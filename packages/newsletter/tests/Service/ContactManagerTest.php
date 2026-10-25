@@ -12,6 +12,7 @@ use Pushword\Newsletter\Entity\AutomationDelivery;
 use Pushword\Newsletter\Entity\Campaign;
 use Pushword\Newsletter\Entity\CampaignRecipient;
 use Pushword\Newsletter\Entity\Contact;
+use Pushword\Newsletter\Entity\DeliveryMessage;
 use Pushword\Newsletter\Entity\Enrollment;
 use Pushword\Newsletter\Enum\ContactStatus;
 use Pushword\Newsletter\Enum\EnrollmentStatus;
@@ -36,7 +37,7 @@ final class ContactManagerTest extends AbstractNewsletterTestCase
     {
         $audience = $this->createAudience(requireDoubleOptIn: false);
         $contact = $this->createContact($audience, 'back@example.tld');
-        $this->manager()->unsubscribe($contact);
+        $this->manager()->unsubscribe($contact, message: $this->lastMessage($contact));
 
         $reopened = $this->manager()->subscribe($audience, 'back@example.tld', source: 'second-thoughts');
 
@@ -82,7 +83,7 @@ final class ContactManagerTest extends AbstractNewsletterTestCase
         self::assertSame('first-page', $contact->source);
     }
 
-    public function testUnsubscribingIsCreditedToTheLastCampaignReceived(): void
+    public function testUnsubscribingIsCreditedToTheReferencedCampaign(): void
     {
         $audience = $this->createAudience(requireDoubleOptIn: false);
         $contact = $this->createContact($audience, 'reader@example.tld');
@@ -92,7 +93,7 @@ final class ContactManagerTest extends AbstractNewsletterTestCase
         $sender->arm($campaign);
         $sender->drain($campaign, 10);
 
-        $this->manager()->unsubscribe($contact);
+        $this->manager()->unsubscribe($contact, message: $this->lastMessage($contact));
 
         self::assertSame(1, $campaign->unsubCount);
     }
@@ -107,7 +108,7 @@ final class ContactManagerTest extends AbstractNewsletterTestCase
         $sender->arm($campaign);
         $sender->drain($campaign, 10);
 
-        $this->manager()->markBounced($contact);
+        $this->manager()->markBounced($contact, message: $this->lastMessage($contact));
 
         self::assertSame(ContactStatus::Bounced, $contact->status);
         self::assertSame(1, $campaign->bounceCount);
@@ -123,15 +124,15 @@ final class ContactManagerTest extends AbstractNewsletterTestCase
         $runner = self::getContainer()->get(AutomationRunner::class);
         $runner->triggerOne($automation, new DateTimeImmutable());
 
-        $this->manager()->unsubscribe($contact);
+        $this->manager()->unsubscribe($contact, message: $this->lastMessage($contact));
 
         $enrollment = $this->entityManager->getRepository(Enrollment::class)->findOneBy(['contact' => $contact]);
         self::assertInstanceOf(Enrollment::class, $enrollment);
         self::assertSame(EnrollmentStatus::Stopped, $enrollment->status);
     }
 
-    /** An opt-out taken back is not one the campaign's rate should keep carrying. */
-    public function testTakingAnOptOutBackGivesTheCampaignItsCountBack(): void
+    /** Historical opt-outs survive a later re-subscription. */
+    public function testTakingAnOptOutBackKeepsTheCampaignHistoricalCount(): void
     {
         $audience = $this->createAudience(requireDoubleOptIn: false);
         $contact = $this->createContact($audience, 'oops@example.tld');
@@ -141,13 +142,13 @@ final class ContactManagerTest extends AbstractNewsletterTestCase
         $sender->arm($campaign);
         $sender->drain($campaign, 10);
 
-        $this->manager()->unsubscribe($contact);
+        $this->manager()->unsubscribe($contact, message: $this->lastMessage($contact));
         self::assertSame(1, $campaign->unsubCount);
 
         $this->manager()->resubscribe($contact);
 
         self::assertSame(ContactStatus::Subscribed, $contact->status);
-        self::assertSame(0, $campaign->unsubCount);
+        self::assertSame(1, $campaign->unsubCount);
     }
 
     /** The mail server refused the address; a click on a page says nothing about that. */
@@ -156,8 +157,8 @@ final class ContactManagerTest extends AbstractNewsletterTestCase
         $audience = $this->createAudience(requireDoubleOptIn: false);
         $contact = $this->createContact($audience, 'dead@example.tld');
 
-        $this->manager()->markBounced($contact);
-        $this->manager()->unsubscribe($contact);
+        $this->manager()->markBounced($contact, message: $this->lastMessage($contact));
+        $this->manager()->unsubscribe($contact, message: $this->lastMessage($contact));
 
         $this->manager()->resubscribe($contact);
 
@@ -175,8 +176,8 @@ final class ContactManagerTest extends AbstractNewsletterTestCase
         $sender->arm($campaign);
         $sender->drain($campaign, 10);
 
-        $this->manager()->unsubscribe($contact);
-        $this->manager()->unsubscribe($contact);
+        $this->manager()->unsubscribe($contact, message: $this->lastMessage($contact));
+        $this->manager()->unsubscribe($contact, message: $this->lastMessage($contact));
 
         self::assertSame(1, $campaign->unsubCount);
     }
@@ -193,7 +194,7 @@ final class ContactManagerTest extends AbstractNewsletterTestCase
         $campaign = $this->sendCampaignYesterday($audience);
         $this->sendDripStep($audience);
 
-        $this->manager()->markBounced($contact);
+        $this->manager()->markBounced($contact, message: $this->lastMessage($contact));
 
         self::assertSame(0, $campaign->bounceCount);
         self::assertSame(RecipientState::Sent, $this->recipientState($campaign));
@@ -208,7 +209,7 @@ final class ContactManagerTest extends AbstractNewsletterTestCase
         $campaign = $this->sendCampaignYesterday($audience);
         $this->sendDripStep($audience);
 
-        $this->manager()->unsubscribe($contact);
+        $this->manager()->unsubscribe($contact, message: $this->lastMessage($contact));
         self::assertSame(0, $campaign->unsubCount);
 
         $this->manager()->resubscribe($contact);
@@ -224,7 +225,7 @@ final class ContactManagerTest extends AbstractNewsletterTestCase
         $this->rewindDeliveries($contact);
         $campaign = $this->sendCampaign($audience);
 
-        $this->manager()->markBounced($contact);
+        $this->manager()->markBounced($contact, message: $this->lastMessage($contact));
 
         self::assertSame(1, $campaign->bounceCount);
         self::assertSame(RecipientState::Bounced, $this->recipientState($campaign));
@@ -246,7 +247,7 @@ final class ContactManagerTest extends AbstractNewsletterTestCase
         $this->entityManager->flush();
         $this->sendDripStep($audience);
 
-        $this->manager()->markBounced($contact);
+        $this->manager()->markBounced($contact, message: $this->lastMessage($contact));
 
         self::assertSame(1, $campaign->bounceCount);
         self::assertSame(RecipientState::Bounced, $this->recipientState($campaign));
@@ -303,6 +304,11 @@ final class ContactManagerTest extends AbstractNewsletterTestCase
         $runner = self::getContainer()->get(AutomationRunner::class);
         $runner->triggerOne($automation, new DateTimeImmutable());
         $runner->advance(10);
+    }
+
+    private function lastMessage(Contact $contact): ?DeliveryMessage
+    {
+        return $this->entityManager->getRepository(DeliveryMessage::class)->findOneBy(['contact' => $contact, 'transportError' => null], ['id' => 'DESC']);
     }
 
     private function deliveryState(Contact $contact): RecipientState

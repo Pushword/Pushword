@@ -37,4 +37,21 @@ final class UtmTagTest extends TestCase
         self::assertSame('bienvenue-randonneurs', $tag->campaign);
         self::assertSame('step-2', $tag->content);
     }
+
+    public function testPermanentIdentitiesSurviveEditorialChangesAndStepReordering(): void
+    {
+        $automation = new Automation();
+        $automation->name = 'Before';
+
+        $step = new AutomationStep();
+        $tag = UtmTag::forStep($automation, $step);
+        self::assertNotNull($tag->id);
+        self::assertNotNull($tag->step);
+        $automation->name = 'After';
+        $step->position = 4;
+        $renamed = UtmTag::forStep($automation, $step);
+        self::assertSame($tag->id, $renamed->id);
+        self::assertSame($tag->step, $renamed->step);
+        self::assertNotSame($tag->id, UtmTag::forStep(new Automation(), $step)->id);
+    }
 }

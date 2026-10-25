@@ -15,9 +15,16 @@ use Pushword\Newsletter\Entity\Campaign;
 use Pushword\Newsletter\Entity\CampaignRecipient;
 use Pushword\Newsletter\Entity\ClickEvent;
 use Pushword\Newsletter\Entity\ContactEvent;
+use Pushword\Newsletter\Entity\DeliveryMessage;
 use Pushword\Newsletter\Repository\AudienceRepository;
 use Pushword\Newsletter\Repository\ClickEventRepository;
 use Pushword\Newsletter\Repository\StatisticsRepository;
+use Pushword\Newsletter\Statistics\LocalStatisticsProvider;
+use Pushword\Newsletter\Statistics\Metric;
+use Pushword\Newsletter\Statistics\Report;
+use Pushword\Newsletter\Statistics\ReportQuery;
+use Pushword\Newsletter\Statistics\StatisticsDashboard;
+use Pushword\Newsletter\Statistics\StatisticsProvider;
 use Pushword\Newsletter\Tests\AbstractNewsletterTestCase;
 use Symfony\Component\DomCrawler\Crawler;
 use Symfony\Component\HttpFoundation\Request;
@@ -178,11 +185,11 @@ final class NewsletterStatisticsTest extends AbstractNewsletterTestCase
         self::assertResponseIsSuccessful();
         self::assertSame('Statistics', $crawler->filter('.pw-newsletter-nav [aria-current="page"]')->text());
         self::assertCount(1, $crawler->filter('[data-campaign]'));
-        self::assertSame('50.00 %', $crawler->filter('[data-statistic="clickRate"]')->text());
+        self::assertSame('50.00 %', $crawler->filter('[data-statistic="clickRate"] [data-rate-value]')->text());
         self::assertStringNotContainsString('newsletter.statistics.', $crawler->filter('article')->text());
         $crawler = $this->client->click($crawler->selectLink('=1+1')->link());
         self::assertResponseIsSuccessful();
-        self::assertCount(2, $crawler->filter('.pw-statistics-table tbody tr'));
+        self::assertCount(2, $crawler->filter('.pw-statistics-links tbody tr'));
         self::assertStringContainsString('audience='.$audience->id, $crawler->filter('a.pw-statistics-back')->link()->getUri());
         self::assertStringContainsString('from='.date('Y-m-d'), $crawler->filter('a.pw-statistics-back')->link()->getUri());
         self::assertStringContainsString('https://example.tld/a?x=<script>', $crawler->filter('.pw-statistics-url')->first()->text());
@@ -198,8 +205,8 @@ final class NewsletterStatisticsTest extends AbstractNewsletterTestCase
         self::assertCount(1, $rows);
         $row = $rows[0];
         self::assertIsArray($row);
-        self::assertSame("'=1+1", $row['Campaign']);
-        self::assertSame('50', $row['Observed click rate (%)']);
+        self::assertSame("'=1+1", $row['subject']);
+        self::assertSame('50', $row['clickRate']);
     }
 
     public function testEmptyPeriodAndZeroSendsHaveNoInventedRates(): void
@@ -226,7 +233,9 @@ final class NewsletterStatisticsTest extends AbstractNewsletterTestCase
         self::assertSame('#statistics-from', $crawler->selectLink('Change the period')->attr('href'));
         $this->client->request(Request::METHOD_GET, '/admin/newsletter/statistics/export'.$query);
         self::assertResponseIsSuccessful();
-        self::assertStringContainsString('Campaign', (string) $this->client->getResponse()->getContent());
+        self::assertStringContainsString('sourceId', (string) $this->client->getResponse()->getContent());
+        self::assertStringContainsString('clickRateDenominator', (string) $this->client->getResponse()->getContent());
+        self::assertStringContainsString('acceptedState', (string) $this->client->getResponse()->getContent());
     }
 
     public function testConsentWithdrawalRemovesUniqueClicksAndLinksButKeepsTheCumulativeCounter(): void
@@ -278,8 +287,8 @@ final class NewsletterStatisticsTest extends AbstractNewsletterTestCase
         self::assertCount(1, $rows);
         $row = $rows[0];
         self::assertIsArray($row);
-        self::assertSame('', $row['Unique clickers']);
-        self::assertSame('', $row['Observed click rate (%)']);
+        self::assertSame('', $row['clickers']);
+        self::assertSame('', $row['clickRate']);
     }
 
     #[DataProvider('invalidFilters')]
@@ -342,13 +351,13 @@ final class NewsletterStatisticsTest extends AbstractNewsletterTestCase
         $noSends = $this->sentCampaign($tracked);
         $measuredZero = $this->sentCampaign($tracked, sent: 1);
         $untracked = $this->sentCampaign($this->createAudience(), sent: 1);
-        foreach ([[$noSends, 'No sends yet'], [$measuredZero, '0.00 %'], [$untracked, 'Not measured']] as [$campaign, $expected]) {
+        foreach ([[$noSends, 'Not measured'], [$measuredZero, '0.00 %'], [$untracked, 'Not measured']] as [$campaign, $expected]) {
             $crawler = $this->client->request(Request::METHOD_GET, '/admin/newsletter/statistics/campaign/'.$campaign->id);
             self::assertResponseIsSuccessful();
-            self::assertSame($expected, $crawler->filter('[data-statistic="clickRate"]')->text());
+            self::assertSame($expected, $crawler->filter('[data-statistic="clickRate"] [data-rate-value]')->text());
             if ($campaign === $noSends) {
                 self::assertCount(2, $crawler->filter('.pw-statistics-quality .pw-statistics-unmeasured'));
-                self::assertSame(['No sends yet', 'No sends yet'], $crawler->filter('.pw-statistics-quality .pw-statistics-unmeasured')->each(static fn (Crawler $node): string => $node->text()));
+                self::assertSame(['Not measured', 'Not measured'], $crawler->filter('.pw-statistics-quality .pw-statistics-unmeasured')->each(static fn (Crawler $node): string => $node->text()));
             }
 
             if ($campaign === $untracked) {
@@ -380,8 +389,7 @@ final class NewsletterStatisticsTest extends AbstractNewsletterTestCase
         $this->entityManager->flush();
         $crawler = $this->client->request(Request::METHOD_GET, '/admin/newsletter/statistics/campaign/'.$campaign->id);
         self::assertResponseIsSuccessful();
-        self::assertCount(1, $crawler->filter('.pw-statistics-secondary [data-statistic]'));
-        self::assertCount(1, $crawler->filter('.pw-statistics-secondary [data-statistic="clicks"]'));
+        self::assertCount(1, $crawler->filter('[data-report] [data-statistic="clicks"]'));
         $first = $crawler->filter('.pw-statistics-links tbody tr')->first();
         self::assertSame($url, $first->filter('a')->attr('href'));
         self::assertSame($url, $first->filter('code')->text());
@@ -408,7 +416,7 @@ final class NewsletterStatisticsTest extends AbstractNewsletterTestCase
         self::assertResponseIsSuccessful();
         $count = str_replace(["\u{00A0}", "\u{202F}"], ' ', $crawler->filter('[data-statistic="sent"]')->text());
         self::assertSame($expectedCount, $count);
-        self::assertSame($expectedRate, $crawler->filter('[data-statistic="clickRate"]')->text());
+        self::assertSame($expectedRate, $crawler->filter('[data-statistic="clickRate"] [data-rate-value]')->text());
         self::assertStringNotContainsString('newsletter.statistics.', $crawler->filter('article')->text());
     }
 
@@ -443,6 +451,8 @@ final class NewsletterStatisticsTest extends AbstractNewsletterTestCase
             self::getContainer()->get(ClickEventRepository::class),
             $timezone,
             self::getContainer()->get(TranslatorInterface::class),
+            self::getContainer()->get(StatisticsDashboard::class),
+            self::getContainer()->get(LocalStatisticsProvider::class),
         );
         $controller->setContainer(self::getContainer());
         self::getContainer()->set(StatisticsController::class, $controller);
@@ -481,6 +491,69 @@ final class NewsletterStatisticsTest extends AbstractNewsletterTestCase
         self::assertResponseStatusCodeSame(Response::HTTP_NOT_FOUND);
     }
 
+    public function testExternalReportsUseTheSameInterfaceAndExportStatesAndFractions(): void
+    {
+        $this->login();
+        $report = new Report('brevo', '42', 'External campaign', 'https://example.tld/manage/42', new DateTimeImmutable(), [
+            'accepted' => new Metric(100),
+            'trackedMessages' => new Metric(80),
+            'clickers' => new Metric(8),
+        ]);
+        $provider = new readonly class($report) implements StatisticsProvider {
+            public function __construct(private Report $report)
+            {
+            }
+
+            public function reports(ReportQuery $query): iterable
+            {
+                if (null === $query->windowDays) {
+                    yield $this->report;
+
+                    return;
+                }
+
+                yield new Report($this->report->source, $this->report->id, $this->report->label, $this->report->managementUrl, $this->report->date, [], mature: false);
+            }
+        };
+        self::getContainer()->set(StatisticsDashboard::class, new StatisticsDashboard([$provider]));
+        $crawler = $this->client->request(Request::METHOD_GET, '/admin/newsletter/statistics');
+        self::assertResponseIsSuccessful();
+        self::assertCount(1, $crawler->filter('[data-source="brevo"]'));
+        self::assertSame('10.00 %', $crawler->filter('[data-statistic="clickRate"] [data-rate-value]')->text());
+        self::assertSame('https://example.tld/manage/42', $crawler->selectLink('Manage in source tool')->link()->getUri());
+        $crawler = $this->client->click($crawler->selectLink('External campaign')->link());
+        self::assertResponseIsSuccessful();
+        self::assertCount(2, $crawler->filter('.pw-statistics-windows thead th small'));
+        $this->client->request(Request::METHOD_GET, '/admin/newsletter/statistics/export');
+        $rows = new CsvEncoder()->decode((string) $this->client->getResponse()->getContent(), 'csv');
+        self::assertIsArray($rows);
+        self::assertIsArray($rows[0]);
+        self::assertSame('brevo', $rows[0]['source']);
+        self::assertSame('42', $rows[0]['sourceId']);
+        self::assertSame('sent', $rows[0]['basis']);
+        self::assertSame('lifetime', $rows[0]['window']);
+        self::assertArrayHasKey('asOf', $rows[0]);
+        self::assertSame('unavailable', $rows[0]['deliveredState']);
+        self::assertSame('8', $rows[0]['clickRateNumerator']);
+        self::assertSame('80', $rows[0]['clickRateDenominator']);
+    }
+
+    public function testLegacyWindowReportsUnavailableLinksInsteadOfMeasuredZero(): void
+    {
+        $this->login();
+        $audience = $this->createAudience();
+        $campaign = $this->sentCampaign($audience, sent: 1);
+        foreach ($this->entityManager->getRepository(DeliveryMessage::class)->findBy(['campaign' => $campaign]) as $message) {
+            $this->entityManager->remove($message);
+        }
+
+        $campaign->incrementClick();
+        $this->entityManager->flush();
+        $crawler = $this->client->request(Request::METHOD_GET, '/admin/newsletter/statistics/campaign/'.$campaign->id.'?window=7');
+        self::assertResponseIsSuccessful();
+        self::assertSame('Unavailable', $crawler->filter('.pw-statistics-links-empty h3')->text());
+    }
+
     private function login(string $role = 'ROLE_SUPER_ADMIN'): void
     {
         $this->user = new User();
@@ -498,6 +571,15 @@ final class NewsletterStatisticsTest extends AbstractNewsletterTestCase
         $campaign = $this->createCampaign($audience, subject: $subject)->markSending($sent)->markSent();
         for ($index = 0; $index < $sent; ++$index) {
             $campaign->incrementSent();
+        }
+
+        if ($sent > 0) {
+            $contact = $this->createContact($audience, 'snapshot-'.bin2hex(random_bytes(6)).'@example.tld');
+            for ($index = 0; $index < $sent; ++$index) {
+                $message = new DeliveryMessage($contact, $audience->clickTracking, $campaign);
+                $message->accept(null);
+                $this->entityManager->persist($message);
+            }
         }
 
         $this->entityManager->flush();

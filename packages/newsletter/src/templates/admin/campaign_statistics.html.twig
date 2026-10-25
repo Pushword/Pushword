@@ -14,7 +14,7 @@
       {% if campaign.date %}<time datetime="{{ campaign.date|date('c', timezone) }}">{{ campaign.date|format_datetime('medium', 'short', timezone: timezone, locale: app.request.locale) }}</time>{% endif %}
     </div>
     {% if campaign.status == 'sending' %}<p class="pw-statistics-sending"><i class="fa fa-clock" aria-hidden="true"></i> {{ 'newsletter.statistics.sendingHelp'|trans }}</p>{% endif %}
-    {{ include('@PushwordNewsletter/admin/_statistics_metrics.html.twig', {totals: campaign, showFeedback: false}) }}
+    {{ include('@PushwordNewsletter/admin/_report_metrics.html.twig') }}
 
     <section class="pw-statistics-delivery" aria-labelledby="statistics-delivery">
       <div>
@@ -37,7 +37,7 @@
           {% for metric, rate in {bounced: 'bounceRate', unsubscribed: 'unsubscribeRate'} %}
             <div>
               <dt>{% if metric == 'bounced' %}<a class="pw-statistics-action" href="{{ path('admin_newsletter_campaign_recipient_index', {filters: {campaign: {comparison: '=', value: campaign.id}, state: {comparison: '=', value: metric}}}) }}">{{ ('newsletter.statistics.' ~ metric)|trans }}</a>{% else %}{{ ('newsletter.statistics.' ~ metric)|trans }}{% endif %}</dt>
-              <dd><strong>{{ statistics.value(rate, campaign[rate], campaign.sent, true) }}</strong><small>{{ campaign[metric]|format_number(locale: app.request.locale) }} {{ (campaign[metric] == 1 ? 'newsletter.statistics.contactSingular' : 'newsletter.statistics.contactPlural')|trans }}</small></dd>
+              <dd><strong>{{ statistics.fraction(report.rate(rate)) }}</strong><small>{{ statistics.measure(report.metric(metric)) }} {{ 'newsletter.statistics.contactPlural'|trans }}</small></dd>
             </div>
           {% endfor %}
         </dl>
@@ -49,14 +49,18 @@
       {% if links is empty %}
         {% if campaign.sent == 0 %}
           {% set emptyTitle = 'newsletter.statistics.noSends' %}
+        {% elseif report.metric('clicks').state != 'measured' %}
+          {% set emptyTitle = 'newsletter.statistics.' ~ report.metric('clicks').state %}
         {% elseif trackingAvailable %}
           {% set emptyTitle = 'newsletter.statistics.noClicks' %}
         {% else %}
           {% set emptyTitle = 'newsletter.statistics.notAvailable' %}
         {% endif %}
+        {% set emptyHelp = trackingAvailable ? 'newsletter.statistics.noClicksHelp' : 'newsletter.statistics.trackingDisabled' %}
+        {% if report.metric('clicks').state == 'unavailable' %}{% set emptyHelp = 'newsletter.statistics.campaignMethodology' %}{% endif %}
         <div class="pw-statistics-empty pw-statistics-links-empty">
           <h3>{{ emptyTitle|trans }}</h3>
-          <p>{{ (trackingAvailable ? 'newsletter.statistics.noClicksHelp' : 'newsletter.statistics.trackingDisabled')|trans }}</p>
+          <p>{{ emptyHelp|trans }}</p>
           {% if not trackingAvailable and campaign.audienceId %}<a class="pw-statistics-action" href="{{ path('admin_newsletter_audience_edit', {entityId: campaign.audienceId}) }}">{{ 'newsletter.statistics.audienceSettings'|trans }}</a>{% endif %}
         </div>
       {% else %}
@@ -78,6 +82,7 @@
         </table>
       {% endif %}
     </section>
+    {{ include('@PushwordNewsletter/admin/_report_comparison.html.twig') }}
     {{ include('@PushwordNewsletter/admin/_statistics_methodology.html.twig', {isCampaign: true}) }}
   </div>
 {% endblock %}

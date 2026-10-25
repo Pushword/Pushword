@@ -25,6 +25,10 @@ class CampaignRecipient implements IdInterface
 {
     use IdTrait;
 
+    #[ORM\ManyToOne(targetEntity: DeliveryMessage::class)]
+    #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
+    public ?DeliveryMessage $message = null;
+
     #[ORM\Column(type: Types::STRING, length: 20, enumType: RecipientState::class)]
     public private(set) RecipientState $state = RecipientState::Pending;
 

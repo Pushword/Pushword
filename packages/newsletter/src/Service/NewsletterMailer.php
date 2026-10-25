@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pushword\Newsletter\Service;
 
+use Doctrine\ORM\EntityManagerInterface;
 use LogicException;
 use Pushword\Core\Site\SiteRegistry;
 use Pushword\Newsletter\Delivery\SendContext;
@@ -11,12 +12,14 @@ use Pushword\Newsletter\Entity\Audience;
 use Pushword\Newsletter\Entity\AutomationStep;
 use Pushword\Newsletter\Entity\Campaign;
 use Pushword\Newsletter\Entity\Contact;
+use Pushword\Newsletter\Entity\DeliveryMessage;
 use Pushword\Newsletter\Utm\UtmTag;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mailer\Transport\TransportInterface;
 use Symfony\Component\Mime\Address;
 use Symfony\Component\Mime\Email;
 use Symfony\Contracts\Translation\TranslatorInterface;
+use Throwable;
 
 /**
  * Builds and hands one mail to the transport.
@@ -40,6 +43,7 @@ final readonly class NewsletterMailer
         private TranslatorInterface $translator,
         private BounceSignature $bounceSignature,
         private TransportInterface $transport,
+        private EntityManagerInterface $entityManager,
     ) {
     }
 
@@ -49,11 +53,11 @@ final readonly class NewsletterMailer
      * per recipient would multiply the ledger by the body size for no gain, and
      * would make fixing a typo mid-campaign impossible.
      */
-    public function sendCampaign(Campaign $campaign, Contact $contact): void
+    public function sendCampaign(Campaign $campaign, Contact $contact): DeliveryMessage
     {
         $content = $campaign->contentFor($contact->locale);
 
-        $this->send(
+        return $this->send(
             $campaign->audience ?? $contact->audience,
             $contact,
             $content['subject'],
@@ -71,11 +75,11 @@ final readonly class NewsletterMailer
      *
      * @param list<string> $untrackedUrls
      */
-    public function sendStep(AutomationStep $step, Contact $contact, string $subject, string $bodyMarkdown, ?SendContext $sendContext = null, ?string $locale = null, array $untrackedUrls = []): void
+    public function sendStep(AutomationStep $step, Contact $contact, string $subject, string $bodyMarkdown, ?SendContext $sendContext = null, ?string $locale = null, array $untrackedUrls = [], ?int $occurrenceId = null, ?DeliveryMessage $message = null): DeliveryMessage
     {
         $automation = $step->automation;
 
-        $this->send(
+        return $this->send(
             $automation->audience ?? $contact->audience,
             $contact,
             $subject,
@@ -86,6 +90,8 @@ final readonly class NewsletterMailer
             $sendContext,
             $locale,
             $untrackedUrls,
+            $occurrenceId,
+            $message,
         );
     }
 
@@ -156,17 +162,49 @@ final readonly class NewsletterMailer
     }
 
     /** @param list<string> $untrackedUrls */
-    private function send(Audience $audience, Contact $contact, string $subject, string $bodyMarkdown, ?string $preheader, ?UtmTag $utmTag, Campaign|AutomationStep $trackedMail, ?SendContext $sendContext = null, ?string $locale = null, array $untrackedUrls = []): void
+    private function send(Audience $audience, Contact $contact, string $subject, string $bodyMarkdown, ?string $preheader, ?UtmTag $utmTag, Campaign|AutomationStep $trackedMail, ?SendContext $sendContext = null, ?string $locale = null, array $untrackedUrls = [], ?int $occurrenceId = null, ?DeliveryMessage $message = null): DeliveryMessage
+    {
+        $message ??= new DeliveryMessage(
+            $contact,
+            $audience->clickTracking && $contact->hasClickTrackingConsent(),
+            $trackedMail instanceof Campaign ? $trackedMail : null,
+            $trackedMail->automation,
+            $trackedMail instanceof Campaign ? $trackedMail->automationStepId : $trackedMail->getUtmId(),
+            $trackedMail instanceof AutomationStep ? $trackedMail->position : null,
+            $trackedMail instanceof Campaign ? $trackedMail->triggerSubjectId : $occurrenceId,
+        );
+        $this->entityManager->persist($message);
+        // Persist the correlation reference before anything reaches the transport.
+        $this->entityManager->flush();
+
+        try {
+            $this->sendMessage($audience, $contact, $subject, $bodyMarkdown, $preheader, $utmTag, $trackedMail, $message, $sendContext, $locale, $untrackedUrls);
+        } catch (Throwable $throwable) {
+            $message->fail($throwable::class);
+            $this->entityManager->flush();
+
+            throw $throwable;
+        }
+
+        $this->entityManager->flush();
+
+        return $message;
+    }
+
+    /** @param list<string> $untrackedUrls */
+    private function sendMessage(Audience $audience, Contact $contact, string $subject, string $bodyMarkdown, ?string $preheader, ?UtmTag $utmTag, Campaign|AutomationStep $trackedMail, DeliveryMessage $message, ?SendContext $sendContext, ?string $locale, array $untrackedUrls): void
     {
         $emailLayout = $trackedMail instanceof Campaign ? $trackedMail->emailLayout : null;
         $unsubscribeUrl = $this->isTransactional($audience, $trackedMail) || 'personal' === ($emailLayout ?? $audience->emailLayout)
             ? null
-            : $this->linkGenerator->unsubscribeUrl($contact, $sendContext?->mainHost, $sendContext?->systemLinkBaseUrl);
+            : $this->linkGenerator->unsubscribeUrl($contact, $sendContext?->mainHost, $sendContext?->systemLinkBaseUrl, $message->reference);
 
         $email = $this->baseEmail($audience, $contact, $sendContext)
             ->subject($this->renderer->subject($subject, $contact))
             ->text($this->renderer->text($audience, $contact, $bodyMarkdown, $unsubscribeUrl, $sendContext, $emailLayout))
-            ->html($this->renderer->html($audience, $contact, $subject, $bodyMarkdown, $preheader, $unsubscribeUrl, $utmTag, $trackedMail, $sendContext, $locale, $untrackedUrls, $emailLayout));
+            ->html($this->renderer->html($audience, $contact, $subject, $bodyMarkdown, $preheader, $unsubscribeUrl, $utmTag, $trackedMail, $sendContext, $locale, $untrackedUrls, $emailLayout, $message->reference));
+
+        $message->identify(trim($email->getHeaders()->get('Message-ID')?->getBodyAsString() ?? throw new LogicException('Missing message identity.'), '<> '));
 
         if (null !== $unsubscribeUrl) {
             $headers = $email->getHeaders();
@@ -174,18 +212,15 @@ final readonly class NewsletterMailer
             $headers->addTextHeader('List-Unsubscribe-Post', 'List-Unsubscribe=One-Click');
         }
 
-        if ($trackedMail instanceof AutomationStep) {
-            // The configured transport retains its listeners, envelope and DSN,
-            // but bypasses Mailer's Messenger bus. A guard must not precede a
-            // queue wait, and a success must mean transport acceptance.
-            if (null === $this->transport->send($email)) {
-                throw new LogicException('The newsletter transport rejected the message.');
-            }
+        $this->entityManager->flush();
 
-            return;
+        // Both kinds of send are synchronous: a queued command is not transport acceptance.
+        $sent = $this->transport->send($email);
+        if (null === $sent) {
+            throw new LogicException('The newsletter transport rejected the message.');
         }
 
-        $this->mailer->send($email);
+        $message->accept($sent->getMessageId());
     }
 
     /**

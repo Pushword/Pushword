@@ -1,0 +1,24 @@
+{% import '@PushwordNewsletter/admin/_statistics_macros.html.twig' as statistics %}
+<div data-report="{{ report.source }}:{{ report.id }}">
+  <dl class="pw-statistics-list">
+    {% for name in ['accepted', 'delivered', 'clicks', 'clickers'] %}
+      <div><dt>{{ ('newsletter.statistics.' ~ name)|trans }}</dt><dd data-statistic="{{ name == 'accepted' ? 'sent' : name }}">{{ statistics.measure(report.metric(name)) }}</dd></div>
+    {% endfor %}
+    {% for name in ['clickRate', 'coverage'] %}
+      <div><dt>{{ ('newsletter.statistics.' ~ name)|trans }}</dt><dd data-statistic="{{ name }}">{{ statistics.fraction(report.rate(name)) }}</dd></div>
+    {% endfor %}
+  </dl>
+  <details class="pw-statistics-help">
+    <summary>{{ 'newsletter.statistics.measurementDetails'|trans }}</summary>
+    <dl class="pw-statistics-list">
+      {% for name in ['transportFailed', 'bounced', 'deferred', 'unsubscribed', 'filteredClicks', 'filteredClickers', 'qualifiedClicks', 'trackedMessages', 'coverageKnownMessages'] %}
+        <div><dt>{{ ('newsletter.statistics.' ~ name)|trans }}</dt><dd data-statistic="{{ name }}">{{ statistics.measure(report.metric(name)) }}</dd></div>
+      {% endfor %}
+      {% for name in ['filteredClickRate', 'deliveryRate', 'bounceRate', 'unsubscribeRate'] %}
+        <div><dt>{{ ('newsletter.statistics.' ~ name)|trans }}</dt><dd data-statistic="{{ name }}">{{ statistics.fraction(report.rate(name)) }}</dd></div>
+      {% endfor %}
+    </dl>
+    <p class="pw-statistics-note">{{ 'newsletter.statistics.qualificationMethod'|trans }}: {{ report.qualificationMethod }}. {{ 'newsletter.statistics.trackingScope'|trans }}: {{ report.trackingScope == 'body; navigation and footer excluded' ? 'newsletter.statistics.bodyOnly'|trans : report.trackingScope }}.</p>
+  </details>
+</div>
+{% if not report.mature %}<p class="pw-statistics-note">{{ 'newsletter.statistics.provisional'|trans }}</p>{% endif %}

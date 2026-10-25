@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace Pushword\Newsletter\Controller;
 
+use Doctrine\ORM\EntityManagerInterface;
 use Psr\Cache\CacheItemPoolInterface;
 use Pushword\Core\Site\SiteRegistry;
 use Pushword\Newsletter\Entity\Audience;
 use Pushword\Newsletter\Entity\Contact;
+use Pushword\Newsletter\Entity\DeliveryMessage;
 use Pushword\Newsletter\Repository\AudienceRepository;
 use Pushword\Newsletter\Repository\ContactRepository;
 use Pushword\Newsletter\Service\ContactManager;
@@ -64,6 +66,7 @@ final class NewsletterController extends AbstractController
         private readonly TranslatorInterface $translator,
         private readonly LocaleSwitcher $localeSwitcher,
         private readonly CacheItemPoolInterface $cache,
+        private readonly EntityManagerInterface $entityManager,
     ) {
     }
 
@@ -277,7 +280,9 @@ final class NewsletterController extends AbstractController
             return $this->page('unsubscribe.html.twig', $contact);
         }
 
-        $this->contactManager->unsubscribe($contact, self::LINK_SOURCE);
+        $reference = $request->query->getString('message');
+        $message = '' === $reference ? null : $this->entityManager->getRepository(DeliveryMessage::class)->findOneBy(['reference' => $reference, 'contact' => $contact]);
+        $this->contactManager->unsubscribe($contact, self::LINK_SOURCE, $message);
 
         return $this->unsubscribed($contact);
     }

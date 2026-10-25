@@ -41,6 +41,10 @@ class ContactEvent implements IdInterface
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
     public private(set) DateTimeImmutable $occurredAt;
 
+    #[ORM\ManyToOne(targetEntity: DeliveryMessage::class)]
+    #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
+    public ?DeliveryMessage $message = null;
+
     private function __construct(
         #[ORM\ManyToOne(targetEntity: Contact::class)]
         #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]

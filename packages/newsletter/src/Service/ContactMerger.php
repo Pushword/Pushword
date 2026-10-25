@@ -7,6 +7,7 @@ namespace Pushword\Newsletter\Service;
 use Doctrine\ORM\EntityManagerInterface;
 use InvalidArgumentException;
 use Pushword\Newsletter\Entity\Contact;
+use Pushword\Newsletter\Entity\DeliveryMessage;
 use Pushword\Newsletter\Repository\AutomationDeliveryRepository;
 use Pushword\Newsletter\Repository\CampaignRecipientRepository;
 use Pushword\Newsletter\Repository\ContactEventRepository;
@@ -127,6 +128,10 @@ final readonly class ContactMerger
      */
     private function moveLedger(Contact $absorbed, Contact $keeper): void
     {
+        foreach ($this->entityManager->getRepository(DeliveryMessage::class)->findBy(['contact' => $absorbed]) as $message) {
+            $message->moveTo($keeper);
+        }
+
         foreach ($this->recipientRepository->findBy(['contact' => $absorbed]) as $recipient) {
             if (null === $this->recipientRepository->findOneBy(['campaign' => $recipient->campaign, 'contact' => $keeper])) {
                 $recipient->moveTo($keeper);

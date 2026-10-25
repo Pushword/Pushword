@@ -130,7 +130,7 @@ final readonly class StatisticsRepository
                 'c.subject',
                 'c.audience_id',
                 'a.name AS audience',
-                'a.click_tracking AS tracking',
+                '(SELECT COUNT(m.id) FROM newsletter_delivery_message m WHERE m.campaign_id = c.id AND m.accepted_at IS NOT NULL AND m.tracking_allowed = TRUE) AS tracking',
                 'c.status',
                 'c.recipient_count AS recipients',
                 'c.sent_count AS sent',

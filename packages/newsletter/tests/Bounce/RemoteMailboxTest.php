@@ -8,6 +8,7 @@ use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\Group;
 use Pushword\Newsletter\Bounce\ImapSource;
 use Pushword\Newsletter\Bounce\MaildirSource;
+use Pushword\Newsletter\Delivery\DeliveryEventRecorder;
 use Pushword\Newsletter\Enum\ContactStatus;
 use Pushword\Newsletter\Repository\ContactEventRepository;
 use Pushword\Newsletter\Repository\ContactRepository;
@@ -206,6 +207,8 @@ final class RemoteMailboxTest extends AbstractNewsletterTestCase
             self::getContainer()->get(BounceSignature::class),
             $maildir,
             $dsn,
+            $this->entityManager,
+            self::getContainer()->get(DeliveryEventRecorder::class),
         );
     }
 

@@ -9,6 +9,7 @@ use Doctrine\Persistence\ManagerRegistry;
 use Pushword\Newsletter\Entity\Campaign;
 use Pushword\Newsletter\Entity\ClickEvent;
 use Pushword\Newsletter\Entity\Contact;
+use Pushword\Newsletter\Statistics\ReportQuery;
 
 /**
  * @extends ServiceEntityRepository<ClickEvent>
@@ -52,8 +53,12 @@ class ClickEventRepository extends ServiceEntityRepository
      *
      * @return list<array{url: string, clicks: int, contacts: int}>
      */
-    public function byUrl(Campaign $campaign): array
+    public function byUrl(Campaign $campaign, ?ReportQuery $selection = null): array
     {
+        if (null !== $selection) {
+            return $this->observedUrls($campaign, $selection);
+        }
+
         return $this->createQueryBuilder('c')
             ->select('c.url AS url', 'COUNT(c.id) AS clicks', 'COUNT(DISTINCT c.contact) AS contacts')
             ->andWhere('c.campaign = :campaign')
@@ -62,5 +67,34 @@ class ClickEventRepository extends ServiceEntityRepository
             ->orderBy('clicks', 'DESC')
             ->getQuery()
             ->getResult();
+    }
+
+    /** @return list<array{url: string, clicks: int, contacts: int}> */
+    private function observedUrls(Campaign $campaign, ReportQuery $selection): array
+    {
+        $query = $this->createQueryBuilder('c')->addSelect('m')->leftJoin('c.message', 'm')
+            ->where('c.campaign = :campaign')->setParameter('campaign', $campaign);
+        /** @var list<ClickEvent> $events */
+        $events = $query->getQuery()->getResult();
+        $urls = [];
+        foreach ($events as $click) {
+            if (null !== $selection->windowDays && null === $click->message) {
+                continue;
+            }
+
+            if (! $selection->observes($click->message->acceptedAt ?? $click->clickedAt, $click->clickedAt)) {
+                continue;
+            }
+
+            $urls[$click->url]['clicks'] = ($urls[$click->url]['clicks'] ?? 0) + 1;
+            $urls[$click->url]['contacts'][$click->contact->id ?? 0] = true;
+        }
+
+        $results = [];
+        foreach ($urls as $url => $counts) {
+            $results[] = ['url' => $url, 'clicks' => $counts['clicks'], 'contacts' => \count($counts['contacts'])];
+        }
+
+        return $results;
     }
 }

@@ -36,6 +36,7 @@ use Symfony\Component\Validator\Context\ExecutionContextInterface;
 class Campaign implements IdInterface, Stringable
 {
     use IdTrait;
+    use StableUtmIdentity;
     use TimestampableTrait;
 
     /** The column holds 128; "YYMMDD-" takes 7 of them. */
@@ -171,6 +172,9 @@ class Campaign implements IdInterface, Stringable
 
     #[ORM\Column(name: 'trigger_subject_id', type: Types::INTEGER, nullable: true)]
     public private(set) ?int $triggerSubjectId = null;
+
+    #[ORM\Column(type: Types::STRING, length: 100, nullable: true)]
+    public ?string $automationStepId = null;
 
     private string $segmentJson = '';
 
@@ -570,14 +574,6 @@ class Campaign implements IdInterface, Stringable
     public function incrementUnsub(): self
     {
         ++$this->unsubCount;
-
-        return $this;
-    }
-
-    /** An opt-out taken back is not an opt-out this campaign's rate should carry. */
-    public function decrementUnsub(): self
-    {
-        --$this->unsubCount;
 
         return $this;
     }

@@ -37,6 +37,10 @@ class AutomationDelivery implements IdInterface
 {
     use IdTrait;
 
+    #[ORM\ManyToOne(targetEntity: DeliveryMessage::class)]
+    #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
+    public ?DeliveryMessage $message = null;
+
     /**
      * When the mail was handed to the transport, or when handing it over failed.
      * A failure has no send date and still has to be placeable in time — it is
@@ -105,7 +109,7 @@ class AutomationDelivery implements IdInterface
         $this->contact = $contact;
     }
 
-    /** A later bounce, credited here because this was the last mail sent. */
+    /** A later bounce identifying this exact message. */
     public function markBounced(): self
     {
         $this->state = RecipientState::Bounced;

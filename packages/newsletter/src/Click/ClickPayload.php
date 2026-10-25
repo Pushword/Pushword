@@ -16,6 +16,7 @@ final readonly class ClickPayload
         public ?int $campaignId = null,
         public ?int $automationId = null,
         public ?int $position = null,
+        public ?string $messageReference = null,
     ) {
     }
 }

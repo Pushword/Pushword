@@ -9,6 +9,7 @@ use PHPUnit\Framework\Attributes\Group;
 use Pushword\Core\Site\SiteRegistry;
 use Pushword\Newsletter\Delivery\SendContext;
 use Pushword\Newsletter\Entity\Campaign;
+use Pushword\Newsletter\Entity\DeliveryMessage;
 use Pushword\Newsletter\Entity\EmailTemplate;
 use Pushword\Newsletter\Service\BounceSignature;
 use Pushword\Newsletter\Service\LinkGenerator;
@@ -133,7 +134,9 @@ final class NewsletterMailerTest extends AbstractNewsletterTestCase
                 self::assertFalse($email->getHeaders()->has('List-Unsubscribe-Post'));
                 self::assertStringNotContainsString('/newsletter/unsubscribe/', $html.$text);
             } elseif (0 === $index) {
-                self::assertSame('<'.self::getContainer()->get(LinkGenerator::class)->unsubscribeUrl($contact).'>', $email->getHeaders()->get('List-Unsubscribe')?->getBodyAsString());
+                $message = $this->entityManager->getRepository(DeliveryMessage::class)->findOneBy(['campaign' => $campaign]);
+                self::assertNotNull($message);
+                self::assertSame('<'.self::getContainer()->get(LinkGenerator::class)->unsubscribeUrl($contact, messageReference: $message->reference).'>', $email->getHeaders()->get('List-Unsubscribe')?->getBodyAsString());
                 self::assertSame('List-Unsubscribe=One-Click', $email->getHeaders()->get('List-Unsubscribe-Post')?->getBodyAsString());
             }
         }
@@ -153,6 +156,8 @@ final class NewsletterMailerTest extends AbstractNewsletterTestCase
         $campaign = new Campaign();
         $campaign->subject = 'Hello';
         $campaign->bodyMarkdown = 'Body';
+
+        $this->entityManager->persist($campaign);
 
         $mailer = self::getContainer()->get(NewsletterMailer::class);
         $mailer->sendCampaign($campaign, $contact);
@@ -239,9 +244,8 @@ final class NewsletterMailerTest extends AbstractNewsletterTestCase
         $container = self::getContainer();
         $transport = $container->get(TransportInterface::class);
         $bus = $this->createMock(MessageBusInterface::class);
-        // Only the campaign reaches this bus, even though the ordinary mailer
-        // is configured with Messenger for both calls.
-        $bus->expects(self::once())->method('dispatch')
+        // Both tracked sends bypass Messenger to measure actual transport acceptance.
+        $bus->expects(self::never())->method('dispatch')
             ->with(self::isInstanceOf(SendEmailMessage::class), self::anything())
             ->willReturnCallback(static fn (object $message): Envelope => new Envelope($message));
         $dispatcher = $container->get(EventDispatcherInterface::class);
@@ -255,6 +259,7 @@ final class NewsletterMailerTest extends AbstractNewsletterTestCase
             $container->get(TranslatorInterface::class),
             $container->get(BounceSignature::class),
             $transport,
+            $this->entityManager,
         );
         $audience = $this->createAudience();
         $contact = $this->createContact($audience, 'reader@example.tld');
@@ -272,8 +277,9 @@ final class NewsletterMailerTest extends AbstractNewsletterTestCase
         $campaign->subject = 'Ordinary campaign';
         $campaign->bodyMarkdown = 'Body';
 
+        $this->entityManager->persist($campaign);
         $mailer->sendCampaign($campaign, $contact);
-        self::assertQueuedEmailCount(1);
-        self::assertEmailCount(1);
+        self::assertQueuedEmailCount(0);
+        self::assertEmailCount(2);
     }
 }

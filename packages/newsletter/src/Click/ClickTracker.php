@@ -44,7 +44,7 @@ final readonly class ClickTracker
     }
 
     /** @param list<string> $untrackedUrls */
-    public function rewrite(string $html, Audience $audience, Contact $contact, Campaign|AutomationStep $mail, array $untrackedUrls = [], ?string $mainHost = null, ?string $systemLinkBaseUrl = null): string
+    public function rewrite(string $html, Audience $audience, Contact $contact, Campaign|AutomationStep $mail, array $untrackedUrls = [], ?string $mainHost = null, ?string $systemLinkBaseUrl = null, ?string $messageReference = null): string
     {
         if (! $audience->clickTracking || ! $contact->hasClickTrackingConsent() || ! str_contains($html, '<a ')) {
             return $html;
@@ -54,13 +54,13 @@ final readonly class ClickTracker
             HtmlUnpublishedLink::HTML_REGEX,
             fn (array $match): string => \in_array(html_entity_decode($match['href'], \ENT_QUOTES | \ENT_HTML5), $untrackedUrls, true)
                 ? $match[0]
-                : $this->trackLink($match, $audience, $contact, $mail, $mainHost, $systemLinkBaseUrl),
+                : $this->trackLink($match, $audience, $contact, $mail, $mainHost, $systemLinkBaseUrl, $messageReference),
             $html
         ) ?? $html;
     }
 
     /** @param array<int|string, string> $match */
-    private function trackLink(array $match, Audience $audience, Contact $contact, Campaign|AutomationStep $mail, ?string $mainHost, ?string $systemLinkBaseUrl): string
+    private function trackLink(array $match, Audience $audience, Contact $contact, Campaign|AutomationStep $mail, ?string $mainHost, ?string $systemLinkBaseUrl, ?string $messageReference): string
     {
         $url = html_entity_decode($match['href'], \ENT_QUOTES | \ENT_HTML5);
         $parts = parse_url($url);
@@ -75,7 +75,7 @@ final readonly class ClickTracker
         // Use the occurrence's explicit system origin when provided; otherwise
         // preserve the live backend origin used by statically generated sites.
         $tracked = $this->linkGenerator->base($audience, $mainHost, $systemLinkBaseUrl)
-            .$this->urlGenerator->generate('pushword_newsletter_click', ['payload' => $this->payload($contact, $mail, $url)], UrlGeneratorInterface::ABSOLUTE_PATH);
+            .$this->urlGenerator->generate('pushword_newsletter_click', ['payload' => $this->payload($contact, $mail, $url, $messageReference)], UrlGeneratorInterface::ABSOLUTE_PATH);
 
         $quote = $match['quote'];
 
@@ -105,12 +105,13 @@ final readonly class ClickTracker
             campaignId: \is_int($data['k'] ?? null) ? $data['k'] : null,
             automationId: \is_int($data['a'] ?? null) ? $data['a'] : null,
             position: \is_int($data['p'] ?? null) ? $data['p'] : null,
+            messageReference: \is_string($data['m'] ?? null) ? $data['m'] : null,
         );
     }
 
-    private function payload(Contact $contact, Campaign|AutomationStep $mail, string $url): string
+    private function payload(Contact $contact, Campaign|AutomationStep $mail, string $url, ?string $messageReference): string
     {
-        $data = ['c' => $contact->id, 'u' => $url];
+        $data = ['c' => $contact->id, 'u' => $url, 'm' => $messageReference];
 
         if ($mail instanceof Campaign) {
             $data['k'] = $mail->id;

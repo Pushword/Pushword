@@ -10,19 +10,12 @@
   {%- endif -%}
 {% endmacro %}
 
-{% macro feedback(campaign) %}
-  {% if campaign.failed > 0 or campaign.bounced > 0 or campaign.unsubscribed > 0 %}
-    <dl class="pw-statistics-signals">
-      {% for metric in ['failed', 'bounced', 'unsubscribed'] %}
-        {% if campaign[metric] > 0 %}
-          <div{% if metric == 'failed' %} class="pw-statistics-failure"{% endif %}>
-            <dt>{% if metric != 'unsubscribed' %}<a href="{{ path('admin_newsletter_campaign_recipient_index', {filters: {campaign: {comparison: '=', value: campaign.id}, state: {comparison: '=', value: metric}}}) }}">{{ ('newsletter.statistics.' ~ metric)|trans }}</a>{% else %}{{ ('newsletter.statistics.' ~ metric)|trans }}{% endif %}</dt>
-            <dd>{{ campaign[metric]|format_number(locale: app.request.locale) }}</dd>
-          </div>
-        {% endif %}
-      {% endfor %}
-    </dl>
-  {% else %}
-    <span class="pw-statistics-quiet">{{ 'newsletter.statistics.noSignals'|trans }}</span>
-  {% endif %}
+{% macro measure(metric) %}
+  {%- if metric.state == 'measured' -%}{{ metric.value|format_number(locale: app.request.locale) }}{%- else -%}<span class="pw-statistics-unmeasured">{{ ('newsletter.statistics.' ~ metric.state)|trans }}</span>{%- endif -%}
+{% endmacro %}
+
+{% macro fraction(rate) %}
+  {% import _self as statistics %}
+  <span data-rate-value>{% if rate.value is not null %}{{ rate.value|format_number({min_fraction_digit: 2, max_fraction_digit: 2}, locale: app.request.locale) }} %{% else %}<span class="pw-statistics-unmeasured">{{ ('newsletter.statistics.' ~ rate.state)|trans }}</span>{% endif %}</span>
+  <small>{{ statistics.measure(rate.numerator) }} / {{ statistics.measure(rate.denominator) }}</small>
 {% endmacro %}

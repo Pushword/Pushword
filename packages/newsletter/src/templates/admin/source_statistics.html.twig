@@ -1,0 +1,11 @@
+{% extends '@PushwordNewsletter/admin/statistics_layout.html.twig' %}
+{% block content_title %}{{ report.label }}{% endblock %}
+{% block page_actions %}<a class="btn btn-outline-secondary pw-statistics-back" href="{{ path('admin_newsletter_statistics', backFilters) }}">{{ 'newsletter.statistics.back'|trans }}</a>{% endblock %}
+{% block main %}
+<div class="pw-statistics">
+  <p>{{ report.source }} · {{ report.id }} · <a href="{{ report.managementUrl }}">{{ 'newsletter.statistics.manageSource'|trans }}</a></p>
+  {{ include('@PushwordNewsletter/admin/_report_metrics.html.twig') }}
+  {{ include('@PushwordNewsletter/admin/_report_comparison.html.twig') }}
+  {{ include('@PushwordNewsletter/admin/_statistics_methodology.html.twig') }}
+</div>
+{% endblock %}

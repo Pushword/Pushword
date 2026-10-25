@@ -56,6 +56,7 @@ final readonly class MailRenderer
         ?string $locale = null,
         array $untrackedUrls = [],
         ?string $emailLayout = null,
+        ?string $messageReference = null,
     ): string {
         $host = $sendContext->mainHost ?? $audience->mainHost;
         $body = $this->markdownParser->transform($this->personalize($bodyMarkdown, $contact));
@@ -68,7 +69,7 @@ final readonly class MailRenderer
         // before the template, so its own links stay out of reach. The double
         // consent gate is the tracker's to keep.
         if (null !== $trackedMail) {
-            $body = $this->clickTracker->rewrite($body, $audience, $contact, $trackedMail, $untrackedUrls, $sendContext?->mainHost, $sendContext?->systemLinkBaseUrl);
+            $body = $this->clickTracker->rewrite($body, $audience, $contact, $trackedMail, $untrackedUrls, $sendContext?->mainHost, $sendContext?->systemLinkBaseUrl, $messageReference);
         }
 
         $layout = $emailLayout ?? $audience->emailLayout;

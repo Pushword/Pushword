@@ -33,6 +33,8 @@ final class ClickTrackingTest extends AbstractNewsletterTestCase
     {
         $contact = $this->sendTrackedCampaign();
 
+        $campaign = $this->entityManager->getRepository(Campaign::class)->findOneBy(['audience' => $contact->audience]);
+        self::assertNotNull($campaign);
         $html = $this->lastHtml();
         self::assertStringContainsString('https://localhost.dev/newsletter/c/', $html);
         self::assertStringNotContainsString('href="https://localhost.dev/article', $html);
@@ -44,13 +46,13 @@ final class ClickTrackingTest extends AbstractNewsletterTestCase
         $response = $this->client->getResponse();
         self::assertSame(Response::HTTP_FOUND, $response->getStatusCode());
         self::assertSame(
-            'https://localhost.dev/article?utm_source=newsletter&utm_medium=email&utm_campaign='.date('ymd').'-janvier',
+            'https://localhost.dev/article?utm_source=newsletter&utm_medium=email&utm_campaign='.date('ymd').'-janvier&utm_id='.$campaign->getUtmId(),
             $response->headers->get('Location'),
         );
 
         $clicks = $this->clicksOf($contact);
         self::assertCount(1, $clicks);
-        self::assertSame('https://localhost.dev/article?utm_source=newsletter&utm_medium=email&utm_campaign='.date('ymd').'-janvier', $clicks[0]->url);
+        self::assertSame('https://localhost.dev/article?utm_source=newsletter&utm_medium=email&utm_campaign='.date('ymd').'-janvier&utm_id='.$campaign->getUtmId(), $clicks[0]->url);
         self::assertInstanceOf(Campaign::class, $clicks[0]->campaign);
         self::assertSame(1, $clicks[0]->campaign->clickCount);
     }

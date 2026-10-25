@@ -94,7 +94,7 @@ final readonly class CampaignSender
             }
 
             try {
-                $this->mailer->sendCampaign($campaign, $contact);
+                $recipient->message = $this->mailer->sendCampaign($campaign, $contact);
                 $recipient->markSent();
                 $campaign->incrementSent();
                 ++$sent;

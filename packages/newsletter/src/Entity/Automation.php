@@ -53,6 +53,7 @@ use Symfony\Component\Validator\Context\ExecutionContextInterface;
 class Automation implements IdInterface, Stringable
 {
     use IdTrait;
+    use StableUtmIdentity;
     use TimestampableTrait;
 
     #[Assert\NotNull]

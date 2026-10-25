@@ -17,6 +17,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 class AutomationStep implements IdInterface, Stringable
 {
     use IdTrait;
+    use StableUtmIdentity;
 
     #[Assert\NotNull]
     #[ORM\ManyToOne(targetEntity: Automation::class, inversedBy: 'steps')]

@@ -85,6 +85,13 @@ final readonly class UtmDecorator
         $query['utm_source'] = $source;
         $query['utm_medium'] = self::MEDIUM;
         $query['utm_campaign'] = $utmTag->campaign;
+        if (null !== $utmTag->id) {
+            $query['utm_id'] = $utmTag->id;
+        }
+
+        if (null !== $utmTag->step) {
+            $query['utm_term'] = $utmTag->step;
+        }
 
         if (null !== $utmTag->content) {
             $query['utm_content'] = $utmTag->content;

@@ -55,6 +55,7 @@ final readonly class BroadcastScheduler
             $campaign->bodyMarkdown = $this->renderer->render($step->bodyMarkdown, $occurrence->placeholders);
             $campaign->segment = $segment;
             $campaign->transactional = $automation->transactional;
+            $campaign->automationStepId = $step->getUtmId();
             $campaign->slug = $this->slug($occurrence, $step->subject, $position);
             $campaign
                 ->triggeredBy($automation, $occurrence->subjectId)

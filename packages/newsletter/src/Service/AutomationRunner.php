@@ -10,6 +10,7 @@ use Psr\Log\LoggerInterface;
 use Pushword\Newsletter\Delivery\SendContext;
 use Pushword\Newsletter\Entity\Automation;
 use Pushword\Newsletter\Entity\AutomationDelivery;
+use Pushword\Newsletter\Entity\DeliveryMessage;
 use Pushword\Newsletter\Entity\Enrollment;
 use Pushword\Newsletter\Entity\TriggerLog;
 use Pushword\Newsletter\Event\AutomationDeliveryResult;
@@ -261,6 +262,7 @@ final readonly class AutomationRunner
         // must never retain an authentication URL supplied during preparation.
         $subject = $this->renderer->renderSubject($step->subject, $enrollment->placeholders);
         $error = null;
+        $message = null;
 
         try {
             $source = $this->sources->for($automation);
@@ -284,6 +286,14 @@ final readonly class AutomationRunner
                 return false;
             }
 
+            $message = new DeliveryMessage(
+                $contact,
+                ($automation->audience ?? $contact->audience)->clickTracking && $contact->hasClickTrackingConsent(),
+                automation: $automation,
+                stepId: $step->getUtmId(),
+                position: $step->position,
+                occurrenceId: $enrollment->subjectId
+            );
             $this->mailer->sendStep(
                 $step,
                 $contact,
@@ -292,6 +302,8 @@ final readonly class AutomationRunner
                 $enrollment->getSendContext(),
                 $enrollment->locale,
                 $preparation->untrackedUrls,
+                $enrollment->subjectId,
+                $message,
             );
         } catch (Throwable $throwable) {
             // Exceptions may contain the rendered mail or a sensitive URL. Keep
@@ -308,6 +320,8 @@ final readonly class AutomationRunner
         $delivery = null === $error
             ? AutomationDelivery::sent($enrollment, $subject)
             : AutomationDelivery::failed($enrollment, $subject, $error);
+        $delivery->message = $message;
+
         $this->entityManager->persist($delivery);
 
         // A failing observer cannot turn an accepted transport submission into

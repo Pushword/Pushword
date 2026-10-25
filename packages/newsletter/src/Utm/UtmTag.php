@@ -15,26 +15,29 @@ final readonly class UtmTag
     public function __construct(
         public string $campaign,
         public ?string $content = null,
+        public ?string $id = null,
+        public ?string $step = null,
     ) {
     }
 
     public static function forCampaign(Campaign $campaign): self
     {
-        return new self($campaign->slug);
+        return new self($campaign->slug, id: $campaign->automation?->getUtmId() ?? $campaign->getUtmId(), step: $campaign->automationStepId);
     }
 
     /**
      * A drip counts as one campaign, each step as a content variant of it — so
      * the sequence can be read as a whole and step by step.
      *
-     * Unlike a campaign, an automation has no frozen slug: renaming one renames
-     * it in analytics too.
+     * Editorial names may change; utm_id and the step identity never do.
      */
     public static function forStep(Automation $automation, AutomationStep $step): self
     {
         return new self(
             new Slugify()->slugify($automation->name),
             'step-'.($step->position + 1),
+            $automation->getUtmId(),
+            $step->getUtmId(),
         );
     }
 }

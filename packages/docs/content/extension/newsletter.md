@@ -156,7 +156,7 @@ cost their reader one extra click, never the wrong outcome.
 
 **Undo is one click too.** The opt-out page carries a button that puts the
 address back with no confirmation mail — the token reached that mailbox and no
-other — and gives the campaign back the unsubscribe it was credited with. It does
+other — while preserving the historical unsubscribe count. It does
 not revive a bounced address, nor resume an automation the opt-out stopped.
 
 Leaving one list leaves only that one. The page then offers the address's other
@@ -837,7 +837,7 @@ A step the transport refuses is skipped, not retried — retrying would freeze t
 contact's sequence on that mail — so this row is the only record that someone
 missed a step, and the only place the transport's reason is kept.
 
-A bounce or an unsubscribe is credited to the last mail that person received.
+A bounce or unsubscribe carrying a message reference is credited to that exact send. Events without a reference remain unattributed.
 When that is a drip step, its row is marked and no campaign is charged:
 campaign counters mean "caused by this send".
 
@@ -846,8 +846,8 @@ campaign counters mean "caused by this send".
 Drips run synchronously in `pw:newsletter:tick` (cron/CLI), through Symfony's
 configured `TransportInterface`. They bypass `MailerInterface`'s Messenger bus,
 including a `SendEmailMessage` route to `async`. The same DSN, transport
-listeners, envelope sender and failover configuration apply. Campaigns,
-confirmations and test mails still use the usual mailer. Never call the drip
+listeners, envelope sender and failover configuration apply. Campaigns use the
+same synchronous transport; confirmations and test mails use the usual mailer. Never call the drip
 runner from HTTP. A result means the transport accepted the submission, not inbox
 delivery.
 
@@ -1096,8 +1096,12 @@ a year of campaigns sorts in order. The slug is derived from the subject unless
 set; the date is stamped when the campaign is armed (scheduled in March, sent in
 April: dated April). Rewording the subject afterwards renames nothing.
 
-Automation steps carry the automation's name plus `utm_content=step-2`, and no
-date: a drip runs continuously.
+Every campaign also carries a permanent `utm_id`. Automations use their own permanent
+`utm_id` across all occurrences, plus the step's permanent identity in `utm_term`.
+`utm_campaign` and `utm_content=step-2` remain editorial labels: renaming an automation
+or reordering a step does not change its permanent identifiers. Existing persisted
+entities derive their first identity from their entity kind and database ID; entities
+used before persistence receive a UUID. The identity is then stored unchanged.
 
 It never touches a link to another domain, a link you tagged by hand, or the
 unsubscribe link, and tags nothing while the audience has no source.
@@ -1167,45 +1171,123 @@ may enrich native navigation through `$index->items['pushword:42']->actions`.
 Action labels map to HTTP(S) URLs or root-relative paths, validated after listeners.
 Use links to the owning tool and existing reports: this catalogue imports no
 content, computes no cross-provider statistics and delegates no sending.
-The native statistics controller is unchanged.
+Statistics providers use the separate contract below; a catalogue entry alone does not supply measurements.
 
 ## Statistics
 
-Open **Newsletter → Statistics** for campaign results, filtered by audience and
-date range (the last 30 days by default). The comparison links to each campaign's
-report, its recipient ledger and its recorded links. **Export CSV** exports the
-same applied campaign selection, including counts and rates. Use the 7/30/90-day
-shortcuts or edit the date range; validation errors stay with their fields. Reset
-returns to all audiences and the last 30 days. The comparison adapts to stacked
-rows on small screens, keeping engagement and reported issues visible.
+Open **Newsletter → Statistics**. Filter by audience, dates, observation window and
+report grouping: campaigns (including automation summaries), automation, step, or
+step and send occurrence. Native and external reports share this interface and keep
+both their source identifier and their link to the owning management tool. Detailed
+reports compare D+7 and D+30, with incomplete windows marked provisional. CSV exports
+the same selection, including measurement states, rate numerators and denominators.
+Its columns also record the date basis, observation window, grouping, bounds and
+observation time; the header schema stays the same for an empty selection.
+Dates use `pushword.editorial_timezone`; range ends are exclusive.
 
-The overview prioritizes sends, unique clickers and observed click rate. The
-campaign report separates sending states from recipient feedback and ranks links
-by unique clickers. Detailed measurement notes are under **How to read these
-figures**. Browser zoom remains available.
+**Sends in period** selects campaigns by first transport acceptance (completion when
+no recipient row remains), and drip messages by attempt date. Results then cover
+all observed events, or the selected window after each individual acceptance.
+**Events in period** counts only events in that date range, including events on older
+sends. Its rates are not computed: its event population differs from its send population.
+D+7/D+30 cover `[acceptedAt, acceptedAt + N days)`, bounded by the observation time.
+A campaign spanning several days therefore has a separate window for each message.
 
-The date filter selects campaigns by their first transport handoff, or completion
-date when no recipient record remains. A campaign still sending appears after its
-first handoff. Results are cumulative to date, including clicks and bounces that
-arrived after the selected period, rather than events restricted to that period.
-Dates use `pushword.editorial_timezone`.
+| Measurement | Definition |
+| --- | --- |
+| Accepted | Messages accepted synchronously by the configured transport, including ones that later bounce. Queue submission is not acceptance. |
+| Confirmed delivery | Messages with an explicit receiving-server acceptance event as their latest observed delivery outcome. These are observed confirmations, not inbox placement or inferred delivery. No confirmations means unavailable. |
+| Transport failures | Attempts rejected before transport acceptance. |
+| Bounced / deferred | Messages whose latest observed remote outcome is permanent failure / temporary deferral. No outcome is not evidence of delivery. |
+| Raw clicks | All recorded clicks, including scanners and unclassified requests. Campaign lifetime counters survive consent withdrawal; windowed results use retained events. |
+| Unique contacts | Distinct contacts within each report. Totals sum contact/report pairs; a person appearing in two reports counts twice, not as one globally deduplicated person. |
+| Qualified clicks | Clicks classified by an extension as non-automated. Unclassified requests are excluded from this count, not declared human. The classified-click count and method show the extent of qualification. |
+| Tracking coverage | Accepted messages with tracking authorized at send time / all accepted messages. Known consent snapshots are also counted; historical gaps remain not measured. |
+| Click rate | Unique raw clicking contacts / accepted messages with tracking authorized. Qualified click rate uses qualified unique contacts with the same denominator. |
+| Bounce / unsubscribe rate | Historical bounces / opt-outs divided by accepted messages. Re-subscribing changes current state, never erases a past opt-out. |
 
-- **Sent** counts messages handed to the mail transport. It does not confirm
-  reception in an inbox. Bounces and transport failures are separate counts.
-- **Unique clickers** count a contact once per campaign, including in the overall
-  total. Rates use sent messages as their denominator; the overall rate uses the
-  combined counts, rather than averaging campaign percentages. Sends without
-  tracking remain in that denominator, so click rates describe observed engagement.
-- Click tracking still requires the audience switch and the contact's consent.
-  Untracked campaigns have no measured click rate. The cumulative click counter
-  survives consent withdrawal; unique clicks and link details use the retained
-  events and may decrease after withdrawal or contact deletion. Bots are not filtered.
-- **Audience health today** is a current subscription snapshot, independent of
-  the selected dates. **Subscription activity** counts consent-ledger events in
-  the selected period. A signup request and its confirmation are separate events,
-  not two new subscribers. A person subscribed to two audiences counts twice.
+`Metric(0)` means a measured zero; `Metric::notMeasured()` means the observation was
+not collected; `Metric::unavailable()` means the source cannot provide it. Unknown
+components propagate through totals instead of becoming zero. Rates are recalculated
+from summed numerators and denominators, never averaged. Legacy cumulative counters
+may contain earlier estimated attribution; new events require message references.
+Historical opt-outs already subtracted before this upgrade cannot be reconstructed.
 
-Inbox delivery, opens, spam complaints, conversions and revenue are not measured.
+**Audience health today** remains a current subscription snapshot. **Subscription
+activity** counts consent events during the selected dates, independently of send
+cohorts. Opens, spam complaints, conversions and revenue are not measured.
+
+### Add a statistics source
+
+Implement `Statistics\StatisticsProvider`; autoconfiguration tags it
+`pushword.newsletter.statistics_provider`. Read the application's synchronized cache,
+honor every `ReportQuery` dimension, and return `Report` objects. The `(source, id)`
+pair must be unique; use the provider's original campaign ID, not its title. Do not
+return zeroes for unsupported windows, grouping, missing caches or failed refreshes:
+return reports with unavailable measurements. Source adapters own their freshness
+policy, including reporting an unavailable cached campaign when refresh fails.
+
+```php
+use Pushword\Newsletter\Statistics\Metric;
+use Pushword\Newsletter\Statistics\Report;
+use Pushword\Newsletter\Statistics\ReportQuery;
+use Pushword\Newsletter\Statistics\StatisticsProvider;
+
+final class BrevoStatistics implements StatisticsProvider
+{
+    public function reports(ReportQuery $query): iterable
+    {
+        // Replace this example with a query of your synchronized campaign cache.
+        yield new Report('brevo', '42', 'Autumn news', 'https://app.brevo.com/', null, [
+            'accepted' => new Metric(100),
+            'delivered' => Metric::unavailable(),
+            'trackedMessages' => new Metric(80),
+            'coverageKnownMessages' => new Metric(100),
+            'clicks' => new Metric(12),
+            'clickers' => new Metric(9),
+        ]);
+    }
+}
+```
+
+Omitted metrics are unavailable. There is no built-in Brevo API client, credential
+storage, webhook route or scheduler; a site supplies its own adapter and authentication.
+`Report::qualificationMethod` and `trackingScope` describe each source's actual rules.
+
+### Delivery events and precise attribution
+
+Each campaign or drip attempt persists a `DeliveryMessage` before sending: permanent
+reference, signed RFC Message-ID, transport-returned ID, attempt and acceptance dates,
+transport failure, consent snapshot, campaign or automation, stable step and occurrence.
+The signed click payload and unsubscribe URL carry this reference. SMTP Message-ID
+is retained separately because a provider may replace the transport-returned ID.
+
+Authenticate a provider webhook in your adapter, resolve its ID to the stored
+`DeliveryMessage::reference`, then call `Delivery\DeliveryEventRecorder::record()` with
+`DeliveryNotification(source, eventId, messageReference, kind, occurredAt, reason)`.
+Kinds are `DeliveryEventKind::RemoteAccepted`, `Deferred`, and `Failed`. A temporary
+report never suppresses the contact. Permanent failure does. The recorder persists
+remote and collection timestamps and the reason, deduplicates `(source, eventId)`
+with a database constraint and applies permanent failures transactionally. Reports
+order outcomes by event time, so late-arriving earlier events do not replace later ones.
+A replay returns `false`; an unknown message reference throws `InvalidArgumentException`.
+The bounce mailbox resolves signed Message-IDs to precise sends when available.
+
+`ContactManager::unsubscribe()` and `markBounced()` accept an optional `DeliveryMessage`
+third argument. It must belong to the contact. New unsubscribe URLs supply it, including
+the POST confirmation and one-click header. Old links and manual actions without a
+reference remain unattributed. Exact subscription events store their
+message relation; re-subscription leaves those events and campaign counters intact.
+
+### Qualify automatic clicks
+
+Listen to `Click\QualifyClick`, dispatched only after consent checks. Inspect its
+`request` and signed `payload`, then set `automated` (`true` scanner, `false`
+non-automated, `null` unknown) and a versioned `method` string. No classifier ships by
+default. Every recorded event retains that decision and method; raw and qualified
+counts are exposed separately. Unclassified events are never silently treated as human.
+Withdrawal still stops recording and purges personal click records; qualification does
+not bypass either consent gate or track unsubscribe, navigation or footer links.
 
 ## Click tracking
 

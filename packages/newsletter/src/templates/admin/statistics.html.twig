@@ -5,11 +5,11 @@
   <div class="pw-statistics">
     <nav class="pw-statistics-presets" aria-label="{{ 'newsletter.statistics.period'|trans }}">
       {% for days, range in presets %}
-        <a href="{{ path('admin_newsletter_statistics', range|merge({audience: audienceId})) }}"{% if days == activePreset %} aria-current="true"{% endif %}>{{ 'newsletter.statistics.lastDays'|trans({'%days%': days}) }}</a>
+        <a href="{{ path('admin_newsletter_statistics', range|merge(reportFilters)|merge({audience: audienceId})) }}"{% if days == activePreset %} aria-current="true"{% endif %}>{{ 'newsletter.statistics.lastDays'|trans({'%days%': days}) }}</a>
       {% endfor %}
       <a class="pw-statistics-reset" href="{{ path('admin_newsletter_statistics') }}">{{ 'newsletter.statistics.reset'|trans }}</a>
     </nav>
-    {{ form_start(filters, {attr: {class: 'pw-statistics-filters', 'data-statistics-filters': '', 'aria-label': 'newsletter.statistics.filters'|trans}}) }}
+    {{ form_start(filters, {attr: {class: 'pw-statistics-filters pw-statistics-filters-expanded', 'data-statistics-filters': '', 'aria-label': 'newsletter.statistics.filters'|trans}}) }}
       {% if not validFilters %}
         <div class="pw-statistics-errors" role="alert">
           <p>{{ 'newsletter.statistics.correctFilters'|trans }}</p>
@@ -20,7 +20,7 @@
         {% set invalid = field.vars.errors|length > 0 %}
         <div class="pw-statistics-filter pw-statistics-filter-{{ field.vars.name }}">
           {{ form_label(field, null, {id: 'statistics-' ~ field.vars.name}) }}
-          {{ form_widget(field, {id: 'statistics-' ~ field.vars.name, type: field.vars.name == 'audience' ? 'select' : 'date', attr: {class: field.vars.name == 'audience' ? 'form-select' : 'form-control', 'aria-invalid': invalid ? 'true' : 'false', 'aria-describedby': invalid ? 'statistics-' ~ field.vars.name ~ '-error' : false}}) }}
+          {{ form_widget(field, {id: 'statistics-' ~ field.vars.name, type: field.vars.name not in ['from', 'to'] ? 'select' : 'date', attr: {class: field.vars.name not in ['from', 'to'] ? 'form-select' : 'form-control', 'aria-invalid': invalid ? 'true' : 'false', 'aria-describedby': invalid ? 'statistics-' ~ field.vars.name ~ '-error' : false}}) }}
           {% if invalid %}<div class="pw-statistics-field-error" id="statistics-{{ field.vars.name }}-error">{{ form_errors(field) }}</div>{% endif %}
         </div>
       {% endfor %}
@@ -32,7 +32,7 @@
         <strong>{{ audience ? audience.name : 'newsletter.statistics.allAudiences'|trans }}</strong>
         <span>{{ fromDate|format_date('medium', timezone: timezone, locale: app.request.locale) }} – {{ toDate|format_date('medium', timezone: timezone, locale: app.request.locale) }}</span>
       </p>
-      {% if campaigns is empty %}
+      {% if reports is empty %}
         <section class="pw-statistics-empty" aria-labelledby="statistics-empty">
           <i class="fa fa-chart-simple" aria-hidden="true"></i>
           <h2 id="statistics-empty">{{ 'newsletter.statistics.emptyTitle'|trans }}</h2>
@@ -46,9 +46,9 @@
         <section aria-labelledby="statistics-overview">
           <div class="pw-statistics-heading">
             <h2 id="statistics-overview">{{ 'newsletter.statistics.overview'|trans }}</h2>
-            <span>{{ totals.campaigns|format_number(locale: app.request.locale) }} {{ (totals.campaigns == 1 ? 'newsletter.statistics.campaignSingular' : 'newsletter.statistics.campaignPlural')|trans }}</span>
+            <span>{{ 'newsletter.statistics.reports'|trans }}: {{ reports|length }}</span>
           </div>
-          {{ include('@PushwordNewsletter/admin/_statistics_metrics.html.twig') }}
+          {{ include('@PushwordNewsletter/admin/_report_metrics.html.twig', {report: reportTotals}) }}
           <p class="pw-statistics-note">{{ 'newsletter.statistics.periodSummary'|trans({'%timezone%': timezone}) }}</p>
         </section>
         <section aria-labelledby="statistics-campaigns">
@@ -56,36 +56,28 @@
             <h2 id="statistics-campaigns">{{ 'newsletter.statistics.campaigns'|trans }}</h2>
             <a class="btn btn-outline-secondary pw-statistics-export" href="{{ path('admin_newsletter_statistics_export', filterContext) }}"><i class="fa fa-download" aria-hidden="true"></i> {{ 'newsletter.statistics.export'|trans }}</a>
           </div>
+          <div class="table-responsive">
           <table class="table pw-statistics-table pw-statistics-comparison" role="table">
-            <caption class="visually-hidden">{{ 'newsletter.statistics.campaigns'|trans }}</caption>
-            <thead role="rowgroup"><tr role="row">
-              {% for metric in ['subject', 'sent', 'engagement', 'attention'] %}<th scope="col" role="columnheader"{% if metric == 'sent' or metric == 'engagement' %} class="pw-statistics-number"{% endif %}>{{ ('newsletter.statistics.' ~ metric)|trans }}</th>{% endfor %}
-            </tr></thead>
-            <tbody role="rowgroup">
-              {% for campaign in campaigns %}
-                <tr data-campaign="{{ campaign.id }}" role="row">
-                  <th scope="row" role="rowheader" class="pw-statistics-campaign">
-                    <a class="pw-statistics-report-link" href="{{ path('admin_newsletter_statistics_campaign', filterContext|merge({id: campaign.id})) }}">{{ campaign.subject }} <i class="fa fa-arrow-right" aria-hidden="true"></i></a>
-                    <div class="pw-statistics-metadata">
-                      <time datetime="{{ campaign.date|date('c', timezone) }}">{{ campaign.date|format_datetime('medium', 'short', timezone: timezone, locale: app.request.locale) }}</time>
-                      <span class="pw-statistics-status" data-state="{{ campaign.status }}">{{ ('newsletter.campaign.status.' ~ campaign.status)|trans }}</span>
-                      {% if not audienceId %}<span class="pw-statistics-audience">{{ campaign.audience }}</span>{% endif %}
-                    </div>
-                  </th>
-                  <td role="cell" class="pw-statistics-number"><span class="pw-statistics-mobile-label" aria-hidden="true">{{ 'newsletter.statistics.sent'|trans }}</span>{{ campaign.sent|format_number(locale: app.request.locale) }}</td>
-                  <td role="cell" class="pw-statistics-number">
-                    <span class="pw-statistics-mobile-label" aria-hidden="true">{{ 'newsletter.statistics.engagement'|trans }}</span>
-                    <div class="pw-statistics-rate">
-                      {% if campaign.clickRate is not null %}<meter min="0" max="100" value="{{ campaign.clickRate }}" aria-label="{{ 'newsletter.statistics.clickRate'|trans }}">{{ campaign.clickRate }} %</meter>{% endif %}
-                      <strong>{{ statistics.value('clickRate', campaign.clickRate, campaign.sent, campaign.tracking or campaign.clicks > 0) }}</strong>
-                    </div>
-                    {% if campaign.tracking or campaign.clicks > 0 %}<small>{{ campaign.clickers|format_number(locale: app.request.locale) }} {{ 'newsletter.statistics.clickers'|trans|lower }}</small>{% elseif campaign.sent > 0 %}<small>{{ 'newsletter.statistics.trackingUnavailable'|trans }}</small>{% endif %}
-                  </td>
-                  <td role="cell" class="pw-statistics-feedback"><span class="pw-statistics-mobile-label" aria-hidden="true">{{ 'newsletter.statistics.attention'|trans }}</span>{{ statistics.feedback(campaign) }}</td>
-                </tr>
-              {% endfor %}
+            <caption class="visually-hidden">{{ 'newsletter.statistics.reports'|trans }}</caption>
+            <thead><tr>{% for name in ['subject', 'accepted', 'clickRate', 'coverage', 'delivered'] %}<th scope="col">{{ ('newsletter.statistics.' ~ name)|trans }}</th>{% endfor %}</tr></thead>
+            <tbody>
+            {% for report in reports %}
+              <tr data-source="{{ report.source }}" data-campaign="{{ report.id }}">
+                <th scope="row">
+                  <a class="pw-statistics-report-link" href="{{ report.source == 'pushword' and report.kind == 'campaign' ? path('admin_newsletter_statistics_campaign', filterContext|merge({id: report.id|replace({'campaign:': ''})})) : path('admin_newsletter_statistics_report', filterContext|merge({source: report.source, reportId: report.id})) }}">{{ report.label }}</a>
+                  <div class="pw-statistics-metadata"><span>{{ report.source }} · {{ report.id }}</span>{% if report.date %}<time datetime="{{ report.date|date('c') }}">{{ report.date|format_datetime('medium', 'short', timezone: timezone, locale: app.request.locale) }}</time>{% endif %}</div>
+                  <a href="{{ report.managementUrl }}">{{ 'newsletter.statistics.manageSource'|trans }}</a>
+                  {% if not report.mature %}<small>{{ 'newsletter.statistics.provisional'|trans }}</small>{% endif %}
+                </th>
+                <td>{{ statistics.measure(report.metric('accepted')) }}</td>
+                <td>{{ statistics.fraction(report.rate('clickRate')) }}</td>
+                <td>{{ statistics.fraction(report.rate('coverage')) }}</td>
+                <td>{{ statistics.measure(report.metric('delivered')) }}</td>
+              </tr>
+            {% endfor %}
             </tbody>
           </table>
+          </div>
         </section>
         {{ include('@PushwordNewsletter/admin/_statistics_methodology.html.twig') }}
       {% endif %}

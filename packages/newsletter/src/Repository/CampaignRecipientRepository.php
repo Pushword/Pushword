@@ -9,7 +9,6 @@ use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 use Pushword\Newsletter\Entity\Campaign;
 use Pushword\Newsletter\Entity\CampaignRecipient;
-use Pushword\Newsletter\Entity\Contact;
 use Pushword\Newsletter\Enum\RecipientState;
 
 /**
@@ -80,26 +79,5 @@ class CampaignRecipientRepository extends ServiceEntityRepository
             ->getResult();
 
         return array_map(static fn (array $row): int => $row['contactId'], $rows);
-    }
-
-    /**
-     * Every campaign row of a contact that has already gone out — the anchor a
-     * later unsubscribe or bounce is attributed to.
-     *
-     * @return list<CampaignRecipient>
-     */
-    public function findSentFor(Contact $contact): array
-    {
-        /** @var list<CampaignRecipient> $recipients */
-        $recipients = $this->createQueryBuilder('r')
-            ->andWhere('r.contact = :contact')
-            ->andWhere('r.state = :sent')
-            ->setParameter('contact', $contact)
-            ->setParameter('sent', RecipientState::Sent->value)
-            ->orderBy('r.sentAt', 'DESC')
-            ->getQuery()
-            ->getResult();
-
-        return $recipients;
     }
 }

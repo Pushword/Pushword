@@ -30,6 +30,16 @@ class ClickEvent implements IdInterface
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
     public private(set) DateTimeImmutable $clickedAt;
 
+    #[ORM\ManyToOne(targetEntity: DeliveryMessage::class)]
+    #[ORM\JoinColumn(nullable: true, onDelete: 'CASCADE')]
+    public ?DeliveryMessage $message = null;
+
+    #[ORM\Column(type: Types::BOOLEAN, nullable: true)]
+    public ?bool $automated = null;
+
+    #[ORM\Column(type: Types::STRING, length: 255, options: ['default' => 'unclassified'])]
+    public string $qualificationMethod = 'unclassified';
+
     private function __construct(
         #[ORM\ManyToOne(targetEntity: Contact::class)]
         #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]

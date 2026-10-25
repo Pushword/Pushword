@@ -857,3 +857,34 @@ body[data-newsletter] :is(.form-fieldset-body, .form-group)[hidden] {
     display: none;
   }
 }
+
+/* Shared report filters retain enough room for complete option labels. */
+.pw-statistics-filters.pw-statistics-filters-expanded {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.pw-statistics-filters.pw-statistics-filters-expanded > button {
+  grid-column: 1 / -1;
+  justify-self: start;
+  margin-block-start: 0;
+}
+
+@media (max-width: 48rem) {
+  .pw-statistics-filters.pw-statistics-filters-expanded {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .pw-statistics-filters-expanded .pw-statistics-filter-audience,
+  .pw-statistics-filters-expanded .pw-statistics-filter-basis,
+  .pw-statistics-filters-expanded .pw-statistics-filter-window,
+  .pw-statistics-filters-expanded .pw-statistics-filter-groupBy {
+    grid-column: 1 / -1;
+  }
+}
+
+.pw-statistics-list dd > small,
+.pw-statistics-comparison td > small {
+  display: block;
+  color: var(--bs-secondary-color);
+  font-weight: normal;
+}

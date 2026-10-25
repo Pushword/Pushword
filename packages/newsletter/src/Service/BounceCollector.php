@@ -4,11 +4,17 @@ declare(strict_types=1);
 
 namespace Pushword\Newsletter\Service;
 
+use DateTimeImmutable;
+use Doctrine\ORM\EntityManagerInterface;
 use InvalidArgumentException;
 use Pushword\Newsletter\Bounce\BounceSource;
 use Pushword\Newsletter\Bounce\DeliveryReport;
 use Pushword\Newsletter\Bounce\ImapSource;
 use Pushword\Newsletter\Bounce\MaildirSource;
+use Pushword\Newsletter\Delivery\DeliveryEventRecorder;
+use Pushword\Newsletter\Delivery\DeliveryNotification;
+use Pushword\Newsletter\Entity\DeliveryMessage;
+use Pushword\Newsletter\Enum\DeliveryEventKind;
 use Pushword\Newsletter\Repository\ContactRepository;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Webklex\PHPIMAP\ClientManager;
@@ -47,6 +53,8 @@ final readonly class BounceCollector
         private ?string $configuredMaildir,
         #[Autowire(param: 'pw.newsletter.bounce_imap_dsn')]
         private ?string $configuredImapDsn,
+        private EntityManagerInterface $entityManager,
+        private DeliveryEventRecorder $events,
     ) {
     }
 
@@ -140,7 +148,18 @@ final readonly class BounceCollector
                         continue;
                     }
 
-                    $report['marked'] += $this->markBounced($failure->email, $dryRun, $report['unknown']);
+                    $message = $this->entityManager->getRepository(DeliveryMessage::class)->findOneBy(['messageId' => $deliveryReport->messageIds]);
+                    $report['marked'] += $this->markBounced($failure->email, $dryRun, $report['unknown'], $message);
+                    if (! $dryRun && null !== $message && $message->contact->email === $failure->email) {
+                        $this->events->record(new DeliveryNotification(
+                            self::SOURCE,
+                            hash('sha256', $message->reference.':'.$failure->status.':'.$failure->diagnostic),
+                            $message->reference,
+                            DeliveryEventKind::Failed,
+                            new DateTimeImmutable(),
+                            $failure->status.' '.$failure->diagnostic,
+                        ));
+                    }
                 }
             }
 
@@ -165,7 +184,7 @@ final readonly class BounceCollector
      *
      * @param list<string> $unknown addresses nobody on the list answers to, appended to
      */
-    private function markBounced(string $email, bool $dryRun, array &$unknown): int
+    private function markBounced(string $email, bool $dryRun, array &$unknown, ?DeliveryMessage $message): int
     {
         $contacts = $this->contactRepository->findAllByEmail($email);
 
@@ -187,7 +206,7 @@ final readonly class BounceCollector
             ++$marked;
 
             if (! $dryRun) {
-                $this->contactManager->markBounced($contact, self::SOURCE);
+                $this->contactManager->markBounced($contact, self::SOURCE, $message?->contact === $contact ? $message : null);
             }
         }
 
