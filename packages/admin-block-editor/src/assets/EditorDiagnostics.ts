@@ -74,6 +74,8 @@ export class EditorDiagnostics {
     this.panel = document.querySelector<HTMLElement>(
       `[data-pw-diagnostics-for="${holder.id}"]`,
     )
+    // Reachable before any failure: a problem that throws nothing must be reportable too.
+    if (this.panel) this.panel.hidden = false
     const options = { capture: true, signal: this.listeners.signal }
     for (const event of [
       'beforeinput',
@@ -217,7 +219,6 @@ export class EditorDiagnostics {
     })
     if (this.errors.length > 20) this.errors.shift()
     if (warning) return
-    if (this.panel) this.panel.hidden = false
     const status = this.panel?.querySelector<HTMLElement>('[data-pw-editor-error]')
     if (status) {
       status.hidden = false

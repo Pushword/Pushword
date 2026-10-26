@@ -31,7 +31,7 @@ afterEach(() => {
   vi.restoreAllMocks()
 })
 
-it('keeps diagnostics hidden during normal editing and records source mode changes', () => {
+it('offers the report before any failure, without a failure message, and records source mode changes', () => {
   holder.querySelector('p')!.dispatchEvent(
     new InputEvent('beforeinput', { bubbles: true, inputType: 'insertText' }),
   )
@@ -40,7 +40,8 @@ it('keeps diagnostics hidden during normal editing and records source mode chang
     { action: 'input:insertText' },
     { action: 'mode:json' },
   ])
-  expect(document.querySelector<HTMLElement>('[data-pw-diagnostics-for]')?.hidden).toBe(true)
+  expect(document.querySelector<HTMLElement>('[data-pw-diagnostics-for]')?.hidden).toBe(false)
+  expect(document.querySelector<HTMLElement>('[role=alert]')?.hidden).toBe(true)
 })
 
 it('records useful action metadata while omitting input, clipboard and exception text', () => {
@@ -121,7 +122,6 @@ it.each([
       { operation: 'uncaught', warning: 'resize-observer-loop', frames: [] },
     ])
     expect(document.querySelector<HTMLElement>('[role=alert]')?.hidden).toBe(true)
-    expect(document.querySelector<HTMLElement>('[data-pw-diagnostics-for]')?.hidden).toBe(true)
     expect(event.defaultPrevented).toBe(false)
     expect(JSON.stringify(diagnostics.report())).not.toContain(message)
   },

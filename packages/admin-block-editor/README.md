@@ -118,7 +118,7 @@ Writing-assistant problems still need comparison on the affected user's profile.
 
 ### Reporting an editor problem
 
-Use **Report a problem** above the editor to download a diagnostic and compare browser
+Use **Report a problem** below the editor to download a diagnostic and compare browser
 writing suggestions. See [Reporting an editor problem](https://pushword.piedweb.com/extension/admin-block-editor#reporting-an-editor-problem)
 for the steps and the report's contents.
 

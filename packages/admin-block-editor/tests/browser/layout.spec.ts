@@ -76,87 +76,91 @@ test('editor and settings use readable theme colors and bounded diagnostics', as
       data: { text: 'A quoted paragraph.', caption: 'An author', alignment: 'left' },
     },
   ])
-  await page
-    .locator('.editorjs-holder')
-    .evaluate((holder) =>
-      holder.dispatchEvent(
-        new CustomEvent('pw:editor-error', { detail: { operation: 'copy' } }),
-      ),
-    )
-  for (const theme of ['dark', 'light']) {
-    await page.evaluate((theme) => {
-      document.body.classList.toggle('ea-dark-scheme', theme === 'dark')
-      document.body.classList.toggle('ea-light-scheme', theme === 'light')
-    }, theme)
-    await expect
-      .poll(() =>
-        page.evaluate(() => {
-          const color = (selector: string, property: string) =>
-            getComputedStyle(document.querySelector(selector)!).getPropertyValue(property)
-          return {
-            titleMatches: color('.h1Field', 'color') === color('body', 'color'),
-            outlineMatches:
-              color('.pw-outline', 'background-color') ===
-              color('body', 'background-color'),
-            panelMatches:
-              color('.pw-settings-toggle', 'color') === color('body', 'color'),
-            captionVisible:
-              color('.cdx-quote__caption', 'color') !== color('body', 'background-color'),
-          }
-        }),
-      )
-      .toEqual({
-        titleMatches: true,
-        outlineMatches: true,
-        panelMatches: true,
-        captionVisible: true,
-      })
-    await expect
-      .poll(async () => {
-        const contrasts = await page.evaluate(() => {
-          const canvas = document.createElement('canvas')
-          canvas.width = canvas.height = 1
-          const context = canvas.getContext('2d')!
-          const luminance = (color: string): number => {
-            context.fillStyle = color
-            context.fillRect(0, 0, 1, 1)
-            const rgb = [...context.getImageData(0, 0, 1, 1).data]
-              .slice(0, 3)
-              .map((value) => {
-                const component = value / 255
-                return component <= 0.04045
-                  ? component / 12.92
-                  : ((component + 0.055) / 1.055) ** 2.4
-              })
-            return rgb[0]! * 0.2126 + rgb[1]! * 0.7152 + rgb[2]! * 0.0722
-          }
-          return [
-            '.pw-editor-mode',
-            '.pw-outline-title',
-            '.cdx-quote__caption',
-            '[data-pw-editor-error]',
-            '.pw-editor-diagnostics summary',
-            '.pw-editor-diagnostics .text-muted',
-            '.pw-editor-suggestions',
-          ].map((selector) => {
-            const element = document.querySelector(selector)!
-            let surface = element
-            while (
-              getComputedStyle(surface).backgroundColor === 'rgba(0, 0, 0, 0)' &&
-              surface.parentElement
-            )
-              surface = surface.parentElement
-            const foreground = luminance(getComputedStyle(element).color)
-            const background = luminance(getComputedStyle(surface).backgroundColor)
-            return (
-              (Math.max(foreground, background) + 0.05) /
-              (Math.min(foreground, background) + 0.05)
-            )
-          })
+  // The report is offered quietly before any failure, then on an alert surface.
+  for (const failed of [false, true]) {
+    if (failed)
+      await page
+        .locator('.editorjs-holder')
+        .evaluate((holder) =>
+          holder.dispatchEvent(
+            new CustomEvent('pw:editor-error', { detail: { operation: 'copy' } }),
+          ),
+        )
+    for (const theme of ['dark', 'light']) {
+      await page.evaluate((theme) => {
+        document.body.classList.toggle('ea-dark-scheme', theme === 'dark')
+        document.body.classList.toggle('ea-light-scheme', theme === 'light')
+      }, theme)
+      await expect
+        .poll(() =>
+          page.evaluate(() => {
+            const color = (selector: string, property: string) =>
+              getComputedStyle(document.querySelector(selector)!).getPropertyValue(property)
+            return {
+              titleMatches: color('.h1Field', 'color') === color('body', 'color'),
+              outlineMatches:
+                color('.pw-outline', 'background-color') ===
+                color('body', 'background-color'),
+              panelMatches:
+                color('.pw-settings-toggle', 'color') === color('body', 'color'),
+              captionVisible:
+                color('.cdx-quote__caption', 'color') !== color('body', 'background-color'),
+            }
+          }),
+        )
+        .toEqual({
+          titleMatches: true,
+          outlineMatches: true,
+          panelMatches: true,
+          captionVisible: true,
         })
-        return Math.min(...contrasts)
-      })
-      .toBeGreaterThanOrEqual(4.5)
+      await expect
+        .poll(async () => {
+          const contrasts = await page.evaluate((failed) => {
+            const canvas = document.createElement('canvas')
+            canvas.width = canvas.height = 1
+            const context = canvas.getContext('2d')!
+            const luminance = (color: string): number => {
+              context.fillStyle = color
+              context.fillRect(0, 0, 1, 1)
+              const rgb = [...context.getImageData(0, 0, 1, 1).data]
+                .slice(0, 3)
+                .map((value) => {
+                  const component = value / 255
+                  return component <= 0.04045
+                    ? component / 12.92
+                    : ((component + 0.055) / 1.055) ** 2.4
+                })
+              return rgb[0]! * 0.2126 + rgb[1]! * 0.7152 + rgb[2]! * 0.0722
+            }
+            return [
+              '.pw-editor-mode',
+              '.pw-outline-title',
+              '.cdx-quote__caption',
+              '.pw-editor-diagnostics summary',
+              '.pw-editor-diagnostics .text-muted',
+              '.pw-editor-suggestions',
+              ...(failed ? ['[data-pw-editor-error]'] : []),
+            ].map((selector) => {
+              const element = document.querySelector(selector)!
+              let surface = element
+              while (
+                getComputedStyle(surface).backgroundColor === 'rgba(0, 0, 0, 0)' &&
+                surface.parentElement
+              )
+                surface = surface.parentElement
+              const foreground = luminance(getComputedStyle(element).color)
+              const background = luminance(getComputedStyle(surface).backgroundColor)
+              return (
+                (Math.max(foreground, background) + 0.05) /
+                (Math.min(foreground, background) + 0.05)
+              )
+            })
+          }, failed)
+          return Math.min(...contrasts)
+        })
+        .toBeGreaterThanOrEqual(4.5)
+    }
   }
   const panel = page.locator('[data-pw-diagnostics-for]')
   await expect(panel).toBeVisible()
@@ -178,6 +182,7 @@ test.describe('touch controls', () => {
     await page.setViewportSize({ width: 375, height: 900 })
     for (const selector of [
       '.pw-editor-mode',
+      '.pw-editor-diagnostics summary',
       '.pw-settings-toggle',
       '.page-actions .btn',
     ]) {

@@ -60,23 +60,32 @@
   fill: currentColor;
 }
 
+/* Reporting a problem stays one quiet line below the editor; the panel turns
+   into an alert surface only once an editor action has failed. */
 .pw-editor-diagnostics {
-  --bs-secondary-color: var(--bs-body-color);
   max-width: calc(var(--pw-editor-width) + 20px);
   margin: 0 10px 16px;
-  padding: 12px 16px;
-  border-radius: var(--pw-radius-md, 8px);
-  background: var(--bs-danger-bg-subtle);
-  color: var(--bs-body-color);
   font-size: var(--pw-text-sm, 14px);
   line-height: 1.6;
 }
 
+.pw-editor-diagnostics:has(> [data-pw-editor-error]:not([hidden])) {
+  --bs-secondary-color: var(--bs-body-color);
+  padding: 12px 16px;
+  border-radius: var(--pw-radius-md, 8px);
+  background: var(--bs-danger-bg-subtle);
+  color: var(--bs-body-color);
+}
+
 .pw-editor-diagnostics summary {
   width: fit-content;
-  color: var(--bs-body-color);
+  color: var(--bs-secondary-color);
   padding-block: 8px;
   cursor: pointer;
+}
+
+.pw-editor-diagnostics summary:hover {
+  color: var(--bs-body-color);
 }
 
 .pw-editor-diagnostics [data-pw-editor-error] {
@@ -102,6 +111,10 @@
 @media (pointer: coarse) {
   .pw-editor-mode {
     min-height: 44px;
+  }
+
+  .pw-editor-diagnostics summary {
+    padding-block: 11px;
   }
 }
 
@@ -156,6 +169,11 @@ a[rel='encrypt']:not(.link-btn) {
   .ce-block__content,
   .ce-toolbar__content {
     margin-left: 60px;
+  }
+
+  /* Line the report up with the blocks: the widget's 10px plus their 60px. */
+  .pw-editor-diagnostics {
+    margin-left: 70px;
   }
 }
 

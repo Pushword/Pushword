@@ -101,7 +101,7 @@ The older `window.pagesUriList` array of paths still works, without titles.
 
 ### Reporting an editor problem
 
-Open **Report a problem** above the editor, reproduce the issue, then download the
+Open **Report a problem** below the editor, reproduce the issue, then download the
 diagnostic file and attach it to your support message. It includes the installed and
 loaded asset versions, browser metadata, the last 60 editing actions and up to 20
 errors. Copy, history, save and tool failures also display a message in the editor.
