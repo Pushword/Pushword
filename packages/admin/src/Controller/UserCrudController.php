@@ -85,12 +85,12 @@ class UserCrudController extends AbstractAdminCrudController
         );
         [$mainFields, $sidebarBlocks] = $fields;
 
-        yield FormField::addColumn('col-12 col-md-8 mainFields');
-        yield FormField::addFieldset();
+        yield FormField::addColumn('col-12 col-lg-7 mainFields');
+        yield FormField::addFieldset('adminUserLabelAccount');
         yield from $this->adminFormFieldManager->getEasyAdminFields($mainFields, $this);
 
         if ([] !== $sidebarBlocks) {
-            yield FormField::addColumn('col-12 col-md-4 columnFields');
+            yield FormField::addColumn('col-12 col-lg-5 columnFields');
             foreach ($sidebarBlocks as $groupName => $block) {
                 if (\is_string($groupName)) {
                     yield FormField::addFieldset($groupName);
