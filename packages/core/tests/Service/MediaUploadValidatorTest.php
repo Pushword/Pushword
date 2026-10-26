@@ -63,7 +63,9 @@ final class MediaUploadValidatorTest extends KernelTestCase
         file_put_contents($path, '<?php echo "owned";');
 
         try {
+            // `.mp3` is an allowed extension: only the MIME check on the bytes refuses it.
             $this->expectException(InvalidArgumentException::class);
+            $this->expectExceptionMessageMatches('/^The mime type of the file is invalid /');
             self::getContainer()->get(MediaUploadValidator::class)->validate(new UploadedFile($path, 'voice.mp3', 'audio/mpeg', null, true));
         } finally {
             unlink($path);
