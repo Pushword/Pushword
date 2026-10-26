@@ -1,2 +1,4 @@
 # Not shipped in the Composer dist archive: dev-only, useless in a site vendor/.
 /tests export-ignore
+# Development fixture (7 MB), not one of the starter's demo media.
+/media~/repurpose-nord.mp4 export-ignore

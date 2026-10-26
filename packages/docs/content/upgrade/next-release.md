@@ -1,5 +1,5 @@
 ---
-title: ''
+title: 'sites created since 1.0.76 can delete the unused demo video'
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -34,3 +34,11 @@ belongs in the feature doc, which you link to instead.
 
 Several changes land here between two tags: append to the file, do not replace it.
 -->
+
+**Concerns:** `pushword/core`
+
+## Motion demo video no longer copied into new sites
+
+New sites no longer receive `media/repurpose-nord.mp4`, a 7 MB development video with
+no media entry. A site created from 1.0.76 on can delete that file unless its media
+library lists it.

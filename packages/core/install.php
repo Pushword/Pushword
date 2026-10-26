@@ -56,9 +56,9 @@ PostInstall::replace('.env', 'postgresql://app:!ChangeMe!@127.0.0.1:5432/app?ser
 // and define an APP_SECRET
 PostInstall::replace('.env', "APP_SECRET=\n", 'APP_SECRET='.bin2hex(random_bytes(32)).chr(10));
 // dev-app's media doubles as the test suite's fixtures: take the demo photos, leave the
-// branding and the PDF test artifact behind.
+// branding, the PDF test artifact and the motion demo video behind.
 PostInstall::mirror('vendor/pushword/dev-app/media~', 'media');
-PostInstall::remove(['media/piedweb-logo.png', 'media/logo.svg', 'media/test.pdf']);
+PostInstall::remove(['media/piedweb-logo.png', 'media/logo.svg', 'media/test.pdf', 'media/repurpose-nord.mp4']);
 $serverDatabase = ! str_starts_with($databaseUrl, 'sqlite:');
 $freshInstall = ! $serverDatabase && ! file_exists('var/app.db');
 $runCommand = static function (string $command): void {
