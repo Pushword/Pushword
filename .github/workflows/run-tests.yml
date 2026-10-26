@@ -95,12 +95,18 @@ jobs:
   editor-browsers:
     name: Editor journeys - ${{ matrix.browser }}
     runs-on: ubuntu-latest
-    # Includes browser/system dependencies and asset builds before the journeys run.
-    timeout-minutes: 30
+    timeout-minutes: 15
     strategy:
       fail-fast: false
       matrix:
-        browser: [chrome, msedge, firefox, chrome-mobile]
+        include:
+          # The phone journeys run on the same Chrome binary: one setup serves both.
+          - browser: chrome
+            projects: --project=chrome --project=chrome-mobile
+          - browser: msedge
+            projects: --project=msedge
+          - browser: firefox
+            projects: --project=firefox
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -124,7 +130,10 @@ jobs:
         run: yarn --cwd packages/admin-block-editor install --frozen-lockfile
 
       - name: Install browser
-        run: yarn --cwd packages/admin-block-editor playwright install --with-deps ${{ matrix.browser == 'chrome-mobile' && 'chrome' || matrix.browser }}
+        # The runner image ships Google Chrome and Microsoft Edge, which the chrome and
+        # msedge channels use as they are; reinstalling Edge took about ten minutes.
+        if: matrix.browser == 'firefox'
+        run: yarn --cwd packages/admin-block-editor playwright install --with-deps firefox
 
       - name: Build the editor under test
         run: yarn --cwd packages/admin-block-editor build
@@ -135,7 +144,7 @@ jobs:
           yarn --cwd packages/admin-monaco-editor build
 
       - name: Run the shared editor journeys
-        run: yarn --cwd packages/admin-block-editor test:browser --project=${{ matrix.browser }}
+        run: yarn --cwd packages/admin-block-editor test:browser ${{ matrix.projects }}
 
       - name: Upload results, failure screenshots and traces
         if: ${{ !cancelled() }}
@@ -201,8 +210,8 @@ jobs:
       - name: Install dependencies
         run: composer update --${{ matrix.stability }} --prefer-dist --no-interaction
 
-      - name: Install image optimization tools
-        run: sudo apt-get update && sudo apt-get install -y ghostscript qpdf
+      - name: Install image, PDF and audio tools
+        run: sudo apt-get update && sudo apt-get install -y ghostscript qpdf ffmpeg
 
       #- name: Install browsers
       #  run: vendor/bin/bdi detect drivers
@@ -324,8 +333,8 @@ jobs:
       - name: Install dependencies
         run: composer update --prefer-stable --prefer-dist --no-interaction
 
-      - name: Install image optimization tools
-        run: sudo apt-get update && sudo apt-get install -y ghostscript qpdf
+      - name: Install image, PDF and audio tools
+        run: sudo apt-get update && sudo apt-get install -y ghostscript qpdf ffmpeg
 
       - name: Create test database user
         run: |
@@ -400,8 +409,8 @@ jobs:
       - name: Install dependencies
         run: composer update --prefer-stable --prefer-dist --no-interaction
 
-      - name: Install image optimization tools
-        run: sudo apt-get update && sudo apt-get install -y ghostscript qpdf
+      - name: Install image, PDF and audio tools
+        run: sudo apt-get update && sudo apt-get install -y ghostscript qpdf ffmpeg
 
       - name: Initialize
         run: composer reset-dev-app
