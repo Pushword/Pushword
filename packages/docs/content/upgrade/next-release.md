@@ -1,5 +1,5 @@
 ---
-title: ''
+title: 'newsletter catalogue subjects open their first action'
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -34,3 +34,10 @@ belongs in the feature doc, which you link to instead.
 
 Several changes land here between two tags: append to the file, do not replace it.
 -->
+
+**Concerns:** `pushword/newsletter`
+
+## Newsletter catalogue subject destinations
+
+Campaign subjects now open their first action: review for native drafts/scheduled campaigns, statistics for sending/sent campaigns.
+**Catalogue listeners:** put the intended subject destination first in `CampaignIndexItem::$actions`.
