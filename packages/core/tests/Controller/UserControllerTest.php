@@ -10,6 +10,7 @@ use Pushword\Core\Entity\LoginToken;
 use Pushword\Core\Entity\User;
 use Pushword\Core\Repository\LoginTokenRepository;
 use Pushword\Core\Repository\UserRepository;
+use Pushword\Core\Site\SiteRegistry;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\DomCrawler\Field\ChoiceFormField;
@@ -32,6 +33,24 @@ final class UserControllerTest extends WebTestCase
 
         self::assertResponseIsSuccessful();
         self::assertSelectorExists('input[name="email"]');
+    }
+
+    public function testLoginActionWearsTheSitePrimaryColor(): void
+    {
+        self::getContainer()->get(SiteRegistry::class)->get('localhost.dev')
+            ->setCustomProperty('css_var:color_primary', '#92400e');
+
+        $this->client->request(Request::METHOD_GET, '/login');
+
+        self::assertStringContainsString('--pw-auth-action: var(--primary);', (string) $this->client->getResponse()->getContent());
+    }
+
+    /** The default --primary is too light behind the button's white text. */
+    public function testWithoutAPrimaryColorTheLoginActionKeepsAnAccessibleBlue(): void
+    {
+        $this->client->request(Request::METHOD_GET, '/login');
+
+        self::assertStringContainsString('--pw-auth-action: oklch(50% 0.134 242.749);', (string) $this->client->getResponse()->getContent());
     }
 
     public function testHttpBasicCannotBypassTheLoginForm(): void
