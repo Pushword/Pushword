@@ -143,6 +143,13 @@ final class ContactApiController extends AbstractApiController
             return $this->badRequest('Missing email or phone');
         }
 
+        // Anything else would fall through to subscribe(): a typo in a prospect
+        // import must not opt the whole file in.
+        $status = $data['status'] ?? null;
+        if (! \in_array($status, [null, 'prospect', 'subscribed'], true)) {
+            return $this->badRequest('Invalid status: use prospect or subscribed, or omit it');
+        }
+
         // Keyed on the address when there is one, on the number otherwise:
         // an address is what makes two rows the same person.
         $existing = '' !== $email
@@ -151,7 +158,7 @@ final class ContactApiController extends AbstractApiController
 
         // An import of an already-consenting base skips the confirmation mail;
         // anything else follows the audience's own rule.
-        $requireDoubleOptIn = 'subscribed' === ($data['status'] ?? null) ? false : null;
+        $requireDoubleOptIn = 'subscribed' === $status ? false : null;
 
         try {
             if (null !== $phone && $request->query->getBoolean('merge')) {
@@ -163,7 +170,7 @@ final class ContactApiController extends AbstractApiController
             $locale = \is_string($data['locale'] ?? null) ? $data['locale'] : null;
             $source = \is_string($data['source'] ?? null) ? $data['source'] : self::SOURCE;
 
-            $contact = 'prospect' === ($data['status'] ?? null)
+            $contact = 'prospect' === $status
                 ? $this->contactManager->importProspect($audience, $email, $name, $locale, $source, $phone)
                 : $this->contactManager->subscribe(
                     $audience,
@@ -535,7 +542,7 @@ final class ContactApiController extends AbstractApiController
                     'post' => [
                         'summary' => 'Create or update a contact, keyed on (audience, email) or on (audience, phone) when no email is given',
                         'parameters' => [self::MERGE_PARAMETER],
-                        'description' => 'Use status: prospect to import without opting in or sending mail; existing consent is preserved. Use status: subscribed only for an already-consenting base. Omit status to follow the audience double opt-in rule.',
+                        'description' => 'Use status: prospect to import without opting in or sending mail; existing consent is preserved. Use status: subscribed only for an already-consenting base. Omit status to follow the audience double opt-in rule; any other status is refused.',
                         'responses' => [
                             '200' => ['description' => 'Updated'],
                             '201' => ['description' => 'Created'],

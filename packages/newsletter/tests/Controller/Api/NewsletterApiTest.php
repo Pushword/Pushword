@@ -361,6 +361,46 @@ final class NewsletterApiTest extends AbstractNewsletterTestCase
         self::assertEmailCount(0);
     }
 
+    /** A misspelt prospect import must not subscribe a single opt-in audience. */
+    public function testCreatingAContactWithAnUnknownStatusIsRefused(): void
+    {
+        $audience = $this->createAudience(requireDoubleOptIn: false);
+
+        $this->request(Request::METHOD_POST, '/api/newsletter/contact', [
+            'audience' => $audience->slug,
+            'email' => 'typo@example.tld',
+            'status' => 'Prospect',
+        ]);
+
+        self::assertSame(Response::HTTP_BAD_REQUEST, $this->client->getResponse()->getStatusCode());
+        self::assertCount(0, $this->entityManager->getRepository(Contact::class)->findBy(['audience' => $audience]));
+        self::assertEmailCount(0);
+    }
+
+    #[DataProvider('invalidStatusProvider')]
+    public function testCreatingAContactWithAnyOtherStatusValueIsRefused(mixed $status): void
+    {
+        $audience = $this->createAudience(requireDoubleOptIn: false);
+
+        $this->request(Request::METHOD_POST, '/api/newsletter/contact', [
+            'audience' => $audience->slug,
+            'email' => 'other@example.tld',
+            'status' => $status,
+        ]);
+
+        self::assertSame(Response::HTTP_BAD_REQUEST, $this->client->getResponse()->getStatusCode());
+        self::assertCount(0, $this->entityManager->getRepository(Contact::class)->findBy(['audience' => $audience]));
+    }
+
+    /** @return iterable<string, array{mixed}> */
+    public static function invalidStatusProvider(): iterable
+    {
+        yield 'empty string' => [''];
+        yield 'unknown word' => ['unsubscribed'];
+        yield 'boolean' => [true];
+        yield 'array' => [['prospect']];
+    }
+
     #[DataProvider('prospectImportProvider')]
     public function testImportingAProspectNeverOptsInOrSendsMail(bool $doubleOptIn, ?string $email, ?string $phone): void
     {
