@@ -86,7 +86,14 @@
           <tbody>
             {% for item in items %}
               <tr data-campaign-key="{{ item.key }}">
-                <th scope="row"><span class="pw-catalogue-subject">{{ item.subject }}</span>{% if item.audience %}<span class="pw-catalogue-audience">{{ item.audience }}</span>{% endif %}</th>
+                <th scope="row">
+                  {% if item.actions is not empty %}
+                    <a class="pw-catalogue-subject" href="{{ item.actions|first }}">{{ item.subject }}</a>
+                  {% else %}
+                    <span class="pw-catalogue-subject">{{ item.subject }}</span>
+                  {% endif %}
+                  {% if item.audience %}<span class="pw-catalogue-audience">{{ item.audience }}</span>{% endif %}
+                </th>
                 <td data-label="{{ 'newsletter.catalogue.source'|trans }}">{{ item.source|capitalize }}</td>
                 <td data-label="{{ 'newsletter.campaign.field.status'|trans }}">{{ item.status is null ? 'newsletter.catalogue.unknown'|trans : (statusLabels[item.status] is defined ? statusLabels[item.status]|trans : item.status) }}</td>
                 <td data-label="{{ 'newsletter.campaign.field.scheduledAt'|trans }}">{{ item.scheduledAt ? item.scheduledAt|format_datetime('medium', 'short', timezone: timezone) : 'newsletter.catalogue.unknown'|trans }}</td>

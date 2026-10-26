@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pushword\Newsletter\Admin;
 
+use Pushword\Newsletter\Enum\CampaignStatus;
 use Pushword\Newsletter\Event\CampaignIndexItem;
 use Pushword\Newsletter\Event\CollectCampaignIndex;
 use Pushword\Newsletter\Repository\CampaignRepository;
@@ -31,6 +32,14 @@ final readonly class CampaignIndex
     {
         $index = new CollectCampaignIndex();
         foreach ($this->campaigns->indexRows() as $campaign) {
+            $actions = [
+                'newsletter.campaign.action.review' => $this->urls->generate('admin_newsletter_campaign_detail', ['entityId' => $campaign['id']]),
+                'newsletter.statistics.title' => $this->urls->generate('admin_newsletter_statistics_campaign', ['id' => $campaign['id']]),
+            ];
+            if (\in_array($campaign['status'], [CampaignStatus::Sending, CampaignStatus::Sent], true)) {
+                $actions = array_reverse($actions);
+            }
+
             $index->add(new CampaignIndexItem(
                 source: 'pushword',
                 id: (string) $campaign['id'],
@@ -38,10 +47,7 @@ final readonly class CampaignIndex
                 status: $campaign['status']->value,
                 scheduledAt: $campaign['scheduledAt'],
                 sentAt: $campaign['sentAt'],
-                actions: [
-                    'newsletter.campaign.action.review' => $this->urls->generate('admin_newsletter_campaign_detail', ['entityId' => $campaign['id']]),
-                    'newsletter.statistics.title' => $this->urls->generate('admin_newsletter_statistics_campaign', ['id' => $campaign['id']]),
-                ],
+                actions: $actions,
                 audience: $campaign['audience'],
             ));
         }

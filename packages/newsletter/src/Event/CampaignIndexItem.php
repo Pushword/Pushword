@@ -12,7 +12,7 @@ final class CampaignIndexItem
 {
     public readonly string $key;
 
-    /** @param array<string, string> $actions Labels mapped to navigation URLs. */
+    /** @param array<string, string> $actions Labels mapped to navigation URLs; the first opens from the subject. */
     public function __construct(
         public readonly string $source,
         public readonly string $id,

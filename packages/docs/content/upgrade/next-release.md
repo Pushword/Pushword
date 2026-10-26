@@ -1,5 +1,5 @@
 ---
-title: 'newsletter links drop utm_term, the catalogue needs an external source and StatisticsRepository::totals() is gone; admin reference help is opt-in per field; weight column and editor widget overrides need updating; motion audio errors name their track; sites may refuse the audio uploads accepted since 1.0.83'
+title: 'newsletter links drop utm_term, the catalogue needs an external source and opens subjects through the first action, and StatisticsRepository::totals() is gone; admin reference help is opt-in per field; weight column and editor widget overrides need updating; motion audio errors name their track; sites may refuse the audio uploads accepted since 1.0.83'
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -62,6 +62,8 @@ Automation step links drop `utm_term`, which analytics tools report as the paid-
 
 **Newsletter → Campaigns** opens the campaign list, and the catalogue only when the application listens to `CollectCampaignIndex`. The catalogue shows other sources' statuses as given (`paused`, `archived` are no longer translated): pass the label editors should read.
 **Sites overriding `_navigation.html.twig`:** link the campaign entry to `newsletter_campaigns_route()`.
+Campaign subjects now open their first action: review for native drafts/scheduled campaigns, statistics for sending/sent campaigns.
+**Catalogue listeners:** put the intended subject destination first in `CampaignIndexItem::$actions`.
 
 ## Newsletter statistics totals
 

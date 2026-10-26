@@ -13,6 +13,7 @@ use Pushword\Core\Service\EditorialTimezone;
 use Pushword\Newsletter\Admin\CampaignIndex;
 use Pushword\Newsletter\Admin\CampaignIndexController;
 use Pushword\Newsletter\Entity\Campaign;
+use Pushword\Newsletter\Enum\CampaignStatus;
 use Pushword\Newsletter\Event\CampaignIndexItem;
 use Pushword\Newsletter\Event\CollectCampaignIndex;
 use Pushword\Newsletter\Tests\AbstractNewsletterTestCase;
@@ -47,7 +48,7 @@ final class CampaignIndexTest extends AbstractNewsletterTestCase
         $nativeId = (string) $native->id;
         self::getContainer()->get(EventDispatcherInterface::class)->addListener(CollectCampaignIndex::class, static function (CollectCampaignIndex $index) use ($nativeId): void {
             $index->items['pushword:'.$nativeId]->actions['Commercial results'] = '/commercial-results';
-            $index->add(new CampaignIndexItem('external', $nativeId, '<script>External</script>', scheduledAt: new DateTimeImmutable('2026-11-01 12:00:00'), actions: ['Open source' => 'https://example.tld/campaign/'.$nativeId]));
+            $index->add(new CampaignIndexItem('external', $nativeId, '<script>External</script>', scheduledAt: new DateTimeImmutable('2026-11-01 12:00:00'), actions: ['Open source' => 'https://example.tld/campaign/'.$nativeId, 'Other report' => '/other-report']));
             $index->notices['external'] = 'Last synchronized yesterday. <script>Notice</script>';
         });
 
@@ -60,6 +61,7 @@ final class CampaignIndexTest extends AbstractNewsletterTestCase
         self::assertSame('/commercial-results', $local->selectLink('Commercial results')->attr('href'));
         self::assertStringContainsString('/newsletter/campaign/'.$nativeId, $local->selectLink('Review')->attr('href') ?? '');
         self::assertSame('https://example.tld/campaign/'.$nativeId, $remote->selectLink('Open source')->attr('href'));
+        self::assertSame('https://example.tld/campaign/'.$nativeId, $remote->selectLink('<script>External</script>')->attr('href'));
         self::assertSame('Not provided', $remote->filter('td')->eq(1)->text());
         self::assertSame('Not provided', $remote->filter('td')->eq(3)->text());
         self::assertSame(['Source', 'Status', 'Scheduled for', 'Sent at', 'Actions'], $remote->filter('td')->extract(['data-label']));
@@ -71,6 +73,39 @@ final class CampaignIndexTest extends AbstractNewsletterTestCase
         self::assertSame('/admin/newsletter/campaigns', $crawler->filter('.pw-newsletter-nav [aria-current="page"]')->attr('href'));
         self::assertCount(1, $crawler->selectLink('Create in Pushword'));
         self::assertCount(1, $crawler->selectLink('Manage in Pushword'));
+    }
+
+    /** @return iterable<string, array{CampaignStatus, string}> */
+    public static function subjectDestinations(): iterable
+    {
+        yield 'draft opens review' => [CampaignStatus::Draft, 'campaign'];
+        yield 'scheduled opens review' => [CampaignStatus::Scheduled, 'campaign'];
+        yield 'sending opens statistics' => [CampaignStatus::Sending, 'statistics/campaign'];
+        yield 'sent opens statistics' => [CampaignStatus::Sent, 'statistics/campaign'];
+    }
+
+    #[DataProvider('subjectDestinations')]
+    public function testSubjectOpensTheScreenForTheCampaignState(CampaignStatus $status, string $destination): void
+    {
+        $this->login();
+        $campaign = $this->createCampaign($this->createAudience(), subject: 'Clickable campaign');
+        match ($status) {
+            CampaignStatus::Draft => null,
+            CampaignStatus::Scheduled => $campaign->schedule(new DateTimeImmutable('+1 day')),
+            CampaignStatus::Sending => $campaign->markSending(0),
+            CampaignStatus::Sent => $campaign->markSent(),
+        };
+        $this->entityManager->flush();
+
+        $crawler = $this->client->request(Request::METHOD_GET, '/admin/newsletter/campaigns');
+        self::assertResponseIsSuccessful();
+        $subject = $crawler->filter('[data-campaign-key="pushword:'.$campaign->id.'"] th a');
+        self::assertCount(1, $subject);
+        self::assertSame('Clickable campaign', $subject->text());
+        self::assertSame('/admin/newsletter/'.$destination.'/'.$campaign->id, $subject->attr('href'));
+
+        $this->client->click($subject->link());
+        self::assertResponseIsSuccessful();
     }
 
     public function testCampaignsOpenTheCatalogueOnlyOnceAnotherSourceListens(): void
@@ -99,6 +134,8 @@ final class CampaignIndexTest extends AbstractNewsletterTestCase
         self::assertSame('paused', $crawler->filter('[data-campaign-key="external:paused"] td')->eq(1)->text());
         self::assertSame('Sent', $crawler->filter('[data-campaign-key="external:sent"] td')->eq(1)->text());
         self::assertSame(['All', 'paused', 'Sent'], $crawler->filter('[name="status"] option')->extract(['_text']));
+        self::assertCount(0, $crawler->filter('[data-campaign-key] th a'));
+        self::assertSame(['Remote paused', 'Remote sent'], $crawler->filter('[data-campaign-key] .pw-catalogue-subject')->extract(['_text']));
     }
 
     public function testFiltersUseTheWholeCatalogueAndRetainTheSelection(): void

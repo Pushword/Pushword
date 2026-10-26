@@ -1173,6 +1173,10 @@ statuses (`draft`, `scheduled`, `sending`, `sent`); any other status displays as
 so pass the label your editors should read. External statuses such as `paused` do not
 change Pushword's delivery state machine. Listeners may enrich native navigation through `$index->items['pushword:42']->actions`.
 Action labels map to HTTP(S) URLs or root-relative paths, validated after listeners.
+The subject opens the first action. Native drafts and scheduled campaigns open
+**Review and send**; sending and sent campaigns open **Statistics**. Order external
+actions with the intended subject destination first. Without actions, the subject
+remains plain text.
 Use links to the owning tool and existing reports: this catalogue imports no
 content, computes no cross-provider statistics and delegates no sending.
 Statistics providers use the separate contract below; a catalogue entry alone does not supply measurements.

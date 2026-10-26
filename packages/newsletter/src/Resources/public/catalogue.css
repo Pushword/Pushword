@@ -54,8 +54,10 @@
 .pw-catalogue-row-actions { display: flex; flex-wrap: wrap; gap: 0.25rem 1rem; }
 .pw-catalogue-row-link { display: inline-flex; align-items: center; min-block-size: 2rem; }
 .pw-catalogue-row-link,
+.pw-catalogue-subject,
 .pw-catalogue-manage { color: var(--bs-body-color); text-decoration: none; }
 .pw-catalogue-row-link:hover,
+a.pw-catalogue-subject:is(:hover, :focus-visible),
 .pw-catalogue-manage:hover { color: var(--link-hover-color, var(--color-primary)); text-decoration: underline; text-underline-offset: 0.2em; }
 .pw-catalogue :is(a, button, input, select):focus-visible,
 .pw-catalogue-page-actions a:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
