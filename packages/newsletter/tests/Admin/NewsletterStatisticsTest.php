@@ -338,6 +338,8 @@ final class NewsletterStatisticsTest extends AbstractNewsletterTestCase
             $crawler = $this->client->request(Request::METHOD_GET, '/admin/newsletter/statistics/campaign/'.$campaign->id);
             self::assertResponseIsSuccessful();
             self::assertSame($expected, $crawler->filter('[data-statistic="clickRate"] [data-rate-value]')->text());
+            self::assertCount(1, $crawler->filter('[data-delivery-coverage="partial"]'));
+            self::assertStringContainsString('incomplete', $crawler->filter('[data-delivery-coverage="partial"]')->text());
             if ($campaign === $noSends) {
                 self::assertCount(2, $crawler->filter('.pw-statistics-quality .pw-statistics-unmeasured'));
                 self::assertSame(['Not measured', 'Not measured'], $crawler->filter('.pw-statistics-quality .pw-statistics-unmeasured')->each(static fn (Crawler $node): string => $node->text()));
@@ -609,7 +611,7 @@ final class NewsletterStatisticsTest extends AbstractNewsletterTestCase
             'accepted' => new Metric(10), 'delivered' => new Metric(8), 'trackedMessages' => new Metric(5), 'clickers' => new Metric(1),
         ], links: [
             new LinkReport('https://example.org/old', 'trip-main', 'body', Metric::unavailable(), new Metric(1)),
-            new LinkReport('https://example.org/new', 'trip-main', 'body', Metric::unavailable(), new Metric(1)),
+            new LinkReport('https://example.org/new', 'trip-main', 'body', Metric::unavailable(), new Metric(1, complete: false)),
             new LinkReport('javascript:alert(1)', '<script>unsafe</script>', 'unknown', Metric::unavailable(), Metric::unavailable()),
         ]);
         $provider = new readonly class($report) implements StatisticsProvider {
@@ -631,6 +633,7 @@ final class NewsletterStatisticsTest extends AbstractNewsletterTestCase
         self::assertCount(2, $crawler->filter('.pw-statistics-links a'));
         self::assertCount(0, $crawler->filter('.pw-statistics-links script'));
         self::assertStringContainsString('Unavailable', $crawler->filter('.pw-statistics-links tbody tr')->first()->text());
+        self::assertStringContainsString('≥', $crawler->filter('.pw-statistics-links tbody tr')->eq(1)->text());
         self::assertStringContainsString('clickScope=body', (string) $crawler->filter('.pw-statistics-back')->attr('href'));
 
         $this->client->request(Request::METHOD_GET, '/admin/newsletter/statistics/export?clickScope=body');
@@ -645,6 +648,7 @@ final class NewsletterStatisticsTest extends AbstractNewsletterTestCase
         self::assertSame('body', $rows[0]['clickScope']);
         self::assertSame('12.5', $rows[0]['clickRateDelivered']);
         self::assertSame('delivered', $rows[0]['clickRateDeliveredDenominatorMetric']);
+        self::assertSame('yes', $rows[0]['deliveredComplete']);
     }
 
     private function login(string $role = 'ROLE_SUPER_ADMIN'): void

@@ -69,7 +69,11 @@ final readonly class Report
         $top = $this->metric($numerator);
         $bottom = null === $denominator ? Metric::unavailable() : $this->metric($denominator);
         $state = Metric::sum([$top, $bottom])->state;
-        if (! $this->ratesAvailable || 0 === $bottom->value) {
+        if ('measured' === $state && (! $top->complete || ! $bottom->complete)) {
+            $state = 'unavailable';
+        }
+
+        if (! $this->ratesAvailable || (0 === $bottom->value && $bottom->complete)) {
             $state = 'notMeasured';
         }
 

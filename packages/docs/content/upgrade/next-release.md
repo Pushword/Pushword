@@ -84,3 +84,11 @@ Enable `newsletter.bot_click_qualification: true` for conservative known-agent c
 ## Source providers and CSV
 
 Providers may reuse the source-independent observation aggregator and link table. Existing providers remain compatible; new CSV fields are appended after the 1.0.81 columns. See [newsletter statistics](../extension/newsletter#statistics) for coverage and rate definitions.
+
+## Native delivery coverage
+
+Delivery counts without a verified collector snapshot are now marked as observed lower bounds, including `<metric>Complete` CSV fields. Delivery rates and delivered-click rates stay unavailable until a listener to `QualifyDeliveryCoverage` proves the full selected cohort/window and sets its durable observation boundary. Existing factual counts are retained; see [delivery coverage](../extension/newsletter#prove-native-delivery-coverage).
+
+## Newsletter admin compatibility
+
+**Sites with `pushword/admin` installed:** update it to at least 1.0.84 together with `pushword/newsletter`; the newsletter forms use the `context_help` option introduced in that admin release. The admin remains optional; Composer rejects older installed admin versions.

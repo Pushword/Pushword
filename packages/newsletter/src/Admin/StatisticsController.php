@@ -160,6 +160,10 @@ final class StatisticsController extends AbstractController
             }
         }
 
+        foreach (Report::METRICS as $name) {
+            $headers[] = $name.'Complete';
+        }
+
         $rows = [];
         foreach ($this->dashboard->reports($query) as $report) {
             $row = [
@@ -180,6 +184,7 @@ final class StatisticsController extends AbstractController
             foreach (Report::METRICS as $name) {
                 $row[$name] = $report->metric($name)->value;
                 $row[$name.'State'] = $report->metric($name)->state;
+                $row[$name.'Complete'] = $report->metric($name)->complete ? 'yes' : 'no';
             }
 
             foreach ($rates as $name) {

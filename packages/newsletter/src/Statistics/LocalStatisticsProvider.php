@@ -13,13 +13,15 @@ use Pushword\Newsletter\Entity\ContactEvent;
 use Pushword\Newsletter\Entity\DeliveryEvent;
 use Pushword\Newsletter\Entity\DeliveryMessage;
 use Pushword\Newsletter\Enum\DeliveryEventKind;
+use Pushword\Newsletter\Event\QualifyDeliveryCoverage;
 use Pushword\Newsletter\Repository\StatisticsRepository;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 /** @phpstan-import-type CampaignStatistics from StatisticsRepository */
 final readonly class LocalStatisticsProvider implements StatisticsProvider
 {
-    public function __construct(private EntityManagerInterface $entityManager, private StatisticsRepository $statistics, private UrlGeneratorInterface $urls)
+    public function __construct(private EntityManagerInterface $entityManager, private StatisticsRepository $statistics, private UrlGeneratorInterface $urls, private ?EventDispatcherInterface $events = null)
     {
     }
 
@@ -63,7 +65,6 @@ final readonly class LocalStatisticsProvider implements StatisticsProvider
         $campaigns = 'sent' === $query->basis && 'campaign' === $query->groupBy
             ? $this->statistics->campaigns($query->from, $query->until, $query->audienceId) : [];
         $messages = $this->messages($query, array_column($campaigns, 'id'));
-        $observations = new MessageObservations($this->entityManager, $messages);
         $groups = [];
         foreach ($messages as $message) {
             if ('campaign' !== $query->groupBy && null === $message->automation) {
@@ -73,9 +74,20 @@ final readonly class LocalStatisticsProvider implements StatisticsProvider
             $groups[$this->groupId($message, $query)][] = $message;
         }
 
+        $coverages = [];
+        foreach ($groups as $id => $group) {
+            $coverages[$id] = $this->deliveryCoverage($group, $query);
+        }
+
+        foreach ($campaigns as $campaign) {
+            $coverages['campaign:'.$campaign['id']] ??= $this->deliveryCoverage([], $query);
+        }
+
+        // Collectors qualify their durable boundary before this snapshot reads events.
+        $observations = new MessageObservations($this->entityManager, $messages);
         foreach ($campaigns as $campaign) {
             $id = 'campaign:'.$campaign['id'];
-            yield $this->campaignReport($campaign, $groups[$id] ?? [], $query, $observations);
+            yield $this->campaignReport($campaign, $groups[$id] ?? [], $observations, $coverages[$id]);
             unset($groups[$id]);
         }
 
@@ -84,7 +96,7 @@ final readonly class LocalStatisticsProvider implements StatisticsProvider
             if (str_starts_with($id, 'campaign:') && null !== $first->campaign?->id) {
                 $campaign = $this->statistics->campaign($first->campaign->id);
                 if (null !== $campaign) {
-                    yield $this->campaignReport($campaign, $group, $query, $observations);
+                    yield $this->campaignReport($campaign, $group, $observations, $coverages[$id]);
                 }
 
                 continue;
@@ -105,12 +117,16 @@ final readonly class LocalStatisticsProvider implements StatisticsProvider
                 $label,
                 $this->urls->generate('admin_newsletter_automation_edit', ['entityId' => $first->automation?->id]),
                 $first->attemptedAt,
-                $this->metrics($group, $query, $observations),
+                $this->metrics($group, $query, $observations, $coverages[$id]->complete, $coverages[$id]->observedAt),
                 'campaign' === $query->groupBy ? 'automation' : $query->groupBy,
                 $this->methods($group, $observations),
                 $this->scopes($group),
                 mature: $this->mature($group, $query),
-                ratesAvailable: 'sent' === $query->basis
+                ratesAvailable: 'sent' === $query->basis,
+                rateDenominators: $this->deliveryRateBases($coverages[$id]->complete),
+                observedAt: $coverages[$id]->observedAt,
+                notice: $coverages[$id]->notice,
+                noticeLevel: $coverages[$id]->noticeLevel,
             );
         }
     }
@@ -120,7 +136,9 @@ final readonly class LocalStatisticsProvider implements StatisticsProvider
         $campaign = $this->statistics->campaign($id) ?? throw new InvalidArgumentException('Unknown newsletter campaign.');
         $messages = $this->entityManager->getRepository(DeliveryMessage::class)->findBy(['campaign' => $id]);
 
-        return $this->campaignReport($campaign, $messages, $query, new MessageObservations($this->entityManager, $messages));
+        $coverage = $this->deliveryCoverage($messages, $query);
+
+        return $this->campaignReport($campaign, $messages, new MessageObservations($this->entityManager, $messages), $coverage);
     }
 
     /** @param list<int> $campaignIds
@@ -175,9 +193,14 @@ final readonly class LocalStatisticsProvider implements StatisticsProvider
     /** @param CampaignStatistics $campaign
      * @param list<DeliveryMessage> $messages
      */
-    private function campaignReport(array $campaign, array $messages, ReportQuery $query, MessageObservations $observations): Report
+    private function campaignReport(array $campaign, array $messages, MessageObservations $observations, QualifyDeliveryCoverage $coverage): Report
     {
-        $metrics = $this->metrics($messages, $query, $observations);
+        $query = $coverage->query;
+        if ('sent' === $query->basis && $campaign['sent'] !== \count(array_filter($messages, static fn (DeliveryMessage $message): bool => null !== $message->acceptedAt && $message->acceptedAt <= $query->asOf))) {
+            $coverage->complete = false;
+        }
+
+        $metrics = $this->metrics($messages, $query, $observations, $coverage->complete, $coverage->observedAt);
         if ('sent' === $query->basis) {
             $metrics['accepted'] = new Metric($campaign['sent']);
             $metrics['transportFailed'] = new Metric($campaign['failed']);
@@ -188,7 +211,10 @@ final readonly class LocalStatisticsProvider implements StatisticsProvider
             if (null === $query->windowDays && null === $query->clickScope) {
                 $metrics['clicks'] = $campaign['tracking'] || $campaign['clicks'] > 0 ? new Metric($campaign['clicks']) : Metric::notMeasured();
                 $metrics['clickers'] = 'measured' === $metrics['clicks']->state ? new Metric($campaign['clickers']) : Metric::notMeasured();
-                $metrics['bounced'] = new Metric($campaign['bounced']);
+                if (! $coverage->complete) {
+                    $metrics['bounced'] = new Metric($campaign['bounced'], complete: false);
+                }
+
                 $metrics['unsubscribed'] = new Metric($campaign['unsubscribed']);
             } elseif ($campaign['sent'] !== $metrics['coverageKnownMessages']->value) {
                 foreach (['clicks', 'clickers', 'bounced', 'unsubscribed'] as $name) {
@@ -208,6 +234,10 @@ final readonly class LocalStatisticsProvider implements StatisticsProvider
             trackingScope: $this->scopes($messages),
             mature: $this->mature($messages, $query),
             ratesAvailable: 'sent' === $query->basis,
+            rateDenominators: $this->deliveryRateBases($coverage->complete),
+            observedAt: $coverage->observedAt,
+            notice: $coverage->notice,
+            noticeLevel: $coverage->noticeLevel,
             links: $this->campaignLinks($campaign['id'], $messages, $observations, $query),
         );
     }
@@ -215,17 +245,23 @@ final readonly class LocalStatisticsProvider implements StatisticsProvider
     /** @param list<DeliveryMessage> $messages
      * @return array<string, Metric>
      */
-    private function metrics(array $messages, ReportQuery $query, MessageObservations $observations): array
+    private function metrics(array $messages, ReportQuery $query, MessageObservations $observations, bool $deliveryComplete, ?DateTimeImmutable $deliveryAsOf): array
     {
-        $observed = $this->observedMessages($messages, $observations);
+        $observed = $this->observedMessages($messages, $observations, $deliveryAsOf);
         $trackingObserved = array_any($messages, static fn (DeliveryMessage $message): bool => $message->trackingAllowed && null !== $message->acceptedAt
             && (null === $query->clickScope || \in_array($query->clickScope, $message->trackingScopes, true)));
         $coverage = array_fill_keys(Report::METRICS, true);
         // Native delivery notifications are explicit lower bounds, not a complete receiving-server feed.
         $coverage['complaints'] = false;
         $metrics = new ObservationAggregator()->metrics($observed, $query, new ObservationCoverage($coverage));
-        if (0 === $metrics['delivered']->value) {
+        if (! $deliveryComplete && 0 === $metrics['delivered']->value) {
             $metrics['delivered'] = Metric::unavailable();
+        }
+
+        if (! $deliveryComplete) {
+            foreach (['delivered', 'deferred', 'bounced'] as $name) {
+                $metrics[$name] = new Metric($metrics[$name]->value, $metrics[$name]->state, false);
+            }
         }
 
         if (! $trackingObserved) {
@@ -235,6 +271,21 @@ final readonly class LocalStatisticsProvider implements StatisticsProvider
         }
 
         return $metrics;
+    }
+
+    /** @param list<DeliveryMessage> $messages */
+    private function deliveryCoverage(array $messages, ReportQuery $query): QualifyDeliveryCoverage
+    {
+        $coverage = new QualifyDeliveryCoverage($messages, $query);
+        $this->events?->dispatch($coverage);
+
+        return $coverage;
+    }
+
+    /** @return array<key-of<Report::RATES>, null> */
+    private function deliveryRateBases(bool $complete): array
+    {
+        return $complete ? [] : array_fill_keys(['deliveryRate', 'clickRateDelivered', 'filteredClickRateDelivered', 'clickRateWithoutKnownBotsDelivered'], null);
     }
 
     /** @param list<DeliveryMessage> $messages
@@ -258,12 +309,16 @@ final readonly class LocalStatisticsProvider implements StatisticsProvider
     /** @param list<DeliveryMessage> $messages
      * @return list<ObservedMessage>
      */
-    private function observedMessages(array $messages, MessageObservations $observations): array
+    private function observedMessages(array $messages, MessageObservations $observations, ?DateTimeImmutable $deliveryAsOf = null): array
     {
         $observed = [];
         foreach ($messages as $message) {
             $events = [];
             foreach ($observations->deliveries[$message->id ?? 0] ?? [] as $event) {
+                if (null !== $deliveryAsOf && $event->occurredAt > $deliveryAsOf) {
+                    continue;
+                }
+
                 $events[] = new ObservedEvent(match ($event->kind) {
                     DeliveryEventKind::RemoteAccepted => 'delivered',
                     DeliveryEventKind::Deferred => 'deferred',

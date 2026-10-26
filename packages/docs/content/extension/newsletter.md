@@ -1278,6 +1278,27 @@ List and detail show this metadata; CSV appends `observedAt`, `notice`, `noticeL
 and rate metric names after existing columns. Totals do not invent a shared snapshot
 date or merge source notices; each row retains its source metadata.
 
+### Prove native delivery coverage
+
+Native receiving-server notifications are confirmed facts, not proof that every
+callback was collected. A measured `Metric(value, state, complete: false)` retains
+its observed lower bound; the UI marks it with ≥ and CSV appends `<metric>Complete`.
+Rates require complete numerators and denominators. Incomplete native delivery
+coverage leaves `deliveryRate` and rates based on delivered messages unavailable.
+
+A site collector may listen to `Event\QualifyDeliveryCoverage(messages, query)`.
+Its readonly inputs contain the native message cohort and full `ReportQuery`;
+mutable `complete` defaults to false, with optional `observedAt`, `notice` and
+`noticeLevel` (`warning` by default). This event is dispatched **before** delivery
+events are loaded. Set `complete = true` only after proving the collection start,
+watermark and gap/ACK state cover every selected attempt and observation window.
+Publish the durable collection boundary as `observedAt`; native delivery events
+are bounded by that timestamp, while click observations keep the query's own bound.
+A positive confirmation
+alone is never such proof. Campaigns missing send-ledger references cannot become
+complete through this hook. With verified complete coverage, a true zero remains
+measured zero. Existing providers and two-argument `Metric` calls remain compatible.
+
 ### Reuse the message observation aggregator
 
 `Statistics\ObservationAggregator` shares the native counting and window rules without
