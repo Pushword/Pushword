@@ -16,6 +16,7 @@ Package names omit `pushword/`; `js-helper` is the npm package
 
 | Version | Packages | What changed |
 | --- | --- | --- |
+| [1.0.80](/upgrade/1.0.80) | `newsletter` | newsletter reporting records sends and preserves historical opt-outs — run `doctrine:schema:update --force` |
 | [1.0.78](/upgrade/1.0.78) | `newsletter` | new newsletter contacts start as prospects; personal email design needs a schema update — run `doctrine:schema:update --force` |
 | [1.0.77](/upgrade/1.0.77) | `newsletter` | campaign catalogue notices distinguish routine updates from source failures |
 | [1.0.76](/upgrade/1.0.76) | `admin` `core` | sessions close before controllers; page list sorting needs a database index — run `doctrine:schema:update --force` |

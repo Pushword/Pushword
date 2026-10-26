@@ -1,6 +1,5 @@
 ---
-title: 'newsletter reporting records sends and preserves historical opt-outs'
-run: 'doctrine:schema:update --force'
+title: ''
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -35,12 +34,3 @@ belongs in the feature doc, which you link to instead.
 
 Several changes land here between two tags: append to the file, do not replace it.
 -->
-
-**Concerns:** `pushword/newsletter`
-
-## Newsletter statistics and delivery history
-
-Run `php bin/console doctrine:schema:update --force` for send references, delivery events, consent snapshots and stable UTM identities.
-Campaigns now use the transport synchronously; a queued message is no longer counted as accepted.
-Re-subscribing preserves historical opt-out counts. Existing coverage and event windows without send references remain unknown.
-Custom statistics templates and CSV consumers must handle the common metrics and their states; see [newsletter statistics](../extension/newsletter#statistics).
