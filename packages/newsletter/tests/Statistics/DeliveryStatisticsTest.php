@@ -72,6 +72,15 @@ final class DeliveryStatisticsTest extends AbstractNewsletterTestCase
         self::assertCount(2, $observations->clicks);
     }
 
+    public function testNoMessagesMeansNoObservations(): void
+    {
+        $observations = new MessageObservations($this->entityManager, []);
+
+        self::assertSame([], $observations->clicks);
+        self::assertSame([], $observations->deliveries);
+        self::assertSame([], $observations->unsubscribes);
+    }
+
     public function testTheSendPersistsItsMessageIdConsentSnapshotAndPreciseLinks(): void
     {
         $audience = $this->createAudience();
