@@ -24,8 +24,11 @@ The MP4 is written to `out/video.mp4` (H.264, yuv420p). `still` writes
 `out/preview.png`. Remotion downloads a headless browser when needed; its browser
 must have the system libraries required by Chromium. Run `npm install` once and
 keep the resulting `package-lock.json` with your project for repeatable installs.
-Remotion dependencies are optional to Pushword and have their own
-[license terms](https://www.remotion.dev/docs/license/pricing).
+Remotion dependencies are optional to Pushword and are not MIT-licensed. The
+[Remotion license](https://www.remotion.dev/license) is free for individuals,
+for-profit organizations with up to 3 employees, non-profit or not-for-profit
+organizations, and evaluation before any commercial use. Other companies need a
+paid [Company License](https://www.remotion.pro/license).
 
 ## Timeline authoring
 

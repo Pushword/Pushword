@@ -2,9 +2,10 @@
 
 A complete 17.6-second, 1080 × 1920 reel: masked typography, photo moves, a drawn
 route, a constellation, staggered words and a circular outro. This example ships
-with `pushword/repurpose`, including its two demo photos. Preparation uses the
-package's bundled fonts and Remotion template; it needs no PHP, database, media
-library or development app. Rendering requires Node.js 22+ and npm.
+with `pushword/repurpose`, including its two demo photos, which are AI-generated,
+royalty-free images. Preparation uses the package's bundled fonts and Remotion
+template; it needs no PHP, database, media library or development app. Rendering
+requires Node.js 22+ and npm.
 
 From a Composer site's root, prepare a **new** directory (its parent must exist):
 

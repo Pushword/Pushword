@@ -19,8 +19,10 @@ composer require pushword/repurpose
 
 Requires `ext-gd` (text measurement) and `ext-zip` (export); no Imagick.
 
-Demo fixtures add sample posts under **Social posts**. For a portable starting
-spec, use the package's `examples/nord/spec.json`, described below.
+Installed before seeding a fresh site, the demo fixtures add a ten-slide carousel of
+the `examples` page, one feature per slide. Its spec, `src/DataFixtures/Carousel.json`,
+is the reference to copy from; the post sits under **Social posts**. For motion, see
+the [NORD. example](#packaged-example-nord) below.
 
 ## How it fits together
 
@@ -239,9 +241,13 @@ npm run render
 ```
 
 Requires Node.js 22+ and npm on the rendering machine. Remotion installs its own
-rendering dependencies, including a headless browser, and has separate
-[license terms](https://www.remotion.dev/docs/license/pricing). No Node dependency
-is added to the CMS. The resulting H.264 video is `out/video.mp4`.
+rendering dependencies, including a headless browser. No Node dependency is added
+to the CMS. The resulting H.264 video is `out/video.mp4`.
+
+Remotion is not MIT-licensed. Its [license](https://www.remotion.dev/license)
+is free for individuals, for-profit organizations with up to 3 employees,
+non-profit or not-for-profit organizations, and evaluation before any commercial
+use. Other companies need a paid [Company License](https://www.remotion.pro/license).
 
 `timeline.json` defines dimensions, fps, scene order, durations and incoming
 crossfades **in frames**; `timeline.schema.json` describes its shape. Crossfades
@@ -281,7 +287,10 @@ static deck.
 
 Every installation of `pushword/repurpose` includes a complete five-scene vertical
 reel in `examples/nord/`: custom React scenes, a companion static spec, local demo
-photos and a preparation script. From a Composer site's root:
+photos and a preparation script. Its copy is in French, and its spec references
+`repurpose-nord.mp4`, `1.jpg` and `3.jpg`: media that only the development app
+has. On another site, import the photos and your own render, then use their
+filenames, as its README explains. From a Composer site's root:
 
 ```sh
 node vendor/pushword/repurpose/examples/nord/prepare.mjs /tmp/nord-motion
