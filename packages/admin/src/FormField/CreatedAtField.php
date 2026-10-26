@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pushword\Admin\FormField;
 
 use EasyCorp\Bundle\EasyAdminBundle\Contracts\Field\FieldInterface;
+use Pushword\Core\Entity\User;
 use Symfony\Component\Form\Extension\Core\Type\DateTimeType;
 
 /**
@@ -19,7 +20,7 @@ class CreatedAtField extends AbstractField
         return $this->buildEasyAdminField('createdAt', DateTimeType::class, [
             'widget' => 'single_text',
             'with_seconds' => false,
-            'label' => 'adminPageCreatedAtLabel',
+            'label' => $this->admin->getSubject() instanceof User ? 'adminUserCreatedAtLabel' : 'adminPageCreatedAtLabel',
             'html5' => true,
             'view_timezone' => $this->formFieldManager->editorialTimezone->timezone->getName(),
         ]);

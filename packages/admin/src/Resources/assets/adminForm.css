@@ -193,7 +193,86 @@ body.ea-new .content-header {
   flex-grow: 0;
 }
 
+/* Account fields stay readable on wide screens; settings stack before they get cramped. */
+.ea-edit-User .ea-edit-form,
+.ea-new-User .ea-new-form,
+.ea-edit-User .content-header,
+.ea-new-User .content-header {
+  max-inline-size: 60rem;
+}
+
+.ea-edit-User #User_roles .form-check,
+.ea-new-User #User_roles .form-check {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-block-size: 2.75rem;
+  gap: 0.5rem;
+  padding-inline-start: 0;
+}
+
+.ea-edit-User #User_roles .form-check-input,
+.ea-new-User #User_roles .form-check-input {
+  float: none;
+  flex-shrink: 0;
+  margin: 0;
+}
+
+.ea-edit-User #User_roles .form-check-label::after,
+.ea-new-User #User_roles .form-check-label::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  cursor: pointer;
+}
+
+.pw-api-token {
+  display: grid;
+  gap: 0.75rem;
+  min-inline-size: 0;
+}
+
+.pw-api-token input {
+  inline-size: 100%;
+  min-inline-size: 0;
+}
+
+.pw-api-token__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.pw-api-token__actions .btn {
+  min-block-size: 2.75rem;
+}
+
+.pw-api-token__actions [hidden] {
+  display: none;
+}
+
+.pw-api-token .pw-action-delete:hover,
+.pw-api-token .pw-action-delete:focus-visible {
+  color: var(--bs-danger-text-emphasis);
+}
+
 @media (max-width: 575.98px) {
+  .ea-edit-User .content-header,
+  .ea-new-User .content-header {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .ea-edit-User .page-actions,
+  .ea-new-User .page-actions {
+    inline-size: 100%;
+  }
+
+  .ea-edit-User .page-actions .btn,
+  .ea-new-User .page-actions .btn {
+    flex: 1;
+  }
   .ea-edit .content-header,
   .ea-new .content-header {
     gap: 0.75rem;

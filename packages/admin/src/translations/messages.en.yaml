@@ -245,6 +245,16 @@ adminStaticPleaseWait: "Please wait, generation is in progress. This page will r
 adminStaticStartedAt: "Started at"
 adminStaticStarting: "Starting generation..."
 adminStaticUpdated: "Site updated successfully."
+adminUserApiTokenCopied: "Copied"
+adminUserApiTokenCopy: "Copy"
+adminUserApiTokenGenerate: Generate Token
+adminUserApiTokenHelp: "<small>Token for webhook API authentication. Use <code>Authorization: Bearer {token}</code> header.</small>"
+adminUserApiTokenLabel: API Token
+adminUserApiTokenPlaceholder: No token generated
+adminUserApiTokenRegenerate: Regenerate
+adminUserApiTokenRegenerateConfirm: Regenerate token? The old token will stop working.
+adminUserApiTokenRevoke: Revoke
+adminUserApiTokenRevokeConfirm: Revoke the API token?
 adminUserCityLabel: City
 adminUserCreatedAtLabel: "Registration date"
 adminUserDateOfBirthLabel: "Date of birth"
@@ -255,12 +265,14 @@ adminUserImpersonate: "Log in as"
 adminUserImpersonationBanner: "You are browsing as <strong>%user%</strong>."
 adminUserImpersonationExit: "Back to my account"
 adminUserImpersonationHint: "Every change is saved under this account."
+adminUserLabelAccount: "Account"
 adminUserLabelApi: API Access
 adminUserLabelId: Identifiers
 adminUserLabelProfile: Profile
 adminUserLabelSecurity: Security
 adminUserLastnameLabel: Name
 adminUserLocaleLabel: "Interface language"
+adminUserPasswordHelp: "Leave blank to keep the current password."
 adminUserPasswordLabel: Password
 adminUserPhoneLabel: Phone
 adminUserRoleAdmin: Administrator
@@ -269,14 +281,6 @@ adminUserRoleLabel: Role
 adminUserRoleSuperAdmin: "Super Administrator"
 adminUserRoleUser: User
 adminUserUsernameLabel: Username
-adminUserApiTokenLabel: API Token
-adminUserApiTokenHelp: "<small>Token for webhook API authentication. Use <code>Authorization: Bearer {token}</code> header.</small>"
-adminUserApiTokenGenerate: Generate Token
-adminUserApiTokenRegenerate: Regenerate
-adminUserApiTokenRevoke: Revoke
-adminUserApiTokenPlaceholder: No token generated
-adminUserApiTokenRegenerateConfirm: Regenerate token? The old token will stop working.
-adminUserApiTokenRevokeConfirm: Revoke the API token?
 datetimeMediumFormat: 'Y-m-d \a\t H:m'
 md_csChapeau: Chapeau
 md_csChapeauDescription: "The chapeau is the introductory paragraph placed below the title."

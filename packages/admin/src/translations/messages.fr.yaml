@@ -246,6 +246,16 @@ adminStaticPleaseWait: 'Veuillez patienter, la génération est en cours. Cette 
 adminStaticStartedAt: 'Démarré à'
 adminStaticStarting: 'Démarrage de la génération...'
 adminStaticUpdated: 'Site actualisé avec succès.'
+adminUserApiTokenCopied: "Copié"
+adminUserApiTokenCopy: "Copier"
+adminUserApiTokenGenerate: Générer un token
+adminUserApiTokenHelp: "<small>Token pour l'authentification API webhook. Utilisez l'en-tête <code>Authorization: Bearer {token}</code>.</small>"
+adminUserApiTokenLabel: Token API
+adminUserApiTokenPlaceholder: Aucun token généré
+adminUserApiTokenRegenerate: "Régénérer"
+adminUserApiTokenRegenerateConfirm: "Régénérer le token ? L’ancien token ne fonctionnera plus."
+adminUserApiTokenRevoke: Révoquer
+adminUserApiTokenRevokeConfirm: Révoquer le token API ?
 adminUserCityLabel: Ville
 adminUserCreatedAtLabel: "Date d'enregistrement"
 adminUserDateOfBirthLabel: 'Date de naissance'
@@ -256,28 +266,22 @@ adminUserImpersonate: 'Se connecter en tant que'
 adminUserImpersonationBanner: 'Vous naviguez en tant que <strong>%user%</strong>.'
 adminUserImpersonationExit: 'Revenir à mon compte'
 adminUserImpersonationHint: 'Toute modification est enregistrée au nom de ce compte.'
+adminUserLabelAccount: "Compte"
 adminUserLabelApi: Accès API
 adminUserLabelId: Identifiants
 adminUserLabelProfile: Profil
-adminUserLabelSecurity: Securité
+adminUserLabelSecurity: "Sécurité"
 adminUserLastnameLabel: Nom
 adminUserLocaleLabel: "Langue de l’interface"
+adminUserPasswordHelp: "Laissez vide pour conserver le mot de passe actuel."
 adminUserPasswordLabel: 'Mot de passe'
 adminUserPhoneLabel: Téléphone
 adminUserRoleAdmin: Administrateur
-adminUserRoleEditor: Editeur
-adminUserRoleLabel: Role
+adminUserRoleEditor: "Éditeur"
+adminUserRoleLabel: "Rôle"
 adminUserRoleSuperAdmin: 'Super Administrateur'
 adminUserRoleUser: Utilisateur
 adminUserUsernameLabel: "Nom d'utilisateur"
-adminUserApiTokenLabel: Token API
-adminUserApiTokenHelp: "<small>Token pour l'authentification API webhook. Utilisez l'en-tête <code>Authorization: Bearer {token}</code>.</small>"
-adminUserApiTokenGenerate: Générer un token
-adminUserApiTokenRegenerate: Regénérer
-adminUserApiTokenRevoke: Révoquer
-adminUserApiTokenPlaceholder: Aucun token généré
-adminUserApiTokenRegenerateConfirm: Regénérer le token ? L'ancien token ne fonctionnera plus.
-adminUserApiTokenRevokeConfirm: Révoquer le token API ?
 datetimeMediumFormat: 'd/m/Y à H:m'
 md_csChapeau: Chapeau
 md_csChapeauDescription: 'Le chapeau est le paragraphe introductif placé sous le titre.'
