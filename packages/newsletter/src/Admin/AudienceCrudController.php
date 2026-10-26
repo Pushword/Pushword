@@ -54,6 +54,7 @@ class AudienceCrudController extends AbstractCrudController
             ->setEntityLabelInSingular('newsletter.audience.label.singular')
             ->setEntityLabelInPlural('newsletter.audience.label.plural')
             ->setDefaultSort(['slug' => 'ASC'])
+            ->setFormOptions(['attr' => ['class' => 'pw-compact-form pw-compact-form--single']])
             ->setSearchFields(['slug', 'name', 'fromEmail']);
     }
 
@@ -185,6 +186,6 @@ class AudienceCrudController extends AbstractCrudController
         yield TextField::new('utmSource', 'newsletter.audience.field.utmSource')->hideOnIndex()
             ->setRequired(false)
             ->setHelp('newsletter.audience.field.utmSource.help')
-            ->setFormTypeOption('context_help', true);
+            ->setFormTypeOption('context_help', 'newsletterHelpUtmSource');
     }
 }

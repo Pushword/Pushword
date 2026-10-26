@@ -84,12 +84,12 @@ class MediaCrudController extends AbstractAdminCrudController
         );
         [$mediaFields, $paramBlocks, $previewBlocks] = $fields;
 
-        yield FormField::addColumn('col-12 col-md-8 mainFields');
+        yield FormField::addColumn('col-12 col-lg-7 mainFields');
         yield FormField::addFieldset();
         yield from $this->adminFormFieldManager->getEasyAdminFields($mediaFields, $this);
 
         if ([] !== $paramBlocks) {
-            yield FormField::addColumn('col-12 col-md-4 columnFields');
+            yield FormField::addColumn('col-12 col-lg-5 columnFields');
             yield FormField::addFieldset();
             foreach ($paramBlocks as $groupName => $block) {
                 if (\is_string($groupName)) {
@@ -119,6 +119,7 @@ class MediaCrudController extends AbstractAdminCrudController
             ->setEntityLabelInPlural('adminLabelMedias')
             ->setSearchFields(['alt', 'fileName', 'altSearch', 'tags'])
             ->setDefaultSort(['updatedAt' => 'DESC'])
+            ->setFormOptions(['attr' => ['class' => 'pw-compact-form']])
             // Renders a named sidebar block as a collapsible accordion; without it the
             // fieldset header shows and its body stays display:none forever.
             ->addFormTheme('@pwAdmin/form/admin_form_theme.html.twig')

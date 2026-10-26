@@ -143,6 +143,11 @@ final class MediaLicenseAdminTest extends AbstractAdminTestClass
 
         $crawler = $this->editCrawler($media);
 
+        self::assertStringContainsString(
+            'Empty licensing fields remove that information from this media; site defaults are not applied on save.',
+            $crawler->filter('[data-pw-license-field="license"]')->ancestors()->filter('.form-group')->text(),
+        );
+
         foreach (MediaLicense::KEYS as $key) {
             self::assertGreaterThan(
                 0,

@@ -165,9 +165,10 @@ class AutomationCrudController extends AbstractCrudController
             ->setChoices(array_combine($hosts, $hosts))
             ->allowMultipleChoices()
             ->renderExpanded()
+            ->setFormTypeOption('attr', ['class' => 'pw-choice-list'])
             ->setRequired(false)
             ->setHelp('newsletter.automation.field.hosts.help')
-            ->setFormTypeOption('context_help', true);
+            ->setFormTypeOption('context_help', 'newsletterHelpHosts');
         yield CriteriaField::new('stopWhenAsJson', 'newsletter.automation.field.stopWhen', CriteriaController::SIDE_CONTACT, $this->urlGenerator)
             ->setNumOfRows(4)
             ->setHelp('newsletter.automation.field.stopWhen.help')

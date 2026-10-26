@@ -45,10 +45,23 @@ function initContextHelp(root = document) {
     const summary = row.dataset.pwHelpSummary
     if (summary || counter) {
       const inline = document.createElement('small')
+      inline.id = `${panel.id}_summary`
       inline.className = 'form-text pw-help-summary'
       if (summary) inline.append(summary)
       if (counter) inline.append(' ', counter)
       content.after(inline)
+      row
+        .querySelectorAll(
+          '.form-widget input:not([type="hidden"]), .form-widget select, .form-widget textarea',
+        )
+        .forEach((control) => {
+          control.setAttribute(
+            'aria-describedby',
+            [control.getAttribute('aria-describedby'), inline.id]
+              .filter(Boolean)
+              .join(' '),
+          )
+        })
     }
 
     if (label?.matches('label') && label.parentElement === row) {
@@ -59,7 +72,8 @@ function initContextHelp(root = document) {
     } else if (label?.matches('legend')) {
       label.classList.add('pw-help-label')
       label.append(button)
-      label.after(panel)
+      // Bootstrap clears the legend's float on its next sibling, the widget.
+      row.append(panel)
     } else if (label?.matches('.form-fieldset-title-content')) {
       const group = document.createElement('div')
       group.className = 'pw-help-label pw-help-heading'

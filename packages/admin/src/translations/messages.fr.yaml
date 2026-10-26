@@ -82,6 +82,7 @@ adminMediaHiddenFromAdminLabel: "Masqué de l'admin"
 adminMediaLicenseApplySeed: 'Appliquer la licence du site'
 adminMediaLicenseBlockLabel: Licence
 adminMediaLicenseClear: 'Vider la licence'
+adminMediaLicenseHelp: "Les champs vides retirent ces informations de licence du média ; les valeurs du site ne sont pas appliquées à l’enregistrement."
 adminMediaLicenseLabel: "URL de licence"
 adminMediaLicenseStateLabel: 'État de la licence'
 adminMediaLicenseStateNone: 'Sans licence'

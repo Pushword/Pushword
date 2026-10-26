@@ -64,10 +64,27 @@ final class NewsletterAdminTest extends AbstractAdminTestClass
     /** @return iterable<string, array{string, int, int}> */
     public static function referenceHelpScreens(): iterable
     {
-        yield 'audience' => ['/admin/newsletter/audience/new', 9, 3];
-        yield 'automation' => ['/admin/newsletter/automation/new', 8, 1];
-        yield 'campaign' => ['/admin/newsletter/campaign/new', 8, 2];
+        yield 'audience' => ['/admin/newsletter/audience/new', 9, 4];
+        yield 'automation' => ['/admin/newsletter/automation/new', 8, 2];
+        yield 'campaign' => ['/admin/newsletter/campaign/new', 8, 3];
         yield 'template' => ['/admin/newsletter/template/new', 4, 1];
+    }
+
+    /** @return iterable<string, array{string, string, string}> */
+    public static function emptyValueConsequences(): iterable
+    {
+        yield 'audience analytics' => ['/admin/newsletter/audience/new', 'Audience[utmSource]', 'newsletterHelpUtmSource'];
+        yield 'automation sites' => ['/admin/newsletter/automation/new', 'Automation[hosts][]', 'newsletterHelpHosts'];
+        yield 'campaign cadence' => ['/admin/newsletter/campaign/new', 'Campaign[rateSeconds]', 'newsletterHelpCadence'];
+    }
+
+    #[DataProvider('emptyValueConsequences')]
+    public function testEmptyValueConsequencesRemainVisible(string $url, string $field, string $summaryKey): void
+    {
+        $crawler = $this->loginUser()->request(Request::METHOD_GET, $url);
+        self::assertResponseIsSuccessful();
+        $summary = self::getContainer()->get('translator')->trans($summaryKey);
+        self::assertCount(1, $crawler->filter('[data-pw-help-summary="'.$summary.'"] [name="'.$field.'"]')->first());
     }
 
     #[DataProvider('referenceHelpScreens')]

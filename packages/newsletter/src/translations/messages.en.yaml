@@ -601,9 +601,11 @@ newsletter:
     selectAll: Select all rows
     selectRow: 'Select row %id%'
 
+newsletterHelpCadence: "Leave empty to use the audience cadence."
 newsletterHelpClickTracking: "Consenting contacts only."
 newsletterHelpConsent: "Enter only with consent evidence. Clearing it deletes recorded clicks."
 newsletterHelpDoubleOptIn: "Email confirmation is required."
+newsletterHelpHosts: "For sources tied to a site, leave empty to watch all sites."
 newsletterHelpIdentifier: "Email or phone required. Without an email address, no email is sent."
 newsletterHelpMoveSubscription: "Changing this moves the subscription."
 newsletterHelpPhone: "Without an email address, this contact receives no email."
@@ -611,3 +613,4 @@ newsletterHelpRates: "Rates use emails sent as their base."
 newsletterHelpSchedule: "Save the draft, then confirm with “Schedule”."
 newsletterHelpSharedTemplate: "Changes apply to every audience and campaign using this template."
 newsletterHelpTransactional: "No unsubscribe links or headers. Service messages only."
+newsletterHelpUtmSource: "Leave empty to keep links unchanged."

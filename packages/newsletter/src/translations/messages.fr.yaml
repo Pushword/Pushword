@@ -601,9 +601,11 @@ newsletter:
     selectAll: Sélectionner toutes les lignes
     selectRow: 'Sélectionner la ligne %id%'
 
+newsletterHelpCadence: "Laissez vide pour utiliser la cadence de l’audience."
 newsletterHelpClickTracking: "Contacts consentants uniquement."
 newsletterHelpConsent: "À renseigner avec une preuve de consentement. Effacer supprime les clics enregistrés."
 newsletterHelpDoubleOptIn: "Confirmation par email requise."
+newsletterHelpHosts: "Pour les sources liées à un site, laissez vide pour surveiller tous les sites."
 newsletterHelpIdentifier: "Email ou téléphone requis. Sans adresse email, aucun mail n’est envoyé."
 newsletterHelpMoveSubscription: "Modifier ce champ déplace l’inscription."
 newsletterHelpPhone: "Sans adresse email, ce contact ne reçoit aucun mail."
@@ -611,3 +613,4 @@ newsletterHelpRates: "Taux calculés sur les envois effectués."
 newsletterHelpSchedule: "Enregistrez le brouillon, puis confirmez avec « Programmer »."
 newsletterHelpSharedTemplate: "Les modifications s’appliquent à toutes les audiences et campagnes utilisant ce modèle."
 newsletterHelpTransactional: "Sans lien ni en-tête de désinscription. Messages de service uniquement."
+newsletterHelpUtmSource: "Laissez vide pour conserver les liens inchangés."

@@ -45,6 +45,7 @@ class UserCrudController extends AbstractAdminCrudController
             ->setEntityLabelInSingular('adminLabelUser')
             ->setEntityLabelInPlural('adminLabelUsers')
             ->setDefaultSort(['createdAt' => 'DESC'])
+            ->setFormOptions(['attr' => ['class' => 'pw-compact-form']])
             ->addFormTheme('@pwAdmin/form/admin_form_theme.html.twig')
             ->addFormTheme('@pwAdmin/form/api_token_theme.html.twig');
     }

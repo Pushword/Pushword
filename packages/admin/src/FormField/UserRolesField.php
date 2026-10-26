@@ -28,6 +28,7 @@ class UserRolesField extends AbstractField
             ->setChoices($this->getRoleChoices())
             ->allowMultipleChoices()
             ->renderExpanded()
+            ->setFormTypeOption('attr', ['class' => 'pw-choice-list'])
             ->setFormTypeOption('required', false);
     }
 

@@ -274,7 +274,7 @@ class CampaignCrudController extends AbstractCrudController
         yield IntegerField::new('rateSeconds', 'newsletter.campaign.field.rateSeconds')->hideOnIndex()
             ->setRequired(false)
             ->setHelp('newsletter.campaign.field.rateSeconds.help')
-            ->setFormTypeOption('context_help', true);
+            ->setFormTypeOption('context_help', 'newsletterHelpCadence');
         yield BooleanField::new('transactional', 'newsletter.campaign.field.transactional')->hideOnIndex()
             ->setHelp('newsletter.campaign.field.transactional.help')
             ->setFormTypeOption('context_help', 'newsletterHelpTransactional');

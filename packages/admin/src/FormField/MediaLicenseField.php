@@ -46,6 +46,7 @@ final class MediaLicenseField extends AbstractField
 
         yield UrlField::new(MediaLicense::LICENSE, 'adminMediaLicenseLabel')
             ->onlyOnForms()
+            ->setHelp('adminMediaLicenseHelp')
             ->setFormTypeOptions($this->options(
                 $subject,
                 MediaLicense::LICENSE,

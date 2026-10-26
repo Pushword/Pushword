@@ -193,16 +193,21 @@ body.ea-new .content-header {
   flex-grow: 0;
 }
 
-/* Account fields stay readable on wide screens; settings stack before they get cramped. */
-.ea-edit-User .ea-edit-form,
-.ea-new-User .ea-new-form,
-.ea-edit-User .content-header,
-.ea-new-User .content-header {
+/* Short settings forms opt in; writing canvases keep their available width. */
+.content :is(.ea-edit-form, .ea-new-form).pw-compact-form,
+.content:has(.pw-compact-form) .content-header {
   max-inline-size: 60rem;
 }
 
-.ea-edit-User #User_roles .form-check,
-.ea-new-User #User_roles .form-check {
+.content .pw-compact-form.pw-compact-form--single {
+  max-inline-size: 40rem;
+}
+
+.pw-compact-form--single .form-fieldset-body > .row > [class*='col-'] {
+  inline-size: 100%;
+}
+
+.pw-choice-list > .form-check {
   position: relative;
   display: flex;
   align-items: center;
@@ -211,15 +216,18 @@ body.ea-new .content-header {
   padding-inline-start: 0;
 }
 
-.ea-edit-User #User_roles .form-check-input,
-.ea-new-User #User_roles .form-check-input {
+.pw-choice-list > .form-check > .form-check-input {
   float: none;
   flex-shrink: 0;
   margin: 0;
 }
 
-.ea-edit-User #User_roles .form-check-label::after,
-.ea-new-User #User_roles .form-check-label::after {
+.pw-choice-list > .form-check > .form-check-label {
+  min-inline-size: 0;
+  overflow-wrap: anywhere;
+}
+
+.pw-choice-list > .form-check > .form-check-label::after {
   content: '';
   position: absolute;
   inset: 0;
@@ -237,8 +245,13 @@ body.ea-new .content-header {
   min-inline-size: 0;
 }
 
-.form-widget:has(#User_plainPassword) > .form-help,
-.pw-api-token .form-control[readonly],
+/* Values remain useful to read even when the editor cannot change them. */
+.form-widget .form-control[readonly],
+.form-widget .form-control:disabled,
+.form-widget .form-select:disabled,
+.form-widget .form-select[readonly],
+.form-fieldset .form-help,
+.form-fieldset .form-widget :is(.form-help, .pw-help-summary),
 .pw-api-token .btn.pw-action-delete {
   color: var(--bs-body-color);
 }
@@ -263,37 +276,35 @@ body.ea-new .content-header {
 }
 
 @media (max-width: 575.98px) {
-  .ea-edit-User .content-header,
-  .ea-new-User .content-header {
+  .ea-edit .content-header,
+  .ea-new .content-header {
     display: flex;
     flex-direction: column;
     align-items: stretch;
-  }
-
-  .ea-edit-User .page-actions,
-  .ea-new-User .page-actions {
-    inline-size: 100%;
-  }
-
-  .ea-edit-User .page-actions .btn,
-  .ea-new-User .page-actions .btn {
-    flex: 1;
-  }
-  .ea-edit .content-header,
-  .ea-new .content-header {
     gap: 0.75rem;
   }
 
   .ea-edit .page-actions,
   .ea-new .page-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    inline-size: 100%;
     margin: 0;
     padding: 0;
+  }
+
+  .ea-edit .page-actions > :only-child,
+  .ea-new .page-actions > :only-child {
+    grid-column: 1 / -1;
   }
 
   .ea-edit .page-actions .btn,
   .ea-new .page-actions .btn {
     min-height: 44px;
     white-space: normal;
+    overflow-wrap: anywhere;
+    justify-content: center;
+    margin: 0;
   }
 }
 
@@ -409,32 +420,6 @@ body.ea-new .content-header {
 
 .ea-edit-Page .page-actions .action-saveAndContinue {
   color: var(--bs-body-color);
-}
-
-@media (max-width: 575.98px) {
-  .ea-edit-Page .page-actions {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 8px;
-    width: 100%;
-    margin: 0;
-    padding: 0;
-  }
-
-  .ea-edit-Page .page-actions .btn {
-    min-height: 44px;
-    margin: 0;
-    white-space: normal;
-    justify-content: center;
-  }
-
-  .ea-edit-Page .page-actions .action-saveAndReturn {
-    order: -2;
-  }
-
-  .ea-edit-Page .page-actions .action-saveAndContinue {
-    order: -1;
-  }
 }
 
 .mainFields:has(.editorjs-holder) .form-group:has(.h1Field),

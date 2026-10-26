@@ -82,6 +82,7 @@ adminMediaHiddenFromAdminLabel: "Hidden from admin"
 adminMediaLicenseApplySeed: "Apply the site license"
 adminMediaLicenseBlockLabel: License
 adminMediaLicenseClear: "Clear the license"
+adminMediaLicenseHelp: "Empty licensing fields remove that information from this media; site defaults are not applied on save."
 adminMediaLicenseLabel: "License URL"
 adminMediaLicenseStateLabel: "License state"
 adminMediaLicenseStateNone: "Not licensed"
