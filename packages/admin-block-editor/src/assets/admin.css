@@ -147,11 +147,6 @@
   scroll-margin-block-start: 10rem;
 }
 
-/* A fading block traps its preview toggle below the moving toolbar. */
-.ce-block:has(.toggle-label) {
-  animation: none;
-}
-
 /* heading anchor size */
 .ce-header::after {
   font-size: 1rem;

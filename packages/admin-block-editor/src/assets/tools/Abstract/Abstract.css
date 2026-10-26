@@ -181,3 +181,8 @@
 .toggle-input:checked + .toggle-label {
   opacity: 0.3;
 }
+/* The narrow editor puts the block handle in the same gutter and, while a field
+   is edited, lines it up with that field's first line, down to about 50px. */
+.codex-editor--narrow .toggle-input:not(:checked) + .toggle-label {
+  top: 56px;
+}

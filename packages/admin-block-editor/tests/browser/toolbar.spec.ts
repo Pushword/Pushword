@@ -99,14 +99,9 @@ test('the preview toggle stays clickable when the narrow toolbar moves over it',
     { id: 'handle-target', type: 'pages_list', data: { kw: 'children' } },
   ])
   const block = page.locator('.ce-block[data-id="handle-target"]')
-  await block.evaluate(block => {
-    // Hold any entering fade halfway while the toolbar moves across the toggle.
-    block.style.animationDuration = '100s'
-    for (const animation of block.getAnimations()) {
-      animation.pause()
-      animation.currentTime = 50_000
-    }
-  })
+  // While its 0.3 s entrance fade runs, a block confines the toggle's z-index;
+  // a person only reaches the toggle after it.
+  await block.evaluate(block => Promise.all(block.getAnimations().map(animation => animation.finished)))
   await expect(page.locator('.codex-editor')).toHaveClass(/codex-editor--narrow/)
   await block.locator('.preview-wrapper').click()
   const toggle = block.locator('.toggle-label')
@@ -125,6 +120,41 @@ test('the preview toggle stays clickable when the narrow toolbar moves over it',
   await page.mouse.up()
   await expect(block.locator('.preview-wrapper')).toBeVisible()
 })
+
+for (const { type, data, field } of [
+  { type: 'pages_list', data: { kw: 'children' }, field: '.cdx-input-labeled-pageslist-kw' },
+  {
+    type: 'embed',
+    data: { serviceUrl: 'https://www.youtube.com/watch?v=handle', alternativeText: 'Video', media: 'handle-test.svg' },
+    field: '.cdx-input-labeled-embed-service-url',
+  },
+]) {
+  test(`${type}: while a field is edited, the narrow handle and the preview toggle stay apart`, async ({ editorPage: page }) => {
+    await page.route('**/media/**/handle-test.svg', route => route.fulfill({
+      contentType: 'image/svg+xml',
+      body: '<svg xmlns="http://www.w3.org/2000/svg" width="320" height="180"/>',
+    }))
+    await render(page, [{ id: 'handle-target', type, data }])
+    await expect(page.locator('.codex-editor')).toHaveClass(/codex-editor--narrow/)
+    const block = page.locator('.ce-block[data-id="handle-target"]')
+    await block.locator('.preview-wrapper').click()
+    // Editing lines the handle up with the first field, beside the toggle.
+    await block.locator(field).click()
+    await expect.poll(() => block.evaluate(block => {
+      const toggle = block.querySelector('.toggle-label')!.getBoundingClientRect()
+      return ['.ce-toolbar__plus', '.ce-toolbar__settings-btn'].map(selector => {
+        const control = block.closest('.codex-editor')!.querySelector(selector)!.getBoundingClientRect()
+        return Math.max(0, Math.min(toggle.right, control.right) - Math.max(toggle.left, control.left)) *
+          Math.max(0, Math.min(toggle.bottom, control.bottom) - Math.max(toggle.top, control.top))
+      })
+    }), { message: 'Area of the + and the handle under the toggle' }).toEqual([0, 0])
+    await page.locator('.ce-toolbar__settings-btn').click()
+    await expect(page.locator('.ce-popover-item[data-item-name="move-up"]')).toBeVisible()
+    await page.keyboard.press('Escape')
+    await block.locator('.toggle-label').click()
+    await expect(block.locator('.preview-wrapper')).toBeVisible()
+  })
+}
 
 test('empty image: handle and Move up work before and after filling and removing the media', async ({ editorPage: page }) => {
   await page.route('**/media/md/handle-test.svg', route => route.fulfill({
