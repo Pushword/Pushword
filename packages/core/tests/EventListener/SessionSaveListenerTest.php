@@ -11,13 +11,17 @@ use PHPUnit\Framework\TestCase;
 use Pushword\Core\EventListener\SessionSaveListener;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\Session\Session;
 use Symfony\Component\HttpFoundation\Session\Storage\Handler\NativeFileSessionHandler;
 use Symfony\Component\HttpFoundation\Session\Storage\MockArraySessionStorage;
 use Symfony\Component\HttpFoundation\Session\Storage\NativeSessionStorage;
 use Symfony\Component\HttpKernel\Event\ControllerArgumentsEvent;
+use Symfony\Component\HttpKernel\Event\ResponseEvent;
 use Symfony\Component\HttpKernel\HttpKernelInterface;
 use Symfony\Component\Process\Process;
+use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorage;
+use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 
 final class SessionSaveListenerTest extends TestCase
 {
@@ -25,7 +29,7 @@ final class SessionSaveListenerTest extends TestCase
     {
         $request = Request::create('/admin');
 
-        new SessionSaveListener()($this->event($request));
+        new SessionSaveListener(new TokenStorage())->release($this->event($request));
 
         self::assertFalse($request->hasSession());
     }
@@ -35,7 +39,7 @@ final class SessionSaveListenerTest extends TestCase
         $request = Request::create('/admin');
         $request->setSessionFactory(static fn () => self::fail('An unused session must not be initialized.'));
 
-        new SessionSaveListener()($this->event($request));
+        new SessionSaveListener(new TokenStorage())->release($this->event($request));
 
         self::assertFalse($request->hasSession(true));
     }
@@ -46,10 +50,32 @@ final class SessionSaveListenerTest extends TestCase
         $session = new Session(new MockArraySessionStorage());
         $request->setSession($session);
 
-        new SessionSaveListener()($this->event($request));
+        new SessionSaveListener(new TokenStorage())->release($this->event($request));
 
         self::assertFalse($session->isStarted());
         self::assertSame('', $session->getId());
+    }
+
+    #[DataProvider('adminPaths')]
+    public function testAdminRequestReleasesItsStartedSession(string $path): void
+    {
+        $request = Request::create($path);
+        $session = new Session(new MockArraySessionStorage());
+        $request->setSession($session);
+        $session->set('value', 'preserved');
+
+        new SessionSaveListener(new TokenStorage())->release($this->event($request));
+
+        self::assertFalse($session->isStarted());
+        self::assertSame('preserved', $session->get('value'));
+    }
+
+    /** @return iterable<string, array{string}> */
+    public static function adminPaths(): iterable
+    {
+        yield 'dashboard' => ['/admin'];
+        yield 'trailing slash' => ['/admin/'];
+        yield 'nested action' => ['/admin/page/1/edit'];
     }
 
     #[DataProvider('excludedRequests')]
@@ -62,7 +88,7 @@ final class SessionSaveListenerTest extends TestCase
         $request->setSession($session);
         $session->set('value', 'preserved');
 
-        new SessionSaveListener()($this->event($request, $requestType));
+        new SessionSaveListener(new TokenStorage())->release($this->event($request, $requestType));
 
         self::assertTrue($session->isStarted());
         self::assertSame('preserved', $session->get('value'));
@@ -82,6 +108,78 @@ final class SessionSaveListenerTest extends TestCase
         yield 'site page' => ['/administration', HttpKernelInterface::MAIN_REQUEST, false];
     }
 
+    /**
+     * A sign-out in another tab empties the stored session while this request runs;
+     * the firewall must not write this request's token back into it.
+     */
+    public function testASignOutDuringTheRequestIsNotUndone(): void
+    {
+        $storage = new MockArraySessionStorage();
+        [$listener, $request, $tokenStorage] = $this->releasedSignedInRequest($storage);
+
+        $storage->setSessionData([]);
+        $listener->keepSignOut($this->responseEvent($request));
+
+        self::assertNull($tokenStorage->getToken());
+    }
+
+    public function testAStillSignedInSessionKeepsItsToken(): void
+    {
+        [$listener, $request, $tokenStorage] = $this->releasedSignedInRequest(new MockArraySessionStorage());
+
+        $listener->keepSignOut($this->responseEvent($request));
+
+        self::assertInstanceOf(TokenInterface::class, $tokenStorage->getToken());
+    }
+
+    public function testSignOutIsIgnoredOutsideTheMainRequest(): void
+    {
+        $storage = new MockArraySessionStorage();
+        [$listener, $request, $tokenStorage] = $this->releasedSignedInRequest($storage);
+
+        $storage->setSessionData([]);
+        $listener->keepSignOut($this->responseEvent($request, HttpKernelInterface::SUB_REQUEST));
+
+        self::assertInstanceOf(TokenInterface::class, $tokenStorage->getToken());
+    }
+
+    public function testASessionNeverSignedInLeavesTheTokenAlone(): void
+    {
+        $request = Request::create('/admin/page');
+        $session = new Session(new MockArraySessionStorage());
+        $request->setSession($session);
+        $session->set('value', 'preserved');
+
+        $tokenStorage = new TokenStorage();
+        $tokenStorage->setToken(self::createStub(TokenInterface::class));
+
+        $listener = new SessionSaveListener($tokenStorage);
+        $listener->release($this->event($request));
+        $listener->keepSignOut($this->responseEvent($request));
+
+        self::assertInstanceOf(TokenInterface::class, $tokenStorage->getToken());
+    }
+
+    public function testARequestOutsideTheAdminKeepsItsTokenWhateverTheSession(): void
+    {
+        $storage = new MockArraySessionStorage();
+        $request = Request::create('/login');
+        $session = new Session($storage);
+        $request->setSession($session);
+        $session->set('_security_main', 'serialized token');
+
+        $tokenStorage = new TokenStorage();
+        $tokenStorage->setToken(self::createStub(TokenInterface::class));
+
+        $listener = new SessionSaveListener($tokenStorage);
+        $listener->release($this->event($request));
+
+        $storage->setSessionData([]);
+        $listener->keepSignOut($this->responseEvent($request));
+
+        self::assertInstanceOf(TokenInterface::class, $tokenStorage->getToken());
+    }
+
     #[RunInSeparateProcess]
     #[PreserveGlobalState(false)]
     public function testAnotherProcessCanUseTheNativeSessionBeforeTheControllerFinishes(): void
@@ -99,7 +197,7 @@ final class SessionSaveListenerTest extends TestCase
             $path = $directory.'/sess_'.$session->getId();
             self::assertSame('locked', $this->probeLock($path));
 
-            new SessionSaveListener()($this->event($request));
+            new SessionSaveListener(new TokenStorage())->release($this->event($request));
 
             self::assertSame('available', $this->probeLock($path));
             $writer = new Process([\PHP_BINARY, '-r', <<<'PHP'
@@ -139,6 +237,29 @@ final class SessionSaveListenerTest extends TestCase
         self::assertSame('', $process->getErrorOutput());
 
         return $process->getOutput();
+    }
+
+    /** @return array{SessionSaveListener, Request, TokenStorage} */
+    private function releasedSignedInRequest(MockArraySessionStorage $storage): array
+    {
+        $request = Request::create('/admin/page');
+        $session = new Session($storage);
+        $request->setSession($session);
+        $session->set('_security_main', 'serialized token');
+
+        $tokenStorage = new TokenStorage();
+        $tokenStorage->setToken(self::createStub(TokenInterface::class));
+
+        $listener = new SessionSaveListener($tokenStorage);
+        $listener->release($this->event($request));
+        self::assertFalse($session->isStarted());
+
+        return [$listener, $request, $tokenStorage];
+    }
+
+    private function responseEvent(Request $request, int $type = HttpKernelInterface::MAIN_REQUEST): ResponseEvent
+    {
+        return new ResponseEvent(self::createStub(HttpKernelInterface::class), $request, $type, new Response());
     }
 
     private function event(Request $request, int $type = HttpKernelInterface::MAIN_REQUEST): ControllerArgumentsEvent

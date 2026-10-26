@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pushword\Core\Tests\Controller;
 
 use Doctrine\ORM\EntityManager;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
 use Pushword\Core\Entity\LoginToken;
 use Pushword\Core\Entity\User;
@@ -35,14 +36,23 @@ final class UserControllerTest extends WebTestCase
         self::assertSelectorExists('input[name="email"]');
     }
 
-    public function testLoginActionWearsTheSitePrimaryColor(): void
+    #[DataProvider('authPages')]
+    public function testLoginActionWearsTheSitePrimaryColor(string $path): void
     {
         self::getContainer()->get(SiteRegistry::class)->get('localhost.dev')
             ->setCustomProperty('css_var:color_primary', '#92400e');
 
-        $this->client->request(Request::METHOD_GET, '/login');
+        $this->client->request(Request::METHOD_GET, $path);
 
+        self::assertSelectorExists('button.pw-auth-action');
         self::assertStringContainsString('--pw-auth-action: var(--primary);', (string) $this->client->getResponse()->getContent());
+    }
+
+    /** @return iterable<string, array{string}> */
+    public static function authPages(): iterable
+    {
+        yield 'login' => ['/login'];
+        yield 'forgot password' => ['/login/forgot-password'];
     }
 
     /** The default --primary is too light behind the button's white text. */
@@ -161,6 +171,7 @@ final class UserControllerTest extends WebTestCase
         self::assertSelectorExists('input[name="password"][type="password"]');
         self::assertSelectorExists('input[name="password_confirm"][type="password"]');
         self::assertSelectorCount(2, '[data-password-toggle]');
+        self::assertSelectorExists('button.pw-auth-action');
     }
 
     public function testSetPasswordWithMismatchedPasswords(): void
