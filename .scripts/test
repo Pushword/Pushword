@@ -214,12 +214,14 @@ done
 
 # Run JS tests (skip when a --filter targets PHPUnit only)
 if [ -z "$1" ] || [ "$1" = "full" ] || [ "$1" = "--no-parallel" ]; then
-    step "Running JS tests (npm test)"
+    step "Running JS tests (yarn test)"
     JS_TEST_START=$(date +%s)
     JS_TEST_EXIT=0
     # Run them all before bailing, so one red suite does not hide the others.
+    # Yarn, as in CI and for the installs above. Under Node 24, Yarn 1 itself prints a
+    # DEP0169 url.parse() warning while reading js-helper's `homepage`: not a test issue.
     for js_package in $JS_TEST_PACKAGES; do
-        (cd "packages/$js_package" && npm test) || JS_TEST_EXIT=$?
+        (cd "packages/$js_package" && yarn test) || JS_TEST_EXIT=$?
     done
     node --test packages/repurpose/tests/Motion/*.test.mjs || JS_TEST_EXIT=$?
     record_step "JS tests" $(( $(date +%s) - JS_TEST_START ))
