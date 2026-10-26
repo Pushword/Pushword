@@ -13,6 +13,7 @@ packages/admin-monaco-editor/dist
 # dev tool
 /PoC/
 .phpactor.json
+/.impeccable/
 /var/symfony-lsp/
 .twigstan
 .phpunit.result.cache
