@@ -14,10 +14,12 @@ final class ContextHelpBrowserTest extends AbstractPantherAdminTest
     public function testReferenceHelpSurvivesScrollAndClosesWithEscape(): void
     {
         $client = $this->createPantherClientWithLogin();
-        $client->request('GET', '/admin/page/new');
+        $this->navigateToPageEdit($client);
 
         $selector = '[data-pw-help-id="Page_title_reference_help"] .pw-help-button';
         $this->waitForElement($client, $selector, 'Reference help should be attached to the title label');
+        // TagsField moves focus to the H1 after loading; let it finish before testing focus restoration.
+        self::assertTrue($this->pollUntilTrue($client, 'return document.activeElement.matches("[id$=_h1]")'));
 
         $button = $client->getWebDriver()->findElement(WebDriverBy::cssSelector($selector));
         $button->click();
