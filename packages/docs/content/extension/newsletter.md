@@ -1219,9 +1219,14 @@ A campaign spanning several days therefore has a separate window for each messag
 `Metric(0)` means a measured zero; `Metric::notMeasured()` means the observation was
 not collected; `Metric::unavailable()` means the source cannot provide it. Unknown
 components propagate through totals instead of becoming zero. Rates are recalculated
-from summed numerators and denominators, never averaged. Different denominator metrics make only that total rate unavailable; other measurements remain available. Legacy cumulative counters
-may contain earlier estimated attribution; new events require message references.
-Historical opt-outs already subtracted before this upgrade cannot be reconstructed.
+from summed numerators and denominators, never averaged. Different denominator metrics
+make only that total rate unavailable; other measurements remain available.
+
+Unscoped lifetime campaign figures use current cumulative counters and retained
+unique-contact totals; `asOf` cannot reconstruct their historical values after consent
+withdrawal. Event periods, D+7/D+30 and placement-filtered clicks use dated retained
+observations. Legacy counters may contain estimated attribution; new events require
+message references. Historical opt-outs already subtracted cannot be reconstructed.
 
 **Audience health today** remains a current subscription snapshot. **Subscription
 activity** counts consent events during the selected dates, independently of send
