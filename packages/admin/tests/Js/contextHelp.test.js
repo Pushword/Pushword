@@ -28,6 +28,17 @@ describe('contextual admin help', () => {
     expect(document.querySelector('button').type).toBe('button')
   })
 
+  it('shows a title counter alone when the field has no summary', () => {
+    document.body.innerHTML = `<div data-pw-help="Help: Title">
+      <label for="title">Title</label><div class="form-widget"><input id="title" class="titleToMeasure" value="Example">
+      <small class="form-help">Search engine title <span id="titleWidth"></span></small></div></div>`
+    initContextHelp()
+    showTitlePixelWidth()
+    const summary = document.querySelector('.pw-help-summary')
+    expect(summary.contains(document.querySelector('#titleWidth'))).toBe(true)
+    expect(summary.textContent.trim()).toBe('7')
+  })
+
   it('keeps a consequence visible and retains selectable HTML and links in the explanation', () => {
     document.body.innerHTML = `<div data-pw-help="Help: Consent" data-pw-help-summary="Clearing deletes clicks.">
       <label for="consent">Consent</label><div class="form-widget"><input id="consent" readonly aria-describedby="consent_errors">
