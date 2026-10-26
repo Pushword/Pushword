@@ -108,6 +108,7 @@ final readonly class LocalStatisticsProvider implements StatisticsProvider
                 $this->metrics($group, $query, $observations),
                 'campaign' === $query->groupBy ? 'automation' : $query->groupBy,
                 $this->methods($group, $observations),
+                $this->scopes($group),
                 mature: $this->mature($group, $query),
                 ratesAvailable: 'sent' === $query->basis
             );
@@ -184,7 +185,7 @@ final readonly class LocalStatisticsProvider implements StatisticsProvider
                 $metrics['trackedMessages'] = Metric::notMeasured();
             }
 
-            if (null === $query->windowDays) {
+            if (null === $query->windowDays && null === $query->clickScope) {
                 $metrics['clicks'] = $campaign['tracking'] || $campaign['clicks'] > 0 ? new Metric($campaign['clicks']) : Metric::notMeasured();
                 $metrics['clickers'] = 'measured' === $metrics['clicks']->state ? new Metric($campaign['clickers']) : Metric::notMeasured();
                 $metrics['bounced'] = new Metric($campaign['bounced']);
@@ -204,8 +205,10 @@ final readonly class LocalStatisticsProvider implements StatisticsProvider
             null !== $campaign['date'] ? new DateTimeImmutable($campaign['date']) : null,
             $metrics,
             qualificationMethod: $this->methods($messages, $observations),
+            trackingScope: $this->scopes($messages),
             mature: $this->mature($messages, $query),
-            ratesAvailable: 'sent' === $query->basis
+            ratesAvailable: 'sent' === $query->basis,
+            links: $this->campaignLinks($campaign['id'], $messages, $observations, $query),
         );
     }
 
@@ -214,84 +217,94 @@ final readonly class LocalStatisticsProvider implements StatisticsProvider
      */
     private function metrics(array $messages, ReportQuery $query, MessageObservations $observations): array
     {
-        $counts = array_fill_keys(Report::METRICS, 0);
-        $clickers = [];
-        $filteredClickers = [];
-        $trackingObserved = false;
-        foreach ($messages as $message) {
-            $trackingObserved = $trackingObserved || ($message->trackingAllowed && null !== $message->acceptedAt);
-            $sentAt = $message->acceptedAt ?? $message->attemptedAt;
-            if ('sent' === $query->basis || $query->contains($sentAt)) {
-                if (null !== $message->acceptedAt) {
-                    ++$counts['accepted'];
-                    ++$counts['coverageKnownMessages'];
-                    if ($message->trackingAllowed) {
-                        ++$counts['trackedMessages'];
-                    }
-                }
-
-                if (null !== $message->transportError) {
-                    ++$counts['transportFailed'];
-                }
-            }
-
-            $last = null;
-            foreach (($observations->deliveries[$message->id ?? 0] ?? []) as $event) {
-                if ($query->observes($sentAt, $event->occurredAt)) {
-                    $last = $event->kind;
-                }
-            }
-
-            if (null !== $last) {
-                ++$counts[match ($last) {
-                    DeliveryEventKind::RemoteAccepted => 'delivered',
-                    DeliveryEventKind::Deferred => 'deferred',
-                    DeliveryEventKind::Failed => 'bounced',
-                }];
-            }
-
-            foreach (($observations->clicks[$message->id ?? 0] ?? []) as $click) {
-                if (! $query->observes($sentAt, $click->clickedAt)) {
-                    continue;
-                }
-
-                ++$counts['clicks'];
-                $clickers[$message->contact->id ?? 0] = true;
-                if (null !== $click->automated) {
-                    ++$counts['qualifiedClicks'];
-                }
-
-                if (false === $click->automated) {
-                    ++$counts['filteredClicks'];
-                    $filteredClickers[$message->contact->id ?? 0] = true;
-                }
-            }
-
-            foreach (($observations->unsubscribes[$message->id ?? 0] ?? []) as $event) {
-                if ($query->observes($sentAt, $event->occurredAt)) {
-                    ++$counts['unsubscribed'];
-                }
-            }
-        }
-
-        $counts['clickers'] = \count($clickers);
-        $counts['filteredClickers'] = \count($filteredClickers);
-        $metrics = array_map(static fn (int $count): Metric => new Metric($count), $counts);
-        // Confirmed remote acceptances are a known lower bound, never an inferred total.
-        if (0 === $counts['delivered']) {
+        $observed = $this->observedMessages($messages, $observations);
+        $trackingObserved = array_any($messages, static fn (DeliveryMessage $message): bool => $message->trackingAllowed && null !== $message->acceptedAt
+            && (null === $query->clickScope || \in_array($query->clickScope, $message->trackingScopes, true)));
+        $coverage = array_fill_keys(Report::METRICS, true);
+        // Native delivery notifications are explicit lower bounds, not a complete receiving-server feed.
+        $coverage['complaints'] = false;
+        $metrics = new ObservationAggregator()->metrics($observed, $query, new ObservationCoverage($coverage));
+        if (0 === $metrics['delivered']->value) {
             $metrics['delivered'] = Metric::unavailable();
         }
 
         if (! $trackingObserved) {
-            foreach (['clicks', 'clickers', 'filteredClicks', 'filteredClickers', 'qualifiedClicks'] as $name) {
+            foreach (['clicks', 'clickers', 'filteredClicks', 'filteredClickers', 'qualifiedClicks', 'automatedClicks', 'unclassifiedClicks', 'clicksWithoutKnownBots', 'clickersWithoutKnownBots'] as $name) {
                 $metrics[$name] = Metric::notMeasured();
             }
-        } elseif (0 === $counts['qualifiedClicks']) {
-            $metrics['filteredClicks'] = Metric::notMeasured();
-            $metrics['filteredClickers'] = Metric::notMeasured();
         }
 
         return $metrics;
+    }
+
+    /** @param list<DeliveryMessage> $messages
+     * @return list<LinkReport>
+     */
+    private function campaignLinks(int $campaignId, array $messages, MessageObservations $observations, ReportQuery $query): array
+    {
+        $observed = $this->observedMessages($messages, $observations);
+        foreach ($this->entityManager->getRepository(ClickEvent::class)->findBy(['campaign' => $campaignId, 'message' => null]) as $click) {
+            $observed[] = new ObservedMessage(
+                null,
+                null === $click->contact->id ? null : (string) $click->contact->id,
+                null,
+                events: [new ObservedEvent('click', $click->clickedAt, $click->automated, $click->qualificationMethod, $click->scope, $click->linkId, $click->url)]
+            );
+        }
+
+        return new ObservationAggregator()->links($observed, $query, new ObservationCoverage(['clicks' => true, 'clickers' => true]));
+    }
+
+    /** @param list<DeliveryMessage> $messages
+     * @return list<ObservedMessage>
+     */
+    private function observedMessages(array $messages, MessageObservations $observations): array
+    {
+        $observed = [];
+        foreach ($messages as $message) {
+            $events = [];
+            foreach ($observations->deliveries[$message->id ?? 0] ?? [] as $event) {
+                $events[] = new ObservedEvent(match ($event->kind) {
+                    DeliveryEventKind::RemoteAccepted => 'delivered',
+                    DeliveryEventKind::Deferred => 'deferred',
+                    DeliveryEventKind::Failed => 'bounced',
+                }, $event->occurredAt);
+            }
+
+            foreach ($observations->clicks[$message->id ?? 0] ?? [] as $click) {
+                $events[] = new ObservedEvent('click', $click->clickedAt, $click->automated, $click->qualificationMethod, $click->scope, $click->linkId, $click->url);
+            }
+
+            foreach ($observations->unsubscribes[$message->id ?? 0] ?? [] as $event) {
+                $events[] = new ObservedEvent('unsubscribed', $event->occurredAt);
+            }
+
+            $observed[] = new ObservedMessage(
+                $message->reference,
+                null === $message->contact->id ? null : (string) $message->contact->id,
+                $message->attemptedAt,
+                $message->acceptedAt,
+                $message->trackingAllowed,
+                null !== $message->transportError,
+                $events,
+                $message->trackingScopes
+            );
+        }
+
+        return $observed;
+    }
+
+    /** @param list<DeliveryMessage> $messages */
+    private function scopes(array $messages): string
+    {
+        $scopes = [];
+        foreach ($messages as $message) {
+            foreach ($message->trackingScopes as $scope) {
+                $scopes[$scope] = true;
+            }
+        }
+
+        return [] === $scopes || ['body'] === array_keys($scopes) ? 'body; navigation and footer excluded' : implode(', ', array_keys($scopes));
     }
 
     /** @param list<DeliveryMessage> $messages */

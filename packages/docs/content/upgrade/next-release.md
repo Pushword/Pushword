@@ -1,7 +1,8 @@
 ---
-title: 'newsletter links drop utm_term, the catalogue needs an external source and StatisticsRepository::totals() is gone; admin reference help is opt-in per field; weight column and editor widget overrides need updating; motion audio errors name their track; sites may refuse the audio uploads accepted since 1.0.83'
+title: 'newsletter links drop utm_term, the catalogue needs an external source and StatisticsRepository::totals() is gone; admin reference help is opt-in per field; weight column and editor widget overrides need updating; motion audio errors name their track; sites may refuse the audio uploads accepted since 1.0.83; newsletter reports add delivered click rates and link placements'
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
+run: 'doctrine:schema:update --force'
 ---
 
 <!--
@@ -71,3 +72,15 @@ Automation step links drop `utm_term`, which analytics tools report as the paid-
 
 `pw:repurpose:motion` reports an unusable audio file on `audio.voice.media` or `audio.music.media` rather than `audio`, and no longer reports other errors as audio problems. Update scripts that match the path `audio`.
 Slideshow `.mp4` exports with audio now also run on FFmpeg 4.4 (Ubuntu 22.04) and always come out stereo.
+
+## Newsletter observations and link instrumentation
+
+Run `doctrine:schema:update --force` to add CTA metadata and the send-time placement snapshot. Existing messages and clicks retain their original body-only scope; missing CTA identities stay unknown.
+
+## Optional bot qualification and template links
+
+Enable `newsletter.bot_click_qualification: true` for conservative known-agent classification. Add `navigation`/`footer` to `newsletter.click_tracking_scopes` only when intended; custom templates use the documented `data-newsletter-*` anchor attributes. Existing consent checks and system-link exclusions remain required.
+
+## Source providers and CSV
+
+Providers may reuse the source-independent observation aggregator and link table. Existing providers remain compatible; new CSV fields are appended after the 1.0.81 columns. See [newsletter statistics](../extension/newsletter#statistics) for coverage and rate definitions.

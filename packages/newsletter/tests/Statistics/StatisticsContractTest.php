@@ -83,6 +83,8 @@ final class StatisticsContractTest extends TestCase
             'deliveryRate' => [80.0, 'accepted'],
             'bounceRate' => [10.0, 'accepted'],
             'unsubscribeRate' => [0.0, 'accepted'],
+            'clickRateDelivered' => [12.5, 'delivered'],
+            'filteredClickRateDelivered' => [25.0, 'delivered'],
         ] as $name => [$value, $denominator]) {
             foreach ([$report, new StatisticsDashboard([])->totals([$report])] as $result) {
                 $rate = $result->rate($name);

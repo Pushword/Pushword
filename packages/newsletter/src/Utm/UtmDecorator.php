@@ -6,6 +6,7 @@ namespace Pushword\Newsletter\Utm;
 
 use Pushword\Core\Component\EntityFilter\Filter\HtmlUnpublishedLink;
 use Pushword\Core\Site\SiteRegistry;
+use Pushword\Newsletter\Click\LinkMetadata;
 use Pushword\Newsletter\Entity\Audience;
 
 /**
@@ -26,8 +27,10 @@ final readonly class UtmDecorator
     ) {
     }
 
-    /** @param list<string> $untrackedUrls */
-    public function decorate(string $html, Audience $audience, ?UtmTag $utmTag, array $untrackedUrls = []): string
+    /** @param list<string> $untrackedUrls
+     * @param list<string>|null $markedScopes null preserves the body pass; a list selects explicit template roles
+     */
+    public function decorate(string $html, Audience $audience, ?UtmTag $utmTag, array $untrackedUrls = [], ?array $markedScopes = null): string
     {
         $source = $audience->utmSource;
 
@@ -37,9 +40,17 @@ final readonly class UtmDecorator
 
         return preg_replace_callback(
             HtmlUnpublishedLink::HTML_REGEX,
-            fn (array $match): string => \in_array(html_entity_decode($match['href'], \ENT_QUOTES | \ENT_HTML5), $untrackedUrls, true)
-                ? $match[0]
-                : $this->tagLink($match, $source, $utmTag),
+            function (array $match) use ($untrackedUrls, $markedScopes, $source, $utmTag): string {
+                $metadata = LinkMetadata::fromHtml('<a'.$match['before'].$match['after'].'>', null === $markedScopes ? 'body' : 'unknown');
+                $url = html_entity_decode($match['href'], \ENT_QUOTES | \ENT_HTML5);
+                if ('system' === $metadata->scope || \in_array($url, $untrackedUrls, true)
+                    || (null !== $markedScopes && ! \in_array($metadata->scope, $markedScopes, true))
+                    || 1 === preg_match('~/newsletter/(?:unsubscribe|confirm|c)/~', (string) parse_url($url, \PHP_URL_PATH))) {
+                    return $match[0];
+                }
+
+                return $this->tagLink($match, $source, $utmTag);
+            },
             $html
         ) ?? $html;
     }

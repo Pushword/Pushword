@@ -102,6 +102,8 @@ final class DeliveryStatisticsTest extends AbstractNewsletterTestCase
         $email = self::getMailerMessage();
         self::assertInstanceOf(Email::class, $email);
         self::assertSame($message->messageId, trim($email->getHeaders()->get('Message-ID')?->getBodyAsString() ?? '', '<> '));
+        self::assertSame($message->reference, $email->getHeaders()->get('X-Pushword-Newsletter-Message')?->getBodyAsString());
+        self::assertSame(['body'], $message->trackingScopes);
         $html = $email->getHtmlBody();
         self::assertIsString($html);
         self::assertStringContainsString('message='.$message->reference, $html);
@@ -121,6 +123,23 @@ final class DeliveryStatisticsTest extends AbstractNewsletterTestCase
         $this->client->request(Request::METHOD_GET, '/newsletter/c/'.$payload);
         self::assertResponseRedirects();
         self::assertSame(0, $this->entityManager->getRepository(ClickEvent::class)->count(['message' => $message]));
+    }
+
+    public function testUnrecordedConfirmationAndPreviewDoNotExposeTheLedgerHeader(): void
+    {
+        $audience = $this->createAudience();
+        $contact = $this->createContact($audience, 'unrecorded@example.tld');
+        $mailer = self::getContainer()->get(NewsletterMailer::class);
+        $mailer->sendConfirmation($contact);
+        $mailer->sendTest($audience, 'Preview', 'Body', null, 'preview@example.tld', null);
+        self::assertEmailCount(2);
+        foreach ([0, 1] as $index) {
+            $email = self::getMailerMessage($index);
+            self::assertInstanceOf(Email::class, $email);
+            self::assertFalse($email->getHeaders()->has('X-Pushword-Newsletter-Message'));
+        }
+
+        self::assertSame(0, $this->entityManager->getRepository(DeliveryMessage::class)->count([]));
     }
 
     public function testDeliveryEventsAreIdempotentAndKeepRemoteDatesAndReasons(): void

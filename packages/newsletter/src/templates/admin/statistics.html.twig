@@ -59,7 +59,7 @@
           <div class="table-responsive">
           <table class="table pw-statistics-table pw-statistics-comparison" role="table">
             <caption class="visually-hidden">{{ 'newsletter.statistics.reports'|trans }}</caption>
-            <thead><tr>{% for name in ['subject', 'accepted', 'clickRate', 'coverage', 'delivered'] %}<th scope="col">{{ ('newsletter.statistics.' ~ name)|trans }}</th>{% endfor %}</tr></thead>
+            <thead><tr>{% for name in ['subject', 'accepted', 'clickRate', 'clickRateDelivered', 'coverage', 'delivered'] %}<th scope="col">{{ ('newsletter.statistics.' ~ name)|trans }}</th>{% endfor %}</tr></thead>
             <tbody>
             {% for report in reports %}
               <tr data-source="{{ report.source }}" data-campaign="{{ report.id }}">
@@ -72,6 +72,7 @@
                 </th>
                 <td>{{ statistics.measure(report.metric('accepted')) }}</td>
                 <td>{{ statistics.fraction(report.rate('clickRate')) }}</td>
+                <td>{{ statistics.fraction(report.rate('clickRateDelivered')) }}</td>
                 <td>{{ statistics.fraction(report.rate('coverage')) }}</td>
                 <td>{{ statistics.measure(report.metric('delivered')) }}</td>
               </tr>
