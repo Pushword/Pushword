@@ -82,6 +82,12 @@ A site overriding `@pwAdmin/page/edit.html.twig` has to carry over the
 `unsaved_changes_banner.html.twig` include and the form's `data-pw-unsaved-key`
 attribute, or the recovery has nowhere to render.
 
+## Uploading media
+
+On a new or existing media form, choose a file or drop it anywhere on the page.
+A drop selects the first file; save the form to upload it.
+See [Media rules](/media-rules) to restrict accepted files.
+
 ## Customize the admin
 
 Admin is built on EasyAdmin. Page, redirection, media and user form fields are
