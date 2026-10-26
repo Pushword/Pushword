@@ -115,7 +115,7 @@ final class MotionProjectExporterTest extends KernelTestCase
         $carousel = new CarouselFactory()->fromArray($spec);
         $files = $exporter->files($carousel, $spec);
         self::assertSame($files, $exporter->files($carousel, $spec));
-        foreach (['package.json', '.gitignore', 'README.md', 'src/index.jsx', 'src/Scene.jsx', 'src/scenes.jsx', 'src/timeline.mjs', 'src/check.mjs', 'timeline.schema.json'] as $path) {
+        foreach (['package.json', '.gitignore', 'README.md', 'src/build.mjs', 'src/scene.mjs', 'src/scenes.mjs', 'src/player.mjs', 'src/run.mjs', 'src/soundtrack.mjs', 'src/timeline.mjs', 'src/check.mjs', 'timeline.schema.json'] as $path) {
             self::assertArrayHasKey($path, $files);
         }
 

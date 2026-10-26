@@ -24,7 +24,7 @@ test('packaged example prepares and validates without the monorepo or PHP', asyn
     const check = spawnSync(process.execPath, [join(out, 'src/check.mjs')], {encoding: 'utf8'});
     assert.equal(check.status, 0, check.stderr);
     assert.deepEqual(JSON.parse(check.stdout), {result: 'passed', slides: 5, assets: 0, durationInFrames: 528, seconds: 17.6});
-    for (const name of ['package.json', 'EXAMPLE.md', 'spec.json', '.gitignore', 'src/scenes.jsx',
+    for (const name of ['package.json', 'EXAMPLE.md', 'spec.json', '.gitignore', 'src/scenes.mjs',
       'public/photos/aurora.jpg', 'public/photos/camp.jpg', 'public/fonts/montserrat.ttf', 'public/fonts/work-sans.ttf']) {
       assert((await readFile(join(out, name))).length > 0, `${name} must be included`);
     }
@@ -42,9 +42,9 @@ test('preparing an example refuses an existing project and preserves its scenes'
     const run = () => spawnSync(process.execPath, [prepare, directory], {encoding: 'utf8'});
     assert.notEqual(run().status, 0, 'even an empty existing directory must be refused');
     await mkdir(join(directory, 'src'));
-    await writeFile(join(directory, 'src/scenes.jsx'), 'authored scene');
+    await writeFile(join(directory, 'src/scenes.mjs'), 'authored scene');
     assert.notEqual(run().status, 0);
-    assert.equal(await readFile(join(directory, 'src/scenes.jsx'), 'utf8'), 'authored scene');
+    assert.equal(await readFile(join(directory, 'src/scenes.mjs'), 'utf8'), 'authored scene');
   } finally {
     await rm(directory, {recursive: true, force: true});
   }

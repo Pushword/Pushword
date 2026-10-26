@@ -77,6 +77,9 @@ jobs:
       - name: Quiz runtime tests
         run: cd packages/quiz && yarn test
 
+      - name: Install FFmpeg for motion audio tests
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg
+
       - name: Repurpose motion and studio tests
         run: node --test packages/repurpose/tests/Motion/*.test.mjs
 

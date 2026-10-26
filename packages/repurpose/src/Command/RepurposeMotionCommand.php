@@ -19,7 +19,7 @@ use Symfony\Component\Filesystem\Exception\IOExceptionInterface;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
-#[AsCommand(name: 'pw:repurpose:motion', description: 'Export a carousel as an editable Remotion video project.')]
+#[AsCommand(name: 'pw:repurpose:motion', description: 'Export a carousel as an editable HyperFrames video project.')]
 final class RepurposeMotionCommand
 {
     use AgentOutputTrait;

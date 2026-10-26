@@ -13,7 +13,7 @@ social network. For static slides only, use [carousel.md](carousel.md).
 | Feature docs | `packages/docs/content/extension/repurpose.md` | `vendor/pushword/docs/content/extension/repurpose.md` |
 | Media API docs | `packages/docs/content/media-api.md` | `vendor/pushword/docs/content/media-api.md` |
 
-Rendering needs Node.js 22+, npm and Chromium's system libraries. The CMS needs
+Rendering needs Node.js 22+, npm, FFmpeg (including ffprobe) and Chromium's system libraries. The CMS needs
 none of the Node dependencies: install them in the generated project. Read its
 README for the pinned runtime and render commands. Keep authored projects and
 their npm lockfiles outside `vendor/`; Composer updates replace package files.
@@ -32,7 +32,7 @@ Use either starting point according to the brief:
   `bin/console pw:repurpose:validate spec.json`, then export:
   `bin/console pw:repurpose:motion spec.json /tmp/my-reel --host=example.com`.
   The new project contains the static artwork as editable SVG layers.
-- **Create custom scenes:** use the same export and edit `src/scenes.jsx`, or
+- **Create custom scenes:** use the same export and edit `src/scenes.mjs`, or
   start from the complete NORD. example shipped in `<repurpose>/examples/nord/`.
   From a Composer site's root:
 
@@ -56,23 +56,30 @@ two compatible levels:
 - `timeline.json`: order, durations and incoming crossfades in **frames**, plus
   per-layer `none`, `fade`, `rise` or `zoom-in`. Crossfades overlap scenes; they
   reduce total duration. Layer order is back-to-front.
-- `src/scenes.jsx`: register React components by timeline scene id (`slide-1`,
-  etc.). Each receives `{slide}` and its local `useCurrentFrame()` starts at 0.
-  Reuse `SlideLayers` from `./Scene` or draw the entire scene. The generated
-  README has a runnable component example; NORD. demonstrates five full scenes.
+- `src/scenes.mjs`: register objects by timeline scene id (`slide-1`, etc.).
+  `html(slide, video)` returns static HTML in Node;
+  `render(root, frame, slide, video)` updates that markup in the browser for the
+  requested local frame. Reuse `slideLayers` from `./scene.mjs` or supply all
+  artwork. NORD. demonstrates five complete HTML/JavaScript scenes.
 
-Derive animation from frame numbers. CSS animation clocks, timers and random
-values make seeking and rendering disagree. Load scene images and other assets
-from local files under `public/` through `staticFile()` and Remotion's media
-components, so rendering waits for them. Wait for custom fonts too; NORD.'s
-`Shell` demonstrates this.
+Derive animation from frame numbers. Timers and random values make seeking and
+rendering disagree. Reference local files under `public/` with `../public/` in
+scene markup, which is generated under `compositions/`. Keep images and fonts
+in the markup so HyperFrames can wait for them. Escape dynamic text with
+`escapeHtml` from `scene.mjs` before inserting it into HTML.
+
+`index.html`, `compositions/` and `public/generated/` are generated outputs.
+Edit `src/` and `timeline.json`; the npm commands rebuild them, and Studio
+watches these sources. Changes made to generated HTML in the HyperFrames browser
+editor are replaced on rebuild. Local rendering needs no HeyGen account; the
+npm commands disable HyperFrames telemetry.
 
 Add narration and music through the carousel spec's `audio` field before
 exporting, not in scene code. `audio.voice` and `audio.music` name audio files in
 the site's media library (MP3, WAV, M4A, OGG or FLAC; upload them through the
 media API first). The export copies them to `public/audio/`, and `timeline.json`'s
 `audio` plays, fades and ducks them across every scene. Do not also add an
-`<Audio>` for them in a scene: the track would play twice. For a project prepared
+`<audio>` for them in a scene: the track would play twice. For a project prepared
 from NORD., copy the files under `public/audio/` and declare them in
 `timeline.json`'s `audio` (see the generated README).
 
@@ -97,7 +104,7 @@ or stop it after previewing. Stills and MP4 rendering work without that server.
 
 `check` validates timing, declared SVG layer files and the `audio` settings and
 files in `timeline.json`. It does **not** compile
-custom scenes, verify all assets referenced by JSX, detect visual overlaps, or
+custom scenes, verify all assets referenced by scene markup or JavaScript, detect visual overlaps, or
 judge legibility. A passing check alone is not a reviewed video.
 
 Render and inspect representative frames: scene entrances, settled text, moving
@@ -155,7 +162,7 @@ retrieve its current spec first and preserve fields outside the requested edit.
 
    Replace sample copy, caption and image references before saving a new post.
    Import needed static-deck images through the same media API and use their
-   returned filenames. React scene assets remain inside the motion project.
+   returned filenames. Scene assets remain inside the motion project.
 
 3. Validate the updated spec; inspect and resolve violations and warnings:
 

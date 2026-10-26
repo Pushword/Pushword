@@ -4,16 +4,12 @@
   "type": "module",
   "scripts": {
     "check": "node src/check.mjs",
-    "studio": "remotion studio src/index.jsx",
-    "render": "remotion render src/index.jsx Repurpose out/video.mp4 --codec=h264 --pixel-format=yuv420p",
-    "still": "remotion still src/index.jsx Repurpose out/preview.png"
+    "build": "node src/build.mjs",
+    "studio": "node src/run.mjs studio",
+    "render": "node src/run.mjs render",
+    "still": "node src/run.mjs still"
   },
   "dependencies": {
-    "@remotion/cli": "4.0.538",
-    "@remotion/media": "4.0.538",
-    "@remotion/media-utils": "4.0.538",
-    "react": "19.3.1",
-    "react-dom": "19.3.1",
-    "remotion": "4.0.538"
+    "hyperframes": "0.8.203"
   }
 }

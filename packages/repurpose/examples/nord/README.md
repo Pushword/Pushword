@@ -3,9 +3,9 @@
 A complete 17.6-second, 1080 × 1920 reel: masked typography, photo moves, a drawn
 route, a constellation, staggered words and a circular outro. This example ships
 with `pushword/repurpose`, including its two demo photos, which are AI-generated,
-royalty-free images. Preparation uses the package's bundled fonts and Remotion
+royalty-free images. Preparation uses the package's bundled fonts and HyperFrames
 template; it needs no PHP, database, media library or development app. Rendering
-requires Node.js 22+ and npm.
+requires Node.js 22+, npm and FFmpeg (including ffprobe).
 
 From a Composer site's root, prepare a **new** directory (its parent must exist):
 
@@ -25,7 +25,7 @@ Keep the generated project and its npm lockfile outside `vendor/`.
 
 ## Adapt it
 
-- `src/scenes.jsx`: copy, layout and frame-based animation. These five scenes
+- `src/scenes.mjs`: copy, layout and frame-based animation. These five scenes
   supply their own artwork, so their timeline `layers` arrays are empty.
 - `timeline.json`: scene order, durations and crossfades. Scene starts are frames
   0, 110, 218, 330 and 408; the last frame is 527. A change in timing changes those
@@ -34,13 +34,13 @@ Keep the generated project and its npm lockfile outside `vendor/`.
 - `public/photos/` and `public/fonts/`: local artwork and fonts. Replace them as
   needed; no remote asset is required.
 - `spec.json`: the companion static carousel. Keep its copy in sync deliberately:
-  editing this JSON does not change the custom React scenes, or vice versa.
+  editing this JSON does not change the custom HTML/JavaScript scenes, or vice versa.
 
 Read the generated README for the shared scene API. Inspect the entrance, middle,
 transition and final frames before delivering `out/video.mp4`. In particular,
 check text against animated paths and images at mobile size. `npm run check`
 validates timing and declared SVG layers; it cannot detect overlaps or check the
-custom JSX's photos and fonts. Stills compile the scenes and exercise those assets.
+custom scenes' photos and fonts. Stills compile the scenes and exercise those assets.
 
 ## Show it in the admin
 

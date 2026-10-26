@@ -1,2 +1,6 @@
 node_modules/
 out/
+.hyperframes/
+index.html
+public/generated/
+compositions/

@@ -24,7 +24,7 @@
         "type": "object", "additionalProperties": false,
         "required": ["id", "durationInFrames", "transitionInFrames", "layers"],
         "properties": {
-          "id": {"type": "string", "minLength": 1, "description": "Unique id; also the key in src/scenes.jsx for a custom scene."},
+          "id": {"type": "string", "minLength": 1, "description": "Unique id; also the key in src/scenes.mjs for a custom scene."},
           "durationInFrames": {"type": "integer", "minimum": 1},
           "transitionInFrames": {"type": "integer", "minimum": 0, "description": "Incoming crossfade length; 0 on the first slide. Overlaps the previous slide, reducing total duration."},
           "layers": {
@@ -35,7 +35,7 @@
               "properties": {
                 "id": {"type": "string", "minLength": 1},
                 "src": {"type": "string", "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))[a-zA-Z0-9_./-]+$", "description": "Local path relative to public/."},
-                "animation": {"enum": ["none", "fade", "rise", "zoom-in"], "description": "fade/rise enter over half a second; zoom-in scales 1 to 1.04 over the scene. Custom motion belongs in src/Scene.jsx or src/scenes.jsx."}
+                "animation": {"enum": ["none", "fade", "rise", "zoom-in"], "description": "fade/rise enter over half a second; zoom-in scales 1 to 1.04 over the scene. Custom motion belongs in src/scene.mjs or src/scenes.mjs."}
               }
             }
           }

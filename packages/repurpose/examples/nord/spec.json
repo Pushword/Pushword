@@ -8,7 +8,7 @@
   "palette": {"bg": "#f2ecd9", "text": "#163b35", "accent": "#e96839"},
   "creatorOnSlides": "none",
   "counter": {"style": "none"},
-  "caption": "NORD. Une parenthèse au grand air. A motion-design study made with Pushword Repurpose: kinetic type, a drawn route, photo reveals and custom React scenes.",
+  "caption": "NORD. Une parenthèse au grand air. A motion-design study made with Pushword Repurpose: kinetic type, a drawn route, photo reveals and custom HTML/JavaScript scenes.",
   "hashtags": ["pushword", "motiondesign", "repurpose"],
   "slides": [
     {"tagline": "Une parenthèse au grand air", "title": "NORD.", "image": {"media": "1.jpg"}, "overlay": 0.25, "palette": {"text": "#f2ecd9"}},

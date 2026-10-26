@@ -63,7 +63,7 @@ final class RepurposeMotionCommandTest extends KernelTestCase
         }
 
         self::assertFileExists($out.'/timeline.json');
-        self::assertFileExists($out.'/src/scenes.jsx');
+        self::assertFileExists($out.'/src/scenes.mjs');
         self::assertStringContainsString('Guest Author', (string) file_get_contents($out.'/public/slides/slide-1/creator.svg'));
     }
 

@@ -6,7 +6,7 @@ const out = resolve(process.argv[2]);
 // Refuse existing directories, including empty ones, to preserve authored work.
 await mkdir(out);
 await cp(new URL('../../src/Resources/motion/', import.meta.url), out, {recursive: true});
-await copyFile(new URL('scenes.jsx', import.meta.url), join(out, 'src/scenes.jsx'));
+await copyFile(new URL('scenes.mjs', import.meta.url), join(out, 'src/scenes.mjs'));
 await copyFile(new URL('spec.json', import.meta.url), join(out, 'spec.json'));
 await copyFile(new URL('README.md', import.meta.url), join(out, 'EXAMPLE.md'));
 await cp(new URL('photos/', import.meta.url), join(out, 'public/photos'), {recursive: true});

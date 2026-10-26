@@ -102,7 +102,7 @@ handles URLs and emoji differently; Repurpose does not validate that count.
 bin/console pw:repurpose:schema                 # print the JSON Schema
 bin/console pw:repurpose:validate spec.json     # lint a spec (precise violations, non-zero exit)
 bin/console pw:repurpose:render spec.json out/  # render to out/slide-1.svg …
-bin/console pw:repurpose:motion spec.json video/ # export an editable Remotion project
+bin/console pw:repurpose:motion spec.json video/ # export an editable HyperFrames project
 bin/console pw:repurpose:fonts                  # list font pairings + installed status
 bin/console pw:repurpose:fonts bebas-neue-lato  # install a pairing's TTFs (or --all)
 ```
@@ -210,9 +210,9 @@ Omit a track to remove it. The files must exist in the site's media library.
 **Slideshow .mp4** includes the current editor's audio settings, even before saving.
 A motion project export copies both source files into `public/audio/`, preserves
 separate tracks in `timeline.json` (`src` replaces `media`), and applies the mix in
-Remotion preview and rendering. Music gain follows composition time across loops.
-The CMS uses FFmpeg's sidechain compressor; Remotion computes a deterministic
-frame-level envelope from the voice waveform.
+HyperFrames preview and rendering. Music gain follows composition time across loops.
+Both the CMS and the motion project use FFmpeg's sidechain compressor; the
+project prepares one local soundtrack shared by preview and rendering.
 
 Static slide previews and image exports have no audio. An imported **Rendered
 video** keeps its existing soundtrack: export and import a new render to hear
@@ -223,10 +223,10 @@ export to a new directory to get these audio controls.
 
 For guided authoring, visual review and delivery, use **`pw motion [brief or page]`** from the
 [`pw` AI skill](https://github.com/Pushword/Pushword/tree/main/packages/ai-skills).
-It supports the exported timeline and custom React scenes.
+It supports the exported timeline and custom HTML/JavaScript scenes.
 
 `pw:repurpose:motion spec.json video/ --host=example.com` exports a standalone
-[Remotion](https://www.remotion.dev/docs) project into a **new** directory. Use
+[HyperFrames](https://github.com/heygen-com/hyperframes) project into a **new** directory. Use
 `instagram` / `story-9-16` for a vertical video, or another valid network/format
 pair for square or landscape output. The command validates the carousel before
 writing and resolves the creator using the selected site.
@@ -240,14 +240,14 @@ npm run still -- --frame=45
 npm run render
 ```
 
-Requires Node.js 22+ and npm on the rendering machine. Remotion installs its own
-rendering dependencies, including a headless browser. No Node dependency is added
-to the CMS. The resulting H.264 video is `out/video.mp4`.
+Requires Node.js 22+, npm and FFmpeg (including ffprobe) on the rendering machine.
+HyperFrames finds or downloads a headless browser; Chromium's system libraries
+must be installed. No Node dependency is added to the CMS. The resulting H.264
+video is `out/video.mp4`.
 
-Remotion is not MIT-licensed. Its [license](https://www.remotion.dev/license)
-is free for individuals, for-profit organizations with up to 3 employees,
-non-profit or not-for-profit organizations, and evaluation before any commercial
-use. Other companies need a paid [Company License](https://www.remotion.pro/license).
+HyperFrames uses Apache-2.0, with no company-size threshold or per-render licence
+fee for local rendering. The generated project uses native JavaScript animation
+and disables HyperFrames telemetry in its npm commands. It needs no cloud account.
 
 `timeline.json` defines dimensions, fps, scene order, durations and incoming
 crossfades **in frames**; `timeline.schema.json` describes its shape. Crossfades
@@ -255,13 +255,20 @@ overlap scenes and reduce total duration. Each slide exports SVG layers in
 drawing order, preserving the static layout and embedded assets. Layers support
 `none`, `fade`, `rise` and `zoom-in` animations.
 
-For custom animation, edit `src/Scene.jsx` or register a React component by slide
-id in `src/scenes.jsx`. Reuse `SlideLayers` or supply your own artwork and local
-assets. Derive motion from `useCurrentFrame()` so seeking and rendering agree.
-The exported README includes a custom scene example.
+For custom animation, edit `src/scene.mjs` or register an object by slide id in
+`src/scenes.mjs`: `html(slide, video)` returns the markup, and
+`render(root, frame, slide, video)` updates it for a local frame. Reuse
+`slideLayers` or supply your own artwork. Use local assets under `public/`,
+referenced as `../public/` from the generated compositions. The exported README
+includes a runnable scene example.
+
+`npm run build` generates `index.html`, `compositions/` and the soundtrack under
+`public/generated/`; preview, stills and rendering run it automatically. Studio
+rebuilds on timeline or scene module changes. Edit the source files: rebuilding
+replaces changes made to generated HTML, including browser-editor changes.
 
 `npm run check` reports timeline errors and missing layer assets as JSON. It does
-not detect visual overlaps or validate every asset referenced by custom JSX.
+not detect visual overlaps or validate every asset referenced by custom scenes.
 Inspect stills at mobile size for entrances, text crossings, transitions and the
 final frame, then render and review the MP4. Timeline edits do not update
 `spec.json` or the stored post. Keep the editable project outside `vendor/`;
@@ -274,7 +281,7 @@ Import the MP4 or WebM into the media library, then select it under **Deck →
 Rendered video** in the studio. The **Slides / Rendered video** toggle switches
 between the live static deck and a native video player with playback, seeking,
 fullscreen and download. A post with an attached video opens on the video view.
-The player shows the last imported render. After editing scenes in Remotion
+The player shows the last imported render. After editing scenes in HyperFrames
 Studio, render and import the new video to update it.
 
 Agents can attach the same media through the optional top-level `video` field in
@@ -286,7 +293,7 @@ static deck.
 ### Packaged example: NORD.
 
 Every installation of `pushword/repurpose` includes a complete five-scene vertical
-reel in `examples/nord/`: custom React scenes, a companion static spec, local demo
+reel in `examples/nord/`: custom HTML/JavaScript scenes, a companion static spec, local demo
 photos and a preparation script. Its copy is in French, and its spec references
 `repurpose-nord.mp4`, `1.jpg` and `3.jpg`: media that only the development app
 has. On another site, import the photos and your own render, then use their

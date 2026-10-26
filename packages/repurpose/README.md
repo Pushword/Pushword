@@ -14,10 +14,10 @@ modelled as an organic image Pin: one 2:3 visual with a required caption.
 - **Pixel-exact export** — the browser rasterises the SVG to PNG; PHP assembles a
   `.zip` (PNGs + caption) and, for LinkedIn, a multipage PDF. No headless browser,
   no npm dependency.
-- **Motion design** — `pw:repurpose:motion` exports a local Remotion project:
+- **Motion design** — `pw:repurpose:motion` exports a local HyperFrames project:
   editable timeline, SVG layers, crossfades and per-layer animation presets. An
-  agent can add custom React scenes, preview frames and render an H.264 video.
-  Node/Remotion dependencies are installed only in the exported project.
+  agent can add custom HTML/JavaScript scenes, preview frames and render an H.264 video.
+  Node/HyperFrames dependencies are installed only in the exported project.
 - **Flat or DB** — carousels round-trip through `pw:flat:sync` as JSON files, so
   they live in git on a flat-file site and in the database on a dynamic one.
 
@@ -37,7 +37,7 @@ It covers the brief, scene authoring, visual checks, video render, upload and
 attachment to an admin draft.
 
 Try the complete [NORD. motion example](examples/nord/README.md), shipped with
-this package. From a Composer site's root (Node.js 22+):
+this package. From a Composer site's root (Node.js 22+ and FFmpeg):
 
 ```sh
 node vendor/pushword/repurpose/examples/nord/prepare.mjs /tmp/nord-motion

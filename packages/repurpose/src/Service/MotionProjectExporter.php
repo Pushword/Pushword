@@ -13,7 +13,7 @@ use function Safe\stream_get_contents;
 
 use Symfony\Component\Finder\Finder;
 
-/** Exports source files only. Agent-authored React executes in the exported project. */
+/** Exports source files only. Agent-authored JavaScript executes in the exported project. */
 final readonly class MotionProjectExporter
 {
     public function __construct(

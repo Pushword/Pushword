@@ -11,8 +11,8 @@ media entry for `media~/repurpose-nord.mp4`. Open that post in the admin studio:
 deck from the package example's `spec.json`. Loading fixtures does not require
 Node.js or a video render.
 
-To edit the animation, prepare a new Remotion project from the repository root
-(Node.js 22+ and npm required):
+To edit the animation, prepare a new HyperFrames project from the repository root
+(Node.js 22+, npm and FFmpeg required):
 
 ```sh
 node packages/repurpose/examples/nord/prepare.mjs /tmp/nord-motion
@@ -23,7 +23,7 @@ npm run studio
 npm run render
 ```
 
-The preparation script copies the Remotion template, scenes and local assets,
+The preparation script copies the HyperFrames template, scenes and local assets,
 then sets the timing in `timeline.json`. All animation derives from frame numbers.
 Edit the generated project; update the package example's source if the fixture
 itself changes.

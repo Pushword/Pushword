@@ -21,33 +21,3 @@ export function audioMix(raw) {
   }
   return mix;
 }
-
-export function trackVolume(track, frame, fps, durationInFrames) {
-  if (frame < 0 || frame >= durationInFrames) return 0;
-  const fadeIn = track.fadeIn > 0 ? Math.min(1, frame / (track.fadeIn * fps)) : 1;
-  const fadeOut = track.fadeOut > 0 ? Math.min(1, (durationInFrames - 1 - frame) / (track.fadeOut * fps)) : 1;
-  return track.volume * fadeIn * fadeOut;
-}
-
-// Precompute from frame zero: seeking and rendering in parallel use the same gain.
-export function duckingEnvelope(data, voice, fps, durationInFrames) {
-  const gains = [];
-  const voiceFrames = Math.min(durationInFrames, Math.ceil(data.durationInSeconds * fps));
-  let gain = 1;
-  for (let frame = 0; frame < durationInFrames; frame++) {
-    const start = Math.floor(frame * data.sampleRate / fps);
-    const end = Math.floor((frame + 1) * data.sampleRate / fps);
-    let energy = 0;
-    for (const channel of data.channelWaveforms) {
-      let sum = 0;
-      for (let sample = start; sample < Math.min(end, channel.length); sample++) sum += channel[sample] ** 2;
-      energy = Math.max(energy, sum / (end - start));
-    }
-    const level = Math.sqrt(energy) * trackVolume(voice, frame, fps, voiceFrames);
-    const target = level > 0.02 ? (0.02 / level) ** (1 - 1 / 8) : 1;
-    const smoothing = Math.exp(-1 / (fps * (target < gain ? 0.05 : 0.4)));
-    gain = target + (gain - target) * smoothing;
-    gains.push(gain);
-  }
-  return gains;
-}

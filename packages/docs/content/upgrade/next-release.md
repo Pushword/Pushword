@@ -1,5 +1,5 @@
 ---
-title: 'newsletter links drop utm_term, the catalogue needs an external source and opens subjects through the first action, and StatisticsRepository::totals() is gone; admin reference help is opt-in per field; weight column and editor widget overrides need updating; motion audio errors name their track; sites may refuse the audio uploads accepted since 1.0.83; newsletter reports add delivered click rates and link placements'
+title: 'newsletter links drop utm_term, the catalogue needs an external source and opens subjects through the first action, and StatisticsRepository::totals() is gone; admin reference help is opt-in per field; weight column and editor widget overrides need updating; motion projects use HyperFrames; motion audio errors name their track; sites may refuse the audio uploads accepted since 1.0.83; newsletter reports add delivered click rates and link placements'
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 run: 'doctrine:schema:update --force'
@@ -94,3 +94,8 @@ Delivery counts without a verified collector snapshot are now marked as observed
 ## Newsletter admin compatibility
 
 **Sites with `pushword/admin` installed:** update it to at least 1.0.84 together with `pushword/newsletter`; the newsletter forms use the `context_help` option introduced in that admin release. The admin remains optional; Composer rejects older installed admin versions.
+
+## Motion projects use HyperFrames
+
+New `pw:repurpose:motion` exports use Apache-2.0 HyperFrames and need Node.js 22+, npm and FFmpeg (including ffprobe).
+**Sites with existing motion projects:** keep them as they are, or export to a new directory and port React scenes to the `html`/`render` API in `src/scenes.mjs` ([Motion design](/extension/repurpose#motion-design-and-agent-authored-videos)). Existing projects are never overwritten or migrated automatically.
