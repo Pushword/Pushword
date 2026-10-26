@@ -609,6 +609,11 @@
       pickVideo: function (mode) {
         this.pickMedia('video', null, mode)
       },
+      audioError: function (track, field) {
+        var path = 'audio.' + track + '.' + field
+        var violation = this.violations.find(function (item) { return item.path === path })
+        return violation ? violation.message : ''
+      },
       pickAudio: function (track, mode) {
         this.pickMedia('audio', track, mode)
       },

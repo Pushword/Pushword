@@ -183,9 +183,9 @@ Binaries are auto-detected from `PATH`; override with `repurpose.chromium_binary
 
 ## Voice and music
 
-In the studio, open **Deck → Voice and music**. Choose or upload a voice recording
-and a music file independently (MP3, WAV, M4A, OGG or FLAC). Each track has a volume
-from 0 to 100% (0 mutes it), plus fade-in and fade-out durations in seconds (0–30).
+In the studio, open **Voice and music**, above the deck settings. Choose or upload
+a voice recording and a music file independently (MP3, WAV, M4A, OGG or FLAC). Each
+track has a volume from 0 to 100% (0 mutes it), plus fade-in and fade-out durations in seconds (0–30).
 Both start at the beginning of the video. Narration plays once; music loops to the
 video end. Fade-out ends at the voice recording's end or the video end, whichever
 comes first; music fades at the video end.

@@ -68,9 +68,28 @@
     .video-preview .media-picker__actions { flex-wrap: wrap; justify-content: center; }
     .field-label { font-size: .75rem; font-weight: 600; }
     .video-filename { overflow-wrap: anywhere; font-size: .75rem; color: var(--muted-2); }
-    .audio-track { border: 0; padding: .75rem 0; margin: 0; min-width: 0; }
-    .audio-track legend { font-size: .85rem; font-weight: 600; }
-    .audio-note { color: var(--muted-2); font-size: .75rem; margin: .5rem 0; }
+    .audio-panel > summary { list-style: none; }
+    .audio-panel > summary::-webkit-details-marker { display: none; }
+    .audio-panel[open] > summary .chev { transform: rotate(90deg); }
+    .audio-summary__state { margin-left: auto; font-size: .75rem; color: var(--muted); }
+    .audio-fields { display: grid; gap: 1.5rem; padding: .5rem 0 1rem; }
+    .audio-track { border: 0; padding: 0; margin: 0; min-width: 0; }
+    .audio-track legend { padding: 0; margin-bottom: .5rem; font-size: .875rem; font-weight: 600; }
+    .audio-track__body, .audio-settings { display: grid; gap: 1rem; }
+    .audio-source__name { margin: 0 0 .25rem; overflow-wrap: anywhere; font-size: .875rem; line-height: 1.5; }
+    .audio-note { display: block; color: var(--muted-2); font-size: .8125rem; line-height: 1.5; margin: 0; }
+    .audio-source .media-picker__actions { margin-top: .75rem; flex-wrap: wrap; }
+    .field.audio-level { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: baseline; }
+    .audio-level input, .audio-level .audio-error { grid-column: 1 / -1; }
+    .audio-level__value { font-size: .875rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+    .media-picker__actions .audio-remove { border-color: transparent; background: transparent; font-weight: 400; }
+    .media-picker__actions .audio-remove:hover { border-color: transparent; text-decoration: underline; }
+    .audio-ducking { display: flex; align-items: flex-start; gap: .75rem; cursor: pointer; }
+    .audio-ducking input { flex: 0 0 auto; width: 1.125rem; height: 1.125rem; margin: .125rem 0; accent-color: var(--accent); }
+    .audio-ducking strong { display: block; font-size: .875rem; font-weight: 600; line-height: 1.5; margin-bottom: .25rem; }
+    .audio-export { display: grid; justify-items: start; gap: .75rem; border-top: 1px solid var(--line); padding-top: 1rem; }
+    .audio-error { margin: .25rem 0 0; color: var(--bad); font-size: .8125rem; line-height: 1.5; }
+    .audio-settings input[aria-invalid=true] { border-color: var(--bad); }
     .deck { display: flex; gap: 1.1rem; overflow-x: auto; padding: .25rem .25rem 1.25rem; scroll-snap-type: x mandatory; scrollbar-width: thin; scrollbar-color: var(--line-2) transparent; }
     .deck::-webkit-scrollbar { height: 9px; }
     .deck::-webkit-scrollbar-thumb { background: var(--line-2); border-radius: 999px; }
@@ -109,14 +128,13 @@
     .deck-fields { display: flex; flex-direction: column; gap: 1rem; }
     .grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .6rem; }
     .field { display: flex; flex-direction: column; gap: .28rem; min-width: 0; }
-    .field > label { font-size: .72rem; color: var(--muted-2); display: flex; justify-content: space-between; gap: .5rem; }
+    .field > label { font-size: .8125rem; line-height: 1.4; color: var(--muted-2); display: flex; justify-content: space-between; gap: .5rem; }
     .field > label .val { color: var(--muted); font-variant-numeric: tabular-nums; }
-    .field > label.audio-ducking { justify-content: flex-start; align-items: flex-start; }
     .field.full { grid-column: 1 / -1; }
 
     input[type=text], input[type=number], input[type=datetime-local], textarea, select {
       width: 100%; background: var(--field); border: 1px solid var(--line-2); border-radius: 8px; padding: .42rem .55rem;
-      color: var(--text); font-size: .8rem; font-family: inherit;
+      color: var(--text); font-size: .875rem; font-family: inherit;
     }
     textarea { resize: vertical; min-height: 3.2rem; line-height: 1.45; }
     input:focus, textarea:focus, select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px #0d6efd26; }
@@ -153,7 +171,7 @@
     .media-picker.is-empty .media-picker__name { color: var(--muted); font-style: italic; }
     .image-cell + .image-cell { margin-top: .55rem; padding-top: .55rem; border-top: 1px dashed var(--line-2); }
     .media-picker__actions { display: flex; gap: .35rem; }
-    .btn-xs { border: 1px solid var(--line-2); background: var(--panel); color: var(--muted-2); border-radius: 6px; padding: .28rem .55rem; font-size: .7rem; font-weight: 600; cursor: pointer; }
+    .btn-xs { border: 1px solid var(--line-2); background: var(--panel); color: var(--muted-2); border-radius: 6px; padding: .375rem .625rem; min-height: 32px; font-size: .8125rem; font-weight: 600; cursor: pointer; }
     .btn-xs:hover { border-color: var(--muted); color: var(--text); }
     .btn-xs.danger:hover { color: var(--bad); border-color: var(--bad); }
 
@@ -275,6 +293,9 @@
       .studio-target { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .75rem; }
       .studio-target .field { width: auto; }
       .studio-target select { min-height: 44px; font-size: 1rem; }
+      .audio-panel .btn, .audio-panel .btn-xs, .audio-panel > summary { min-height: 44px; }
+      .audio-panel input[type=number] { min-height: 44px; font-size: 1rem; }
+      .audio-panel input[type=range], .audio-ducking { min-height: 44px; }
       .deck-note { flex-wrap: wrap; }
       .deck-note span { flex-basis: 100%; }
     }
@@ -287,7 +308,7 @@
         min-width: 44px;
       }
       header .back { display: inline-flex; align-items: center; }
-      input[type=text], input[type=datetime-local], textarea, select { min-height: 44px; font-size: 1rem; }
+      input[type=text], input[type=number], input[type=datetime-local], textarea, select { min-height: 44px; font-size: 1rem; }
       input[type=range], input[type=color], .switch, .slide-item__head { min-height: 44px; }
     }
     @media (prefers-reduced-motion: reduce) {
@@ -303,6 +324,14 @@
       slides: {{ slidesJs|raw }},
       video: {{ videoJs|raw }},
       messages: {
+        audioChooseMusic: {{ 'repurposeAudioChooseMusic'|trans|json_encode(constant('JSON_HEX_APOS') b-or constant('JSON_HEX_QUOT'))|raw }},
+        audioChooseVoice: {{ 'repurposeAudioChooseVoice'|trans|json_encode(constant('JSON_HEX_APOS') b-or constant('JSON_HEX_QUOT'))|raw }},
+        audioConfigured: {{ 'repurposeAudioConfigured'|trans|json_encode(constant('JSON_HEX_APOS') b-or constant('JSON_HEX_QUOT'))|raw }},
+        audioDuckingHint: {{ 'repurposeAudioDuckingHint'|trans|json_encode(constant('JSON_HEX_APOS') b-or constant('JSON_HEX_QUOT'))|raw }},
+        audioDuckingNeedsTracks: {{ 'repurposeAudioDuckingNeedsTracks'|trans|json_encode(constant('JSON_HEX_APOS') b-or constant('JSON_HEX_QUOT'))|raw }},
+        audioEmpty: {{ 'repurposeAudioEmpty'|trans|json_encode(constant('JSON_HEX_APOS') b-or constant('JSON_HEX_QUOT'))|raw }},
+        audioExport: {{ 'repurposeAudioExport'|trans|json_encode(constant('JSON_HEX_APOS') b-or constant('JSON_HEX_QUOT'))|raw }},
+        audioReplace: {{ 'repurposeAudioReplace'|trans|json_encode(constant('JSON_HEX_APOS') b-or constant('JSON_HEX_QUOT'))|raw }},
         audioTitle: {{ 'repurposeAudioTitle'|trans|json_encode(constant('JSON_HEX_APOS') b-or constant('JSON_HEX_QUOT'))|raw }},
         audioInvalid: {{ 'repurposeAudioInvalid'|trans|json_encode(constant('JSON_HEX_APOS') b-or constant('JSON_HEX_QUOT'))|raw }},
         videoTitle: {{ 'repurposeVideoTitle'|trans|json_encode(constant('JSON_HEX_APOS') b-or constant('JSON_HEX_QUOT'))|raw }},
@@ -428,6 +457,65 @@
 
       {# ---------- VISUAL EDITOR ---------- #}
       <div id="rp-visual-editor" role="region" aria-label="Visual editor" x-show="view === 'visual'" style="display:flex;flex-direction:column;gap:1rem;">
+        <section class="group">
+          <details class="audio-panel" id="rp-audio-fields" x-init="$el.open = !!(spec.audio.voice.media || spec.audio.music.media)">
+            <summary class="group-head audio-summary">
+              <span class="chev" aria-hidden="true">▸</span>
+              <span class="group-title">{{ 'repurposeAudioTitle'|trans }}</span>
+              <span class="audio-summary__state" x-text="spec.audio.voice.media || spec.audio.music.media ? messages.audioConfigured : messages.audioEmpty"></span>
+            </summary>
+            <div class="audio-fields">
+              <p class="audio-note">{{ 'repurposeAudioIntro'|trans }}</p>
+              {% for track, label in {voice: 'repurposeAudioVoice', music: 'repurposeAudioMusic'} %}
+                <fieldset class="audio-track">
+                  <legend>{{ label|trans }}</legend>
+                  <div class="audio-track__body">
+                    <div class="audio-source">
+                      <p class="audio-source__name" x-text="spec.audio.{{ track }}.media || {{ (track == 'voice' ? 'repurposeAudioVoiceEmpty' : 'repurposeAudioMusicEmpty')|trans|json_encode }}"></p>
+                      <p class="audio-note">{{ (track == 'voice' ? 'repurposeAudioVoiceHint' : 'repurposeAudioMusicHint')|trans }}</p>
+                      <div class="media-picker__actions">
+                        <button type="button" class="btn-xs" x-on:click="pickAudio('{{ track }}', 'choose')" aria-describedby="rp-{{ track }}-media-error" x-text="spec.audio.{{ track }}.media ? messages.audioReplace : messages.{{ track == 'voice' ? 'audioChooseVoice' : 'audioChooseMusic' }}"></button>
+                        <button type="button" class="btn-xs" x-on:click="pickAudio('{{ track }}', 'upload')">{{ 'repurposeVideoUpload'|trans }}</button>
+                        <button type="button" class="btn-xs audio-remove" x-show="spec.audio.{{ track }}.media" x-cloak x-on:click="spec.audio.{{ track }}.media = ''">{{ 'repurposeVideoRemove'|trans }}</button>
+                      </div>
+                      <p id="rp-{{ track }}-media-error" class="audio-error" x-show="audioError('{{ track }}', 'media')" x-cloak x-text="audioError('{{ track }}', 'media')"></p>
+                    </div>
+                    <div class="audio-settings" x-show="spec.audio.{{ track }}.media" x-cloak>
+                      <div class="field audio-level">
+                        <label for="rp-{{ track }}-volume">{{ 'repurposeAudioVolume'|trans }}</label>
+                        <output class="audio-level__value" for="rp-{{ track }}-volume" aria-hidden="true" x-text="Math.round(spec.audio.{{ track }}.volume * 100) + ' %'"></output>
+                        <input id="rp-{{ track }}-volume" type="range" min="0" max="1" step="0.01" x-model.number="spec.audio.{{ track }}.volume"
+                               x-bind:aria-valuetext="Math.round(spec.audio.{{ track }}.volume * 100) + ' %'" x-bind:aria-invalid="!!audioError('{{ track }}', 'volume')" aria-describedby="rp-{{ track }}-volume-error">
+                        <p id="rp-{{ track }}-volume-error" class="audio-error" x-show="audioError('{{ track }}', 'volume')" x-cloak x-text="audioError('{{ track }}', 'volume')"></p>
+                      </div>
+                      <div class="grid2">
+                        {% for fade, fadeLabel in {fadeIn: 'repurposeAudioFadeIn', fadeOut: 'repurposeAudioFadeOut'} %}
+                          <div class="field">
+                            <label for="rp-{{ track }}-{{ fade }}">{{ fadeLabel|trans }}</label>
+                            <input id="rp-{{ track }}-{{ fade }}" type="number" min="0" max="30" step="0.1" inputmode="decimal" x-model.number="spec.audio.{{ track }}.{{ fade }}"
+                                   x-bind:aria-invalid="!!audioError('{{ track }}', '{{ fade }}')" aria-describedby="rp-{{ track }}-{{ fade }}-error">
+                            <p id="rp-{{ track }}-{{ fade }}-error" class="audio-error" x-show="audioError('{{ track }}', '{{ fade }}')" x-cloak x-text="audioError('{{ track }}', '{{ fade }}')"></p>
+                          </div>
+                        {% endfor %}
+                      </div>
+                    </div>
+                  </div>
+                </fieldset>
+              {% endfor %}
+              <label class="audio-ducking" for="rp-audio-ducking">
+                <input id="rp-audio-ducking" type="checkbox" x-model="spec.audio.ducking" x-bind:disabled="!spec.audio.voice.media || !spec.audio.music.media" aria-describedby="rp-audio-ducking-hint">
+                <span>
+                  <strong>{{ 'repurposeAudioDucking'|trans }}</strong>
+                  <span id="rp-audio-ducking-hint" class="audio-note" x-text="spec.audio.voice.media && spec.audio.music.media ? messages.audioDuckingHint : messages.audioDuckingNeedsTracks"></span>
+                </span>
+              </label>
+              <div class="audio-export">
+                <p class="audio-note">{{ 'repurposeAudioExportNote'|trans }}</p>
+                <button type="button" class="btn" x-show="spec.audio.voice.media || spec.audio.music.media" x-cloak x-on:click="exportVideo()" x-bind:disabled="exportingVideo" x-text="exportingVideo ? exportVideoLabel : messages.audioExport"></button>
+              </div>
+            </div>
+          </details>
+        </section>
         <section class="group" :class="{ 'open': deckOpen }">
           <button type="button" class="group-head" @click="toggleDeck()" :aria-expanded="deckOpen" aria-controls="rp-deck-fields">
             <span class="chev" aria-hidden="true" x-text="deckOpen ? '▾' : '▸'"></span>
@@ -444,36 +532,6 @@
                   <button type="button" class="btn-xs" x-show="spec.video" @click="clearVideo()">{{ 'repurposeVideoRemove'|trans }}</button>
                 </div>
               </div>
-              <details class="field full" id="rp-audio-fields">
-                <summary>{{ 'repurposeAudioTitle'|trans }}</summary>
-                <p class="audio-note">{{ 'repurposeAudioNote'|trans }}</p>
-                {% for track, label in {voice: 'repurposeAudioVoice', music: 'repurposeAudioMusic'} %}
-                  <fieldset class="audio-track">
-                    <legend>{{ label|trans }}</legend>
-                    <span class="video-filename" x-text="spec.audio.{{ track }}.media || '—'"></span>
-                    <div class="media-picker__actions">
-                      <button type="button" class="btn-xs" x-on:click="pickAudio('{{ track }}', 'choose')">{{ 'repurposeVideoChoose'|trans }}</button>
-                      <button type="button" class="btn-xs" x-on:click="pickAudio('{{ track }}', 'upload')">{{ 'repurposeVideoUpload'|trans }}</button>
-                      <button type="button" class="btn-xs" x-show="spec.audio.{{ track }}.media" x-cloak x-on:click="spec.audio.{{ track }}.media = ''">{{ 'repurposeVideoRemove'|trans }}</button>
-                    </div>
-                    <div class="grid2" x-show="spec.audio.{{ track }}.media" x-cloak>
-                      <div class="field full">
-                        <label for="rp-{{ track }}-volume">{{ 'repurposeAudioVolume'|trans }} <span class="val" x-text="Math.round(spec.audio.{{ track }}.volume * 100) + ' %'"></span></label>
-                        <input id="rp-{{ track }}-volume" type="range" min="0" max="1" step="0.01" x-model.number="spec.audio.{{ track }}.volume">
-                      </div>
-                      {% for fade, fadeLabel in {fadeIn: 'repurposeAudioFadeIn', fadeOut: 'repurposeAudioFadeOut'} %}
-                        <div class="field">
-                          <label for="rp-{{ track }}-{{ fade }}">{{ fadeLabel|trans }}</label>
-                          <input id="rp-{{ track }}-{{ fade }}" type="number" min="0" max="30" step="0.1" x-model.number="spec.audio.{{ track }}.{{ fade }}">
-                        </div>
-                      {% endfor %}
-                    </div>
-                  </fieldset>
-                {% endfor %}
-                <div class="field">
-                  <label class="audio-ducking" for="rp-audio-ducking"><input id="rp-audio-ducking" type="checkbox" x-model="spec.audio.ducking"> {{ 'repurposeAudioDucking'|trans }}</label>
-                </div>
-              </details>
               <div class="field full" x-id="['field']">
                 <label :for="$id('field')">Page <span class="val" x-show="isStandalone" x-cloak>standalone — not linked</span></label>
                 <div class="page-link">

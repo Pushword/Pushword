@@ -20,6 +20,21 @@ function selection(fileName, eventOrigin = origin) {
   return {origin: eventOrigin, data: {type: 'pw-media-picker-select', media: {fileName}}};
 }
 
+test('audio errors stay attached to the exact track and field and clear after validation', () => {
+  const state = studio();
+  state.violations = [
+    {path: 'slides[0].title', message: 'Add a title'},
+    {path: 'audio.voice.volume', message: 'Voice volume is out of range'},
+    {path: 'audio.music.fadeOut', message: 'Music fade is out of range'},
+  ];
+  assert.equal(state.audioError('voice', 'volume'), 'Voice volume is out of range');
+  assert.equal(state.audioError('music', 'fadeOut'), 'Music fade is out of range');
+  assert.equal(state.audioError('music', 'volume'), '');
+  assert.equal(state.audioError('voice', 'fadeOut'), '');
+  state.violations = [];
+  assert.equal(state.audioError('voice', 'volume'), '');
+});
+
 test('network switching names the destination and preserves edits when cancelled', () => {
   let message;
   const state = studio({network: 'instagram', networkUrls: {youtube: '/youtube'}, vocab: {networkLabels: {youtube: 'YouTube Shorts'}}}, undefined,

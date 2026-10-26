@@ -18,14 +18,27 @@ repurpose:
     plannedAt: Planned at
     updatedAt: Updated
 
+repurposeAudioChooseMusic: "Choose music"
+repurposeAudioChooseVoice: "Choose voice"
+repurposeAudioConfigured: "Configured"
 repurposeAudioDucking: "Lower music automatically during narration"
+repurposeAudioDuckingHint: "Music returns smoothly during pauses and after the narration."
+repurposeAudioDuckingNeedsTracks: "Add both a voice recording and music to enable this option."
+repurposeAudioEmpty: "No tracks"
+repurposeAudioExport: "Export MP4 with audio"
+repurposeAudioExportNote: "Audio changes apply to new exports. The imported video keeps its existing soundtrack."
 repurposeAudioFadeIn: "Fade in (s)"
 repurposeAudioFadeOut: "Fade out (s)"
+repurposeAudioIntro: "Add voice, background music, or both. Set each track independently."
 repurposeAudioInvalid: "Choose an MP3, WAV, M4A, OGG or FLAC audio file."
 repurposeAudioMusic: "Music"
-repurposeAudioNote: "Both tracks start with the video. Music loops to the end. Settings apply to new MP4 and motion exports; export again to hear your changes."
+repurposeAudioMusicEmpty: "No music selected"
+repurposeAudioMusicHint: "Loops from the start to the end of the video."
+repurposeAudioReplace: "Replace file"
 repurposeAudioTitle: "Voice and music"
 repurposeAudioVoice: "Voice / narration"
+repurposeAudioVoiceEmpty: "No voice recording selected"
+repurposeAudioVoiceHint: "Plays once, from the start of the video."
 repurposeAudioVolume: "Volume"
 repurposeConfirmationCancel: Cancel
 repurposeExport: 'Export'

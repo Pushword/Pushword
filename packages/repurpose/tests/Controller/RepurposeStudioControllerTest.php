@@ -143,6 +143,9 @@ final class RepurposeStudioControllerTest extends WebTestCase
         self::assertSelectorExists('#rp-audio-fields label[for="rp-voice-volume"]');
         self::assertSelectorExists('#rp-audio-fields label[for="rp-music-fadeOut"]');
         self::assertSelectorExists('#rp-audio-ducking[type="checkbox"]');
+        self::assertSelectorExists('#rp-music-fadeOut[aria-describedby="rp-music-fadeOut-error"]');
+        self::assertSelectorExists('#rp-music-fadeOut-error');
+        self::assertSelectorExists('#rp-voice-volume[aria-describedby="rp-voice-volume-error"]');
     }
 
     public function testSaveEditedSpecPersistsNewCopy(): void
