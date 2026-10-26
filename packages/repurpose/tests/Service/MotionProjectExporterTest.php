@@ -35,11 +35,20 @@ final class MotionProjectExporterTest extends KernelTestCase
         $layers = $renderer->renderSlideLayers($carousel, 0, $creator);
         self::assertSame(['background', 'images.0', 'images.1', 'overlay', 'effect', 'title', 'paragraph', 'texts.0', 'creator', 'counter', 'swipe'], array_keys($layers));
         $body = '';
-        foreach ($layers as $svg) {
-            self::assertStringContainsString('data:font/ttf;base64,', $svg);
+        $fonts = [];
+        foreach ($layers as $name => $svg) {
             self::assertStringContainsString('id="frame-0"', $svg);
+            preg_match_all("/@font-face\\{font-family:'([a-z-]+)';src:url\\('data:font\\/ttf;base64,/", $svg, $faces);
+            $fonts[$name] = $faces[1];
             $body .= $this->body($svg);
         }
+
+        // Only text layers embed a font, and only the ones they draw with.
+        self::assertSame([
+            'background' => [], 'images.0' => [], 'images.1' => [], 'overlay' => [], 'effect' => [],
+            'title' => ['rp-heading'], 'paragraph' => ['rp-body'], 'texts.0' => ['rp-body'], 'creator' => ['rp-body'],
+            'counter' => [], 'swipe' => [],
+        ], $fonts);
 
         self::assertSame($this->body($renderer->renderSlide($carousel, 0, $creator)), $body);
         self::assertSame([], $renderer->renderSlideLayers($carousel, 99));

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pushword\Repurpose\Service;
 
+use Closure;
 use Pushword\Repurpose\Model\Carousel;
 use Pushword\Repurpose\Model\Counter;
 use Pushword\Repurpose\Model\Creator;
@@ -58,12 +59,13 @@ final readonly class SlideRenderer
     {
         $parts = $this->slideParts($carousel, $index, $creator);
 
-        return null === $parts ? '' : $parts['open'].implode('', $parts['layers']).'</svg>';
+        return null === $parts ? '' : $parts['open'](implode('', $parts['fonts'])).implode('', $parts['layers']).'</svg>';
     }
 
     /**
      * Ordered, transparent, full-frame SVG layers for animation. Each keeps its
-     * embedded assets and clipping definitions, exactly as in the static slide.
+     * embedded assets and clipping definitions, exactly as in the static slide,
+     * but embeds only the fonts its own text uses: an image layer carries none.
      *
      * @return array<string, string> semantic layer id => self-contained SVG
      */
@@ -74,10 +76,14 @@ final readonly class SlideRenderer
             return [];
         }
 
-        return array_map(static fn (string $body): string => $parts['open'].$body.'</svg>', $parts['layers']);
+        return array_map(static function (string $body) use ($parts): string {
+            $fonts = array_filter($parts['fonts'], static fn (string $family): bool => str_contains($body, 'font-family="'.$family.'"'), \ARRAY_FILTER_USE_KEY);
+
+            return $parts['open'](implode('', $fonts)).$body.'</svg>';
+        }, $parts['layers']);
     }
 
-    /** @return array{open: string, layers: array<string, string>}|null */
+    /** @return array{open: Closure(string): string, fonts: array<string, string>, layers: array<string, string>}|null */
     private function slideParts(Carousel $carousel, int $index, ?Creator $creator): ?array
     {
         $slide = $carousel->slides[$index] ?? null;
@@ -96,8 +102,10 @@ final readonly class SlideRenderer
         $headingFile = $this->fonts->headingFile($carousel->fontPairing);
         $bodyFile = $this->fonts->bodyFile($carousel->fontPairing);
 
-        $defs = $this->embedder->fontFace('rp-heading', $headingFile)
-            .$this->embedder->fontFace('rp-body', $bodyFile);
+        $fonts = [
+            'rp-heading' => $this->embedder->fontFace('rp-heading', $headingFile),
+            'rp-body' => $this->embedder->fontFace('rp-body', $bodyFile),
+        ];
 
         $effect = $slide->background ?? $carousel->background;
 
@@ -112,12 +120,12 @@ final readonly class SlideRenderer
             'swipe' => $this->renderSwipe($slide, $width, $height, $text, $accent),
         ];
 
-        $open = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 '.$width.' '.$height.'" '
+        $open = static fn (string $fontFaces): string => '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 '.$width.' '.$height.'" '
             .'width="'.$width.'" height="'.$height.'" font-family="rp-body">'
-            .'<defs><style>'.$defs.'</style>'
+            .'<defs>'.('' === $fontFaces ? '' : '<style>'.$fontFaces.'</style>')
             .'<clipPath id="frame-'.$index.'"><rect width="'.$width.'" height="'.$height.'"/></clipPath></defs>';
 
-        return ['open' => $open, 'layers' => array_filter($layers, static fn (string $body): bool => '' !== $body)];
+        return ['open' => $open, 'fonts' => $fonts, 'layers' => array_filter($layers, static fn (string $body): bool => '' !== $body)];
     }
 
     /** @return array<string, string> */
