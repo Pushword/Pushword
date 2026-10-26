@@ -22,7 +22,9 @@ final class TranslationLocalesTest extends TestCase
         $englishFiles = new Finder()->files()->in($packages.'/*/src')->path('#^(Resources/)?translations/[^/]+\.en\.yaml$#');
         foreach ($englishFiles as $english) {
             $domain = $english->getBasename('.en.yaml');
-            foreach (new Finder()->files()->in($english->getPath())->depth(0)->name($domain.'.*.yaml')->notName($english->getFilename()) as $file) {
+            $otherLocales = new Finder()->files()->in($english->getPath())->depth(0)
+                ->name($domain.'.*.yaml')->notName($english->getFilename());
+            foreach ($otherLocales as $file) {
                 yield substr($file->getPathname(), \strlen($packages) + 1) => [$english->getPathname(), $file->getPathname()];
             }
         }
@@ -43,7 +45,13 @@ final class TranslationLocalesTest extends TestCase
     {
         $keys = [];
         foreach (\is_array($messages) ? $messages : [] as $key => $value) {
-            $keys = [...$keys, ...(\is_array($value) ? $this->keys($value, $prefix.$key.'.') : [$prefix.$key])];
+            if (\is_array($value)) {
+                $keys = [...$keys, ...$this->keys($value, $prefix.$key.'.')];
+
+                continue;
+            }
+
+            $keys[] = $prefix.$key;
         }
 
         return $keys;
