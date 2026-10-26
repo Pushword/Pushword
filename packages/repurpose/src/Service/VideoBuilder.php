@@ -129,7 +129,7 @@ final class VideoBuilder
             $labels = ['[voiceMix]', '[ducked]'];
         }
 
-        $filters[] = implode('', $labels).'amix=inputs='.\count($labels).':normalize=0,alimiter=limit=0.95:level=false:latency=true[mix]';
+        $filters[] = implode('', $labels).'amix=inputs='.\count($labels).':normalize=0,alimiter=limit=0.95:level=false[mix]';
         $arguments[] = '-filter_complex';
         $arguments[] = implode(';', $filters);
         $arguments[] = '-map';
@@ -139,29 +139,44 @@ final class VideoBuilder
         $arguments[] = '-c:a';
         $arguments[] = 'aac';
         $arguments[] = '-t';
-        $arguments[] = (string) $duration;
+        $arguments[] = $this->decimal($duration);
 
         return $arguments;
     }
 
     private function trackFilters(AudioTrack $track, float $duration): string
     {
-        $filters = ['atrim=duration='.$duration, 'asetpts=PTS-STARTPTS', 'volume='.$track->volume];
-        if ($track->fadeIn > 0) {
-            $filters[] = 'afade=t=in:d='.$track->fadeIn;
+        $seconds = $this->decimal($duration);
+        $filters = ['atrim=duration='.$seconds, 'asetpts=PTS-STARTPTS', 'volume='.$this->decimal($track->volume)];
+        // A fade that rounds to zero is skipped: afade reads d=0 as unset and
+        // falls back to a 44100-sample fade.
+        if (round($track->fadeIn, 3) > 0) {
+            $filters[] = 'afade=t=in:d='.$this->decimal($track->fadeIn);
         }
 
-        if ($track->fadeOut > 0) {
+        if (round($track->fadeOut, 3) > 0) {
             // Reverse after trimming so a short narration fades at its own end.
             $filters[] = 'areverse';
-            $filters[] = 'afade=t=in:d='.$track->fadeOut;
+            $filters[] = 'afade=t=in:d='.$this->decimal($track->fadeOut);
             $filters[] = 'areverse';
         }
 
-        $filters[] = 'apad=whole_dur='.$duration;
-        $filters[] = 'atrim=duration='.$duration;
+        $filters[] = 'apad=whole_dur='.$seconds;
+        $filters[] = 'atrim=duration='.$seconds;
+        // Every track enters the mix as stereo, so a mono voice cannot fold the
+        // music into mono; a mono source plays on both sides at its own level.
+        $filters[] = 'pan=stereo|FL<FL+FC|FR<FR+FC';
 
         return implode(',', $filters);
+    }
+
+    /**
+     * A filter argument in plain decimals: PHP prints 0.00001 as 1.0E-5, which
+     * ffmpeg rejects as a duration.
+     */
+    private function decimal(float $value): string
+    {
+        return \sprintf('%.3F', $value);
     }
 
     /**

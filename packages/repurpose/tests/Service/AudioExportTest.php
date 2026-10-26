@@ -20,6 +20,7 @@ use Pushword\Repurpose\Service\SlideRenderer;
 use Pushword\Repurpose\Service\VideoBuilder;
 use RuntimeException;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
+use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Process\Process;
 
 #[Group('integration')]
@@ -30,11 +31,12 @@ final class AudioExportTest extends KernelTestCase
         $storage = new MediaStorageAdapter(new Flysystem(new InMemoryFilesystemAdapter()), '/unused', false);
         $storage->write('voice.wav', $this->wav(4, 440, true));
         $storage->write('music.wav', $this->wav(0.5, 1000));
+        $storage->write('stereo.wav', $this->wav(0.5, 1000, rightOnly: true));
 
         $repository = self::createStub(MediaRepository::class);
         $repository->method('findOneByFileNameOrHistory')->willReturnCallback(static fn (string $name): ?Media => match ($name) {
             'voice.wav', 'old-voice.wav' => new Media()->setFileName('voice.wav')->setMimeType('audio/wav'),
-            'music.wav', 'missing.wav' => new Media()->setFileName($name)->setMimeType('audio/wav'),
+            'music.wav', 'stereo.wav', 'missing.wav' => new Media()->setFileName($name)->setMimeType('audio/wav'),
             'photo.mp3' => new Media()->setFileName($name)->setMimeType('image/jpeg'),
             'no-mime.wav' => new Media()->setFileName($name),
             default => null,
@@ -103,6 +105,8 @@ final class AudioExportTest extends KernelTestCase
         self::assertLessThan($level / 2, $this->tone($faded, 0.1, 1000));
         self::assertLessThan($level / 2, $this->tone($faded, 8.7, 1000));
         self::assertEqualsWithDelta($level, $this->tone($faded, 5, 1000), 0.01);
+        $tinyFades = $this->samples($builder, new AudioMix(music: new AudioTrack('music.wav', 0.5, 0.00001, 0.00001)));
+        self::assertEqualsWithDelta($level, $this->tone($tinyFades, 0.1, 1000), 0.01, 'A fade below a millisecond must neither break the filter nor stretch.');
 
         $voice = new AudioTrack('voice.wav');
         $ducked = $this->samples($builder, new AudioMix($voice, $music));
@@ -114,27 +118,53 @@ final class AudioExportTest extends KernelTestCase
         self::assertEqualsWithDelta($this->tone($unDucked, 1.5, 440), $this->tone($ducked, 1.5, 440), 0.015, 'Ducking must leave voice unchanged.');
         $mutedVoice = $this->samples($builder, new AudioMix(new AudioTrack('voice.wav', 0), $music));
         self::assertEqualsWithDelta($level, $this->tone($mutedVoice, 1.5, 1000), 0.01);
+        $stereo = new AudioMix(new AudioTrack('voice.wav', 0), new AudioTrack('stereo.wav', 0.5));
+        self::assertLessThan(0.001, $this->tone($this->samples($builder, $stereo), 1.5, 1000), 'A mono voice must not fold stereo music into mono.');
+        self::assertEqualsWithDelta($level, $this->tone($this->samples($builder, $stereo, 1), 1.5, 1000), 0.01);
         $voiceOnly = $this->samples($builder, new AudioMix(new AudioTrack('voice.wav', 0.5, 2, 1)));
         self::assertLessThan(0.15, $this->tone($voiceOnly, 1.1, 440));
         self::assertLessThan(0.15, $this->tone($voiceOnly, 3.2, 440));
         self::assertLessThan(0.001, $this->tone($voiceOnly, 6, 440));
     }
 
-    private function wav(float $seconds, int $frequency, bool $pauses = false): string
+    /** Ubuntu 22.04 ships FFmpeg 4.4, whose alimiter has no `latency` option (added in 5.1). */
+    public function testFilterGraphAvoidsOptionsNewerThanFfmpeg44(): void
     {
+        $directory = sys_get_temp_dir().'/pw-fake-ffmpeg-'.bin2hex(random_bytes(6));
+        mkdir($directory);
+        file_put_contents($directory.'/ffmpeg', "#!/bin/sh\nprintf '%s\\n' \"$@\" > ".$directory."/arguments\nexit 1\n");
+        chmod($directory.'/ffmpeg', 0o700);
+
+        try {
+            new VideoBuilder($directory.'/ffmpeg', audioAssets: $this->resolver())->build(['PNG'], 64, 64, new AudioMix(new AudioTrack('voice.wav'), new AudioTrack('music.wav')));
+            self::fail('The fake ffmpeg cannot encode.');
+        } catch (RuntimeException) {
+            self::assertStringNotContainsString('latency', (string) file_get_contents($directory.'/arguments'));
+        } finally {
+            new Filesystem()->remove($directory);
+        }
+    }
+
+    private function wav(float $seconds, int $frequency, bool $pauses = false, bool $rightOnly = false): string
+    {
+        $channels = $rightOnly ? 2 : 1;
         $pcm = '';
         for ($i = 0; $i < (int) ($seconds * 8000); ++$i) {
             $time = $i / 8000;
             $audible = ! $pauses || ($time >= 1 && $time < 2) || ($time >= 3 && $time < 3.5);
             $sample = $audible ? (int) round(sin(2 * \M_PI * $frequency * $time) * 0.4 * 32767) : 0;
-            $pcm .= pack('v', $sample & 0xFFFF);
+            $pcm .= ($rightOnly ? pack('v', 0) : '').pack('v', $sample & 0xFFFF);
         }
 
-        return 'RIFF'.pack('V', 36 + \strlen($pcm)).'WAVEfmt '.pack('VvvVVvv', 16, 1, 1, 8000, 16000, 2, 16).'data'.pack('V', \strlen($pcm)).$pcm;
+        return 'RIFF'.pack('V', 36 + \strlen($pcm)).'WAVEfmt '.pack('VvvVVvv', 16, 1, $channels, 8000, 16000 * $channels, 2 * $channels, 16).'data'.pack('V', \strlen($pcm)).$pcm;
     }
 
-    /** @return list<float> */
-    private function samples(VideoBuilder $builder, AudioMix $mix): array
+    /**
+     * One output channel, left by default, decoded at 8 kHz.
+     *
+     * @return list<float>
+     */
+    private function samples(VideoBuilder $builder, AudioMix $mix, int $channel = 0): array
     {
         $image = imagecreatetruecolor(64, 64);
         ob_start();
@@ -144,7 +174,7 @@ final class AudioExportTest extends KernelTestCase
 
         try {
             file_put_contents($path, $builder->build([$png, $png, $png], 64, 64, $mix));
-            $process = new Process(['ffmpeg', '-v', 'error', '-i', $path, '-vn', '-f', 'f32le', '-ar', '8000', '-ac', '1', 'pipe:1']);
+            $process = new Process(['ffmpeg', '-v', 'error', '-i', $path, '-vn', '-af', 'pan=mono|c0=c'.$channel, '-f', 'f32le', '-ar', '8000', 'pipe:1']);
             $process->mustRun();
 
             /** @var array<int, float> $samples */
