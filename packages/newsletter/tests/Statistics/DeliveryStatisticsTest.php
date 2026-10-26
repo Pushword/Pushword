@@ -24,6 +24,7 @@ use Pushword\Newsletter\Service\CampaignSender;
 use Pushword\Newsletter\Service\ContactManager;
 use Pushword\Newsletter\Service\NewsletterMailer;
 use Pushword\Newsletter\Statistics\LocalStatisticsProvider;
+use Pushword\Newsletter\Statistics\MessageObservations;
 use Pushword\Newsletter\Statistics\Report;
 use Pushword\Newsletter\Statistics\ReportQuery;
 use Pushword\Newsletter\Tests\AbstractNewsletterTestCase;
@@ -37,6 +38,39 @@ use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 final class DeliveryStatisticsTest extends AbstractNewsletterTestCase
 {
     use MailerAssertionsTrait;
+
+    public function testObservationsCoverMoreMessagesThanOneQueryBinds(): void
+    {
+        $audience = $this->createAudience();
+        $contact = $this->createContact($audience, 'reader@example.tld');
+        $campaign = $this->createCampaign($audience);
+        $messages = [];
+        for ($index = 0; $index <= MessageObservations::CHUNK; ++$index) {
+            $messages[] = $message = new DeliveryMessage($contact, true, $campaign);
+            $this->entityManager->persist($message);
+        }
+
+        foreach ([$messages[0], $messages[MessageObservations::CHUNK]] as $index => $message) {
+            $click = ClickEvent::onCampaign($contact, $campaign, 'https://localhost.dev/article');
+            $click->message = $message;
+            $unsubscribe = ContactEvent::unsubscribed($contact, 'test');
+            $unsubscribe->message = $message;
+            $now = new DateTimeImmutable();
+            $this->entityManager->persist($click);
+            $this->entityManager->persist($unsubscribe);
+            $this->entityManager->persist(new DeliveryEvent($message, hash('sha256', 'chunk-'.$index), 'test', 'chunk-'.$index, DeliveryEventKind::RemoteAccepted, $now, '', $now));
+        }
+
+        $this->entityManager->flush();
+        $observations = new MessageObservations($this->entityManager, $messages);
+        foreach ([$messages[0], $messages[MessageObservations::CHUNK]] as $message) {
+            self::assertCount(1, $observations->clicks[$message->id ?? 0] ?? []);
+            self::assertCount(1, $observations->deliveries[$message->id ?? 0] ?? []);
+            self::assertCount(1, $observations->unsubscribes[$message->id ?? 0] ?? []);
+        }
+
+        self::assertCount(2, $observations->clicks);
+    }
 
     public function testTheSendPersistsItsMessageIdConsentSnapshotAndPreciseLinks(): void
     {
