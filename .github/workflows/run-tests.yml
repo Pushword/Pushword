@@ -95,7 +95,8 @@ jobs:
   editor-browsers:
     name: Editor journeys - ${{ matrix.browser }}
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    # Includes browser/system dependencies and asset builds before the journeys run.
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
