@@ -168,7 +168,13 @@ final class LinkedDocsScannerTest extends KernelTestCase
     public function testCrossHostInternalLinkToMedia(string $url): void
     {
         self::bootKernel();
-        $scanner = $this->createScanner();
+        $storage = new Flysystem(new InMemoryFilesystemAdapter());
+        $storage->write('xs/1.webp', 'RIFFxxxxWEBP');
+        $storage->write('default/1.webp', 'RIFFxxxxWEBP');
+
+        $scanner = $this->createScanner(
+            mediaCacheStorage: new MediaCacheStorageAdapter($storage, isLocal: false),
+        );
         $scanner->preloadPageCache();
 
         $errors = $this->messages($scanner, $this->getPage('other-page', 'pushword.piedweb.com'), '<a href="'.$url.'">doc</a>');
