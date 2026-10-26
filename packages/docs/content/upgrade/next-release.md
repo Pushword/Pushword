@@ -1,5 +1,5 @@
 ---
-title: 'motion projects use HyperFrames'
+title: ''
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -34,10 +34,3 @@ belongs in the feature doc, which you link to instead.
 
 Several changes land here between two tags: append to the file, do not replace it.
 -->
-
-**Concerns:** `pushword/repurpose`
-
-## Motion projects use HyperFrames
-
-New `pw:repurpose:motion` exports use Apache-2.0 HyperFrames and need Node.js 22+, npm and FFmpeg (including ffprobe).
-**Sites with existing motion projects:** keep them as they are, or export to a new directory and port React scenes to the `html`/`render` API in `src/scenes.mjs` ([Motion design](/extension/repurpose#motion-design-and-agent-authored-videos)). Existing projects are never overwritten or migrated automatically.
