@@ -211,6 +211,8 @@ jobs:
         run: composer update --${{ matrix.stability }} --prefer-dist --no-interaction
 
       - name: Install image, PDF and audio tools
+        # A stalled package mirror otherwise holds the job until GitHub's six-hour limit.
+        timeout-minutes: 5
         run: sudo apt-get update && sudo apt-get install -y ghostscript qpdf ffmpeg
 
       #- name: Install browsers
@@ -334,6 +336,7 @@ jobs:
         run: composer update --prefer-stable --prefer-dist --no-interaction
 
       - name: Install image, PDF and audio tools
+        timeout-minutes: 5
         run: sudo apt-get update && sudo apt-get install -y ghostscript qpdf ffmpeg
 
       - name: Create test database user
@@ -410,6 +413,7 @@ jobs:
         run: composer update --prefer-stable --prefer-dist --no-interaction
 
       - name: Install image, PDF and audio tools
+        timeout-minutes: 5
         run: sudo apt-get update && sudo apt-get install -y ghostscript qpdf ffmpeg
 
       - name: Initialize
