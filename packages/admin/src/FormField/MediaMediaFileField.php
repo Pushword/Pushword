@@ -19,6 +19,6 @@ final class MediaMediaFileField extends AbstractField
             'label' => 'adminMediaMediaFileLabel',
             'required' => null === $this->admin->getSubject()->id,
             'help' => null !== $this->admin->getSubject()->id ? 'adminMediaReplaceFileHelp' : null,
-        ]);
+        ])->addJsFiles('/bundles/pushwordadmin/mediaFileDrop.js');
     }
 }

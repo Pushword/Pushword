@@ -7,5 +7,11 @@
     "css": [
       "admin.css"
     ]
+  },
+  "src/Resources/assets/admin.mediaFileDrop.js": {
+    "file": "mediaFileDrop.js",
+    "name": "mediaFileDrop",
+    "src": "src/Resources/assets/admin.mediaFileDrop.js",
+    "isEntry": true
   }
 }

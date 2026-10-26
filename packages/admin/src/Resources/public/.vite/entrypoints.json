@@ -11,6 +11,15 @@
       ],
       "legacy": false,
       "preload": []
+    },
+    "mediaFileDrop": {
+      "css": [],
+      "dynamic": [],
+      "js": [
+        "/build/mediaFileDrop.js"
+      ],
+      "legacy": false,
+      "preload": []
     }
   },
   "legacy": false,

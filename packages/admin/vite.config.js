@@ -12,6 +12,7 @@ const filesToCopy = [
 
 const input = {
   admin: resolve(import.meta.dirname, 'src/Resources/assets/admin.js'),
+  mediaFileDrop: resolve(import.meta.dirname, 'src/Resources/assets/admin.mediaFileDrop.js'),
 }
 
 export default defineConfig({
