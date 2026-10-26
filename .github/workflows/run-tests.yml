@@ -78,7 +78,13 @@ jobs:
         run: cd packages/quiz && yarn test
 
       - name: Install FFmpeg for motion audio tests
-        run: sudo apt-get update && sudo apt-get install -y ffmpeg
+        # A stalled package mirror otherwise holds the job until GitHub's six-hour limit.
+        timeout-minutes: 5
+        run: |
+          # Use the runner's official HTTPS mirrors instead of the slow Azure mirror.
+          sudo sed -i '/azure\.archive\.ubuntu\.com/d' /etc/apt/apt-mirrors.txt
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
 
       - name: Repurpose motion and studio tests
         run: node --test packages/repurpose/tests/Motion/*.test.mjs
