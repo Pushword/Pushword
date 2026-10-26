@@ -67,6 +67,7 @@
                   <a class="pw-statistics-report-link" href="{{ report.source == 'pushword' and report.kind == 'campaign' ? path('admin_newsletter_statistics_campaign', filterContext|merge({id: report.id|replace({'campaign:': ''})})) : path('admin_newsletter_statistics_report', filterContext|merge({source: report.source, reportId: report.id})) }}">{{ report.label }}</a>
                   <div class="pw-statistics-metadata"><span>{{ report.source }} · {{ report.id }}</span>{% if report.date %}<time datetime="{{ report.date|date('c') }}">{{ report.date|format_datetime('medium', 'short', timezone: timezone, locale: app.request.locale) }}</time>{% endif %}</div>
                   <a href="{{ report.managementUrl }}">{{ 'newsletter.statistics.manageSource'|trans }}</a>
+                  {{ include('@PushwordNewsletter/admin/_report_observation.html.twig') }}
                   {% if not report.mature %}<small>{{ 'newsletter.statistics.provisional'|trans }}</small>{% endif %}
                 </th>
                 <td>{{ statistics.measure(report.metric('accepted')) }}</td>

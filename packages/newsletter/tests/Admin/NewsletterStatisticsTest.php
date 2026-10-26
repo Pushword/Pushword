@@ -538,6 +538,72 @@ final class NewsletterStatisticsTest extends AbstractNewsletterTestCase
         self::assertSame('80', $rows[0]['clickRateDenominator']);
     }
 
+    /** @return iterable<string, array{'info'|'warning'|'danger'}> */
+    public static function reportNoticeLevels(): iterable
+    {
+        yield 'routine' => ['info'];
+        yield 'retained stale snapshot' => ['warning'];
+        yield 'unavailable source' => ['danger'];
+    }
+
+    /** @param 'info'|'warning'|'danger' $level */
+    #[DataProvider('reportNoticeLevels')]
+    public function testReportBasesAndObservationMetadataAppearInListDetailAndExport(string $level): void
+    {
+        $this->login();
+        $observedAt = new DateTimeImmutable('2026-01-12T08:45:00+00:00');
+        $notice = '=Retained snapshot <script>alert(1)</script>';
+        $report = new Report('external', 'snapshot', 'Cached campaign', 'https://example.tld/manage', null, [
+            'accepted' => new Metric(100),
+            'delivered' => new Metric(80),
+            'clickers' => new Metric(8),
+        ], rateDenominators: ['clickRate' => 'delivered', 'filteredClickRate' => null], observedAt: $observedAt, notice: $notice, noticeLevel: $level);
+        $provider = new readonly class($report) implements StatisticsProvider {
+            public function __construct(private Report $report)
+            {
+            }
+
+            public function reports(ReportQuery $query): iterable
+            {
+                return null === $query->windowDays ? [$this->report] : [];
+            }
+        };
+        self::getContainer()->set(StatisticsDashboard::class, new StatisticsDashboard([$provider]));
+        foreach (['', '/report/external/snapshot'] as $suffix) {
+            $crawler = $this->client->request(Request::METHOD_GET, '/admin/newsletter/statistics'.$suffix);
+            self::assertResponseIsSuccessful();
+            self::assertSame('10.00 %', $crawler->filter('[data-statistic="clickRate"] [data-rate-value]')->text());
+            self::assertStringContainsString('8 Unique clickers / 80 Confirmed delivery', $crawler->filter('[data-statistic="clickRate"]')->text());
+            self::assertSame('Unavailable', $crawler->filter('[data-statistic="coverage"] [data-rate-value]')->text());
+            self::assertStringContainsString('Rate base unavailable', $crawler->filter('[data-statistic="filteredClickRate"]')->text());
+            self::assertSame($observedAt->format(\DATE_ATOM), $crawler->filter('[data-report-observed-at] time')->attr('datetime'));
+            self::assertSame($level, $crawler->filter('[data-report-notice]')->attr('data-notice-level'));
+            self::assertSame($notice, $crawler->filter('[data-report-notice]')->text());
+            self::assertCount(0, $crawler->filter('[data-report-notice] script'));
+        }
+
+        $this->client->request(Request::METHOD_GET, '/admin/newsletter/statistics/export');
+        self::assertResponseIsSuccessful();
+        $rows = new CsvEncoder()->decode((string) $this->client->getResponse()->getContent(), 'csv');
+        self::assertIsArray($rows);
+        self::assertIsArray($rows[0]);
+        $row = $rows[0];
+        self::assertSame('10', $row['clickRate']);
+        self::assertSame('clickers', $row['clickRateNumeratorMetric']);
+        self::assertSame('delivered', $row['clickRateDenominatorMetric']);
+        self::assertSame('', $row['filteredClickRateDenominatorMetric']);
+        self::assertSame('unavailable', $row['filteredClickRateState']);
+        self::assertSame('', $row['trackedMessages']);
+        self::assertSame('unavailable', $row['trackedMessagesState']);
+        self::assertSame($observedAt->format(\DATE_ATOM), $row['observedAt']);
+        self::assertSame("'".$notice, $row['notice'], 'Provider notices must keep CSV formula protection.');
+        self::assertSame($level, $row['noticeLevel']);
+        $keys = array_keys($row);
+        $matureColumn = array_search('mature', $keys, true);
+        self::assertIsInt($matureColumn);
+        self::assertSame(['mature', 'observedAt', 'notice', 'noticeLevel', 'clickRateNumeratorMetric'], \array_slice($keys, $matureColumn, 5));
+    }
+
     public function testLegacyWindowReportsUnavailableLinksInsteadOfMeasuredZero(): void
     {
         $this->login();

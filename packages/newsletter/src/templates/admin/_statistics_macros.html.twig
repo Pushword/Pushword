@@ -17,5 +17,5 @@
 {% macro fraction(rate) %}
   {% import _self as statistics %}
   <span data-rate-value>{% if rate.value is not null %}{{ rate.value|format_number({min_fraction_digit: 2, max_fraction_digit: 2}, locale: app.request.locale) }} %{% else %}<span class="pw-statistics-unmeasured">{{ ('newsletter.statistics.' ~ rate.state)|trans }}</span>{% endif %}</span>
-  <small>{{ statistics.measure(rate.numerator) }} / {{ statistics.measure(rate.denominator) }}</small>
+  <small>{% if rate.denominatorMetric %}{{ statistics.measure(rate.numerator) }} {{ ('newsletter.statistics.' ~ rate.numeratorMetric)|trans }} / {{ statistics.measure(rate.denominator) }} {{ ('newsletter.statistics.' ~ rate.denominatorMetric)|trans }}{% else %}{{ 'newsletter.statistics.rateBasisUnavailable'|trans }}{% endif %}</small>
 {% endmacro %}

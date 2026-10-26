@@ -10,7 +10,19 @@ final readonly class Report
 {
     public const array METRICS = ['accepted', 'delivered', 'transportFailed', 'bounced', 'deferred', 'unsubscribed', 'clicks', 'clickers', 'filteredClicks', 'filteredClickers', 'qualifiedClicks', 'trackedMessages', 'coverageKnownMessages'];
 
-    /** @param array<string, Metric> $metrics */
+    public const array RATES = [
+        'clickRate' => ['clickers', 'trackedMessages'],
+        'filteredClickRate' => ['filteredClickers', 'trackedMessages'],
+        'coverage' => ['trackedMessages', 'accepted'],
+        'deliveryRate' => ['delivered', 'accepted'],
+        'bounceRate' => ['bounced', 'accepted'],
+        'unsubscribeRate' => ['unsubscribed', 'accepted'],
+    ];
+
+    /** @param array<string, Metric> $metrics
+     * @param array<key-of<self::RATES>, value-of<self::METRICS>|null> $rateDenominators overrides the default base; null makes only that rate unavailable
+     * @param 'info'|'warning'|'danger'                                $noticeLevel
+     */
     public function __construct(
         public string $source,
         public string $id,
@@ -23,6 +35,10 @@ final readonly class Report
         public string $trackingScope = 'body; navigation and footer excluded',
         public bool $mature = true,
         public bool $ratesAvailable = true,
+        public array $rateDenominators = [],
+        public ?DateTimeImmutable $observedAt = null,
+        public ?string $notice = null,
+        public string $noticeLevel = 'info',
     ) {
     }
 
@@ -31,20 +47,14 @@ final readonly class Report
         return $this->metrics[$name] ?? Metric::unavailable();
     }
 
-    /** @param 'clickRate'|'filteredClickRate'|'coverage'|'deliveryRate'|'bounceRate'|'unsubscribeRate' $name
-     * @return array{numerator: Metric, denominator: Metric, value: float|null, state: string} */
+    /** @param key-of<self::RATES> $name
+     * @return array{numerator: Metric, denominator: Metric, value: float|null, state: string, numeratorMetric: value-of<self::METRICS>, denominatorMetric: value-of<self::METRICS>|null} */
     public function rate(string $name): array
     {
-        [$numerator, $denominator] = match ($name) {
-            'clickRate' => ['clickers', 'trackedMessages'],
-            'filteredClickRate' => ['filteredClickers', 'trackedMessages'],
-            'coverage' => ['trackedMessages', 'accepted'],
-            'deliveryRate' => ['delivered', 'accepted'],
-            'bounceRate' => ['bounced', 'accepted'],
-            'unsubscribeRate' => ['unsubscribed', 'accepted'],
-        };
+        [$numerator, $defaultDenominator] = self::RATES[$name];
+        $denominator = \array_key_exists($name, $this->rateDenominators) ? $this->rateDenominators[$name] : $defaultDenominator;
         $top = $this->metric($numerator);
-        $bottom = $this->metric($denominator);
+        $bottom = null === $denominator ? Metric::unavailable() : $this->metric($denominator);
         $state = Metric::sum([$top, $bottom])->state;
         if (! $this->ratesAvailable || 0 === $bottom->value) {
             $state = 'notMeasured';
@@ -55,6 +65,6 @@ final readonly class Report
             $value = round(100 * $top->value / $bottom->value, 2);
         }
 
-        return ['numerator' => $top, 'denominator' => $bottom, 'value' => $value, 'state' => $state];
+        return ['numerator' => $top, 'denominator' => $bottom, 'value' => $value, 'state' => $state, 'numeratorMetric' => $numerator, 'denominatorMetric' => $denominator];
     }
 }
