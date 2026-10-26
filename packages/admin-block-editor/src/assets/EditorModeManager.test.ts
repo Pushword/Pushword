@@ -178,3 +178,33 @@ describe('EditorModeManager – opening Monaco on the mode textarea', () => {
     expect(window.pwMonacoLoading).toBeNull()
   })
 })
+
+describe('EditorModeManager – aria-pressed on the mode buttons', () => {
+  const modes =
+    '<button data-pw-editor-mode="json"></button><button data-pw-editor-mode="markdown"></button>'
+  const pressed = (): (string | null)[] =>
+    Array.from(document.querySelectorAll('[data-pw-editor-mode]')).map((b) =>
+      b.getAttribute('aria-pressed'),
+    )
+
+  it.each([
+    [
+      'the container naming the editor, away from the holder',
+      '<div><div id="ed" data-input-id="inp"></div></div>' +
+        `<div data-pw-editor-modes-for="ed">${modes}</div>`,
+    ],
+    [
+      'an earlier sibling in an older template copy',
+      `<div>${modes}</div><div><div id="ed" data-input-id="inp"></div></div>`,
+    ],
+  ])('presses the open mode button and releases all once Editor.js is back, in %s', (_, html) => {
+    document.body.innerHTML = html + '<input id="inp" type="hidden" data-editor="markdown">'
+    const manager = new EditorModeManager('ed')
+
+    ;(manager as any).toggleEditorJsVisibility(false)
+    expect(pressed()).toEqual(['false', 'true'])
+
+    ;(manager as any).toggleEditorJsVisibility(true)
+    expect(pressed()).toEqual(['false', 'false'])
+  })
+})

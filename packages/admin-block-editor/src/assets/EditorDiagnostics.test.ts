@@ -184,3 +184,20 @@ it('can report an initialization failure before the Editor.js API is ready', () 
     errors: [{ operation: 'uncaught', name: 'TypeError' }],
   })
 })
+
+it('records mode clicks from the container naming the editor, wherever it sits', () => {
+  diagnostics.destroy()
+  document.body.innerHTML = `<div id="editor"></div>
+    <div data-pw-editor-modes-for="editor"><button type="button" data-pw-editor-mode="markdown">MD</button></div>`
+  const named = new EditorDiagnostics(document.getElementById('editor')!, {
+    blocks: { getBlocksCount: () => 1, getById: () => ({ name: 'paragraph' }) },
+  } as unknown as EditorJS, {
+    version: '1.2.3',
+    editorjsVersion: '2.33.0',
+    labels: { failure: 'x' },
+  })
+  document.querySelector<HTMLButtonElement>('[data-pw-editor-mode]')!.click()
+
+  expect(named.report().actions).toMatchObject([{ action: 'mode:markdown' }])
+  named.destroy()
+})

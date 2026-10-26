@@ -5,16 +5,20 @@
  * holder's wrapper, before or after the diagnostics panel.
  */
 export function modeButtonsOf(holder: HTMLElement): HTMLButtonElement[] {
-  let container = document.querySelector(`[data-pw-editor-modes-for="${holder.id}"]`)
-  for (
-    let sibling = holder.parentElement?.previousElementSibling ?? null;
-    container === null && sibling !== null;
-    sibling = sibling.previousElementSibling
-  ) {
-    if (sibling.querySelector('[data-pw-editor-mode]')) container = sibling
-  }
+  const container =
+    document.querySelector(`[data-pw-editor-modes-for="${holder.id}"]`) ??
+    earlierSiblingWithModeButtons(holder)
 
   return Array.from(
     container?.querySelectorAll<HTMLButtonElement>('[data-pw-editor-mode]') ?? [],
   )
+}
+
+function earlierSiblingWithModeButtons(holder: HTMLElement): Element | null {
+  let sibling = holder.parentElement?.previousElementSibling ?? null
+  while (sibling !== null && !sibling.querySelector('[data-pw-editor-mode]')) {
+    sibling = sibling.previousElementSibling
+  }
+
+  return sibling
 }
