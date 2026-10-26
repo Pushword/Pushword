@@ -50,6 +50,17 @@ final class SlideRendererTest extends KernelTestCase
         self::assertStringContainsString('data-rp-edit="paragraph"', $svg);
     }
 
+    public function testStaticSlideStillEmbedsBothFontsOnce(): void
+    {
+        $svg = $this->render([
+            'page' => 'x', 'network' => 'linkedin', 'format' => 'linkedin-4-5',
+            'slides' => [['title' => 'Hello world', 'paragraph' => 'A second line of copy.']],
+        ]);
+
+        self::assertSame(1, substr_count($svg, "@font-face{font-family:'rp-heading'"));
+        self::assertSame(1, substr_count($svg, "@font-face{font-family:'rp-body'"));
+    }
+
     public function testExplicitNewlinesSplitTextLines(): void
     {
         $svg = $this->render([
