@@ -26,7 +26,7 @@ final readonly class AudioAssetResolver
      *
      * @throws AudioAssetException when the file name, the media or the stored file is unusable
      */
-    public function stream(string $name, AudioTrack $track)
+    public function stream(string $name, AudioTrack $track): mixed
     {
         $path = 'audio.'.$name.'.media';
         // Specs can also come from flat files, so validate before touching storage.
