@@ -23,7 +23,7 @@ final class SessionSaveListenerTest extends TestCase
 {
     public function testRequestWithoutSessionIsLeftAlone(): void
     {
-        $request = Request::create('/');
+        $request = Request::create('/admin');
 
         new SessionSaveListener()($this->event($request));
 
@@ -32,7 +32,7 @@ final class SessionSaveListenerTest extends TestCase
 
     public function testSessionFactoryRemainsLazy(): void
     {
-        $request = Request::create('/');
+        $request = Request::create('/admin');
         $request->setSessionFactory(static fn () => self::fail('An unused session must not be initialized.'));
 
         new SessionSaveListener()($this->event($request));
@@ -42,7 +42,7 @@ final class SessionSaveListenerTest extends TestCase
 
     public function testUnstartedSessionIsLeftAlone(): void
     {
-        $request = Request::create('/');
+        $request = Request::create('/admin');
         $session = new Session(new MockArraySessionStorage());
         $request->setSession($session);
 
@@ -53,9 +53,9 @@ final class SessionSaveListenerTest extends TestCase
     }
 
     #[DataProvider('excludedRequests')]
-    public function testExcludedRequestKeepsItsSessionOpen(int $requestType, bool $stateless): void
+    public function testExcludedRequestKeepsItsSessionOpen(string $path, int $requestType, bool $stateless): void
     {
-        $request = Request::create('/');
+        $request = Request::create($path);
         $request->attributes->set('_stateless', $stateless);
 
         $session = new Session(new MockArraySessionStorage());
@@ -68,11 +68,18 @@ final class SessionSaveListenerTest extends TestCase
         self::assertSame('preserved', $session->get('value'));
     }
 
-    /** @return iterable<string, array{int, bool}> */
+    /**
+     * Outside the admin a controller may log a user in or out, and Symfony cannot
+     * migrate or invalidate a session that was saved before it.
+     *
+     * @return iterable<string, array{string, int, bool}>
+     */
     public static function excludedRequests(): iterable
     {
-        yield 'subrequest' => [HttpKernelInterface::SUB_REQUEST, false];
-        yield 'stateless' => [HttpKernelInterface::MAIN_REQUEST, true];
+        yield 'subrequest' => ['/admin', HttpKernelInterface::SUB_REQUEST, false];
+        yield 'stateless' => ['/admin', HttpKernelInterface::MAIN_REQUEST, true];
+        yield 'login' => ['/login', HttpKernelInterface::MAIN_REQUEST, false];
+        yield 'site page' => ['/administration', HttpKernelInterface::MAIN_REQUEST, false];
     }
 
     #[RunInSeparateProcess]

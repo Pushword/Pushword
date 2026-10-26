@@ -42,3 +42,9 @@ Several changes land here between two tags: append to the file, do not replace i
 New sites no longer receive `media/repurpose-nord.mp4`, a 7 MB development video with
 no media entry. A site created from 1.0.76 on can delete that file unless its media
 library lists it.
+
+## Early session save limited to the admin
+
+Since 1.0.76 every started session was saved before its controller ran, and Symfony
+then silently skips `migrate()` and `invalidate()`. Only `/admin` requests are saved
+early now; login, logout and site controllers keep their session open. Nothing to do.
