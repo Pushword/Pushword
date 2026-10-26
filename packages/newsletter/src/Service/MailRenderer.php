@@ -42,6 +42,12 @@ final readonly class MailRenderer
         return $this->personalize($subject, $contact);
     }
 
+    /** @return list<string> */
+    public function trackingScopes(): array
+    {
+        return $this->clickTracker->scopes();
+    }
+
     /** @param list<string> $untrackedUrls */
     public function html(
         Audience $audience,
@@ -61,12 +67,11 @@ final readonly class MailRenderer
         $host = $sendContext->mainHost ?? $audience->mainHost;
         $body = $this->markdownParser->transform($this->personalize($bodyMarkdown, $contact));
         $body = $this->absolutize($body, $host);
-        // Tagging the body and not the rendered mail leaves the template's
-        // unsubscribe link alone: leaving is an exit, not a visit.
+        // The body is instrumented first; explicitly marked template roles follow below.
         $body = $this->utmDecorator->decorate($body, $audience, $utmTag, $untrackedUrls);
 
         // After the UTM pass, so a recorded click still lands on a tagged URL;
-        // before the template, so its own links stay out of reach. The double
+        // before the template, whose unmarked links remain excluded. The double
         // consent gate is the tracker's to keep.
         if (null !== $trackedMail) {
             $body = $this->clickTracker->rewrite($body, $audience, $contact, $trackedMail, $untrackedUrls, $sendContext?->mainHost, $sendContext?->systemLinkBaseUrl, $messageReference);
@@ -76,12 +81,14 @@ final readonly class MailRenderer
         if ('personal' === $layout) {
             $signature = $this->designText($audience->signatureMarkdown, $host);
 
-            return $this->twig->render($this->view($audience, 'personal.email.html.twig', $sendContext), [
+            $html = $this->twig->render($this->view($audience, 'personal.email.html.twig', $sendContext), [
                 'locale' => $locale ?? $contact->locale,
                 'subject' => $this->personalize($subject, $contact),
                 'body' => $body,
-                'signature' => $this->absolutize($this->markdownParser->transform($signature), $host),
+                'signature' => $this->markScope($this->absolutize($this->markdownParser->transform($signature), $host), 'footer'),
             ]);
+
+            return $this->templateLinks($html, $audience, $contact, $trackedMail, $utmTag, $sendContext, $untrackedUrls, $unsubscribeUrl, $messageReference);
         }
 
         $saved = $this->emailTemplates->saved($layout);
@@ -91,7 +98,7 @@ final readonly class MailRenderer
         $header = $this->designText($saved->headerMarkdown ?? $audience->headerMarkdown, $host);
         $footer = $this->designText($sendContext->footerMarkdown ?? $saved->footerMarkdown ?? $audience->footerMarkdown, $host);
 
-        return $this->twig->render($template, [
+        $html = $this->twig->render($template, [
             'audience' => $audience,
             'contact' => $contact,
             'sendContext' => $sendContext,
@@ -101,13 +108,33 @@ final readonly class MailRenderer
             'year' => new DateTimeImmutable()->format('Y'),
             'postalAddress' => null !== $sendContext ? $sendContext->postalAddress : $audience->postalAddress,
             'wrapped' => $saved->wrapped ?? 'framed' === $layout,
-            'header' => $this->absolutize($this->markdownParser->transform($header), $host),
-            'footer' => $this->absolutize($this->markdownParser->transform($footer), $host),
+            'header' => $this->markScope($this->absolutize($this->markdownParser->transform($header), $host), 'navigation'),
+            'footer' => $this->markScope($this->absolutize($this->markdownParser->transform($footer), $host), 'footer'),
             'subject' => $this->personalize($subject, $contact),
             'preheader' => null !== $preheader ? $this->personalize($preheader, $contact) : null,
             'body' => $body,
             'unsubscribeUrl' => $unsubscribeUrl,
         ]);
+
+        return $this->templateLinks($html, $audience, $contact, $trackedMail, $utmTag, $sendContext, $untrackedUrls, $unsubscribeUrl, $messageReference);
+    }
+
+    /** @param list<string> $untrackedUrls */
+    private function templateLinks(string $html, Audience $audience, Contact $contact, Campaign|AutomationStep|null $mail, ?UtmTag $utmTag, ?SendContext $context, array $untrackedUrls, ?string $unsubscribeUrl, ?string $reference): string
+    {
+        if (null !== $unsubscribeUrl) {
+            $untrackedUrls[] = $unsubscribeUrl;
+        }
+
+        $html = $this->utmDecorator->decorate($html, $audience, $utmTag, $untrackedUrls, $this->clickTracker->scopes());
+
+        return null === $mail ? $html : $this->clickTracker->rewrite($html, $audience, $contact, $mail, $untrackedUrls, $context?->mainHost, $context?->systemLinkBaseUrl, $reference, 'unknown');
+    }
+
+    private function markScope(string $html, string $scope): string
+    {
+        return preg_replace_callback(HtmlUnpublishedLink::HTML_REGEX, static fn (array $match): string => 1 !== preg_match('/\sdata-newsletter-scope\s*=/i', $match['before'].$match['after'])
+            ? '<a data-newsletter-scope="'.$scope.'"'.substr($match[0], 2) : $match[0], $html) ?? $html;
     }
 
     /** @param string|null $confirmTrackingUrl the confirm-and-accept-tracking variant, when the audience asks for the consent */

@@ -1,5 +1,5 @@
 {% macro measure(metric) %}
-  {%- if metric.state == 'measured' -%}{{ metric.value|format_number(locale: app.request.locale) }}{%- else -%}<span class="pw-statistics-unmeasured">{{ ('newsletter.statistics.' ~ metric.state)|trans }}</span>{%- endif -%}
+  {%- if metric.state == 'measured' -%}{% if not metric.complete %}<abbr title="{{ 'newsletter.statistics.lowerBound'|trans }}">≥</abbr> {% endif %}{{ metric.value|format_number(locale: app.request.locale) }}{%- else -%}<span class="pw-statistics-unmeasured">{{ ('newsletter.statistics.' ~ metric.state)|trans }}</span>{%- endif -%}
 {% endmacro %}
 
 {% macro fraction(rate) %}

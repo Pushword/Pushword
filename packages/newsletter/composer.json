@@ -20,6 +20,9 @@
     "cocur/slugify": "^4.6",
     "pushword/core": "*"
   },
+  "conflict": {
+    "pushword/admin": "<1.0.84"
+  },
   "suggest": {
     "pushword/admin": "Manage pages, media and users from an EasyAdmin-based back-office.",
     "pushword/admin-block-editor": "Rich block editor (EditorJS) for the admin.",

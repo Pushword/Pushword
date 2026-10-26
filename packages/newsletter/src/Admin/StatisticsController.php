@@ -11,7 +11,6 @@ use Pushword\Core\Service\EditorialTimezone;
 use Pushword\Newsletter\Entity\Audience;
 use Pushword\Newsletter\Entity\Campaign;
 use Pushword\Newsletter\Repository\AudienceRepository;
-use Pushword\Newsletter\Repository\ClickEventRepository;
 use Pushword\Newsletter\Repository\StatisticsRepository;
 use Pushword\Newsletter\Statistics\LocalStatisticsProvider;
 use Pushword\Newsletter\Statistics\Report;
@@ -39,7 +38,6 @@ final class StatisticsController extends AbstractController
     public function __construct(
         private readonly StatisticsRepository $statistics,
         private readonly AudienceRepository $audiences,
-        private readonly ClickEventRepository $clicks,
         private readonly EditorialTimezone $timezone,
         private readonly TranslatorInterface $translator,
         private readonly StatisticsDashboard $dashboard,
@@ -65,14 +63,7 @@ final class StatisticsController extends AbstractController
         $report = $this->localStatistics->campaign($campaign->id, $query);
         $comparisons = [];
         foreach ([7, 30] as $days) {
-            $comparisons[$days] = $this->localStatistics->campaign($campaign->id, new ReportQuery($query->from, $query->until, $query->audienceId, $query->basis, $days, $query->groupBy, $query->asOf));
-        }
-
-        $links = $this->clicks->byUrl($campaign, $query);
-        usort($links, static fn (array $first, array $second): int => $second['contacts'] <=> $first['contacts'] ?: $second['clicks'] <=> $first['clicks'] ?: strcmp($first['url'], $second['url']));
-        foreach ($links as $index => $link) {
-            $links[$index]['host'] = parse_url($link['url'], \PHP_URL_HOST) ?: '';
-            $links[$index]['path'] = parse_url($link['url'], \PHP_URL_PATH) ?: '/';
+            $comparisons[$days] = $this->localStatistics->campaign($campaign->id, new ReportQuery($query->from, $query->until, $query->audienceId, $query->basis, $days, $query->groupBy, $query->asOf, $query->clickScope));
         }
 
         return $this->render('@PushwordNewsletter/admin/campaign_statistics.html.twig', [
@@ -80,10 +71,8 @@ final class StatisticsController extends AbstractController
             'campaign' => $data,
             'report' => $report,
             'comparisons' => $comparisons,
-            'links' => $links,
-            'maxLinkContacts' => [] === $links ? 1 : max(array_column($links, 'contacts')),
             'trackingAvailable' => $data['tracking'] || $data['clicks'] > 0,
-            'backFilters' => array_intersect_key($request->query->all(), array_flip(['from', 'to', 'audience', 'basis', 'window', 'groupBy'])),
+            'backFilters' => array_intersect_key($request->query->all(), array_flip(['from', 'to', 'audience', 'basis', 'window', 'groupBy', 'clickScope'])),
             'timezone' => $this->timezone->timezone->getName(),
         ]);
     }
@@ -107,7 +96,7 @@ final class StatisticsController extends AbstractController
 
         $comparisons = [];
         foreach ([7, 30] as $days) {
-            $window = new ReportQuery($query->from, $query->until, $query->audienceId, $query->basis, $days, $query->groupBy, $query->asOf);
+            $window = new ReportQuery($query->from, $query->until, $query->audienceId, $query->basis, $days, $query->groupBy, $query->asOf, $query->clickScope);
             foreach ($this->dashboard->reports($window) as $report) {
                 if ($report->source === $source && $report->id === $reportId) {
                     $comparisons[$days] = $report;
@@ -135,12 +124,12 @@ final class StatisticsController extends AbstractController
         $query = $this->reportQuery($form);
         $rates = array_keys(Report::RATES);
         $headers = ['source', 'sourceId', 'managementUrl', 'subject', 'kind', 'date', 'basis', 'window', 'groupBy', 'from', 'until', 'asOf'];
-        foreach (Report::METRICS as $name) {
+        foreach (Report::BASE_METRICS as $name) {
             $headers[] = $name;
             $headers[] = $name.'State';
         }
 
-        foreach ($rates as $name) {
+        foreach (array_keys(Report::BASE_RATES) as $name) {
             $headers[] = $name;
             $headers[] = $name.'Numerator';
             $headers[] = $name.'Denominator';
@@ -154,9 +143,25 @@ final class StatisticsController extends AbstractController
         $headers[] = 'notice';
         $headers[] = 'noticeLevel';
 
-        foreach ($rates as $name) {
+        foreach (array_keys(Report::BASE_RATES) as $name) {
             $headers[] = $name.'NumeratorMetric';
             $headers[] = $name.'DenominatorMetric';
+        }
+
+        $headers[] = 'clickScope';
+        foreach (array_diff(Report::METRICS, Report::BASE_METRICS) as $name) {
+            $headers[] = $name;
+            $headers[] = $name.'State';
+        }
+
+        foreach (array_diff($rates, array_keys(Report::BASE_RATES)) as $name) {
+            foreach (['', 'Numerator', 'Denominator', 'State', 'NumeratorMetric', 'DenominatorMetric'] as $suffix) {
+                $headers[] = $name.$suffix;
+            }
+        }
+
+        foreach (Report::METRICS as $name) {
+            $headers[] = $name.'Complete';
         }
 
         $rows = [];
@@ -174,10 +179,12 @@ final class StatisticsController extends AbstractController
                 'from' => $query->from->format(\DATE_ATOM),
                 'until' => $query->until->format(\DATE_ATOM),
                 'asOf' => $query->asOf->format(\DATE_ATOM),
+                'clickScope' => $query->clickScope,
             ];
             foreach (Report::METRICS as $name) {
                 $row[$name] = $report->metric($name)->value;
                 $row[$name.'State'] = $report->metric($name)->state;
+                $row[$name.'Complete'] = $report->metric($name)->complete ? 'yes' : 'no';
             }
 
             foreach ($rates as $name) {
@@ -211,11 +218,11 @@ final class StatisticsController extends AbstractController
         ]);
     }
 
-    /** @return FormInterface<array{from: string|null, to: string|null, audience: Audience|null, basis: string, window: string|null, groupBy: string}> */
+    /** @return FormInterface<array{from: string|null, to: string|null, audience: Audience|null, basis: string, window: string|null, groupBy: string, clickScope: string|null}> */
     private function filterForm(Request $request): FormInterface
     {
         $today = new DateTimeImmutable('today', $this->timezone->timezone);
-        $defaults = ['from' => $today->modify('-29 days')->format('Y-m-d'), 'to' => $today->format('Y-m-d'), 'audience' => '', 'basis' => 'sent', 'window' => '', 'groupBy' => 'campaign'];
+        $defaults = ['from' => $today->modify('-29 days')->format('Y-m-d'), 'to' => $today->format('Y-m-d'), 'audience' => '', 'basis' => 'sent', 'window' => '', 'groupBy' => 'campaign', 'clickScope' => ''];
         $dateOptions = [
             'trim' => false,
             'invalid_message' => $this->translator->trans('newsletter.statistics.invalidDate'),
@@ -224,7 +231,7 @@ final class StatisticsController extends AbstractController
                 new Date(message: $this->translator->trans('newsletter.statistics.invalidDate')),
             ],
         ];
-        /** @var FormInterface<array{from: string|null, to: string|null, audience: Audience|null, basis: string, window: string|null, groupBy: string}> $form */
+        /** @var FormInterface<array{from: string|null, to: string|null, audience: Audience|null, basis: string, window: string|null, groupBy: string, clickScope: string|null}> $form */
         $form = $this->container->get('form.factory')->createNamedBuilder('', FormType::class, null, [
             'method' => 'GET',
             'action' => $this->generateUrl('admin_newsletter_statistics'),
@@ -241,13 +248,14 @@ final class StatisticsController extends AbstractController
                 'invalid_message' => $this->translator->trans('newsletter.statistics.invalidAudience'),
                 'required' => false,
             ])
+            ->add('clickScope', ChoiceType::class, ['label' => 'newsletter.statistics.clickScope', 'choices' => ['newsletter.statistics.allScopes' => '', 'newsletter.statistics.scopeBody' => 'body', 'newsletter.statistics.scopeNavigation' => 'navigation', 'newsletter.statistics.scopeFooter' => 'footer', 'newsletter.statistics.scopeUnknown' => 'unknown'], 'required' => false, 'placeholder' => false])
             ->add('basis', ChoiceType::class, ['label' => 'newsletter.statistics.basis', 'choices' => ['newsletter.statistics.sentPeriod' => 'sent', 'newsletter.statistics.eventPeriod' => 'events']])
             ->add('window', ChoiceType::class, ['label' => 'newsletter.statistics.window', 'choices' => ['newsletter.statistics.lifetime' => '', 'newsletter.statistics.day7' => '7', 'newsletter.statistics.day30' => '30'], 'required' => false, 'placeholder' => false])
             ->add('groupBy', ChoiceType::class, ['label' => 'newsletter.statistics.groupBy', 'choices' => ['newsletter.statistics.campaigns' => 'campaign', 'newsletter.statistics.automations' => 'automation', 'newsletter.statistics.steps' => 'step', 'newsletter.statistics.occurrences' => 'occurrence']])
             ->getForm();
         $form->submit(array_replace($defaults, array_intersect_key($request->query->all(), $defaults)));
         if ($form->isValid()) {
-            /** @var array{from: string, to: string, audience: Audience|null, basis: string, window: string|null, groupBy: string} $data */
+            /** @var array{from: string, to: string, audience: Audience|null, basis: string, window: string|null, groupBy: string, clickScope: string|null} $data */
             $data = $form->getData();
             if ($data['from'] > $data['to']) {
                 $form->get('to')->addError(new FormError($this->translator->trans('newsletter.statistics.invalidRange')));
@@ -258,13 +266,13 @@ final class StatisticsController extends AbstractController
     }
 
     /**
-     * @param FormInterface<array{from: string|null, to: string|null, audience: Audience|null, basis: string, window: string|null, groupBy: string}> $form
+     * @param FormInterface<array{from: string|null, to: string|null, audience: Audience|null, basis: string, window: string|null, groupBy: string, clickScope: string|null}> $form
      *
      * @return array{DateTimeImmutable, DateTimeImmutable, int|null}
      */
     private function selection(FormInterface $form): array
     {
-        /** @var array{from: string, to: string, audience: Audience|null, basis: string, window: string|null, groupBy: string} $data */
+        /** @var array{from: string, to: string, audience: Audience|null, basis: string, window: string|null, groupBy: string, clickScope: string|null} $data */
         $data = $form->getData();
         $from = new DateTimeImmutable($data['from'], $this->timezone->timezone);
         $to = new DateTimeImmutable($data['to'], $this->timezone->timezone);
@@ -273,7 +281,7 @@ final class StatisticsController extends AbstractController
         return [$from->setTimezone($serverTimezone), $to->modify('+1 day')->setTimezone($serverTimezone), $data['audience']?->id];
     }
 
-    /** @param FormInterface<array{from: string|null, to: string|null, audience: Audience|null, basis: string, window: string|null, groupBy: string}> $form */
+    /** @param FormInterface<array{from: string|null, to: string|null, audience: Audience|null, basis: string, window: string|null, groupBy: string, clickScope: string|null}> $form */
     private function reportQuery(FormInterface $form): ReportQuery
     {
         if (! $form->isValid()) {
@@ -283,10 +291,10 @@ final class StatisticsController extends AbstractController
         [$from, $until, $audienceId] = $this->selection($form);
         $data = $form->getData();
 
-        return new ReportQuery($from, $until, $audienceId, $data['basis'], null === $data['window'] || '' === $data['window'] ? null : (int) $data['window'], $data['groupBy']);
+        return new ReportQuery($from, $until, $audienceId, $data['basis'], null === $data['window'] || '' === $data['window'] ? null : (int) $data['window'], $data['groupBy'], clickScope: null === $data['clickScope'] || '' === $data['clickScope'] ? null : $data['clickScope']);
     }
 
-    /** @param FormInterface<array{from: string|null, to: string|null, audience: Audience|null, basis: string, window: string|null, groupBy: string}> $form */
+    /** @param FormInterface<array{from: string|null, to: string|null, audience: Audience|null, basis: string, window: string|null, groupBy: string, clickScope: string|null}> $form */
     private function dashboard(FormInterface $form): Response
     {
         $today = new DateTimeImmutable('today', $this->timezone->timezone);
@@ -303,7 +311,7 @@ final class StatisticsController extends AbstractController
             'presets' => $presets,
             'audienceId' => $audience instanceof Audience ? $audience->id : null,
             'activePreset' => null,
-            'reportFilters' => ['basis' => $form->get('basis')->getData(), 'window' => $form->get('window')->getData(), 'groupBy' => $form->get('groupBy')->getData()],
+            'reportFilters' => ['basis' => $form->get('basis')->getData(), 'window' => $form->get('window')->getData(), 'groupBy' => $form->get('groupBy')->getData(), 'clickScope' => $form->get('clickScope')->getData()],
             'timezone' => $this->timezone->timezone->getName(),
         ];
         if (! $form->isValid()) {
@@ -312,7 +320,7 @@ final class StatisticsController extends AbstractController
 
         [$from, $until, $audienceId] = $this->selection($form);
         $reports = $this->dashboard->reports($this->reportQuery($form));
-        /** @var array{from: string, to: string, audience: Audience|null, basis: string, window: string|null, groupBy: string} $data */
+        /** @var array{from: string, to: string, audience: Audience|null, basis: string, window: string|null, groupBy: string, clickScope: string|null} $data */
         $data = $form->getData();
 
         return $this->render('@PushwordNewsletter/admin/statistics.html.twig', [
@@ -321,7 +329,7 @@ final class StatisticsController extends AbstractController
             'activePreset' => array_search(['from' => $data['from'], 'to' => $data['to']], $presets, true),
             'fromDate' => $from,
             'toDate' => $until->setTimezone($this->timezone->timezone)->modify('-1 day'),
-            'filterContext' => ['from' => $data['from'], 'to' => $data['to'], 'audience' => $audienceId, 'basis' => $data['basis'], 'window' => $data['window'], 'groupBy' => $data['groupBy']],
+            'filterContext' => ['from' => $data['from'], 'to' => $data['to'], 'audience' => $audienceId, 'basis' => $data['basis'], 'window' => $data['window'], 'groupBy' => $data['groupBy'], 'clickScope' => $data['clickScope']],
             'reports' => $reports,
             'reportTotals' => $this->dashboard->totals($reports),
             'contacts' => $this->statistics->contacts($audienceId),

@@ -5,3 +5,6 @@
   {% set level = report.noticeLevel in ['warning', 'danger'] ? report.noticeLevel : 'info' %}
   <p class="{{ level == 'info' ? 'pw-statistics-note' : 'alert alert-' ~ level }}" role="status" data-report-notice data-notice-level="{{ level }}">{{ report.notice }}</p>
 {% endif %}
+{% if report.source == 'pushword' and not report.metric('delivered').complete %}
+  <p class="alert alert-warning" role="status" data-delivery-coverage="partial">{{ 'newsletter.statistics.deliveryCoverageUnknown'|trans }}</p>
+{% endif %}

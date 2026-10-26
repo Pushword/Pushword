@@ -19,8 +19,10 @@ final readonly class ReportQuery
         public ?int $windowDays = null,
         public string $groupBy = 'campaign',
         ?DateTimeImmutable $asOf = null,
+        public ?string $clickScope = null,
     ) {
-        if ($from >= $until || ! \in_array($basis, ['sent', 'events'], true) || ! \in_array($windowDays, [null, 7, 30], true) || ! \in_array($groupBy, ['campaign', 'automation', 'step', 'occurrence'], true)) {
+        if ($from >= $until || ! \in_array($basis, ['sent', 'events'], true) || ! \in_array($windowDays, [null, 7, 30], true) || ! \in_array($groupBy, ['campaign', 'automation', 'step', 'occurrence'], true)
+            || ! \in_array($clickScope, [null, 'body', 'navigation', 'footer', 'unknown'], true)) {
             throw new InvalidArgumentException('Invalid newsletter report selection.');
         }
 

@@ -46,7 +46,7 @@
 
     <section aria-labelledby="statistics-links">
       <h2 id="statistics-links">{{ 'newsletter.statistics.links'|trans }} {{ contextHelp.help('newsletter.statistics.links'|trans, 'newsletter.statistics.linksSummary'|trans) }}</h2>
-      {% if links is empty %}
+      {% if report.links is empty %}
         {% if campaign.sent == 0 %}
           {% set emptyTitle = 'newsletter.statistics.noSends' %}
         {% elseif report.metric('clicks').state != 'measured' %}
@@ -64,22 +64,7 @@
           {% if not trackingAvailable and campaign.audienceId %}<a class="pw-statistics-action" href="{{ path('admin_newsletter_audience_edit', {entityId: campaign.audienceId}) }}">{{ 'newsletter.statistics.audienceSettings'|trans }}</a>{% endif %}
         </div>
       {% else %}
-        <table class="table pw-statistics-table pw-statistics-links" role="table">
-          <caption class="visually-hidden">{{ 'newsletter.statistics.links'|trans }}</caption>
-          <thead role="rowgroup"><tr role="row"><th scope="col" role="columnheader">{{ 'newsletter.statistics.url'|trans }}</th><th scope="col" role="columnheader" class="pw-statistics-number">{{ 'newsletter.statistics.clickers'|trans }}</th><th scope="col" role="columnheader" class="pw-statistics-number">{{ 'newsletter.campaign.field.clicks'|trans }}</th></tr></thead>
-          <tbody role="rowgroup">
-            {% for link in links %}
-              <tr role="row">
-                <th scope="row" role="rowheader" class="pw-statistics-url">
-                  <a href="{{ link.url }}" target="_blank" rel="noopener noreferrer">{{ link.host }}{{ link.path }} <i class="fa fa-arrow-up-right-from-square" aria-hidden="true"></i><span class="visually-hidden"> {{ 'newsletter.statistics.opensNewTab'|trans }}</span></a>
-                  <code>{{ link.url }}</code>
-                </th>
-                <td role="cell" class="pw-statistics-number"><span class="pw-statistics-mobile-label" aria-hidden="true">{{ 'newsletter.statistics.clickers'|trans }}</span><div class="pw-statistics-rate"><meter min="0" max="{{ maxLinkContacts }}" value="{{ link.contacts }}" aria-label="{{ 'newsletter.statistics.clickers'|trans }}">{{ link.contacts }}</meter><strong>{{ link.contacts|format_number(locale: app.request.locale) }}</strong></div></td>
-                <td role="cell" class="pw-statistics-number"><span class="pw-statistics-mobile-label" aria-hidden="true">{{ 'newsletter.campaign.field.clicks'|trans }}</span>{{ link.clicks|format_number(locale: app.request.locale) }}</td>
-              </tr>
-            {% endfor %}
-          </tbody>
-        </table>
+        {{ include('@PushwordNewsletter/admin/_report_links.html.twig') }}
       {% endif %}
     </section>
     {{ include('@PushwordNewsletter/admin/_report_comparison.html.twig') }}

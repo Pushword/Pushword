@@ -5,6 +5,9 @@
 <div class="pw-statistics">
   <p>{{ report.source }} · {{ report.id }} · <a href="{{ report.managementUrl }}">{{ 'newsletter.statistics.manageSource'|trans }}</a></p>
   {{ include('@PushwordNewsletter/admin/_report_metrics.html.twig') }}
+  {% if report.links is not empty %}
+    <section aria-labelledby="statistics-links"><h2 id="statistics-links">{{ 'newsletter.statistics.links'|trans }}</h2>{{ include('@PushwordNewsletter/admin/_report_links.html.twig') }}</section>
+  {% endif %}
   {{ include('@PushwordNewsletter/admin/_report_comparison.html.twig') }}
   {{ include('@PushwordNewsletter/admin/_statistics_methodology.html.twig') }}
 </div>

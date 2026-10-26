@@ -80,7 +80,7 @@ final class ClickController extends AbstractController
         }
 
         $message = null === $clickPayload->messageReference ? null : $this->entityManager->getRepository(DeliveryMessage::class)->findOneBy(['reference' => $clickPayload->messageReference, 'contact' => $contact]);
-        if (null !== $clickPayload->messageReference && (null === $message || ! $message->trackingAllowed)) {
+        if (null !== $clickPayload->messageReference && (null === $message || ! $message->trackingAllowed || ! \in_array($clickPayload->scope, $message->trackingScopes, true))) {
             return;
         }
 
@@ -96,7 +96,7 @@ final class ClickController extends AbstractController
             }
 
             $event = ClickEvent::onCampaign($contact, $campaign, $clickPayload->url);
-            $this->qualify($event, $qualification, $message);
+            $this->qualify($event, $qualification, $message, $clickPayload);
             $this->entityManager->persist($event);
             $campaign->incrementClick();
             $this->entityManager->flush();
@@ -111,15 +111,17 @@ final class ClickController extends AbstractController
         }
 
         $event = ClickEvent::onStep($contact, $automation, $clickPayload->position, $clickPayload->url);
-        $this->qualify($event, $qualification, $message);
+        $this->qualify($event, $qualification, $message, $clickPayload);
         $this->entityManager->persist($event);
         $this->entityManager->flush();
     }
 
-    private function qualify(ClickEvent $event, QualifyClick $qualification, ?DeliveryMessage $message): void
+    private function qualify(ClickEvent $event, QualifyClick $qualification, ?DeliveryMessage $message, ClickPayload $payload): void
     {
         $event->message = $message;
         $event->automated = $qualification->automated;
         $event->qualificationMethod = mb_substr($qualification->method, 0, 255);
+        $event->scope = $payload->scope;
+        $event->linkId = $payload->linkId;
     }
 }
