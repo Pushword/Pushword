@@ -62,9 +62,19 @@ two compatible levels:
   README has a runnable component example; NORD. demonstrates five full scenes.
 
 Derive animation from frame numbers. CSS animation clocks, timers and random
-values make seeking and rendering disagree. Use local files under `public/`,
-`staticFile()` and Remotion's media components so rendering waits for assets.
-Wait for custom fonts too; NORD.'s `Shell` demonstrates this.
+values make seeking and rendering disagree. Load scene images and other assets
+from local files under `public/` through `staticFile()` and Remotion's media
+components, so rendering waits for them. Wait for custom fonts too; NORD.'s
+`Shell` demonstrates this.
+
+Add narration and music through the carousel spec's `audio` field before
+exporting, not in scene code. `audio.voice` and `audio.music` name audio files in
+the site's media library (MP3, WAV, M4A, OGG or FLAC; upload them through the
+media API first). The export copies them to `public/audio/`, and `timeline.json`'s
+`audio` plays, fades and ducks them across every scene. Do not also add an
+`<Audio>` for them in a scene: the track would play twice. For a project prepared
+from NORD., copy the files under `public/audio/` and declare them in
+`timeline.json`'s `audio` (see the generated README).
 
 `spec.json` is the companion static deck and post metadata. Custom scene copy,
 `timeline.json` and the spec are independent: keep intended changes in sync.
@@ -85,7 +95,8 @@ npm run render
 `studio` is optional and stays running; use a separate terminal for rendering,
 or stop it after previewing. Stills and MP4 rendering work without that server.
 
-`check` validates timing and declared SVG layer files. It does **not** compile
+`check` validates timing, declared SVG layer files and the `audio` settings and
+files in `timeline.json`. It does **not** compile
 custom scenes, verify all assets referenced by JSX, detect visual overlaps, or
 judge legibility. A passing check alone is not a reviewed video.
 
@@ -97,7 +108,8 @@ mobile size as well as full resolution: text must remain readable and separate
 from paths, crops and other text throughout the motion. Fix issues, then render
 `out/video.mp4` and inspect the affected frames in that final file. Check its
 dimensions and duration against the brief. For narration or music, check the
-audio and its timing too.
+audio and its timing too: narration does not lengthen the video and is cut at its
+last frame.
 
 ## Attach the render and save the draft
 
@@ -156,10 +168,11 @@ retrieve its current spec first and preserve fields outside the requested edit.
 4. Save the draft, using the same network and page as the spec:
 
    ```sh
+   NETWORK=$(node -p "require('./spec.json').network")
    curl --fail-with-body --silent --show-error -X PUT \
      -H "Authorization: Bearer $PUSHWORD_TOKEN" -H 'Content-Type: application/json' \
      --data-binary @spec.json \
-     "$PUSHWORD_URL/api/repurpose/$PUSHWORD_HOST/instagram/standalone/my-reel" > post.json
+     "$PUSHWORD_URL/api/repurpose/$PUSHWORD_HOST/$NETWORK/standalone/my-reel" > post.json
    ```
 
    Confirm the returned slide count and warnings, then GET the same URL and
