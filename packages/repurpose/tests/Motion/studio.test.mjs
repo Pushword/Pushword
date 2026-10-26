@@ -5,7 +5,7 @@ import vm from 'node:vm';
 
 const source = readFileSync(new URL('../../src/Resources/public/repurpose.js', import.meta.url), 'utf8');
 const origin = 'https://example.test';
-function studio(config = {}, fetch, confirm) {
+function studio(config = {}, fetch, confirm, globals = {}) {
   let factory;
   const window = {location: {origin}, confirm, RP_STUDIO: {
     spec: {slides: [{title: 'Test', images: [{}]}]},
@@ -13,7 +13,7 @@ function studio(config = {}, fetch, confirm) {
     messages: {videoInvalid: 'Choose a video', audioInvalid: 'Choose audio'},
     ...config,
   }, Alpine: {data: (_, value) => { factory = value; }}};
-  vm.runInNewContext(source, {window, fetch, document: {addEventListener: (_, callback) => callback()}});
+  vm.runInNewContext(source, {window, fetch, document: {addEventListener: (_, callback) => callback()}, ...globals});
   return factory();
 }
 function selection(fileName, eventOrigin = origin) {
@@ -33,6 +33,22 @@ test('audio errors stay attached to the exact track and field and clear after va
   assert.equal(state.audioError('voice', 'fadeOut'), '');
   state.violations = [];
   assert.equal(state.audioError('voice', 'volume'), '');
+});
+
+test('a video export refused for an audio file shows the error on that track', async () => {
+  const violation = {path: 'audio.voice.media', message: 'Audio media is missing or unsupported: gone.wav'};
+  const state = studio({urls: {exportVideo: '/export-video'}},
+    async () => ({ok: false, status: 422, json: async () => ({violations: [violation]})}), undefined, {
+      document: {addEventListener: (_, callback) => callback(), querySelectorAll: () => [{getAttribute: () => '64'}],
+        createElement: () => ({getContext: () => ({drawImage() {}}), toDataURL: () => 'data:image/png;base64,AA=='})},
+      XMLSerializer: class { serializeToString() { return '<svg/>'; } },
+      btoa: value => Buffer.from(value, 'binary').toString('base64'),
+      Image: class { set src(_) { this.onload(); } },
+      setTimeout() {},
+    });
+  await state.exportVideo();
+  assert.equal(state.audioError('voice', 'media'), violation.message);
+  assert.equal(state.notice, violation.message);
 });
 
 test('network switching names the destination and preserves edits when cancelled', () => {

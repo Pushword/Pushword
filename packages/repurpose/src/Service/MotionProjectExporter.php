@@ -9,6 +9,7 @@ use Pushword\Repurpose\Model\Creator;
 
 use function Safe\file_get_contents;
 use function Safe\json_encode;
+use function Safe\stream_get_contents;
 
 use Symfony\Component\Finder\Finder;
 
@@ -64,7 +65,9 @@ final readonly class MotionProjectExporter
                 }
 
                 $src = 'audio/'.$name.'.'.strtolower(pathinfo($track->media, \PATHINFO_EXTENSION));
-                $files['public/'.$src] = $this->audioAssets->read($track);
+                $stream = $this->audioAssets->stream($name, $track);
+                $files['public/'.$src] = stream_get_contents($stream);
+                fclose($stream);
                 $audio[$name] = ['src' => $src, 'volume' => $track->volume, 'fadeIn' => $track->fadeIn, 'fadeOut' => $track->fadeOut];
             }
 

@@ -12,6 +12,7 @@ use Pushword\Core\Repository\MediaRepository;
 use Pushword\Core\Service\MediaStorageAdapter;
 use Pushword\Repurpose\Model\AudioMix;
 use Pushword\Repurpose\Model\AudioTrack;
+use Pushword\Repurpose\Service\AudioAssetException;
 use Pushword\Repurpose\Service\AudioAssetResolver;
 use Pushword\Repurpose\Service\CarouselFactory;
 use Pushword\Repurpose\Service\FormatRegistry;
@@ -48,12 +49,13 @@ final class AudioExportTest extends KernelTestCase
     public function testResolverRejectsInvalidMissingAndNonAudioMedia(): void
     {
         $resolver = $this->resolver();
-        self::assertSame($this->wav(4, 440, true), $resolver->read(new AudioTrack('old-voice.wav')));
+        self::assertSame($this->wav(4, 440, true), stream_get_contents($resolver->stream('voice', new AudioTrack('old-voice.wav'))));
         foreach (['../voice.wav', 'unknown.wav', 'missing.wav', 'photo.mp3', 'no-mime.wav'] as $filename) {
             try {
-                $resolver->read(new AudioTrack($filename));
+                $resolver->stream('music', new AudioTrack($filename));
                 self::fail('The audio resolver accepted '.$filename);
-            } catch (RuntimeException $exception) {
+            } catch (AudioAssetException $exception) {
+                self::assertSame('audio.music.media', $exception->path);
                 self::assertNotEmpty($exception->getMessage());
             }
         }
@@ -81,7 +83,7 @@ final class AudioExportTest extends KernelTestCase
 
     public function testEncodedAudioHasIndependentLevelsFadesLoopsAndSignalDrivenDucking(): void
     {
-        $builder = new VideoBuilder(audioAssets: $this->resolver());
+        $builder = new VideoBuilder($this->resolver());
         if (! $builder->available()) {
             $this->expectException(RuntimeException::class);
             $builder->build(['PNG'], 64, 64, new AudioMix(music: new AudioTrack('music.wav')));
@@ -136,7 +138,7 @@ final class AudioExportTest extends KernelTestCase
         chmod($directory.'/ffmpeg', 0o700);
 
         try {
-            new VideoBuilder($directory.'/ffmpeg', audioAssets: $this->resolver())->build(['PNG'], 64, 64, new AudioMix(new AudioTrack('voice.wav'), new AudioTrack('music.wav')));
+            new VideoBuilder($this->resolver(), $directory.'/ffmpeg')->build(['PNG'], 64, 64, new AudioMix(new AudioTrack('voice.wav'), new AudioTrack('music.wav')));
             self::fail('The fake ffmpeg cannot encode.');
         } catch (RuntimeException) {
             self::assertStringNotContainsString('latency', (string) file_get_contents($directory.'/arguments'));

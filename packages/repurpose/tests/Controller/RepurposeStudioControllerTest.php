@@ -12,6 +12,7 @@ use Pushword\Core\Entity\Page;
 use Pushword\Core\Entity\User;
 use Pushword\Core\Tests\PathTrait;
 use Pushword\Repurpose\Entity\SocialPost;
+use Pushword\Repurpose\Service\AudioAssetResolver;
 use Pushword\Repurpose\Service\CarouselFactory;
 use Pushword\Repurpose\Service\VideoBuilder;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
@@ -639,22 +640,32 @@ final class RepurposeStudioControllerTest extends WebTestCase
     {
         $post = $this->persistPost();
         $audio = ['voice' => ['media' => 'missing-narration.wav']];
-        $this->postJson('/admin/repurpose/studio/'.$post->id.'/export-video', ['slides' => [$this->pngDataUrl()], 'audio' => $audio]);
+        $body = $this->postJson('/admin/repurpose/studio/'.$post->id.'/export-video', ['slides' => [$this->pngDataUrl()], 'audio' => $audio]);
         if (! self::getContainer()->get(VideoBuilder::class)->available()) {
             self::assertResponseStatusCodeSame(Response::HTTP_SERVICE_UNAVAILABLE);
 
             return;
         }
 
-        self::assertResponseStatusCodeSame(Response::HTTP_INTERNAL_SERVER_ERROR);
-        self::assertStringContainsString('missing-narration.wav', (string) $this->client->getResponse()->getContent());
+        self::assertResponseStatusCodeSame(Response::HTTP_UNPROCESSABLE_ENTITY);
+        self::assertSame([['path' => 'audio.voice.media', 'message' => 'Audio media is missing or unsupported: missing-narration.wav']], $body['violations'] ?? null);
         $post->spec = [...$post->spec, 'audio' => $audio];
         $this->em->flush();
         $this->postJson('/admin/repurpose/studio/'.$post->id.'/export-video', ['slides' => [$this->pngDataUrl()], 'audio' => null]);
         self::assertResponseIsSuccessful();
         self::assertSame('ftyp', substr((string) $this->client->getResponse()->getContent(), 4, 4));
-        $this->postJson('/admin/repurpose/studio/'.$post->id.'/export-video', ['slides' => [$this->pngDataUrl()], 'audio' => ['music' => ['media' => '../music.mp3', 'volume' => 2]]]);
+    }
+
+    public function testVideoExportReportsInvalidAudioPerFieldEvenWithoutFfmpeg(): void
+    {
+        $post = $this->persistPost();
+        self::getContainer()->set(VideoBuilder::class, new VideoBuilder(self::getContainer()->get(AudioAssetResolver::class), '/nonexistent/ffmpeg-binary'));
+
+        $body = $this->postJson('/admin/repurpose/studio/'.$post->id.'/export-video', ['slides' => [$this->pngDataUrl()], 'audio' => ['music' => ['media' => '../music.mp3', 'volume' => 2]]]);
+
         self::assertResponseStatusCodeSame(Response::HTTP_UNPROCESSABLE_ENTITY);
+        self::assertIsArray($body['violations'] ?? null);
+        self::assertSame(['audio.music.media', 'audio.music.volume'], array_column($body['violations'], 'path'));
     }
 
     public function testExportVideoRejectsSlidesThatDecodeToNothing(): void
@@ -673,7 +684,7 @@ final class RepurposeStudioControllerTest extends WebTestCase
 
         // Force the "no ffmpeg" branch on any host by pointing the builder at a
         // binary that does not exist.
-        self::getContainer()->set(VideoBuilder::class, new VideoBuilder('/nonexistent/ffmpeg-binary'));
+        self::getContainer()->set(VideoBuilder::class, new VideoBuilder(self::getContainer()->get(AudioAssetResolver::class), '/nonexistent/ffmpeg-binary'));
 
         $this->client->request(
             Request::METHOD_POST,

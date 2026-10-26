@@ -5,6 +5,11 @@ declare(strict_types=1);
 namespace Pushword\Repurpose\Tests\Command;
 
 use PHPUnit\Framework\Attributes\Group;
+use Pushword\Repurpose\Model\Carousel;
+use Pushword\Repurpose\Model\Creator;
+use Pushword\Repurpose\Service\ConfigCreatorResolver;
+use Pushword\Repurpose\Service\CreatorResolverInterface;
+use RuntimeException;
 use Symfony\Bundle\FrameworkBundle\Console\Application;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Console\Tester\CommandTester;
@@ -124,8 +129,28 @@ final class RepurposeMotionCommandTest extends KernelTestCase
         self::assertIsArray($result);
         self::assertSame('failed', $result['result']);
         self::assertIsArray($result['issues']);
-        self::assertSame([['path' => 'audio', 'message' => 'Audio media is missing or unsupported: missing-narration.wav']], $result['issues']);
+        self::assertSame([['path' => 'audio.voice.media', 'message' => 'Audio media is missing or unsupported: missing-narration.wav']], $result['issues']);
         self::assertDirectoryDoesNotExist($out);
+    }
+
+    public function testOnlyAudioFailuresAreReportedAsAudioIssues(): void
+    {
+        $kernel = self::bootKernel();
+        self::getContainer()->set(ConfigCreatorResolver::class, new class implements CreatorResolverInterface {
+            public function resolve(Carousel $carousel, string $host): ?Creator
+            {
+                throw new RuntimeException('Creator lookup failed.');
+            }
+
+            public function available(string $host): array
+            {
+                return [];
+            }
+        });
+        $tester = new CommandTester(new Application($kernel)->find('pw:repurpose:motion'));
+
+        $this->expectExceptionMessageIsOrContains('Creator lookup failed.');
+        $tester->execute(['spec' => $this->spec(), 'out-dir' => $this->directory.'/video', '--format' => 'agent']);
     }
 
     public function testWriteFailureIsReportedAsAgentJson(): void

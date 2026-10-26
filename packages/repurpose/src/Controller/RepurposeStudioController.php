@@ -14,6 +14,7 @@ use Pushword\Repurpose\Model\Counter;
 use Pushword\Repurpose\Model\FreeText;
 use Pushword\Repurpose\Model\Slide;
 use Pushword\Repurpose\Repository\SocialPostRepository;
+use Pushword\Repurpose\Service\AudioAssetException;
 use Pushword\Repurpose\Service\BackgroundEffectRegistry;
 use Pushword\Repurpose\Service\CarouselFactory;
 use Pushword\Repurpose\Service\ContrastAdvisor;
@@ -344,8 +345,9 @@ final class RepurposeStudioController extends AbstractController
         $post = $this->loadPost($id);
         $carousel = $this->factory->fromArray($post->spec);
 
-        // Validate the request shape before reporting a server capability: a
-        // malformed body is a 400 whether or not ffmpeg is installed.
+        // Validate the request before reporting a server capability: a malformed
+        // body (400) or invalid audio settings (422) are reported whether or not
+        // ffmpeg is installed.
         $data = json_decode($request->getContent(), true);
         if (! \is_array($data) || ! isset($data['slides']) || ! \is_array($data['slides'])) {
             return new JsonResponse(['error' => 'Expected {slides: [dataURL, …]}.'], Response::HTTP_BAD_REQUEST);
@@ -356,6 +358,16 @@ final class RepurposeStudioController extends AbstractController
             return new JsonResponse(['error' => 'No slides to encode.'], Response::HTTP_BAD_REQUEST);
         }
 
+        // The PNGs represent the current editor state, including unsaved audio edits.
+        if (\array_key_exists('audio', $data)) {
+            $carousel->audio = $this->factory->fromArray(['audio' => $data['audio']])->audio;
+        }
+
+        $violations = $this->violations($carousel, 'audio');
+        if ([] !== $violations) {
+            return new JsonResponse(['violations' => $violations], Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
         if (! $this->videoBuilder->available()) {
             return new JsonResponse([
                 'error' => 'Video export needs ffmpeg on the server. Install it (e.g. `apt install ffmpeg`, `brew install ffmpeg`) or set repurpose.ffmpeg_binary, then retry — the .zip and .svg exports work without it.',
@@ -364,18 +376,10 @@ final class RepurposeStudioController extends AbstractController
 
         $format = $carousel->format;
 
-        // The PNGs represent the current editor state, including unsaved audio edits.
-        if (\array_key_exists('audio', $data)) {
-            $carousel->audio = $this->factory->fromArray(['audio' => $data['audio']])->audio;
-        }
-
-        $violations = $this->validator->validateProperty($carousel, 'audio');
-        if (\count($violations) > 0) {
-            return new JsonResponse(['error' => (string) $violations], Response::HTTP_UNPROCESSABLE_ENTITY);
-        }
-
         try {
             $mp4 = $this->videoBuilder->build($pngs, $this->formats->width($format), $this->formats->height($format), $carousel->audio);
+        } catch (AudioAssetException $audioAssetException) {
+            return new JsonResponse(['violations' => [['path' => $audioAssetException->path, 'message' => $audioAssetException->getMessage()]]], Response::HTTP_UNPROCESSABLE_ENTITY);
         } catch (RuntimeException $runtimeException) {
             return new JsonResponse(['error' => 'The video could not be encoded: '.$runtimeException->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
@@ -673,10 +677,11 @@ final class RepurposeStudioController extends AbstractController
     /**
      * @return list<array{path: string, message: string}>
      */
-    private function violations(Carousel $carousel): array
+    private function violations(Carousel $carousel, ?string $property = null): array
     {
         $errors = [];
-        foreach ($this->validator->validate($carousel) as $violation) {
+        $violations = null === $property ? $this->validator->validate($carousel) : $this->validator->validateProperty($carousel, $property);
+        foreach ($violations as $violation) {
             $errors[] = ['path' => $violation->getPropertyPath(), 'message' => (string) $violation->getMessage()];
         }
 

@@ -4,8 +4,13 @@ declare(strict_types=1);
 
 namespace Pushword\Repurpose\Tests\Service;
 
+use League\Flysystem\Filesystem as Flysystem;
+use League\Flysystem\InMemory\InMemoryFilesystemAdapter;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
+use Pushword\Core\Repository\MediaRepository;
+use Pushword\Core\Service\MediaStorageAdapter;
+use Pushword\Repurpose\Service\AudioAssetResolver;
 use Pushword\Repurpose\Service\VideoBuilder;
 use RuntimeException;
 
@@ -19,16 +24,23 @@ use RuntimeException;
 #[Group('integration')]
 final class VideoBuilderTest extends TestCase
 {
+    private function builder(string $binary, float $timeout = 120): VideoBuilder
+    {
+        $storage = new MediaStorageAdapter(new Flysystem(new InMemoryFilesystemAdapter()), '/unused', false);
+
+        return new VideoBuilder(new AudioAssetResolver(self::createStub(MediaRepository::class), $storage), $binary, $timeout);
+    }
+
     public function testAvailableIsFalseWhenTheConfiguredBinaryIsMissing(): void
     {
-        self::assertFalse(new VideoBuilder('/nonexistent/ffmpeg-binary')->available());
+        self::assertFalse($this->builder('/nonexistent/ffmpeg-binary')->available());
     }
 
     public function testBuildThrowsWhenFfmpegIsUnavailable(): void
     {
         $this->expectException(RuntimeException::class);
 
-        new VideoBuilder('/nonexistent/ffmpeg-binary')->build(['PNGBYTES'], 1080, 1350);
+        $this->builder('/nonexistent/ffmpeg-binary')->build(['PNGBYTES'], 1080, 1350);
     }
 
     /**
@@ -44,7 +56,7 @@ final class VideoBuilderTest extends TestCase
 
         try {
             $this->expectException(RuntimeException::class);
-            new VideoBuilder($binary, 1)->build(['PNGBYTES'], 1080, 1350);
+            $this->builder($binary, 1)->build(['PNGBYTES'], 1080, 1350);
         } finally {
             @unlink($binary);
         }

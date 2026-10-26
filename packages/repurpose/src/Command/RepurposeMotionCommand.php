@@ -6,10 +6,10 @@ namespace Pushword\Repurpose\Command;
 
 use JsonException;
 use Pushword\Core\Command\AgentOutputTrait;
+use Pushword\Repurpose\Service\AudioAssetException;
 use Pushword\Repurpose\Service\CarouselFactory;
 use Pushword\Repurpose\Service\CreatorResolverInterface;
 use Pushword\Repurpose\Service\MotionProjectExporter;
-use RuntimeException;
 use Symfony\Component\Console\Attribute\Argument;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Attribute\Option;
@@ -80,8 +80,8 @@ final class RepurposeMotionCommand
 
         try {
             $files = $this->exporter->files($carousel, $data, $this->creators->resolve($carousel, $host));
-        } catch (RuntimeException $runtimeException) {
-            return $this->fail($io, [['path' => 'audio', 'message' => $runtimeException->getMessage()]]);
+        } catch (AudioAssetException $audioAssetException) {
+            return $this->fail($io, [['path' => $audioAssetException->path, 'message' => $audioAssetException->getMessage()]]);
         }
 
         $written = [];

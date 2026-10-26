@@ -1329,7 +1329,12 @@
             this.exportVideoLabel = 'Downloaded ✓'
           } else {
             var body = await response.json().catch(function () { return {} })
-            this.notice = body.error || ('Video export failed (' + response.status + ')')
+            // Audio problems come back as field violations, shown on their track.
+            var violations = Array.isArray(body.violations) ? body.violations : []
+            if (violations.length) {
+              this.violations = violations
+            }
+            this.notice = body.error || (violations.length ? violations[0].message : 'Video export failed (' + response.status + ')')
             this.exportVideoLabel = 503 === response.status ? 'ffmpeg required' : 'Export failed'
           }
         } catch (error) {

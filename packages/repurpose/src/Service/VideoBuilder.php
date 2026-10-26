@@ -33,9 +33,9 @@ final class VideoBuilder
     private string|false|null $binary = null;
 
     public function __construct(
+        private readonly AudioAssetResolver $audioAssets,
         private readonly ?string $ffmpegBinary = null,
         private readonly float $timeout = 120,
-        private readonly ?AudioAssetResolver $audioAssets = null,
     ) {
     }
 
@@ -49,8 +49,9 @@ final class VideoBuilder
      *
      * @param list<string> $pngs raw PNG bytes, in slide order
      *
-     * @throws RuntimeException when ffmpeg is unavailable or the encode failed —
-     *                          the caller turns this into a user-facing warning
+     * @throws AudioAssetException when an audio track's media file is unusable
+     * @throws RuntimeException    when ffmpeg is unavailable or the encode failed —
+     *                             the caller turns this into a user-facing warning
      */
     public function build(array $pngs, int $width, int $height, ?AudioMix $audio = null): string
     {
@@ -104,9 +105,10 @@ final class VideoBuilder
                 continue;
             }
 
-            $resolver = $this->audioAssets ?? throw new RuntimeException('Audio asset resolver is not configured.');
             $path = $dir.'/'.$name.'.'.pathinfo($track->media, \PATHINFO_EXTENSION);
-            file_put_contents($path, $resolver->read($track));
+            $stream = $this->audioAssets->stream($name, $track);
+            file_put_contents($path, $stream);
+            fclose($stream);
             if ('music' === $name) {
                 $arguments[] = '-stream_loop';
                 $arguments[] = '-1';
