@@ -1,15 +1,3 @@
-{% macro value(metric, value, sent, trackingAvailable) %}
-  {%- if metric ends with 'Rate' and sent == 0 -%}
-    <span class="pw-statistics-unmeasured">{{ 'newsletter.statistics.noSends'|trans }}</span>
-  {%- elseif value is null or (metric in ['clicks', 'clickers'] and not trackingAvailable) -%}
-    <span class="pw-statistics-unmeasured">{{ 'newsletter.statistics.notAvailable'|trans }}</span>
-  {%- elseif metric ends with 'Rate' -%}
-    {{ value|format_number({min_fraction_digit: 2, max_fraction_digit: 2}, locale: app.request.locale) }} %
-  {%- else -%}
-    {{ value|format_number(locale: app.request.locale) }}
-  {%- endif -%}
-{% endmacro %}
-
 {% macro measure(metric) %}
   {%- if metric.state == 'measured' -%}{{ metric.value|format_number(locale: app.request.locale) }}{%- else -%}<span class="pw-statistics-unmeasured">{{ ('newsletter.statistics.' ~ metric.state)|trans }}</span>{%- endif -%}
 {% endmacro %}

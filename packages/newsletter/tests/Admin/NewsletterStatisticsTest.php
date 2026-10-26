@@ -47,7 +47,7 @@ final class NewsletterStatisticsTest extends AbstractNewsletterTestCase
         parent::tearDown();
     }
 
-    public function testCampaignsDeduplicateClicksAndWeightRatesBySends(): void
+    public function testCampaignsCountEachClickerOncePerCampaign(): void
     {
         $audience = $this->createAudience();
         $audience->clickTracking = true;
@@ -63,8 +63,6 @@ final class NewsletterStatisticsTest extends AbstractNewsletterTestCase
 
         $this->entityManager->persist(ClickEvent::onCampaign($other, $large, 'https://example.tld/second'));
         $large->incrementClick();
-        $small->incrementBounce();
-        $large->incrementUnsub();
         $this->entityManager->flush();
 
         $repository = $this->repository();
@@ -75,16 +73,10 @@ final class NewsletterStatisticsTest extends AbstractNewsletterTestCase
         self::assertNotNull($large->id);
         self::assertArrayHasKey($small->id, $byId);
         self::assertArrayHasKey($large->id, $byId);
-        self::assertSame(1, $byId[$small->id]['clickers']);
+        self::assertSame(1, $byId[$small->id]['clickers'], 'The same reader counts once in each campaign.');
         self::assertSame(2, $byId[$small->id]['clicks']);
-        self::assertSame(50.0, $byId[$small->id]['clickRate']);
-        self::assertSame(25.0, $byId[$large->id]['clickRate']);
-        $totals = $repository->totals($campaigns);
-        self::assertSame(3, $totals['clickers'], 'The same reader counts once in each campaign.');
-        self::assertSame(4, $totals['clicks']);
-        self::assertSame(30.0, $totals['clickRate'], 'A mean of the two rates would incorrectly give 37.5%.');
-        self::assertSame(10.0, $totals['bounceRate']);
-        self::assertSame(10.0, $totals['unsubscribeRate']);
+        self::assertSame(2, $byId[$large->id]['clickers']);
+        self::assertSame(2, $byId[$large->id]['clicks']);
     }
 
     public function testPeriodUsesFirstHandoffAndExcludesDraftsOtherAudiencesAndBoundaries(): void
@@ -141,7 +133,6 @@ final class NewsletterStatisticsTest extends AbstractNewsletterTestCase
         self::assertSame(1, $data['skipped']);
         self::assertSame(1, $data['failed']);
         self::assertSame(1, $data['bounced']);
-        self::assertNull($data['clickRate'], 'An untracked campaign has no measured click rate.');
     }
 
     public function testContactsAndActivityKeepCurrentStateSeparateFromPeriodEvents(): void
@@ -213,17 +204,8 @@ final class NewsletterStatisticsTest extends AbstractNewsletterTestCase
     {
         $this->login();
         $audience = $this->createAudience();
-        $campaign = $this->sentCampaign($audience, 'No sends');
+        $this->sentCampaign($audience, 'No sends');
         $this->entityManager->flush();
-        $totals = $this->repository()->totals([]);
-        self::assertSame(0, $totals['sent']);
-        self::assertNull($totals['clickRate']);
-        self::assertNull($totals['bounceRate']);
-        self::assertNull($totals['unsubscribeRate']);
-        self::assertNotNull($campaign->id);
-        $data = $this->repository()->campaign($campaign->id);
-        self::assertNotNull($data);
-        self::assertNull($data['clickRate']);
         $query = '?from=2000-01-01&to=2000-01-01&audience='.$audience->id;
         $crawler = $this->client->request(Request::METHOD_GET, '/admin/newsletter/statistics'.$query);
         self::assertResponseIsSuccessful();

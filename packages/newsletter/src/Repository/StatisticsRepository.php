@@ -13,7 +13,7 @@ use Pushword\Newsletter\Enum\ContactTransition;
 use Pushword\Newsletter\Enum\RecipientState;
 
 /**
- * @phpstan-type CampaignStatistics array{id: int, subject: string, audience: string|null, audienceId: int|null, date: string|null, status: string, tracking: bool, recipients: int, sent: int, failed: int, bounced: int, unsubscribed: int, clicks: int, clickers: int, pending: int, skipped: int, clickRate: float|null, bounceRate: float|null, unsubscribeRate: float|null}
+ * @phpstan-type CampaignStatistics array{id: int, subject: string, audience: string|null, audienceId: int|null, date: string|null, status: string, tracking: bool, recipients: int, sent: int, failed: int, bounced: int, unsubscribed: int, clicks: int, clickers: int, pending: int, skipped: int}
  * @phpstan-type CampaignRow array{id: int|string, subject: string, audience: string|null, audience_id: int|string|null, date: string|null, status: string, tracking: bool|int|string|null, recipients: int|string, sent: int|string, failed: int|string, bounced: int|string, unsubscribed: int|string, clicks: int|string}
  */
 final readonly class StatisticsRepository
@@ -42,35 +42,6 @@ final readonly class StatisticsRepository
     public function campaign(int $id): ?array
     {
         return $this->hydrateCampaigns($this->campaignQuery()->andWhere('c.id = :id')->setParameter('id', $id))[0] ?? null;
-    }
-
-    /**
-     * Count each contact once per campaign, including when aggregating campaigns.
-     * The denominator is transport handoffs, never an inferred delivery count.
-     *
-     * @param list<CampaignStatistics> $campaigns
-     *
-     * @return array<string, int|float|null>
-     */
-    public function totals(array $campaigns): array
-    {
-        $totals = array_fill_keys(['recipients', 'sent', 'failed', 'bounced', 'unsubscribed', 'clicks', 'clickers', 'pending', 'skipped'], 0);
-        $tracking = false;
-        foreach ($campaigns as $campaign) {
-            foreach ($totals as $key => $value) {
-                $totals[$key] = $value + $campaign[$key];
-            }
-
-            $tracking = $tracking || $campaign['tracking'] || $campaign['clicks'] > 0;
-        }
-
-        return [
-            ...$totals,
-            'campaigns' => \count($campaigns),
-            'clickRate' => $tracking ? $this->rate($totals['clickers'], $totals['sent']) : null,
-            'bounceRate' => $this->rate($totals['bounced'], $totals['sent']),
-            'unsubscribeRate' => $this->rate($totals['unsubscribed'], $totals['sent']),
-        ];
     }
 
     /** @return array<string, int> */
@@ -182,10 +153,6 @@ final readonly class StatisticsRepository
         $campaigns = [];
         foreach ($rows as $row) {
             $id = (int) $row['id'];
-            $sent = (int) $row['sent'];
-            $clicks = (int) $row['clicks'];
-            $unique = (int) ($clickers[$id] ?? 0);
-            $tracking = (bool) $row['tracking'];
             $campaigns[] = [
                 'id' => $id,
                 'subject' => $row['subject'],
@@ -193,27 +160,19 @@ final readonly class StatisticsRepository
                 'audience' => $row['audience'],
                 'date' => $row['date'],
                 'status' => $row['status'],
-                'tracking' => $tracking,
+                'tracking' => (bool) $row['tracking'],
                 'recipients' => (int) $row['recipients'],
-                'sent' => $sent,
+                'sent' => (int) $row['sent'],
                 'failed' => (int) $row['failed'],
                 'bounced' => (int) $row['bounced'],
                 'unsubscribed' => (int) $row['unsubscribed'],
-                'clicks' => $clicks,
-                'clickers' => $unique,
+                'clicks' => (int) $row['clicks'],
+                'clickers' => (int) ($clickers[$id] ?? 0),
                 'pending' => $pending[$id] ?? 0,
                 'skipped' => $skipped[$id] ?? 0,
-                'clickRate' => $tracking || $clicks > 0 ? $this->rate($unique, $sent) : null,
-                'bounceRate' => $this->rate((int) $row['bounced'], $sent),
-                'unsubscribeRate' => $this->rate((int) $row['unsubscribed'], $sent),
             ];
         }
 
         return $campaigns;
-    }
-
-    private function rate(int $count, int $sent): ?float
-    {
-        return 0 === $sent ? null : round(100 * $count / $sent, 2);
     }
 }
