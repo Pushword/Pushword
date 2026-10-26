@@ -1,5 +1,6 @@
 {% import '@PushwordNewsletter/admin/_statistics_macros.html.twig' as statistics %}
 <div data-report="{{ report.source }}:{{ report.id }}">
+  {{ include('@PushwordNewsletter/admin/_report_observation.html.twig') }}
   <dl class="pw-statistics-list">
     {% for name in ['accepted', 'delivered', 'clicks', 'clickers'] %}
       <div><dt>{{ ('newsletter.statistics.' ~ name)|trans }}</dt><dd data-statistic="{{ name == 'accepted' ? 'sent' : name }}">{{ statistics.measure(report.metric(name)) }}</dd></div>

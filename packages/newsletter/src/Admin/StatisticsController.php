@@ -120,6 +120,7 @@ final class StatisticsController extends AbstractController
             'report' => $selected,
             'comparisons' => $comparisons,
             'backFilters' => $request->query->all(),
+            'timezone' => $this->timezone->timezone->getName(),
         ]);
     }
 
@@ -132,7 +133,7 @@ final class StatisticsController extends AbstractController
         }
 
         $query = $this->reportQuery($form);
-        $rates = ['clickRate', 'filteredClickRate', 'coverage', 'deliveryRate', 'bounceRate', 'unsubscribeRate'];
+        $rates = array_keys(Report::RATES);
         $headers = ['source', 'sourceId', 'managementUrl', 'subject', 'kind', 'date', 'basis', 'window', 'groupBy', 'from', 'until', 'asOf'];
         foreach (Report::METRICS as $name) {
             $headers[] = $name;
@@ -149,6 +150,15 @@ final class StatisticsController extends AbstractController
         $headers[] = 'qualificationMethod';
         $headers[] = 'trackingScope';
         $headers[] = 'mature';
+        $headers[] = 'observedAt';
+        $headers[] = 'notice';
+        $headers[] = 'noticeLevel';
+
+        foreach ($rates as $name) {
+            $headers[] = $name.'NumeratorMetric';
+            $headers[] = $name.'DenominatorMetric';
+        }
+
         $rows = [];
         foreach ($this->dashboard->reports($query) as $report) {
             $row = [
@@ -176,11 +186,16 @@ final class StatisticsController extends AbstractController
                 $row[$name.'Numerator'] = $rate['numerator']->value;
                 $row[$name.'Denominator'] = $rate['denominator']->value;
                 $row[$name.'State'] = $rate['state'];
+                $row[$name.'NumeratorMetric'] = $rate['numeratorMetric'];
+                $row[$name.'DenominatorMetric'] = $rate['denominatorMetric'];
             }
 
             $row['qualificationMethod'] = $report->qualificationMethod;
             $row['trackingScope'] = $report->trackingScope;
             $row['mature'] = $report->mature ? 'yes' : 'no';
+            $row['observedAt'] = $report->observedAt?->format(\DATE_ATOM);
+            $row['notice'] = $report->notice;
+            $row['noticeLevel'] = $report->noticeLevel;
             $rows[] = $row;
         }
 

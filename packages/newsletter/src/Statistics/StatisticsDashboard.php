@@ -43,6 +43,14 @@ final readonly class StatisticsDashboard
             $metrics[$name] = Metric::sum(array_map(static fn (Report $report): Metric => $report->metric($name), $reports));
         }
 
+        $rateDenominators = [];
+        foreach (array_keys(Report::RATES) as $name) {
+            $bases = array_values(array_unique(array_map(static fn (Report $report): ?string => $report->rate($name)['denominatorMetric'], $reports)));
+            if ([] !== $bases) {
+                $rateDenominators[$name] = 1 === \count($bases) ? $bases[0] : null;
+            }
+        }
+
         return new Report(
             'all',
             'all',
@@ -54,6 +62,7 @@ final readonly class StatisticsDashboard
             trackingScope: implode('; ', array_unique(array_column($reports, 'trackingScope'))),
             mature: array_all($reports, static fn (Report $report): bool => $report->mature),
             ratesAvailable: array_all($reports, static fn (Report $report): bool => $report->ratesAvailable),
+            rateDenominators: $rateDenominators,
         );
     }
 }

@@ -1,0 +1,7 @@
+{% if report.observedAt %}
+  <p class="pw-statistics-note" data-report-observed-at>{{ 'newsletter.statistics.observedAt'|trans }} <time datetime="{{ report.observedAt|date('c') }}">{{ report.observedAt|format_datetime('medium', 'short', timezone: timezone, locale: app.request.locale) }}</time></p>
+{% endif %}
+{% if report.notice %}
+  {% set level = report.noticeLevel in ['warning', 'danger'] ? report.noticeLevel : 'info' %}
+  <p class="{{ level == 'info' ? 'pw-statistics-note' : 'alert alert-' ~ level }}" role="status" data-report-notice data-notice-level="{{ level }}">{{ report.notice }}</p>
+{% endif %}

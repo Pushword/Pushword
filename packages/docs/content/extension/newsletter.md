@@ -1203,13 +1203,13 @@ A campaign spanning several days therefore has a separate window for each messag
 | Unique contacts | Distinct contacts within each report. Totals sum contact/report pairs; a person appearing in two reports counts twice, not as one globally deduplicated person. |
 | Qualified clicks | Clicks classified by an extension as non-automated. Unclassified requests are excluded from this count, not declared human. The classified-click count and method show the extent of qualification. |
 | Tracking coverage | Accepted messages with tracking authorized at send time / all accepted messages. Known consent snapshots are also counted; historical gaps remain not measured. |
-| Click rate | Unique raw clicking contacts / accepted messages with tracking authorized. Qualified click rate uses qualified unique contacts with the same denominator. |
+| Click rate | Unique raw clicking contacts / the source's declared base. Pushword defaults to accepted messages with tracking authorized; an external source may use confirmed deliveries. Qualified click rate has its own declared base. |
 | Bounce / unsubscribe rate | Historical bounces / opt-outs divided by accepted messages. Re-subscribing changes current state, never erases a past opt-out. |
 
 `Metric(0)` means a measured zero; `Metric::notMeasured()` means the observation was
 not collected; `Metric::unavailable()` means the source cannot provide it. Unknown
 components propagate through totals instead of becoming zero. Rates are recalculated
-from summed numerators and denominators, never averaged. Legacy cumulative counters
+from summed numerators and denominators, never averaged. Different denominator metrics make only that total rate unavailable; other measurements remain available. Legacy cumulative counters
 may contain earlier estimated attribution; new events require message references.
 Historical opt-outs already subtracted before this upgrade cannot be reconstructed.
 
@@ -1240,12 +1240,16 @@ final class BrevoStatistics implements StatisticsProvider
         // Replace this example with a query of your synchronized campaign cache.
         yield new Report('brevo', '42', 'Autumn news', 'https://app.brevo.com/', null, [
             'accepted' => new Metric(100),
-            'delivered' => Metric::unavailable(),
-            'trackedMessages' => new Metric(80),
-            'coverageKnownMessages' => new Metric(100),
+            'delivered' => new Metric(80),
+            // Consent coverage is unknown; omit trackedMessages and coverageKnownMessages.
             'clicks' => new Metric(12),
             'clickers' => new Metric(9),
-        ]);
+        ],
+            rateDenominators: ['clickRate' => 'delivered'],
+            observedAt: new \DateTimeImmutable('2026-10-26T08:00:00Z'),
+            notice: 'Cached snapshot; refresh delayed.',
+            noticeLevel: 'warning',
+        );
     }
 }
 ```
@@ -1253,6 +1257,20 @@ final class BrevoStatistics implements StatisticsProvider
 Omitted metrics are unavailable. There is no built-in Brevo API client, credential
 storage, webhook route or scheduler; a site supplies its own adapter and authentication.
 `Report::qualificationMethod` and `trackingScope` describe each source's actual rules.
+
+`rateDenominators` overrides individual rates with a name from `Report::METRICS`;
+`null` makes only that rate unavailable. Omitted entries retain Pushword's defaults
+in `Report::RATES`. `rate()` also returns `numeratorMetric` and `denominatorMetric`,
+shown beside each fraction and exported as `<rate>NumeratorMetric` and
+`<rate>DenominatorMetric`. A zero denominator remains not measured.
+
+`observedAt` is the optional timestamp of the source snapshot, independently of the
+campaign date and query `asOf`. Optional plain-text `notice` and `noticeLevel`
+(`info`, `warning`, `danger`; default `info`) describe freshness or availability.
+The adapter chooses the level; Pushword does not infer freshness from a clock.
+List and detail show this metadata; CSV appends `observedAt`, `notice`, `noticeLevel`
+and rate metric names after existing columns. Totals do not invent a shared snapshot
+date or merge source notices; each row retains its source metadata.
 
 ### Delivery events and precise attribution
 

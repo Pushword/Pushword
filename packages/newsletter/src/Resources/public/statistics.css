@@ -101,10 +101,12 @@
 .pw-statistics-table > thead > tr > th { padding-block: 0.75rem; color: var(--statistics-muted); font-size: 0.75rem; font-weight: 500; }
 .pw-statistics-table > tbody > tr > :is(th, td) { padding-block: 1rem; vertical-align: top; border-color: var(--statistics-border); }
 .pw-statistics-table > tbody > tr > th { font-weight: 400; min-inline-size: 0; }
-.pw-statistics-comparison > thead th:first-child { inline-size: 43%; }
-.pw-statistics-comparison > thead th:nth-child(2) { inline-size: 12%; }
+.pw-statistics-comparison > thead th { white-space: normal; }
+.pw-statistics-comparison > thead th:first-child { inline-size: 35%; }
+.pw-statistics-comparison > thead th:nth-child(2) { inline-size: 10%; }
 .pw-statistics-comparison > thead th:nth-child(3) { inline-size: 23%; }
 .pw-statistics-comparison > thead th:nth-child(4) { inline-size: 22%; }
+.pw-statistics-comparison > thead th:nth-child(5) { inline-size: 10%; }
 .pw-statistics .pw-statistics-number { text-align: end; font-variant-numeric: tabular-nums; }
 .pw-statistics-table small { display: block; margin-block-start: 0.375rem; }
 .pw-statistics a.pw-statistics-report-link { display: block; min-block-size: 2.75rem; padding-block: 0.375rem; color: var(--bs-body-color); font-weight: 600; line-height: 1.5; overflow-wrap: anywhere; }
@@ -138,6 +140,9 @@
 .pw-statistics-list > div { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; padding-block: 0.625rem; }
 .pw-statistics-list dt { font-weight: 400; }
 .pw-statistics-list dd { flex-shrink: 0; margin: 0; font-weight: 600; font-variant-numeric: tabular-nums; }
+.pw-statistics-list dd:has([data-rate-value]) { flex: 0 1 60%; min-inline-size: 0; text-align: end; }
+.pw-statistics-list [data-rate-value] { display: block; }
+.pw-statistics-list dd > small { display: block; color: var(--statistics-muted); font-weight: 400; line-height: 1.5; overflow-wrap: anywhere; }
 .pw-statistics-linked-row { position: relative; min-block-size: 2.75rem; padding-inline: 0.5rem; border-radius: 0.375rem; }
 .pw-statistics-linked-row a { color: inherit; }
 .pw-statistics-linked-row a::after { position: absolute; inset: 0; content: ''; }
