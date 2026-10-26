@@ -15,6 +15,7 @@
         "plannedAt": { "type": ["string", "null"], "description": "Parseable date-time when the post is scheduled, or null." },
         "caption": { "type": ["string", "null"], "description": "The post caption. Its published length, including hashtags, is capped per network; Pinterest requires a non-empty caption." },
         "video": { "type": ["string", "null"], "pattern": "^[a-zA-Z0-9_.-]+\\.(?:[mM][pP]4|[wW][eE][bB][mM])(?![\\s\\S])", "description": "Normalized filename of a rendered MP4 or WebM in the media library. The admin plays this render; editing slides does not regenerate it." },
+        "audio": { "$ref": "#/$defs/audioMix", "description": "Independent voice and looping music for new video exports. Does not change an already imported rendered video." },
         "hashtags": { "type": "array", "items": { "type": "string" } },
         "palette": { "$ref": "#/$defs/palette", "description": "Deck-level colour override; any slide may override again." },
         "fontPairing": { "type": ["string", "null"], "description": "A key from the font-pairing registry (see /api/repurpose/networks, fontPairings). Only pick a pairing whose `installed` is true — an uninstalled one silently falls back to Roboto; `pw:repurpose:fonts <pairing>` installs the missing TTFs. Null inherits site typography." },
@@ -49,6 +50,23 @@
         }
     ],
     "$defs": {
+        "audioMix": {
+            "type": ["object", "null"], "additionalProperties": false,
+            "properties": {
+                "voice": { "$ref": "#/$defs/audioTrack" },
+                "music": { "$ref": "#/$defs/audioTrack", "description": "Loops to the video end; defaults to volume 0.3." },
+                "ducking": { "type": "boolean", "default": true, "description": "Lower music while the voice signal is audible, restoring it during pauses." }
+            }
+        },
+        "audioTrack": {
+            "type": "object", "required": ["media"], "additionalProperties": false,
+            "properties": {
+                "media": { "type": "string", "pattern": "^[a-zA-Z0-9_.-]+\\.(?:[mM][pP]3|[wW][aA][vV]|[mM]4[aA]|[oO][gG][gG]|[fF][lL][aA][cC])(?![\\s\\S])" },
+                "volume": { "type": "number", "minimum": 0, "maximum": 1, "description": "Linear gain; 0 mutes, 1 keeps the source level. Voice defaults to 1, music to 0.3." },
+                "fadeIn": { "type": "number", "minimum": 0, "maximum": 30, "default": 0, "description": "Fade-in duration in seconds." },
+                "fadeOut": { "type": "number", "minimum": 0, "maximum": 30, "default": 0, "description": "Fade-out duration in seconds, ending at the track or video end, whichever is earlier." }
+            }
+        },
         "palette": {
             "type": "object",
             "additionalProperties": false,

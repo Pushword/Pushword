@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Pushword\Repurpose\Service;
 
 use FilesystemIterator;
+use Pushword\Repurpose\Model\AudioMix;
+use Pushword\Repurpose\Model\AudioTrack;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 use RuntimeException;
@@ -33,6 +35,7 @@ final class VideoBuilder
     public function __construct(
         private readonly ?string $ffmpegBinary = null,
         private readonly float $timeout = 120,
+        private readonly ?AudioAssetResolver $audioAssets = null,
     ) {
     }
 
@@ -49,7 +52,7 @@ final class VideoBuilder
      * @throws RuntimeException when ffmpeg is unavailable or the encode failed —
      *                          the caller turns this into a user-facing warning
      */
-    public function build(array $pngs, int $width, int $height): string
+    public function build(array $pngs, int $width, int $height, ?AudioMix $audio = null): string
     {
         $binary = $this->binary();
         if (null === $binary) {
@@ -69,7 +72,9 @@ final class VideoBuilder
             $listFile = $this->writeFrames($dir, $pngs);
             $outFile = $dir.'/carousel.mp4';
 
-            $process = new Process($this->command($binary, $listFile, $outFile, $width, $height), timeout: $this->timeout);
+            $audioArguments = $this->audioArguments($dir, $audio, \count($pngs) * self::SECONDS_PER_SLIDE);
+            $command = $this->command($binary, $listFile, $outFile, $width, $height, $audioArguments);
+            $process = new Process($command, timeout: $this->timeout);
             $process->run();
 
             $mp4 = @file_get_contents($outFile);
@@ -85,6 +90,78 @@ final class VideoBuilder
         } finally {
             $this->cleanup($dir);
         }
+    }
+
+    /** @return list<string> */
+    private function audioArguments(string $dir, ?AudioMix $audio, float $duration): array
+    {
+        $arguments = [];
+        $filters = [];
+        $labels = [];
+        foreach (['voice', 'music'] as $name) {
+            $track = $audio?->{$name};
+            if (null === $track) {
+                continue;
+            }
+
+            $resolver = $this->audioAssets ?? throw new RuntimeException('Audio asset resolver is not configured.');
+            $path = $dir.'/'.$name.'.'.pathinfo($track->media, \PATHINFO_EXTENSION);
+            file_put_contents($path, $resolver->read($track));
+            if ('music' === $name) {
+                $arguments[] = '-stream_loop';
+                $arguments[] = '-1';
+            }
+
+            $arguments[] = '-i';
+            $arguments[] = $path;
+            $input = \count($labels) + 1;
+            $filters[] = '['.$input.':a]'.$this->trackFilters($track, $duration).'['.$name.']';
+            $labels[] = '['.$name.']';
+        }
+
+        if ([] === $labels) {
+            return [];
+        }
+
+        if (null !== $audio?->voice && null !== $audio->music && $audio->ducking) {
+            $filters[] = '[voice]asplit[voiceMix][sidechain]';
+            $filters[] = '[music][sidechain]sidechaincompress=threshold=0.02:ratio=8:attack=50:release=400[ducked]';
+            $labels = ['[voiceMix]', '[ducked]'];
+        }
+
+        $filters[] = implode('', $labels).'amix=inputs='.\count($labels).':normalize=0,alimiter=limit=0.95:level=false:latency=true[mix]';
+        $arguments[] = '-filter_complex';
+        $arguments[] = implode(';', $filters);
+        $arguments[] = '-map';
+        $arguments[] = '0:v';
+        $arguments[] = '-map';
+        $arguments[] = '[mix]';
+        $arguments[] = '-c:a';
+        $arguments[] = 'aac';
+        $arguments[] = '-t';
+        $arguments[] = (string) $duration;
+
+        return $arguments;
+    }
+
+    private function trackFilters(AudioTrack $track, float $duration): string
+    {
+        $filters = ['atrim=duration='.$duration, 'asetpts=PTS-STARTPTS', 'volume='.$track->volume];
+        if ($track->fadeIn > 0) {
+            $filters[] = 'afade=t=in:d='.$track->fadeIn;
+        }
+
+        if ($track->fadeOut > 0) {
+            // Reverse after trimming so a short narration fades at its own end.
+            $filters[] = 'areverse';
+            $filters[] = 'afade=t=in:d='.$track->fadeOut;
+            $filters[] = 'areverse';
+        }
+
+        $filters[] = 'apad=whole_dur='.$duration;
+        $filters[] = 'atrim=duration='.$duration;
+
+        return implode(',', $filters);
     }
 
     /**
@@ -111,9 +188,11 @@ final class VideoBuilder
     }
 
     /**
+     * @param list<string> $audioArguments
+     *
      * @return list<string>
      */
-    private function command(string $binary, string $listFile, string $outFile, int $width, int $height): array
+    private function command(string $binary, string $listFile, string $outFile, int $width, int $height, array $audioArguments): array
     {
         return [
             $binary,
@@ -121,6 +200,7 @@ final class VideoBuilder
             '-f', 'concat',
             '-safe', '0',
             '-i', $listFile,
+            ...$audioArguments,
             // Fit each frame into the target box (letterboxing anything off-ratio),
             // then force yuv420p on even dimensions — what every player and social
             // upload expects.

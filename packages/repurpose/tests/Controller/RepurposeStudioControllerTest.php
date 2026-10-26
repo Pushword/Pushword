@@ -140,6 +140,9 @@ final class RepurposeStudioControllerTest extends WebTestCase
         self::assertMatchesRegularExpression('#/bundles/pushwordcore/alpine\.js\?v=\d+#', $html);
         self::assertMatchesRegularExpression('#/bundles/pushwordcore/contextHelp\.js\?v=\d+#', $html);
         self::assertSelectorExists('[data-pw-help] [data-pw-help-content]');
+        self::assertSelectorExists('#rp-audio-fields label[for="rp-voice-volume"]');
+        self::assertSelectorExists('#rp-audio-fields label[for="rp-music-fadeOut"]');
+        self::assertSelectorExists('#rp-audio-ducking[type="checkbox"]');
     }
 
     public function testSaveEditedSpecPersistsNewCopy(): void
@@ -614,6 +617,41 @@ final class RepurposeStudioControllerTest extends WebTestCase
         $this->postJson('/admin/repurpose/studio/'.$post->id.'/export-video', ['notSlides' => 1]);
 
         self::assertSame(Response::HTTP_BAD_REQUEST, $this->client->getResponse()->getStatusCode());
+    }
+
+    public function testAudioSettingsCanBeSavedAndRemovedIndependently(): void
+    {
+        $post = $this->persistPost();
+        $audio = ['voice' => ['media' => 'voice.wav', 'volume' => 0, 'fadeIn' => 0.2], 'music' => ['media' => 'music.mp3', 'volume' => 0.3, 'fadeOut' => 2], 'ducking' => false];
+        $this->postJson('/admin/repurpose/studio/'.$post->id.'/save', [...$this->validSpec(), 'audio' => $audio]);
+        self::assertResponseIsSuccessful();
+        self::assertSame($audio, $this->em->find(SocialPost::class, $post->id)?->spec['audio']);
+        unset($audio['voice']);
+        $this->postJson('/admin/repurpose/studio/'.$post->id.'/save', [...$this->validSpec(), 'audio' => $audio]);
+        self::assertResponseIsSuccessful();
+        self::assertSame($audio, $this->em->find(SocialPost::class, $post->id)?->spec['audio']);
+    }
+
+    public function testVideoExportUsesUnsavedAudioAndAllowsDetachingIt(): void
+    {
+        $post = $this->persistPost();
+        $audio = ['voice' => ['media' => 'missing-narration.wav']];
+        $this->postJson('/admin/repurpose/studio/'.$post->id.'/export-video', ['slides' => [$this->pngDataUrl()], 'audio' => $audio]);
+        if (! self::getContainer()->get(VideoBuilder::class)->available()) {
+            self::assertResponseStatusCodeSame(Response::HTTP_SERVICE_UNAVAILABLE);
+
+            return;
+        }
+
+        self::assertResponseStatusCodeSame(Response::HTTP_INTERNAL_SERVER_ERROR);
+        self::assertStringContainsString('missing-narration.wav', (string) $this->client->getResponse()->getContent());
+        $post->spec = [...$post->spec, 'audio' => $audio];
+        $this->em->flush();
+        $this->postJson('/admin/repurpose/studio/'.$post->id.'/export-video', ['slides' => [$this->pngDataUrl()], 'audio' => null]);
+        self::assertResponseIsSuccessful();
+        self::assertSame('ftyp', substr((string) $this->client->getResponse()->getContent(), 4, 4));
+        $this->postJson('/admin/repurpose/studio/'.$post->id.'/export-video', ['slides' => [$this->pngDataUrl()], 'audio' => ['music' => ['media' => '../music.mp3', 'volume' => 2]]]);
+        self::assertResponseStatusCodeSame(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 
     public function testExportVideoRejectsSlidesThatDecodeToNothing(): void

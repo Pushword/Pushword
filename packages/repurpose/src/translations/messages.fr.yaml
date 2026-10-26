@@ -18,6 +18,15 @@ repurpose:
     plannedAt: Planifié le
     updatedAt: Mis à jour
 
+repurposeAudioDucking: "Baisser automatiquement la musique pendant la narration"
+repurposeAudioFadeIn: "Fondu d’entrée (s)"
+repurposeAudioFadeOut: "Fondu de sortie (s)"
+repurposeAudioInvalid: "Choisissez un fichier audio MP3, WAV, M4A, OGG ou FLAC."
+repurposeAudioMusic: "Musique"
+repurposeAudioNote: "Les deux pistes démarrent avec la vidéo. La musique tourne en boucle. Les réglages s’appliquent aux nouveaux exports MP4 et animés ; exportez à nouveau pour écouter vos changements."
+repurposeAudioTitle: "Voix et musique"
+repurposeAudioVoice: "Voix / narration"
+repurposeAudioVolume: "Volume"
 repurposeConfirmationCancel: Annuler
 repurposeExport: 'Exporter'
 repurposeFormat: 'Format'

@@ -12,6 +12,30 @@ use Pushword\Repurpose\Service\CarouselFactory;
 #[Group('integration')]
 final class CarouselFactoryTest extends TestCase
 {
+    public function testAudioTracksKeepIndependentSettingsAndDefaults(): void
+    {
+        $factory = new CarouselFactory();
+        self::assertNull($factory->fromArray([])->audio);
+        $mix = $factory->fromArray(['audio' => [
+            'voice' => ['media' => 'voice.wav', 'volume' => 0, 'fadeIn' => 0.2],
+            'music' => ['media' => 'music.mp3', 'fadeOut' => 2], 'ducking' => false,
+        ]])->audio;
+        self::assertNotNull($mix);
+        self::assertFalse($mix->ducking);
+        self::assertNotNull($mix->voice);
+        self::assertNotNull($mix->music);
+        self::assertSame(0.0, $mix->voice->volume);
+        self::assertSame(0.2, $mix->voice->fadeIn);
+        self::assertSame(0.0, $mix->voice->fadeOut);
+        self::assertSame(0.3, $mix->music->volume);
+        self::assertSame(2.0, $mix->music->fadeOut);
+        $voice = $factory->fromArray(['audio' => ['voice' => ['media' => 'voice.wav']]])->audio;
+        self::assertNotNull($voice);
+        self::assertTrue($voice->ducking);
+        self::assertNull($voice->music);
+        self::assertSame(1.0, $voice->voice?->volume);
+    }
+
     public function testRenderedVideoIsOptional(): void
     {
         $factory = new CarouselFactory();

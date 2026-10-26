@@ -2,6 +2,7 @@ import React from 'react';
 import {AbsoluteFill, Composition, registerRoot, Sequence, useCurrentFrame} from 'remotion';
 import project from '../timeline.json';
 import {Scene} from './Scene';
+import {Soundtrack} from './Soundtrack';
 import {scenes} from './scenes';
 import {entranceOpacity, timeline} from './timeline.mjs';
 
@@ -19,6 +20,7 @@ const Clip = ({slide}) => {
 
 const Video = () => (
   <AbsoluteFill style={{backgroundColor: '#0b1120'}}>
+    <Soundtrack mix={video.audio}/>
     {video.slides.map((slide) => (
       <Sequence key={slide.id} name={slide.id} from={slide.from} durationInFrames={slide.durationInFrames}>
         <Clip slide={slide}/>

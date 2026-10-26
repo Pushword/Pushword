@@ -9,6 +9,7 @@ use Pushword\Core\Command\AgentOutputTrait;
 use Pushword\Repurpose\Service\CarouselFactory;
 use Pushword\Repurpose\Service\CreatorResolverInterface;
 use Pushword\Repurpose\Service\MotionProjectExporter;
+use RuntimeException;
 use Symfony\Component\Console\Attribute\Argument;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Attribute\Option;
@@ -77,7 +78,12 @@ final class RepurposeMotionCommand
             return $this->fail($io, $issues);
         }
 
-        $files = $this->exporter->files($carousel, $data, $this->creators->resolve($carousel, $host));
+        try {
+            $files = $this->exporter->files($carousel, $data, $this->creators->resolve($carousel, $host));
+        } catch (RuntimeException $runtimeException) {
+            return $this->fail($io, [['path' => 'audio', 'message' => $runtimeException->getMessage()]]);
+        }
+
         $written = [];
 
         try {

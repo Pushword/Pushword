@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Pushword\Repurpose\Service;
 
+use Pushword\Repurpose\Model\AudioMix;
+use Pushword\Repurpose\Model\AudioTrack;
 use Pushword\Repurpose\Model\Carousel;
 use Pushword\Repurpose\Model\Counter;
 use Pushword\Repurpose\Model\Creator;
@@ -42,6 +44,34 @@ final class CarouselFactory
             creatorOnSlides: $this->strOr($data['creatorOnSlides'] ?? null, 'intro-outro'),
             slides: $this->slides($data['slides'] ?? null),
             video: $this->strOrNull($data['video'] ?? null),
+            audio: $this->audio($data['audio'] ?? null),
+        );
+    }
+
+    private function audio(mixed $raw): ?AudioMix
+    {
+        if (! \is_array($raw)) {
+            return null;
+        }
+
+        return new AudioMix(
+            voice: $this->audioTrack($raw['voice'] ?? null, 1),
+            music: $this->audioTrack($raw['music'] ?? null, 0.3),
+            ducking: (bool) ($raw['ducking'] ?? true),
+        );
+    }
+
+    private function audioTrack(mixed $raw, float $volume): ?AudioTrack
+    {
+        if (! \is_array($raw)) {
+            return null;
+        }
+
+        return new AudioTrack(
+            media: $this->str($raw['media'] ?? null),
+            volume: $this->float($raw['volume'] ?? null, $volume),
+            fadeIn: $this->float($raw['fadeIn'] ?? null, 0),
+            fadeOut: $this->float($raw['fadeOut'] ?? null, 0),
         );
     }
 

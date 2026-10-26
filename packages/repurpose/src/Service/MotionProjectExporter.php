@@ -18,6 +18,7 @@ final readonly class MotionProjectExporter
     public function __construct(
         private SlideRenderer $renderer,
         private FormatRegistry $formats,
+        private AudioAssetResolver $audioAssets,
     ) {
     }
 
@@ -47,13 +48,30 @@ final readonly class MotionProjectExporter
             $slides[] = ['id' => $id, 'durationInFrames' => 90, 'transitionInFrames' => 0 === $index ? 0 : 12, 'layers' => $layers];
         }
 
-        $files['timeline.json'] = json_encode([
+        $timeline = [
             '$schema' => './timeline.schema.json',
             'width' => $this->formats->width($carousel->format),
             'height' => $this->formats->height($carousel->format),
             'fps' => 30,
             'slides' => $slides,
-        ], \JSON_PRETTY_PRINT | \JSON_UNESCAPED_SLASHES | \JSON_UNESCAPED_UNICODE)."\n";
+        ];
+        if (null !== $carousel->audio) {
+            $audio = ['ducking' => $carousel->audio->ducking];
+            foreach (['voice', 'music'] as $name) {
+                $track = $carousel->audio->{$name};
+                if (null === $track) {
+                    continue;
+                }
+
+                $src = 'audio/'.$name.'.'.strtolower(pathinfo($track->media, \PATHINFO_EXTENSION));
+                $files['public/'.$src] = $this->audioAssets->read($track);
+                $audio[$name] = ['src' => $src, 'volume' => $track->volume, 'fadeIn' => $track->fadeIn, 'fadeOut' => $track->fadeOut];
+            }
+
+            $timeline['audio'] = $audio;
+        }
+
+        $files['timeline.json'] = json_encode($timeline, \JSON_PRETTY_PRINT | \JSON_UNESCAPED_SLASHES | \JSON_UNESCAPED_UNICODE)."\n";
         $files['spec.json'] = json_encode($spec, \JSON_PRETTY_PRINT | \JSON_UNESCAPED_SLASHES | \JSON_UNESCAPED_UNICODE)."\n";
         $files['caption.txt'] = CaptionFormatter::format($carousel->caption, array_values($carousel->hashtags))."\n";
 

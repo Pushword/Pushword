@@ -79,7 +79,7 @@ test('project check counts existing assets and fails for a missing file', async 
   try {
     await mkdir(join(directory, 'src'));
     await mkdir(join(directory, 'public/slides/one'), {recursive: true});
-    for (const name of ['check.mjs', 'timeline.mjs']) {
+    for (const name of ['check.mjs', 'timeline.mjs', 'audio.mjs']) {
       await copyFile(new URL(`../../src/Resources/motion/src/${name}`, import.meta.url), join(directory, 'src', name));
     }
     await writeFile(join(directory, 'timeline.json'), JSON.stringify(project([slide('one')])));
@@ -93,6 +93,14 @@ test('project check counts existing assets and fails for a missing file', async 
     assert.equal(present.status, 0);
     assert.deepEqual(JSON.parse(present.stdout), {result: 'passed', slides: 1, assets: 1, durationInFrames: 90, seconds: 3});
     assert.equal(present.stderr, '');
+    await writeFile(join(directory, 'timeline.json'), JSON.stringify({...project([slide('one')]), audio: {voice: {src: 'voice.wav'}}}));
+    const missingAudio = run();
+    assert.equal(missingAudio.status, 1);
+    assert.match(JSON.parse(missingAudio.stderr).error, /voice.wav/);
+    await writeFile(join(directory, 'public/voice.wav'), 'audio fixture');
+    const withAudio = run();
+    assert.equal(withAudio.status, 0, withAudio.stderr);
+    assert.equal(JSON.parse(withAudio.stdout).assets, 2);
   } finally {
     await rm(directory, {recursive: true, force: true});
   }

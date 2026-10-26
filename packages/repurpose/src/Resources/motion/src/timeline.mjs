@@ -1,3 +1,5 @@
+import {audioMix} from './audio.mjs';
+
 const animations = ['none', 'fade', 'rise', 'zoom-in'];
 
 function integer(value, path, minimum = 0) {
@@ -55,7 +57,7 @@ export function timeline(project) {
     integer(end, `${path} end frame`, 1);
     return {...slide, from};
   });
-  return {width: project.width, height: project.height, fps: project.fps, slides, durationInFrames: end};
+  return {width: project.width, height: project.height, fps: project.fps, slides, durationInFrames: end, audio: audioMix(project.audio)};
 }
 
 export function entranceOpacity(frame, transitionInFrames) {

@@ -146,6 +146,16 @@
       delete s.hashtags
     }
     dropEmptyStrings(s, ['video', 'caption', 'creator', 'fontPairing', 'creatorOnSlides', 'creatorOrientation'])
+    if (s.audio) {
+      ;['voice', 'music'].forEach(function (name) {
+        if (!s.audio[name] || !s.audio[name].media) {
+          delete s.audio[name]
+        }
+      })
+      if (!s.audio.voice && !s.audio.music) {
+        delete s.audio
+      }
+    }
     // Deck-wide effect: 'none' is the factory default.
     dropDefaults(s, { background: 'none' })
     if ('' === s.plannedAt) {
@@ -276,6 +286,15 @@
         }
         var s = this.spec
         def(s, 'video', '')
+        s.audio = s.audio || {}
+        def(s.audio, 'ducking', true)
+        ;['voice', 'music'].forEach(function (name) {
+          s.audio[name] = s.audio[name] || {}
+          def(s.audio[name], 'media', '')
+          def(s.audio[name], 'volume', 'voice' === name ? 1 : 0.3)
+          def(s.audio[name], 'fadeIn', 0)
+          def(s.audio[name], 'fadeOut', 0)
+        })
         s.palette = s.palette || {}
         s.counter = s.counter || {}
         s.hashtags = Array.isArray(s.hashtags) ? s.hashtags : []
@@ -590,6 +609,9 @@
       pickVideo: function (mode) {
         this.pickMedia('video', null, mode)
       },
+      pickAudio: function (track, mode) {
+        this.pickMedia('audio', track, mode)
+      },
       clearVideo: function () {
         this.spec.video = ''
         this.selectedVideo = ''
@@ -615,6 +637,16 @@
         }
         var data = event.data
         if (!this.mediaModal.open || !data || 'pw-media-picker-select' !== data.type || !data.media) {
+          return
+        }
+        if ('audio' === this._pickSlide) {
+          var audioFilename = data.media.fileName || ''
+          if (!/^[a-z0-9_.-]+\.(mp3|wav|m4a|ogg|flac)$/i.test(audioFilename)) {
+            this.notice = this.messages.audioInvalid
+            return
+          }
+          this.spec.audio[this._pickCell].media = audioFilename
+          this.closeMediaModal()
           return
         }
         if ('video' === this._pickSlide) {
@@ -1286,7 +1318,7 @@
           for (var i = 0; i < svgs.length; i++) {
             pngs.push(await svgToPng(svgs[i]))
           }
-          var response = await fetch(this.urls.exportVideo, jsonPost({ slides: pngs }))
+          var response = await fetch(this.urls.exportVideo, jsonPost({ slides: pngs, audio: this.payload().audio || null }))
           if (response.ok) {
             download(await response.blob(), this.filename + '.mp4')
             this.exportVideoLabel = 'Downloaded ✓'

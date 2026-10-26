@@ -18,6 +18,15 @@ repurpose:
     plannedAt: Planned at
     updatedAt: Updated
 
+repurposeAudioDucking: "Lower music automatically during narration"
+repurposeAudioFadeIn: "Fade in (s)"
+repurposeAudioFadeOut: "Fade out (s)"
+repurposeAudioInvalid: "Choose an MP3, WAV, M4A, OGG or FLAC audio file."
+repurposeAudioMusic: "Music"
+repurposeAudioNote: "Both tracks start with the video. Music loops to the end. Settings apply to new MP4 and motion exports; export again to hear your changes."
+repurposeAudioTitle: "Voice and music"
+repurposeAudioVoice: "Voice / narration"
+repurposeAudioVolume: "Volume"
 repurposeConfirmationCancel: Cancel
 repurposeExport: 'Export'
 repurposeFormat: 'Format'

@@ -43,6 +43,26 @@ final class CarouselValidationTest extends KernelTestCase
         self::assertSame([], $violations);
     }
 
+    public function testAudioRejectsUnsafeFilesAndOutOfRangeMixSettings(): void
+    {
+        $spec = ['page' => 'x', 'network' => 'instagram', 'format' => 'story-9-16', 'slides' => [['title' => 'Hi']]];
+        foreach (['voice.mp3', 'track.WAV', 'music.m4a', 'voice.ogg', 'music.flac'] as $media) {
+            self::assertSame([], $this->violations([...$spec, 'audio' => ['voice' => ['media' => $media, 'volume' => 0, 'fadeOut' => 30]]]));
+        }
+
+        foreach (['', '../voice.mp3', 'https://example.test/a.wav', 'photo.jpg', "a.mp3\n"] as $media) {
+            self::assertArrayHasKey('audio.voice.media', $this->violations([...$spec, 'audio' => ['voice' => ['media' => $media]]]));
+        }
+
+        $violations = $this->violations([...$spec, 'audio' => [
+            'voice' => ['media' => 'voice.wav', 'volume' => -1, 'fadeIn' => -0.1],
+            'music' => ['media' => 'music.wav', 'volume' => 1.1, 'fadeOut' => 31],
+        ]]);
+        foreach (['audio.voice.volume', 'audio.voice.fadeIn', 'audio.music.volume', 'audio.music.fadeOut'] as $path) {
+            self::assertArrayHasKey($path, $violations);
+        }
+    }
+
     public function testUnknownNetworkIsRejected(): void
     {
         $violations = $this->violations([

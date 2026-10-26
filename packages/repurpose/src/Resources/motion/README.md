@@ -52,6 +52,22 @@ Layers have semantic ids: `background`, `images.0`, `images.1`, `overlay`,
 Only layers present in the source slide are exported. Remove a layer from the
 list to hide it; set all animations to `none` to reproduce the static slide.
 
+## Voice and music
+
+`audio.voice` and `audio.music` in `timeline.json` are independent optional tracks.
+Each has a local `src` relative to `public/`, `volume` (0–1), `fadeIn` and `fadeOut`
+in seconds (0–30). Voice defaults to volume 1; music to 0.3. Both start at frame 0.
+Voice plays once and fades at its own end (or the video end if shorter); music
+loops to the video end, with fades applied across the full composition.
+
+`audio.ducking` defaults to true. The voice waveform controls a smooth reduction
+in music volume while narration is audible, restoring it during pauses. Volume 0
+mutes a track; muted voice does not reduce music. Audio gains are computed from
+frame zero, so seeking and parallel rendering give the same result. Both source
+files are copied from the site's library at export; no site connection is needed.
+`npm run check` also checks the audio settings and files. Remove a track from
+`audio` to detach it. Changing these settings does not modify `spec.json`.
+
 ## Agent-authored scenes
 
 Edit `src/Scene.jsx` to change the shared animation style. For an entirely custom
@@ -79,8 +95,7 @@ export const scenes = {'slide-1': Opening};
 `SlideLayers` is optional: a scene can supply all its own artwork. The enclosing
 sequence applies its timeline duration and crossfade to either kind of scene.
 Add local audio, video or illustrations under `public/` and use Remotion's
-`staticFile()` and media components. New audio/video assets and their timing are
-managed in scene code; they are not part of the carousel spec or its library.
+`staticFile()` and media components. Additional scene-specific media and their timing are managed in scene code.
 
 All motion must derive from `useCurrentFrame()` and composition data. Do not use
 CSS animation clocks, timers, `Date.now()` or `Math.random()` for rendered motion:

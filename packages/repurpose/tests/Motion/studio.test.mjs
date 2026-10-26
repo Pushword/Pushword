@@ -10,7 +10,7 @@ function studio(config = {}, fetch, confirm) {
   const window = {location: {origin}, confirm, RP_STUDIO: {
     spec: {slides: [{title: 'Test', images: [{}]}]},
     urls: {mediaIndex: '/admin/media', mediaUpload: '/admin/media/new'},
-    messages: {videoInvalid: 'Choose a video'},
+    messages: {videoInvalid: 'Choose a video', audioInvalid: 'Choose audio'},
     ...config,
   }, Alpine: {data: (_, value) => { factory = value; }}};
   vm.runInNewContext(source, {window, fetch, document: {addEventListener: (_, callback) => callback()}});
@@ -31,6 +31,34 @@ test('network switching names the destination and preserves edits when cancelled
   assert.equal(event.target.value, 'instagram');
   assert.equal(state.dirty, true);
   assert.equal(state.spec.slides[0].title, 'Test');
+});
+
+test('voice and music pickers keep independent levels, fades and mute in the saved payload', () => {
+  const state = studio();
+  state.normalize();
+  assert.equal(state.payload().audio, undefined, 'empty controls must not create audio tracks');
+  state.pickAudio('voice', 'choose');
+  state.onMediaMessage(selection('narration.wav'));
+  state.spec.audio.voice.volume = 0;
+  state.spec.audio.voice.fadeOut = 0.5;
+  state.pickAudio('music', 'upload');
+  state.onMediaMessage(selection('picture.jpg'));
+  assert.equal(state.notice, 'Choose audio');
+  assert.equal(state.mediaModal.open, true);
+  state.onMediaMessage(selection('music.MP3', 'https://other.test'));
+  assert.equal(state.spec.audio.music.media, '');
+  state.onMediaMessage(selection('music.MP3'));
+  assert.equal(state.spec.audio.music.volume, 0.3);
+  assert.equal(state.spec.audio.voice.media, 'narration.wav');
+  assert.equal(state.payload().audio.voice.volume, 0);
+  assert.equal(state.payload().audio.voice.fadeOut, 0.5);
+  assert.equal(state.payload().audio.ducking, true);
+  state.spec.audio.voice.media = '';
+  state.spec.audio.ducking = false;
+  assert.equal(state.payload().audio.voice, undefined);
+  assert.equal(state.payload().audio.music.media, 'music.MP3');
+  assert.equal(state.payload().audio.ducking, false);
+  assert.equal(state.spec.slides[0].images[0].media, undefined);
 });
 
 test('choosing a rendered video switches preview without changing slide images', () => {

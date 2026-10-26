@@ -113,6 +113,21 @@ final class RepurposeMotionCommandTest extends KernelTestCase
         self::assertDirectoryDoesNotExist($this->directory.'/video');
     }
 
+    public function testMissingAudioFailsAsAgentJsonWithoutCreatingAProject(): void
+    {
+        $tester = $this->tester();
+        $spec = $this->spec('{"page":"x","network":"instagram","format":"story-9-16","slides":[{"title":"Audio"}],"audio":{"voice":{"media":"missing-narration.wav"}}}');
+        $out = $this->directory.'/video';
+        $tester->execute(['spec' => $spec, 'out-dir' => $out, '--format' => 'agent']);
+        self::assertSame(1, $tester->getStatusCode());
+        $result = json_decode(trim($tester->getDisplay()), true, flags: \JSON_THROW_ON_ERROR);
+        self::assertIsArray($result);
+        self::assertSame('failed', $result['result']);
+        self::assertIsArray($result['issues']);
+        self::assertSame([['path' => 'audio', 'message' => 'Audio media is missing or unsupported: missing-narration.wav']], $result['issues']);
+        self::assertDirectoryDoesNotExist($out);
+    }
+
     public function testWriteFailureIsReportedAsAgentJson(): void
     {
         $parent = $this->directory.'/file';

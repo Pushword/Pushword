@@ -181,6 +181,42 @@ export as an `.mp4` slideshow.
 Binaries are auto-detected from `PATH`; override with `repurpose.chromium_binary`
 (preview contact sheet) and `repurpose.ffmpeg_binary` (video).
 
+## Voice and music
+
+In the studio, open **Deck → Voice and music**. Choose or upload a voice recording
+and a music file independently (MP3, WAV, M4A, OGG or FLAC). Each track has a volume
+from 0 to 100% (0 mutes it), plus fade-in and fade-out durations in seconds (0–30).
+Both start at the beginning of the video. Narration plays once; music loops to the
+video end. Fade-out ends at the voice recording's end or the video end, whichever
+comes first; music fades at the video end.
+
+**Lower music automatically during narration** is enabled by default. It follows
+the voice signal, lowers music while narration is audible, and restores it
+smoothly during pauses and after narration ends. Muting voice disables its effect.
+
+The optional carousel `audio` field stores these settings for the API and flat files:
+
+```json
+"audio": {
+  "voice": {"media": "narration.mp3", "volume": 1, "fadeIn": 0.2, "fadeOut": 0.5},
+  "music": {"media": "music.mp3", "volume": 0.3, "fadeIn": 1, "fadeOut": 2},
+  "ducking": true
+}
+```
+
+Omit a track to remove it. The files must exist in the site's media library.
+**Slideshow .mp4** includes the current editor's audio settings, even before saving.
+A motion project export copies both source files into `public/audio/`, preserves
+separate tracks in `timeline.json` (`src` replaces `media`), and applies the mix in
+Remotion preview and rendering. Music gain follows composition time across loops.
+The CMS uses FFmpeg's sidechain compressor; Remotion computes a deterministic
+frame-level envelope from the voice waveform.
+
+Static slide previews and image exports have no audio. An imported **Rendered
+video** keeps its existing soundtrack: export and import a new render to hear
+changed audio settings. Previously exported motion projects keep their own files;
+export to a new directory to get these audio controls.
+
 ## Motion design and agent-authored videos
 
 For guided authoring, visual review and delivery, use **`pw motion [brief or page]`** from the

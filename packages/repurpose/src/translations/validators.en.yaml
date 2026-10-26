@@ -1,4 +1,8 @@
 repurpose:
+  audio:
+    media: "Audio must reference a local MP3, WAV, M4A, OGG or FLAC media filename."
+    volume: "Volume must be between 0 and 1."
+    fade: "Audio fades must be between 0 and 30 seconds."
   page:
     empty: 'A carousel must reference a page.'
   network:

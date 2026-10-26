@@ -364,8 +364,18 @@ final class RepurposeStudioController extends AbstractController
 
         $format = $carousel->format;
 
+        // The PNGs represent the current editor state, including unsaved audio edits.
+        if (\array_key_exists('audio', $data)) {
+            $carousel->audio = $this->factory->fromArray(['audio' => $data['audio']])->audio;
+        }
+
+        $violations = $this->validator->validateProperty($carousel, 'audio');
+        if (\count($violations) > 0) {
+            return new JsonResponse(['error' => (string) $violations], Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
         try {
-            $mp4 = $this->videoBuilder->build($pngs, $this->formats->width($format), $this->formats->height($format));
+            $mp4 = $this->videoBuilder->build($pngs, $this->formats->width($format), $this->formats->height($format), $carousel->audio);
         } catch (RuntimeException $runtimeException) {
             return new JsonResponse(['error' => 'The video could not be encoded: '.$runtimeException->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
         }

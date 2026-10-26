@@ -1,4 +1,8 @@
 repurpose:
+  audio:
+    media: "La piste doit référencer un fichier audio local MP3, WAV, M4A, OGG ou FLAC."
+    volume: "Le volume doit être compris entre 0 et 1."
+    fade: "Les fondus doivent durer entre 0 et 30 secondes."
   page:
     empty: 'Un carrousel doit référencer une page.'
   network:

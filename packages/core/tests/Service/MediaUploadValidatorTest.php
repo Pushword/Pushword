@@ -42,6 +42,34 @@ final class MediaUploadValidatorTest extends KernelTestCase
         self::addToAssertionCount(1);
     }
 
+    public function testAcceptsAudioSourcesForVoiceAndMusic(): void
+    {
+        self::bootKernel();
+        $validator = self::getContainer()->get(MediaUploadValidator::class);
+        foreach (['mp3', 'wav', 'm4a', 'ogg', 'flac'] as $extension) {
+            $file = new UploadedFile(__DIR__.'/fixtures/audio/tone.'.$extension, 'tone.'.$extension, null, null, true);
+            $validator->validate($file);
+            $media = new Media();
+            $media->setMediaFile($file);
+            self::assertCount(0, $validator->validateMedia($media), $extension);
+        }
+    }
+
+    public function testRejectsExecutableContentDisguisedAsAudio(): void
+    {
+        self::bootKernel();
+        $path = tempnam(sys_get_temp_dir(), 'pushword-audio-upload-');
+        self::assertIsString($path);
+        file_put_contents($path, '<?php echo "owned";');
+
+        try {
+            $this->expectException(InvalidArgumentException::class);
+            self::getContainer()->get(MediaUploadValidator::class)->validate(new UploadedFile($path, 'voice.mp3', 'audio/mpeg', null, true));
+        } finally {
+            unlink($path);
+        }
+    }
+
     private function png(string $clientName): UploadedFile
     {
         $path = tempnam(sys_get_temp_dir(), 'pushword-upload-');

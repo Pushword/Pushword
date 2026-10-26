@@ -73,6 +73,8 @@ class Carousel
         /** Rendered motion video from the media library, independent of the slide preview. */
         #[Assert\Regex(pattern: '/\A[a-z0-9_.-]+\.(?:mp4|webm)\z/i', message: 'repurpose.video.invalid')]
         public ?string $video = null,
+        #[Assert\Valid]
+        public ?AudioMix $audio = null,
     ) {
     }
 
