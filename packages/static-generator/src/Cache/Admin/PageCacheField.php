@@ -36,6 +36,7 @@ final class PageCacheField extends AbstractField
         return $this->buildEasyAdminField('cache', CheckboxType::class, [
             'label' => 'adminPageCacheLabel',
             'help' => 'adminPageCacheHelp',
+            'context_help' => true,
             'required' => false,
         ]);
     }

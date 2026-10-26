@@ -29,6 +29,7 @@ final class PageHoldPublicationField extends AbstractField
 
         return BooleanField::new('holdPublication', 'adminPageHoldPublicationLabel')
             ->setHelp('adminPageHoldPublicationHelp')
+            ->setFormTypeOption('context_help', 'adminHelpHoldPublication')
             ->renderAsSwitch(true)
             ->onlyOnForms();
     }

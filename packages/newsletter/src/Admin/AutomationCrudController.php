@@ -120,24 +120,29 @@ class AutomationCrudController extends AbstractCrudController
             ->renderAsBadges(['1' => 'success', '0' => 'secondary']);
         yield BooleanField::new('enabled', 'newsletter.automation.field.enabled')
             ->hideOnIndex()
-            ->setHelp('newsletter.automation.field.enabled.help');
+            ->setHelp('newsletter.automation.field.enabled.help')
+            ->setFormTypeOption('context_help', true);
 
         yield FormField::addFieldset('newsletter.automation.fieldset.trigger')->setIcon('fa fa-bolt');
         yield ChoiceField::new('source', 'newsletter.automation.field.source')
             ->setChoices($sources)
             ->renderAsNativeWidget()
-            ->setHelp('newsletter.automation.field.source.help');
+            ->setHelp('newsletter.automation.field.source.help')
+            ->setFormTypeOption('context_help', true);
         yield CriteriaField::new('triggerWhenAsJson', 'newsletter.automation.field.triggerWhen', CriteriaController::SIDE_TRIGGER, $this->urlGenerator, $automationId)
             ->setNumOfRows(6)
-            ->setHelp('newsletter.automation.field.triggerWhen.help');
+            ->setHelp('newsletter.automation.field.triggerWhen.help')
+            ->setFormTypeOption('context_help', true);
         yield DateTimeField::new('activeFrom', 'newsletter.automation.field.activeFrom')->hideOnIndex();
 
         yield FormField::addFieldset('newsletter.automation.fieldset.recipients')->setIcon('fa fa-users')
             ->setFormTypeOption('attr', ['data-pw-automation-recipients' => $this->translator->trans('newsletter.automation.contactRecipients')])
-            ->setHelp('newsletter.automation.fieldset.recipientsHelp');
+            ->setHelp('newsletter.automation.fieldset.recipientsHelp')
+            ->setFormTypeOption('context_help', true);
         yield CriteriaField::new('recipientWhenAsJson', 'newsletter.automation.field.recipientWhen', CriteriaController::SIDE_CONTACT, $this->urlGenerator)
             ->setNumOfRows(4)
-            ->setHelp('newsletter.automation.field.recipientWhen.help');
+            ->setHelp('newsletter.automation.field.recipientWhen.help')
+            ->setFormTypeOption('context_help', true);
         yield FormField::addFieldset('newsletter.automation.fieldset.steps')->setIcon('fa fa-envelope');
         yield IntegerField::new('steps', 'newsletter.automation.field.stepCount')
             ->onlyOnIndex()
@@ -161,14 +166,17 @@ class AutomationCrudController extends AbstractCrudController
             ->allowMultipleChoices()
             ->renderExpanded()
             ->setRequired(false)
-            ->setHelp('newsletter.automation.field.hosts.help');
+            ->setHelp('newsletter.automation.field.hosts.help')
+            ->setFormTypeOption('context_help', true);
         yield CriteriaField::new('stopWhenAsJson', 'newsletter.automation.field.stopWhen', CriteriaController::SIDE_CONTACT, $this->urlGenerator)
             ->setNumOfRows(4)
-            ->setHelp('newsletter.automation.field.stopWhen.help');
+            ->setHelp('newsletter.automation.field.stopWhen.help')
+            ->setFormTypeOption('context_help', true);
 
         yield BooleanField::new('transactional', 'newsletter.automation.field.transactional')
             ->hideOnIndex()
-            ->setHelp('newsletter.automation.field.transactional.help');
+            ->setHelp('newsletter.automation.field.transactional.help')
+            ->setFormTypeOption('context_help', 'newsletterHelpTransactional');
     }
 
     /** What this would catch if a tick ran right now, on both sides of the rule. */

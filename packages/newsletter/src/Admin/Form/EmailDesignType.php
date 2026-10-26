@@ -41,18 +41,21 @@ final class EmailDesignType extends AbstractType
                 'required' => false,
                 'attr' => ['rows' => 4],
                 'help' => 'newsletter.design.headerHelp',
+                'context_help' => true,
             ])
             ->add('footerMarkdown', TextareaType::class, [
                 'label' => 'newsletter.design.footer',
                 'required' => false,
                 'attr' => ['rows' => 4],
                 'help' => 'newsletter.design.footerHelp',
+                'context_help' => true,
             ])
             ->add('signatureMarkdown', TextareaType::class, [
                 'label' => 'newsletter.design.signature',
                 'required' => false,
                 'attr' => ['rows' => 4],
                 'help' => 'newsletter.design.signatureHelp',
+                'context_help' => true,
             ])
             ->add('sampleBody', TextareaType::class, [
                 'label' => 'newsletter.design.sample',

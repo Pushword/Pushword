@@ -68,6 +68,7 @@ final class PageHoldPublicationFieldTest extends TestCase
         $dto = $field->getAsDto();
         self::assertSame('holdPublication', $dto->getProperty());
         self::assertSame('adminPageHoldPublicationLabel', $dto->getLabel());
+        self::assertSame('adminHelpHoldPublication', $dto->getFormTypeOption('context_help'));
     }
 
     public function testFieldIsOnlyOnForms(): void

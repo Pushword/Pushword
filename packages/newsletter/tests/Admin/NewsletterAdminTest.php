@@ -51,6 +51,33 @@ final class NewsletterAdminTest extends AbstractAdminTestClass
         self::assertCount(0, $crawler->filter($assets));
     }
 
+    public function testReferenceHelpKeepsDeliveryConsequencesAndEmptyTargetState(): void
+    {
+        $crawler = $this->loginUser()->request(Request::METHOD_GET, '/admin/newsletter/campaign/new');
+        self::assertResponseIsSuccessful();
+        self::assertCount(1, $crawler->filter('[data-pw-help-summary] input[name="Campaign[scheduledAt]"]'));
+        self::assertCount(1, $crawler->filter('[data-pw-help-summary] input[name="Campaign[transactional]"]'));
+        self::assertCount(1, $crawler->filter('[data-pw-help] textarea[name="Campaign[segmentAsJson]"]'));
+        self::assertStringNotContainsString('Without conditions, every subscriber in the selected audience receives this newsletter.', $crawler->filter('.form-fieldset-help')->text(''));
+    }
+
+    /** @return iterable<string, array{string, int, int}> */
+    public static function referenceHelpScreens(): iterable
+    {
+        yield 'audience' => ['/admin/newsletter/audience/new', 9, 3];
+        yield 'automation' => ['/admin/newsletter/automation/new', 8, 1];
+        yield 'campaign' => ['/admin/newsletter/campaign/new', 8, 2];
+        yield 'template' => ['/admin/newsletter/template/new', 4, 1];
+    }
+
+    #[DataProvider('referenceHelpScreens')]
+    public function testReferenceHelpIsOptedInOnEveryNewsletterForm(string $url, int $popovers, int $summaries): void
+    {
+        $crawler = $this->loginUser()->request(Request::METHOD_GET, $url);
+        self::assertResponseIsSuccessful();
+        self::assertSame([$popovers, $summaries], [\count($crawler->filter('[data-pw-help]')), \count($crawler->filter('[data-pw-help-summary]'))]);
+    }
+
     public function testAudienceActionsRemainAvailableInOneMenu(): void
     {
         $client = $this->loginUser();

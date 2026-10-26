@@ -116,7 +116,8 @@ class EmailTemplateCrudController extends AbstractCrudController
     public function configureFields(string $pageName): iterable
     {
         yield FormField::addFieldset('newsletter.template.identity')->setIcon('fa fa-palette')
-            ->setHelp('newsletter.template.help');
+            ->setHelp('newsletter.template.help')
+            ->setFormTypeOption('context_help', 'newsletterHelpSharedTemplate');
         yield TextField::new('name', 'newsletter.template.name')->setColumns('col-12');
         yield BooleanField::new('wrapped', 'newsletter.template.wrapped')
             ->renderAsSwitch(false)
@@ -125,9 +126,11 @@ class EmailTemplateCrudController extends AbstractCrudController
             ->setChoices(['newsletter.design.wrapped' => 1, 'newsletter.design.simple' => 0]);
         yield TextareaField::new('headerMarkdown', 'newsletter.design.header')->hideOnIndex()
             ->setNumOfRows(5)->setColumns('col-12')->setRequired(false)
-            ->setHelp('newsletter.template.headerHelp');
+            ->setHelp('newsletter.template.headerHelp')
+            ->setFormTypeOption('context_help', true);
         yield TextareaField::new('footerMarkdown', 'newsletter.design.footer')->hideOnIndex()
             ->setNumOfRows(5)->setColumns('col-12')->setRequired(false)
-            ->setHelp('newsletter.template.footerHelp');
+            ->setHelp('newsletter.template.footerHelp')
+            ->setFormTypeOption('context_help', true);
     }
 }

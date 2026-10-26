@@ -234,7 +234,8 @@ class CampaignCrudController extends AbstractCrudController
             static fn (mixed $value): string => $value instanceof DateTimeInterface ? $value->format('d/m/Y H:i') : '—',
         );
         yield TextField::new('preheader', 'newsletter.campaign.field.preheader')->hideOnIndex()->setColumns('col-12')
-            ->setHelp('newsletter.campaign.field.preheader.help');
+            ->setHelp('newsletter.campaign.field.preheader.help')
+            ->setFormTypeOption('context_help', true);
         yield $this->bodyField();
 
         yield FormField::addFieldset('newsletter.campaign.fieldset.audience')->setIcon('fa fa-users');
@@ -244,11 +245,14 @@ class CampaignCrudController extends AbstractCrudController
 
         yield CriteriaField::new('segmentAsJson', 'newsletter.campaign.field.segment', CriteriaController::SIDE_CONTACT, $this->urlGenerator)
             ->setNumOfRows(6)
-            ->setHelp('newsletter.campaign.field.segment.help');
+            ->setHelp('newsletter.campaign.field.segment.help')
+            ->setFormTypeOption('context_help', true);
         yield FormField::addFieldset('newsletter.campaign.fieldset.schedule')->setIcon('fa fa-clock')
-            ->setHelp('newsletter.campaign.fieldset.scheduleHelp');
+            ->setHelp('newsletter.campaign.fieldset.scheduleHelp')
+            ->setFormTypeOption('context_help', true);
         yield DateTimeField::new('scheduledAt', 'newsletter.campaign.field.scheduledAt')->hideOnIndex()
-            ->setHelp('newsletter.campaign.field.scheduledAt.help');
+            ->setHelp('newsletter.campaign.field.scheduledAt.help')
+            ->setFormTypeOption('context_help', 'newsletterHelpSchedule');
         yield FormField::addFieldset('newsletter.campaign.fieldset.languages')->setIcon('fa fa-language')
             ->setHelp($this->coverage())
             ->hideOnIndex()
@@ -265,12 +269,15 @@ class CampaignCrudController extends AbstractCrudController
             ->renderCollapsed();
         yield TextField::new('slug', 'newsletter.campaign.field.slug')->hideOnIndex()
             ->setRequired(false)
-            ->setHelp('newsletter.campaign.field.slug.help');
+            ->setHelp('newsletter.campaign.field.slug.help')
+            ->setFormTypeOption('context_help', true);
         yield IntegerField::new('rateSeconds', 'newsletter.campaign.field.rateSeconds')->hideOnIndex()
             ->setRequired(false)
-            ->setHelp('newsletter.campaign.field.rateSeconds.help');
+            ->setHelp('newsletter.campaign.field.rateSeconds.help')
+            ->setFormTypeOption('context_help', true);
         yield BooleanField::new('transactional', 'newsletter.campaign.field.transactional')->hideOnIndex()
-            ->setHelp('newsletter.campaign.field.transactional.help');
+            ->setHelp('newsletter.campaign.field.transactional.help')
+            ->setFormTypeOption('context_help', 'newsletterHelpTransactional');
 
         yield FormField::addFieldset('newsletter.campaign.fieldset.performance')->setIcon('fa fa-chart-simple')->onlyOnDetail();
         yield IntegerField::new('recipientCount', 'newsletter.campaign.field.recipients')->hideOnForm();

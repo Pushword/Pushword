@@ -143,11 +143,13 @@ class AudienceCrudController extends AbstractCrudController
         yield FormField::addFieldset('newsletter.audience.fieldset.identity')->setIcon('fa fa-users');
         yield TextField::new('name', 'newsletter.audience.field.name');
         yield TextField::new('slug', 'newsletter.audience.field.slug')
-            ->setHelp('newsletter.audience.field.slug.help');
+            ->setHelp('newsletter.audience.field.slug.help')
+            ->setFormTypeOption('context_help', true);
         yield ChoiceField::new('mainHost', 'newsletter.audience.field.mainHost')
             ->setChoices(array_combine($hosts, $hosts))
             ->renderAsNativeWidget()
-            ->setHelp('newsletter.audience.field.mainHost.help');
+            ->setHelp('newsletter.audience.field.mainHost.help')
+            ->setFormTypeOption('context_help', true);
 
         yield FormField::addFieldset('newsletter.audience.fieldset.sender')->setIcon('fa fa-paper-plane');
         yield TextField::new('fromName', 'newsletter.audience.field.fromName')->hideOnIndex();
@@ -156,26 +158,33 @@ class AudienceCrudController extends AbstractCrudController
         yield TextareaField::new('postalAddress', 'newsletter.audience.field.postalAddress')->hideOnIndex()
             ->setRequired(false)
             ->setNumOfRows(3)
-            ->setHelp('newsletter.audience.field.postalAddress.help');
+            ->setHelp('newsletter.audience.field.postalAddress.help')
+            ->setFormTypeOption('context_help', true);
 
         yield FormField::addFieldset('newsletter.audience.fieldset.rules')->setIcon('fa fa-sliders');
         yield BooleanField::new('requireDoubleOptIn', 'newsletter.audience.field.doubleOptIn')
-            ->setHelp('newsletter.audience.field.doubleOptIn.help');
+            ->setHelp('newsletter.audience.field.doubleOptIn.help')
+            ->setFormTypeOption('context_help', 'newsletterHelpDoubleOptIn');
         yield ArrayField::new('interests', 'newsletter.audience.field.interests')->hideOnIndex()
-            ->setHelp('newsletter.audience.field.interests.help');
+            ->setHelp('newsletter.audience.field.interests.help')
+            ->setFormTypeOption('context_help', true);
 
         yield FormField::addFieldset('newsletter.audience.fieldset.advanced')->setIcon('fa fa-gear')
             ->collapsible()->renderCollapsed();
         yield BooleanField::new('clickTracking', 'newsletter.audience.field.clickTracking')
             ->hideOnIndex()
-            ->setHelp('newsletter.audience.field.clickTracking.help');
+            ->setHelp('newsletter.audience.field.clickTracking.help')
+            ->setFormTypeOption('context_help', 'newsletterHelpClickTracking');
         yield BooleanField::new('transactional', 'newsletter.audience.field.transactional')
             ->hideOnIndex()
-            ->setHelp('newsletter.audience.field.transactional.help');
+            ->setHelp('newsletter.audience.field.transactional.help')
+            ->setFormTypeOption('context_help', 'newsletterHelpTransactional');
         yield IntegerField::new('rateSeconds', 'newsletter.audience.field.rateSeconds')->hideOnIndex()
-            ->setHelp('newsletter.audience.field.rateSeconds.help');
+            ->setHelp('newsletter.audience.field.rateSeconds.help')
+            ->setFormTypeOption('context_help', true);
         yield TextField::new('utmSource', 'newsletter.audience.field.utmSource')->hideOnIndex()
             ->setRequired(false)
-            ->setHelp('newsletter.audience.field.utmSource.help');
+            ->setHelp('newsletter.audience.field.utmSource.help')
+            ->setFormTypeOption('context_help', true);
     }
 }

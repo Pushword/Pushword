@@ -26,6 +26,11 @@ final class PageCacheFieldTest extends KernelTestCase
         self::assertNull($this->fieldFor('404'));
     }
 
+    public function testTheCacheCheckboxKeepsItsHelpBehindTheLabel(): void
+    {
+        self::assertTrue($this->fieldFor('about')?->getAsDto()->getFormTypeOption('context_help'));
+    }
+
     private function fieldFor(string $slug): ?FieldInterface
     {
         $page = new Page();

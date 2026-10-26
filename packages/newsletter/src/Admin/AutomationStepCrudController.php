@@ -34,11 +34,13 @@ class AutomationStepCrudController extends AbstractCrudController
         yield IntegerField::new('sequenceNumber', 'newsletter.step.field.position')
             ->setColumns('col-6 col-lg-3')
             ->setFormTypeOption('attr', ['min' => 1, 'data-pw-sequence-number' => ''])
-            ->setHelp('newsletter.step.field.position.help');
+            ->setHelp('newsletter.step.field.position.help')
+            ->setFormTypeOption('context_help', true);
         yield IntegerField::new('delayMinutes', 'newsletter.step.field.delay')
             ->setColumns('col-6 col-lg-5')
             ->setFormTypeOption('attr', ['data-pw-delay-preview' => ''])
-            ->setHelp('newsletter.step.field.delay.help');
+            ->setHelp('newsletter.step.field.delay.help')
+            ->setFormTypeOption('context_help', true);
         yield TextField::new('subject', 'newsletter.step.field.subject')
             ->setColumns('col-12');
         yield TextareaField::new('bodyMarkdown', 'newsletter.step.field.body')
