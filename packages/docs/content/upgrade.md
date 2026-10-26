@@ -16,6 +16,7 @@ Package names omit `pushword/`; `js-helper` is the npm package
 
 | Version | Packages | What changed |
 | --- | --- | --- |
+| [1.0.84](/upgrade/1.0.84) | `admin` `admin-block-editor` `core` `newsletter` `repurpose` | newsletter links drop utm_term, the catalogue needs an external source and StatisticsRepository::totals() is gone; admin reference help is opt-in per field; weight column and editor widget overrides need updating; motion audio errors name their track; sites may refuse the audio uploads accepted since 1.0.83; newsletter reports add delivered click rates and link placements — run `doctrine:schema:update --force` |
 | [1.0.83](/upgrade/1.0.83) | `admin` `core` `newsletter` | sites created since 1.0.76 can delete the unused demo video; newsletter admin assets moved to their bundle |
 | [1.0.81](/upgrade/1.0.81) | `newsletter` | statistics declare their rate bases and source snapshot freshness |
 | [1.0.80](/upgrade/1.0.80) | `newsletter` | newsletter reporting records sends and preserves historical opt-outs — run `doctrine:schema:update --force` |
