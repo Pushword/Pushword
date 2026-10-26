@@ -126,7 +126,7 @@ final class NewsletterAdminTest extends AbstractAdminTestClass
             self::assertStringNotContainsString('user-scalable=no', $viewport);
             self::assertStringNotContainsString('maximum-scale=1', $viewport);
             $activeSection = match ($section) {
-                'campaign', 'campaign-recipient' => 'campaigns',
+                'campaigns', 'campaign-recipient' => 'campaign',
                 default => $section,
             };
             self::assertStringEndsWith(

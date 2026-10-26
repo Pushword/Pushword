@@ -189,8 +189,6 @@ newsletter:
     search: Search
     sentAt: Sent at
     source: Source
-    statusArchived: Archived
-    statusPaused: Paused
     timezone: Times shown in %timezone%.
     unknown: Not provided
   confirm:

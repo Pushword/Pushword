@@ -7,8 +7,9 @@ namespace Pushword\Newsletter\Admin;
 use Pushword\Newsletter\Event\CampaignIndexItem;
 use Pushword\Newsletter\Event\CollectCampaignIndex;
 use Pushword\Newsletter\Repository\CampaignRepository;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
-use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
+use Twig\Attribute\AsTwigFunction;
 
 final readonly class CampaignIndex
 {
@@ -17,6 +18,13 @@ final readonly class CampaignIndex
         private UrlGeneratorInterface $urls,
         private EventDispatcherInterface $events,
     ) {
+    }
+
+    /** Without a listener adding another source, the catalogue would only stand in front of the campaign list. */
+    #[AsTwigFunction('newsletter_campaigns_route')]
+    public function route(): string
+    {
+        return $this->events->hasListeners(CollectCampaignIndex::class) ? 'admin_newsletter_campaign_catalogue' : 'admin_newsletter_campaign_index';
     }
 
     public function collect(): CollectCampaignIndex

@@ -8,8 +8,12 @@ use EasyCorp\Bundle\EasyAdminBundle\Config\MenuItem;
 use Pushword\Admin\Menu\AdminMenuItemsEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
-final class NewsletterMenuSubscriber implements EventSubscriberInterface
+final readonly class NewsletterMenuSubscriber implements EventSubscriberInterface
 {
+    public function __construct(private CampaignIndex $campaigns)
+    {
+    }
+
     /**
      * @return array<string, string>
      */
@@ -23,7 +27,7 @@ final class NewsletterMenuSubscriber implements EventSubscriberInterface
         $event->addMenuItem(
             MenuItem::subMenu('newsletter.menu.label', 'fas fa-envelope-open-text')->setSubItems([
                 MenuItem::linkToRoute('newsletter.statistics.title', 'fas fa-chart-simple', 'admin_newsletter_statistics'),
-                MenuItem::linkToRoute('newsletter.campaign.label.plural', 'fas fa-paper-plane', 'admin_newsletter_campaign_catalogue'),
+                MenuItem::linkToRoute('newsletter.campaign.label.plural', 'fas fa-paper-plane', $this->campaigns->route()),
                 MenuItem::linkTo(EmailTemplateCrudController::class, 'newsletter.template.label.plural', 'fas fa-palette'),
                 MenuItem::linkTo(AutomationCrudController::class, 'newsletter.automation.label.plural', 'fas fa-robot'),
                 MenuItem::linkTo(ContactCrudController::class, 'newsletter.contact.label.plural', 'fas fa-address-book'),

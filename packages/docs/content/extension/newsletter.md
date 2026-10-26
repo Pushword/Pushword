@@ -1115,8 +1115,10 @@ the next section.
 
 ## Multi-source campaign index
 
-**Newsletter → Campaigns** opens a read-only catalogue at
-`/admin/newsletter/campaigns`. Filter by source, status or subject/audience text.
+As soon as an application listens to `CollectCampaignIndex` (below), **Newsletter →
+Campaigns** opens a read-only catalogue at `/admin/newsletter/campaigns`; until then it
+opens the campaign list. An overridden admin template gets the same route from
+`newsletter_campaigns_route()`. Filter by source, status or subject/audience text.
 Scheduled and sent dates use the editorial timezone; missing values stay unknown.
 Use **Create in Pushword** or **Manage in Pushword** for the native campaign editor,
 bulk actions and delivery controls. Existing CRUD routes remain available.
@@ -1166,9 +1168,10 @@ remote campaign total. An empty search offers a filter reset; an empty catalogue
 offers the connected tools' creation links.
 
 `CampaignIndexItem` also accepts nullable `scheduledAt`/`sentAt` (`DateTimeImmutable`)
-and `audience`. Unknown status or dates are `null`; external statuses such as
-`paused` and `archived` do not change Pushword's delivery state machine. Listeners
-may enrich native navigation through `$index->items['pushword:42']->actions`.
+and `audience`. Unknown status or dates are `null`. Pushword translates its own
+statuses (`draft`, `scheduled`, `sending`, `sent`); any other status displays as given,
+so pass the label your editors should read. External statuses such as `paused` do not
+change Pushword's delivery state machine. Listeners may enrich native navigation through `$index->items['pushword:42']->actions`.
 Action labels map to HTTP(S) URLs or root-relative paths, validated after listeners.
 Use links to the owning tool and existing reports: this catalogue imports no
 content, computes no cross-provider statistics and delegates no sending.

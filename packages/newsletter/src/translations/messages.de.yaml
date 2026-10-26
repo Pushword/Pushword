@@ -34,8 +34,6 @@ newsletter:
     search: Suchen
     sentAt: Gesendet am
     source: Quelle
-    statusArchived: Archiviert
-    statusPaused: Pausiert
     timezone: Zeiten in %timezone%.
     unknown: Nicht angegeben
   design:

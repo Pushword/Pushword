@@ -189,8 +189,6 @@ newsletter:
     search: Rechercher
     sentAt: Envoyée le
     source: Source
-    statusArchived: Archivée
-    statusPaused: En pause
     timezone: Heures affichées dans le fuseau %timezone%.
     unknown: Non renseigné
   confirm:

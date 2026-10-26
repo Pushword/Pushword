@@ -1,9 +1,8 @@
 {% extends '@PushwordNewsletter/admin/layout.html.twig' %}
 
+{# Other sources' statuses display as given. #}
 {% set statusLabels = {
-  archived: 'newsletter.catalogue.statusArchived',
   draft: 'newsletter.campaign.status.draft',
-  paused: 'newsletter.catalogue.statusPaused',
   scheduled: 'newsletter.campaign.status.scheduled',
   sending: 'newsletter.campaign.status.sending',
   sent: 'newsletter.campaign.status.sent',
@@ -54,8 +53,7 @@
           <select class="form-select" id="campaign-status" name="status">
             <option value="">{{ 'newsletter.workspace.filterAll'|trans }}</option>
             {% for value in statuses %}
-              {% set label = statusLabels[value]|default(value) %}
-              <option value="{{ value }}"{% if status == value %} selected{% endif %}>{{ label|trans }}</option>
+              <option value="{{ value }}"{% if status == value %} selected{% endif %}>{{ statusLabels[value] is defined ? statusLabels[value]|trans : value }}</option>
             {% endfor %}
           </select>
         </div>
@@ -90,8 +88,7 @@
               <tr data-campaign-key="{{ item.key }}">
                 <th scope="row"><span class="pw-catalogue-subject">{{ item.subject }}</span>{% if item.audience %}<span class="pw-catalogue-audience">{{ item.audience }}</span>{% endif %}</th>
                 <td data-label="{{ 'newsletter.catalogue.source'|trans }}">{{ item.source|capitalize }}</td>
-                {% set statusLabel = statusLabels[item.status]|default(item.status) %}
-                <td data-label="{{ 'newsletter.campaign.field.status'|trans }}">{{ statusLabel is not null ? statusLabel|trans : 'newsletter.catalogue.unknown'|trans }}</td>
+                <td data-label="{{ 'newsletter.campaign.field.status'|trans }}">{{ item.status is null ? 'newsletter.catalogue.unknown'|trans : (statusLabels[item.status] is defined ? statusLabels[item.status]|trans : item.status) }}</td>
                 <td data-label="{{ 'newsletter.campaign.field.scheduledAt'|trans }}">{{ item.scheduledAt ? item.scheduledAt|format_datetime('medium', 'short', timezone: timezone) : 'newsletter.catalogue.unknown'|trans }}</td>
                 <td data-label="{{ 'newsletter.catalogue.sentAt'|trans }}">{{ item.sentAt ? item.sentAt|format_datetime('medium', 'short', timezone: timezone) : 'newsletter.catalogue.unknown'|trans }}</td>
                 <td data-label="{{ 'newsletter.catalogue.actions'|trans }}"><div class="pw-catalogue-row-actions">{% for label, url in item.actions %}<a class="pw-catalogue-row-link" href="{{ url }}">{{ label|trans }}</a>{% endfor %}</div></td>

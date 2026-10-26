@@ -16,6 +16,8 @@ use Pushword\Newsletter\Entity\Campaign;
 use Pushword\Newsletter\Event\CampaignIndexItem;
 use Pushword\Newsletter\Event\CollectCampaignIndex;
 use Pushword\Newsletter\Tests\AbstractNewsletterTestCase;
+use Symfony\Component\DomCrawler\Crawler;
+use Symfony\Component\DomCrawler\Link;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpFoundation\Request;
 
@@ -69,6 +71,34 @@ final class CampaignIndexTest extends AbstractNewsletterTestCase
         self::assertSame('/admin/newsletter/campaigns', $crawler->filter('.pw-newsletter-nav [aria-current="page"]')->attr('href'));
         self::assertCount(1, $crawler->selectLink('Create in Pushword'));
         self::assertCount(1, $crawler->selectLink('Manage in Pushword'));
+    }
+
+    public function testCampaignsOpenTheCatalogueOnlyOnceAnotherSourceListens(): void
+    {
+        $this->login();
+        $crawler = $this->client->request(Request::METHOD_GET, '/admin/newsletter/statistics');
+        self::assertResponseIsSuccessful();
+        self::assertSame(['/admin/newsletter/campaign', '/admin/newsletter/campaign'], $this->campaignLinks($crawler), 'Main menu and section navigation');
+
+        self::getContainer()->get(EventDispatcherInterface::class)->addListener(CollectCampaignIndex::class, static function (): void {});
+        $crawler = $this->client->request(Request::METHOD_GET, '/admin/newsletter/statistics');
+        self::assertSame(['/admin/newsletter/campaigns', '/admin/newsletter/campaigns'], $this->campaignLinks($crawler));
+    }
+
+    public function testOnlyPushwordStatusesAreTranslatedAndOthersDisplayAsGiven(): void
+    {
+        $this->login();
+        self::getContainer()->get(EventDispatcherInterface::class)->addListener(CollectCampaignIndex::class, static function (CollectCampaignIndex $index): void {
+            $index->items = [];
+            $index->add(new CampaignIndexItem('external', 'paused', 'Remote paused', 'paused'));
+            $index->add(new CampaignIndexItem('external', 'sent', 'Remote sent', 'sent'));
+        });
+
+        $crawler = $this->client->request(Request::METHOD_GET, '/admin/newsletter/campaigns');
+        self::assertResponseIsSuccessful();
+        self::assertSame('paused', $crawler->filter('[data-campaign-key="external:paused"] td')->eq(1)->text());
+        self::assertSame('Sent', $crawler->filter('[data-campaign-key="external:sent"] td')->eq(1)->text());
+        self::assertSame(['All', 'paused', 'Sent'], $crawler->filter('[name="status"] option')->extract(['_text']));
     }
 
     public function testFiltersUseTheWholeCatalogueAndRetainTheSelection(): void
@@ -247,6 +277,12 @@ final class CampaignIndexTest extends AbstractNewsletterTestCase
         });
         $this->expectException(InvalidArgumentException::class);
         self::getContainer()->get(CampaignIndex::class)->collect();
+    }
+
+    /** @return list<string> */
+    private function campaignLinks(Crawler $crawler): array
+    {
+        return array_values(array_map(static fn (Link $link): string => (string) parse_url($link->getUri(), \PHP_URL_PATH), $crawler->selectLink('Newsletters')->links()));
     }
 
     private function login(string $role = 'ROLE_EDITOR'): void

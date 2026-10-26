@@ -34,8 +34,6 @@ newsletter:
     search: Cerca
     sentAt: Inviata il
     source: Fonte
-    statusArchived: Archiviata
-    statusPaused: In pausa
     timezone: Orari nel fuso %timezone%.
     unknown: Non disponibile
   design:
