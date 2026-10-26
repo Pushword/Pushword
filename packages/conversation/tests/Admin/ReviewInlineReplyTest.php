@@ -9,12 +9,13 @@ use Doctrine\ORM\EntityManagerInterface;
 use Pushword\Admin\Tests\AbstractAdminTestClass;
 use Pushword\Conversation\Entity\Review;
 use Pushword\Core\Site\SiteRegistry;
+use Symfony\Component\DomCrawler\Crawler;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
- * Covers inline editing of a review reply on the review index
- * (pushword_conversation_inline_update with field=reply).
+ * Covers inline editing on the review index (pushword_conversation_inline_update):
+ * the reply and the weight.
  */
 final class ReviewInlineReplyTest extends AbstractAdminTestClass
 {
@@ -81,6 +82,38 @@ final class ReviewInlineReplyTest extends AbstractAdminTestClass
         $review = $this->reloadReview($reviewId);
         self::assertSame('Glad you liked it!', $review->getReply());
         self::assertSame($expectedDefault, $review->getReplyAuthor());
+    }
+
+    public function testInlineWeightPostsToTheConversationEndpointWithItsOwnLabels(): void
+    {
+        $client = $this->loginUser();
+        $client->catchExceptions(false);
+
+        $reviewId = $this->createReview();
+
+        $crawler = $client->request(Request::METHOD_GET, '/admin/review');
+        self::assertResponseIsSuccessful();
+        $weight = $crawler->filter('#pw-weight-conversation-'.$reviewId.' input[name="weight"]');
+        self::assertCount(1, $weight, 'The review row should expose an inline weight field.');
+        self::assertSame('/admin/conversation/'.$reviewId.'/inline-update', parse_url((string) $weight->attr('hx-post'), \PHP_URL_PATH));
+        self::assertSame('Weight (ascending)', $weight->attr('aria-label'));
+        self::assertSame('Lower values appear first', $weight->attr('title'));
+
+        $client->request(Request::METHOD_POST, '/admin/conversation/'.$reviewId.'/inline-update', [
+            'field' => 'weight',
+            'value' => '7',
+            '_token' => $this->extractToken((string) $weight->attr('hx-vals')),
+        ]);
+        self::assertSame(Response::HTTP_OK, $client->getResponse()->getStatusCode());
+        self::assertSame(7, $this->reloadReview($reviewId)->weight);
+
+        // The swapped-in fragment keeps the endpoint and labels of the column it replaces.
+        $input = new Crawler((string) $client->getResponse()->getContent())->filter('#pw-weight-conversation-'.$reviewId.' input');
+        self::assertCount(1, $input);
+        self::assertSame('7', $input->attr('value'));
+        self::assertSame($weight->attr('hx-post'), $input->attr('hx-post'));
+        self::assertSame('Weight (ascending)', $input->attr('aria-label'));
+        self::assertSame('Lower values appear first', $input->attr('title'));
     }
 
     public function testInlineUpdateRejectsInvalidCsrf(): void

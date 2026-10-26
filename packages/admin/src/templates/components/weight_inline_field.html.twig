@@ -1,7 +1,8 @@
-{# Generic template for inline weight editing
-   Works with any entity that implements Weightable interface (Page, Message, etc.)
+{# Inline weight editing for any Weightable entity (Page, Message, etc.)
    @var entity object with weight property and getId() method
-   @var entityType string - type identifier for CSRF token and route (e.g., 'page', 'conversation')
+   @var field FieldDto - its label and help name the input; its `entityType` custom option
+        (default 'page') picks the `pushword_<entityType>_inline_update` route and CSRF token.
+        An inline-update action renders the fragment back with the same field.
 #}
 {% set entityInstance = entity.instance ?? entity ?? null %}
 {% if entityInstance is null or (entityInstance.id is defined and entityInstance.id is null) %}
@@ -9,7 +10,7 @@
 {% else %}
     {% set currentValue = entityInstance.weight ?? 0 %}
     {% set entityId = entityInstance.id ?? 0 %}
-    {% set entityType = entityType|default('page') %}
+    {% set entityType = field.customOptions.get('entityType') ?? 'page' %}
     {% set target = 'pw-weight-' ~ entityType ~ '-' ~ entityId %}
     {% set routeName = 'pushword_' ~ entityType ~ '_inline_update' %}
     {% set action = url(routeName, {id: entityId}) %}
@@ -30,8 +31,8 @@
             hx-target="#{{ target }}"
             hx-swap="outerHTML"
             hx-vals='js:{field: "weight", value: event.target.value, _token: "{{ token|e('js') }}"}'
-            aria-label="{{ (entityType == 'conversation' ? 'adminConversationWeightLabel' : 'adminPageWeightLabel')|trans }}"
-            title="{{ (entityType == 'conversation' ? 'adminConversationWeightHelp' : 'adminPageWeightHelp')|trans }}"
+            aria-label="{{ field.label|trans }}"
+            title="{{ field.help|trans }}"
         >
     </div>
 {% endif %}

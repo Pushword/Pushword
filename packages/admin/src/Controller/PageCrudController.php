@@ -558,9 +558,7 @@ class PageCrudController extends AbstractAdminCrudController
                 ->setTemplatePath('@pwAdmin/components/hold_toggle.html.twig');
         }
 
-        yield IntegerField::new('weight', 'adminPageWeightLabel')
-            ->setSortable(true)
-            ->setTemplatePath('@pwAdmin/components/weight_inline_field.html.twig');
+        yield $this->weightField();
 
         yield DateTimeField::new('updatedAt', 'adminPageUpdatedAtLabel')
             ->setSortable(true)
@@ -718,8 +716,16 @@ class PageCrudController extends AbstractAdminCrudController
         return new Response($this->adminFormFieldManager->twig->render($template, [
             'entity' => ['instance' => $page],
             'value' => 'weight' === $field ? $page->weight : null,
-            'field' => null,
+            'field' => 'weight' === $field ? $this->weightField()->getAsDto() : null,
         ]));
+    }
+
+    private function weightField(): IntegerField
+    {
+        return IntegerField::new('weight', 'adminPageWeightLabel')
+            ->setSortable(true)
+            ->setHelp('adminPageWeightHelp')
+            ->setTemplatePath('@pwAdmin/components/weight_inline_field.html.twig');
     }
 
     private function applyInlineUpdate(Page $page, string $field, string $value): bool

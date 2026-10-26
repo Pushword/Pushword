@@ -226,9 +226,7 @@ class ConversationCrudController extends AbstractAdminCrudController
             ->setSortable(true)
             ->setTemplatePath('@pwAdmin/components/published_toggle.html.twig');
 
-        yield IntegerField::new('weight', 'adminConversationWeightLabel')
-            ->setSortable(true)
-            ->setTemplatePath('@pwAdmin/components/weight_inline_field.html.twig');
+        yield $this->weightField();
 
         yield TextField::new('content', 'adminConversationContentLabel')
             ->setSortable(false)
@@ -384,8 +382,17 @@ class ConversationCrudController extends AbstractAdminCrudController
         return new Response($this->adminFormFieldManager->twig->render($template, [
             'entity' => ['instance' => $message],
             'value' => 'weight' === $field ? $message->weight : null,
-            'field' => null,
+            'field' => 'weight' === $field ? $this->weightField()->getAsDto() : null,
         ]));
+    }
+
+    protected function weightField(): IntegerField
+    {
+        return IntegerField::new('weight', 'adminConversationWeightLabel')
+            ->setSortable(true)
+            ->setHelp('adminConversationWeightHelp')
+            ->setCustomOption('entityType', $this->getEntityTypeIdentifier())
+            ->setTemplatePath('@pwAdmin/components/weight_inline_field.html.twig');
     }
 
     #[Override]

@@ -14,7 +14,6 @@ use EasyCorp\Bundle\EasyAdminBundle\Dto\SearchDto;
 use EasyCorp\Bundle\EasyAdminBundle\Field\ChoiceField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\CollectionField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\DateTimeField;
-use EasyCorp\Bundle\EasyAdminBundle\Field\IntegerField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextareaField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextField;
 
@@ -167,9 +166,7 @@ final class ReviewCrudController extends ConversationCrudController
             ->setSortable(true)
             ->setTemplatePath('@pwAdmin/components/published_toggle.html.twig');
 
-        yield IntegerField::new('weight', 'adminConversationWeightLabel')
-            ->setSortable(true)
-            ->setTemplatePath('@pwAdmin/components/weight_inline_field.html.twig');
+        yield $this->weightField();
 
         yield TextField::new('title', 'adminReviewTitleLabel')
             ->setSortable(false)
