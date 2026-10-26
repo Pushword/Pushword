@@ -58,15 +58,14 @@ final class TestScriptTest extends TestCase
                 exit 0
                 SH,
             '.scripts/test-installer' => "#!/bin/sh\nexit \"\$STUB_INSTALLER_EXIT\"\n",
-            'bin/yarn' => "#!/bin/sh\nexit 0\n",
-            'bin/npm' => <<<'SH'
+            'bin/yarn' => <<<'SH'
                 #!/bin/sh
                 js_package=$(basename "$PWD")
                 if [ -n "${STUB_JS_CALLS:-}" ]; then
                     echo "$js_package" >> "$STUB_JS_CALLS"
                 fi
                 if [ "$js_package" = 'js-helper' ]; then
-                    exit "${STUB_NPM_EXIT:-0}"
+                    exit "${STUB_YARN_EXIT:-0}"
                 fi
                 exit 0
                 SH,
@@ -130,14 +129,14 @@ final class TestScriptTest extends TestCase
     }
 
     #[DataProvider('javascriptExitCodes')]
-    public function testJavaScriptFailuresPropagateAfterEveryPackageRuns(int $npm, int $node, int $expected): void
+    public function testJavaScriptFailuresPropagateAfterEveryPackageRuns(int $yarn, int $node, int $expected): void
     {
         $calls = $this->testRoot.'/javascript-calls';
         $process = new Process(['bash', '-e', $this->testRoot.'/.scripts/test'], $this->testRoot, [
             'PATH' => $this->testRoot.'/bin:'.getenv('PATH'),
             'TMPDIR' => $this->testRoot.'/tmp',
             'TEST_RUN_ID' => basename($this->testRoot),
-            'STUB_NPM_EXIT' => (string) $npm,
+            'STUB_YARN_EXIT' => (string) $yarn,
             'STUB_NODE_EXIT' => (string) $node,
             'STUB_JS_CALLS' => $calls,
             'STUB_PHPUNIT_EXIT' => '0',
@@ -157,7 +156,7 @@ final class TestScriptTest extends TestCase
     /** @return iterable<string, array{int, int, int}> */
     public static function javascriptExitCodes(): iterable
     {
-        yield 'first npm suite fails, later suites pass' => [7, 0, 7];
+        yield 'first yarn suite fails, later suites pass' => [7, 0, 7];
         yield 'repurpose Node suite fails' => [0, 5, 5];
     }
 
