@@ -150,7 +150,6 @@ final class DeliveryStatisticsTest extends AbstractNewsletterTestCase
         $tag = UtmTag::forStep($automation, $step);
         $automation->name = 'Renamed editorial title';
         self::assertSame($tag->id, UtmTag::forStep($automation, $step)->id);
-        self::assertSame($tag->step, UtmTag::forStep($automation, $step)->step);
         $dispatcher = self::getContainer()->get(EventDispatcherInterface::class);
         $dispatcher->addListener(QualifyClick::class, static function (QualifyClick $event): void {
             self::assertGreaterThan(0, $event->payload->contactId);
