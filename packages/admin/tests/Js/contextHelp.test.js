@@ -11,7 +11,7 @@ afterEach(() => {
 
 describe('contextual admin help', () => {
   it('keeps the live SEO counter outside the closed explanation and preserves its updates', () => {
-    document.body.innerHTML = `<div data-pw-help="Help: Title" data-pw-help-counter-label="Characters:">
+    document.body.innerHTML = `<div data-pw-help="Help: Title" data-pw-help-summary="Characters:">
       <label for="title">Title</label><div class="form-widget"><input id="title" class="titleToMeasure" value="Example">
       <small class="form-help">Search engine title <span id="titleWidth"></span></small></div></div>`
     const counter = document.querySelector('#titleWidth')
@@ -19,6 +19,7 @@ describe('contextual admin help', () => {
     showTitlePixelWidth()
     expect(document.querySelector('.pw-help-panel').contains(counter)).toBe(false)
     expect(counter.textContent).toBe('7')
+    expect(document.querySelector('.pw-help-summary').textContent).toBe('Characters: 7')
     const input = document.querySelector('input')
     input.value = 'Another title'
     input.dispatchEvent(new Event('input'))

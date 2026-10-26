@@ -140,3 +140,20 @@ class MyPageField extends AbstractField
 `->setCrudController(PageCrudController::class)->autocomplete()` is what makes the
 field fetch on demand; without it every candidate page is hydrated whole, `mainContent`
 included, to build a `<select>`.
+
+### Reference help
+
+A field's help shows under the field. Long reference copy can open from a help button
+next to the label instead: set the `context_help` form option, on any admin form.
+
+```php
+yield TextField::new('slug', 'mySlugLabel')
+    ->setHelp('mySlugHelp')
+    ->setFormTypeOption('context_help', 'mySlugSummary');
+```
+
+`true` moves the whole help into the popover. A string is the translation key of a short
+line that stays under the field, for what the editor must not miss: a consequence, a
+constraint. Opt in reference copy only — help holding controls, warnings or history must
+stay visible. A field built with `AbstractField::buildEasyAdminField()` passes it among its
+options (`'context_help' => true`).

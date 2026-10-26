@@ -106,6 +106,7 @@ final class ReviewCrudController extends ConversationCrudController
     {
         return TextField::new('replyAuthor', 'adminReviewReplyAuthorLabel')
             ->setHelp('adminReviewReplyAuthorHelp')
+            ->setFormTypeOption('context_help', true)
             ->setFormTypeOption('required', false);
     }
 
@@ -182,6 +183,7 @@ final class ReviewCrudController extends ConversationCrudController
             ->setChoices($this->buildRatingChoices())
             ->renderExpanded()
             ->setHelp('adminReviewRatingHelp')
+            ->setFormTypeOption('context_help', true)
             ->setFormTypeOption('required', true)
             ->setFormTypeOption('row_attr', [
                 'class' => 'pw-rating-field-row',

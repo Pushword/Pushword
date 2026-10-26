@@ -46,8 +46,8 @@ function initContextHelp(root = document) {
     if (summary || counter) {
       const inline = document.createElement('small')
       inline.className = 'form-text pw-help-summary'
-      if (counter) inline.append(`${row.dataset.pwHelpCounterLabel} `, counter)
-      else inline.textContent = summary
+      if (summary) inline.append(summary)
+      if (counter) inline.append(' ', counter)
       content.after(inline)
     }
 

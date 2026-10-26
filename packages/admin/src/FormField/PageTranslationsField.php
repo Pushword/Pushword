@@ -49,6 +49,7 @@ class PageTranslationsField extends AbstractField
             ->setCrudController(PageCrudController::class)
             ->autocomplete(callback: $label)
             ->setHelp('adminPageTranslationsHelp')
+            ->setFormTypeOption('context_help', true)
             ->setFormTypeOption('help_html', true)
             ->setFormTypeOption('multiple', true)
             ->setFormTypeOption('required', false)

@@ -20,6 +20,7 @@ class PageSearchExcreptField extends AbstractField
             'label' => 'adminPageSearchExcreptLabel',
             'help_html' => true,
             'help' => 'adminPageSearchExcreptHelp',
+            'context_help' => 'adminHelpCharacters',
             'attr' => ['class' => 'descToMeasure autosize textarea-no-newline'],
         ]);
     }

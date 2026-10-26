@@ -126,7 +126,8 @@ class SnippetCrudController extends AbstractCrudController
         yield FormField::addFieldset();
         yield TextField::new('name', 'snippet.field.name');
         yield TextField::new('slug', 'snippet.field.slug')
-            ->setHelp('snippet.field.slug.help');
+            ->setHelp('snippet.field.slug.help')
+            ->setFormTypeOption('context_help', 'adminHelpSnippetReference');
         yield $this->contentField();
 
         yield FormField::addColumn('col-12 col-lg-4 columnFields');
@@ -163,6 +164,7 @@ class SnippetCrudController extends AbstractCrudController
         return ChoiceField::new('host', 'snippet.field.host')
             ->setChoices(['snippet.field.host.all' => ''] + array_combine($hosts, $hosts))
             ->setHelp('snippet.field.host.help')
+            ->setFormTypeOption('context_help', true)
             ->renderAsNativeWidget()
             ->setFormTypeOption('placeholder', false)
             ->hideOnIndex();

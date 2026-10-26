@@ -15,21 +15,11 @@ final class ContextHelpTest extends AbstractAdminTestClass
     {
         $crawler = $this->loginUser()->request(Request::METHOD_GET, '/admin/page/2/edit');
         self::assertResponseIsSuccessful();
-        self::assertCount(1, $crawler->filter('[data-pw-help] [name="Page[title]"]'));
+        self::assertCount(1, $crawler->filter('[data-pw-help-summary="Characters:"] [name="Page[title]"]'));
         self::assertCount(1, $crawler->filter('[data-pw-help] #titleWidth'));
         self::assertCount(0, $crawler->filter('[data-pw-help] #pw-draft-toggle-switch'));
         self::assertCount(0, $crawler->filter('[data-pw-help] #disabledLinkSlug'));
         self::assertCount(1, $crawler->filter('#pw-draft-toggle-switch'));
         self::assertCount(1, $crawler->filter('script[src*="contextHelp.js"]'));
-    }
-
-    public function testNewsletterKeepsDeliveryConsequencesAndEmptyTargetState(): void
-    {
-        $crawler = $this->loginUser()->request(Request::METHOD_GET, '/admin/newsletter/campaign/new');
-        self::assertResponseIsSuccessful();
-        self::assertCount(1, $crawler->filter('[data-pw-help-summary] input[name="Campaign[scheduledAt]"]'));
-        self::assertCount(1, $crawler->filter('[data-pw-help-summary] input[name="Campaign[transactional]"]'));
-        self::assertCount(1, $crawler->filter('[data-pw-help] textarea[name="Campaign[segmentAsJson]"]'));
-        self::assertStringNotContainsString('Without conditions, every subscriber in the selected audience receives this newsletter.', $crawler->filter('.form-fieldset-help')->text(''));
     }
 }

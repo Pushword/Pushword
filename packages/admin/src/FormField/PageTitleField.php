@@ -20,6 +20,7 @@ class PageTitleField extends AbstractField
             'required' => false,
             'help_html' => true,
             'help' => 'adminPageTitleHelp',
+            'context_help' => 'adminHelpCharacters',
             'attr' => ['class' => 'titleToMeasure autosize textarea-no-newline'],
         ]);
     }

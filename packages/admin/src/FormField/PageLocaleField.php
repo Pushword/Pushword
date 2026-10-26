@@ -26,6 +26,7 @@ class PageLocaleField extends AbstractField
             'label' => 'adminPageLocaleLabel',
             'help_html' => true,
             'help' => 'adminPageLocaleHelp',
+            'context_help' => true,
         ]);
     }
 

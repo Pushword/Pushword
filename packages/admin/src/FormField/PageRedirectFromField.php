@@ -30,6 +30,7 @@ class PageRedirectFromField extends AbstractField
             ->allowAdd()
             ->allowDelete()
             ->setHelp('adminPageRedirectFromHelp')
+            ->setFormTypeOption('context_help', true)
             ->setFormTypeOption('help_html', true)
             ->setFormTypeOption('by_reference', false)
             ->setFormTypeOption('required', false);

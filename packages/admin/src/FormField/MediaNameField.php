@@ -19,6 +19,7 @@ final class MediaNameField extends AbstractField
             'required' => null !== $this->admin->getSubject()->id,
             'help_html' => true,
             'help' => 'adminMediaAltHelp',
+            'context_help' => true,
             'label' => 'adminMediaAltLabel',
             'attr' => ['ismedia' => 1, 'class' => 'col-md-6'],
         ]);

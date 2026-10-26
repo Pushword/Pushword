@@ -58,7 +58,8 @@ final class MediaLicenseField extends AbstractField
         yield UrlField::new(MediaLicense::ACQUIRE_LICENSE_PAGE, 'adminMediaAcquireLicensePageLabel')
             ->onlyOnForms()
             ->setHelp('adminMediaAcquireLicensePageHelp')
-            ->setFormTypeOptions($this->options($subject, MediaLicense::ACQUIRE_LICENSE_PAGE));
+            ->setFormTypeOptions($this->options($subject, MediaLicense::ACQUIRE_LICENSE_PAGE))
+            ->setFormTypeOption('context_help', true);
 
         yield TextField::new(MediaLicense::CREDIT_TEXT, 'adminMediaCreditTextLabel')
             ->onlyOnForms()
@@ -83,6 +84,7 @@ final class MediaLicenseField extends AbstractField
                 'mapped' => false,
                 'by_reference' => false,
                 'data' => MediaLicense::creators($subject),
+                'context_help' => true,
                 // row_attr, not attr: the hook has to be the element that carries
                 // data-prototype and holds the rows, which is the form row itself.
                 'row_attr' => ['data-pw-license-field' => MediaLicense::CREATOR],
@@ -104,7 +106,8 @@ final class MediaLicenseField extends AbstractField
             // carries it, so it never reaches Google through our JSON-LD.
             ->setHelp('adminMediaDigitalSourceTypeHelp')
             ->setChoices($this->digitalSourceTypeChoices())
-            ->setFormTypeOptions($this->options($subject, MediaLicense::DIGITAL_SOURCE_TYPE));
+            ->setFormTypeOptions($this->options($subject, MediaLicense::DIGITAL_SOURCE_TYPE))
+            ->setFormTypeOption('context_help', true);
     }
 
     /**

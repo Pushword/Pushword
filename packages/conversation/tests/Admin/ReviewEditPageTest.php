@@ -91,6 +91,16 @@ final class ReviewEditPageTest extends AbstractAdminTestClass
         self::assertNull($review->authorIp);
     }
 
+    public function testRatingAndReplyAuthorHelpOpenFromTheirLabels(): void
+    {
+        $client = $this->loginUser();
+        $crawler = $client->request(Request::METHOD_GET, '/admin/review/'.$this->createReview().'/edit');
+        self::assertResponseIsSuccessful();
+
+        self::assertCount(1, $crawler->filter('[data-pw-help] input[name="Review[replyAuthor]"]'));
+        self::assertGreaterThan(0, $crawler->filter('[data-pw-help] input[name="Review[rating]"]')->count());
+    }
+
     private function createReview(): int
     {
         $review = new Review();

@@ -20,6 +20,7 @@ class PageNameField extends AbstractField
             'required' => false,
             'help_html' => true,
             'help' => 'adminPageNameHelp',
+            'context_help' => true,
             'attr' => ['class' => 'autosize'],
         ]);
     }

@@ -58,6 +58,16 @@ final class SnippetCrudControllerTest extends AbstractAdminTestClass
         self::assertMatchesRegularExpression('/<select[^>]*id="[^"]*inline_attaches"[^>]*data-pw-media-picker/', $html);
     }
 
+    public function testSlugAndHostHelpOpenFromTheirLabels(): void
+    {
+        $crawler = $this->loginUser()->request(Request::METHOD_GET, '/admin/snippet/new');
+        self::assertResponseIsSuccessful();
+
+        $summary = self::getContainer()->get('translator')->trans('adminHelpSnippetReference');
+        self::assertCount(1, $crawler->filter('[data-pw-help-summary="'.$summary.'"] input[name="Snippet[slug]"]'));
+        self::assertCount(1, $crawler->filter('[data-pw-help] select[name="Snippet[host]"]'));
+    }
+
     public function testIndexShowsHostColumnWithAllHostsLabel(): void
     {
         $client = $this->loginUser();

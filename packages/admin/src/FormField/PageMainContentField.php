@@ -21,6 +21,7 @@ class PageMainContentField extends AbstractField
             return $this->buildEasyAdminField('mainContent', RedirectionTargetType::class, [
                 'label' => 'adminPageRedirectionTo',
                 'help' => 'adminPageRedirectionTargetHelp',
+                'context_help' => true,
                 'required' => true,
             ]);
         }

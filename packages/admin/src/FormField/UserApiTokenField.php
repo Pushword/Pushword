@@ -30,6 +30,7 @@ class UserApiTokenField extends AbstractField
                     'data-has-token' => $hasToken ? '1' : '0',
                 ],
             ])
-            ->setHelp('adminUserApiTokenHelp');
+            ->setHelp('adminUserApiTokenHelp')
+            ->setFormTypeOption('context_help', true);
     }
 }
