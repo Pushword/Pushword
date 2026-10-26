@@ -1,4 +1,5 @@
 import type EditorJS from '@editorjs/editorjs'
+import { modeButtonsOf } from './modeButtons'
 
 export type EditorOperation =
   'copy' | 'history' | 'save' | 'tool' | 'uncaught' | 'promise'
@@ -122,19 +123,17 @@ export class EditorDiagnostics {
       },
       options,
     )
-    holder.parentElement?.previousElementSibling
-      ?.querySelectorAll<HTMLElement>('[data-pw-editor-mode]')
-      .forEach((button) => {
-        button.addEventListener(
-          'click',
-          () => {
-            this.record(
-              button.dataset.pwEditorMode === 'json' ? 'mode:json' : 'mode:markdown',
-            )
-          },
-          options,
-        )
-      })
+    for (const button of modeButtonsOf(holder)) {
+      button.addEventListener(
+        'click',
+        () => {
+          this.record(
+            button.dataset.pwEditorMode === 'json' ? 'mode:json' : 'mode:markdown',
+          )
+        },
+        options,
+      )
+    }
     window.addEventListener(
       'error',
       (event) => {

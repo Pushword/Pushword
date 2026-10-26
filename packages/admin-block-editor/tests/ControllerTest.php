@@ -50,6 +50,9 @@ final class ControllerTest extends AbstractAdminTestClass
         // Their labels and the editor placeholders are translated in the template:
         // a key missing from the catalogue would render as itself.
         self::assertDoesNotMatchRegularExpression('/(?:aria-label=|[pP]laceholder: )"editor[A-Z]/', (string) $client->getResponse()->getContent());
+        // The switches' container names the editor it drives, so scripts need not rely on its position.
+        $holderId = (string) $crawler->filter('.editorjs-holder')->attr('id');
+        self::assertCount(2, $crawler->filter('[data-pw-editor-modes-for="'.$holderId.'"] button[data-pw-editor-mode]'));
 
         // The editor widget ships its own hidden media-picker selects, which the
         // image/gallery/attaches tools look up globally. Exactly one per name:

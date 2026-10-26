@@ -542,6 +542,25 @@ describe('OutlinePanel collapse', () => {
     expect(document.querySelector<HTMLButtonElement>('.pw-outline-label')!.title).toBe('Updated paragraph label')
   })
 
+  it('names its close button, after the outline when an older widget template has no label for it', () => {
+    buildPanel([])
+    expect(document.querySelector('.pw-outline-toggle')!.getAttribute('aria-label')).toBe(
+      'Close the outline',
+    )
+
+    document.body.innerHTML = ''
+    const { closeOutline: _, ...olderLabels } = labels
+    new OutlinePanel({
+      holderId: 'no-such-holder',
+      source: new StubSource([]),
+      labels: olderLabels,
+      toolMeta: (type) => ({ title: type, icon: '' }),
+    })
+    expect(document.querySelector('.pw-outline-toggle')!.getAttribute('aria-label')).toBe(
+      'Outline',
+    )
+  })
+
   it('collapses to the opener and persists the choice', () => {
     buildPanel([entry(0, 'paragraph', 'intro')])
 

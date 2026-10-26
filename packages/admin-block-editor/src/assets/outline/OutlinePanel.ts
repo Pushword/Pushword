@@ -18,7 +18,8 @@ export interface OutlineToolMeta {
 }
 
 export interface OutlineLabels {
-  closeOutline: string
+  /** Missing from widget templates copied before it existed; `outline` stands in. */
+  closeOutline?: string
   deleteBlock: string
   deleteGroup: string
   deleteHeading: string
@@ -222,7 +223,11 @@ export class OutlinePanel {
     title.className = 'pw-outline-title'
     title.textContent = this.labels.outline
 
-    const collapse = this.iconButton(IconChevronLeft, this.labels.closeOutline, 'pw-outline-toggle')
+    const collapse = this.iconButton(
+      IconChevronLeft,
+      this.labels.closeOutline ?? this.labels.outline,
+      'pw-outline-toggle',
+    )
     collapse.addEventListener('click', () => this.setCollapsed(true, true))
 
     head.append(title, collapse)

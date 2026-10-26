@@ -2,6 +2,7 @@ import { API, OutputData } from '@editorjs/editorjs'
 import { logger } from './tools/utils/logger'
 import { loadMonaco } from './tools/utils/loadScript'
 import { boundInputOf } from './boundInput'
+import { modeButtonsOf } from './modeButtons'
 
 /**
  * Gestionnaire des modes d'édition (EditorJS, JSON, Markdown)
@@ -138,14 +139,9 @@ export class EditorModeManager {
     if (holder) {
       holder.style.display = visible ? 'block' : 'none'
       const mode = visible ? null : this.getCurrentMode()
-      holder.parentElement?.previousElementSibling
-        ?.querySelectorAll<HTMLButtonElement>('[data-pw-editor-mode]')
-        .forEach((button) => {
-          button.setAttribute(
-            'aria-pressed',
-            String(button.dataset.pwEditorMode === mode),
-          )
-        })
+      for (const button of modeButtonsOf(holder)) {
+        button.setAttribute('aria-pressed', String(button.dataset.pwEditorMode === mode))
+      }
     } else {
       logger.warn('Holder EditorJS non trouvé pour changer la visibilité', {
         editorId: this.editorId,

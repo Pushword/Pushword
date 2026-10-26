@@ -1,7 +1,7 @@
 {% block editorjs_widget %}
 {% set editor_id = 'editorjs_' ~ id %}
 
-<div class="pw-editor-modes" role="group" aria-label="{{ 'editorEditingTools'|trans }}">
+<div class="pw-editor-modes" data-pw-editor-modes-for="{{ editor_id }}" role="group" aria-label="{{ 'editorEditingTools'|trans }}">
     <button type="button" class="pw-editor-mode" data-pw-editor-mode="json" aria-pressed="false" onclick="toggleEditor()" title="{{ 'editorSourceJson'|trans }}" aria-label="{{ 'editorSourceJson'|trans }}">
         {{ svg('code') }}
         <span>JSON</span>
