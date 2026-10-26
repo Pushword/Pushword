@@ -237,6 +237,12 @@ body.ea-new .content-header {
   min-inline-size: 0;
 }
 
+.form-widget:has(#User_plainPassword) > .form-help,
+.pw-api-token .form-control[readonly],
+.pw-api-token .btn.pw-action-delete {
+  color: var(--bs-body-color);
+}
+
 .pw-api-token__actions {
   display: flex;
   flex-wrap: wrap;
