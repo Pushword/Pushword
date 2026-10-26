@@ -22,6 +22,7 @@ final class UserCrudSecurityTest extends AbstractAdminTestClass
         self::assertResponseIsSuccessful();
         self::assertStringContainsString('Super Administrator', $crawler->filter('.datagrid')->text());
         self::assertStringNotContainsString('ROLE_', $crawler->filter('.datagrid')->text());
+        self::assertStringNotContainsString('ROLE_', $crawler->filter('.datagrid td[data-label="Role"]')->html());
 
         $crawler = $client->request(Request::METHOD_GET, '/admin/user/new');
         self::assertResponseIsSuccessful();

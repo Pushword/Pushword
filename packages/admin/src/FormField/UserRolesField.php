@@ -13,6 +13,14 @@ use Pushword\Core\Entity\User;
  */
 class UserRolesField extends AbstractField
 {
+    /** Translation key of each role the admin offers, highest first. */
+    public const array ROLE_LABELS = [
+        'ROLE_SUPER_ADMIN' => 'adminUserRoleSuperAdmin',
+        'ROLE_ADMIN' => 'adminUserRoleAdmin',
+        'ROLE_EDITOR' => 'adminUserRoleEditor',
+        'ROLE_USER' => 'adminUserRoleUser',
+    ];
+
     public function getEasyAdminField(): ?FieldInterface
     {
         return ChoiceField::new('roles', 'adminUserRoleLabel')
@@ -28,16 +36,11 @@ class UserRolesField extends AbstractField
      */
     private function getRoleChoices(): array
     {
-        $choices = [
-            'adminUserRoleAdmin' => 'ROLE_ADMIN',
-            'adminUserRoleEditor' => 'ROLE_EDITOR',
-            'adminUserRoleUser' => 'ROLE_USER',
-        ];
-
-        if (\in_array('ROLE_SUPER_ADMIN', $this->formFieldManager->getUser()?->getRoles() ?? [], true)) {
-            return ['adminUserRoleSuperAdmin' => 'ROLE_SUPER_ADMIN'] + $choices;
+        $labels = self::ROLE_LABELS;
+        if (! \in_array('ROLE_SUPER_ADMIN', $this->formFieldManager->getUser()?->getRoles() ?? [], true)) {
+            unset($labels['ROLE_SUPER_ADMIN']);
         }
 
-        return $choices;
+        return array_flip($labels);
     }
 }
