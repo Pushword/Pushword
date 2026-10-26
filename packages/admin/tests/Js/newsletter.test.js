@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { initAutomationRecipients, initCampaignDesigns, initNewsletterDelays, initNewsletterIndexes, numberNewNewsletterStep } from '../../src/Resources/assets/admin.newsletter.js'
+import { initAutomationRecipients, initCampaignDesigns, initNewsletterDelays, initNewsletterIndexes, numberNewNewsletterStep } from '../../../newsletter/src/Resources/public/admin.js'
 
 function renderDelay(value) {
   document.body.innerHTML = `<input id="delay" type="number" value="${value}" data-pw-delay-preview>
@@ -212,4 +212,22 @@ it('shows recipients according to the trigger and retains publication conditions
   expect(document.querySelector('[name="Automation[stopWhenAsJson]"]').value).toBe('Stop rule')
   expect(document.querySelector('textarea').value).toBe('Saved rule')
   document.body.innerHTML = ''
+})
+
+describe('newsletter asset self-wiring', () => {
+  afterEach(() => { document.body.innerHTML = '' })
+
+  it('initialises the screen on window load', () => {
+    document.body.innerHTML = `<input id="delay" type="number" value="2880" data-pw-delay-preview>
+      <output for="delay" data-delay-output data-immediate="Immediately" data-days="d" data-hours="h" data-minutes="min"></output>`
+    window.dispatchEvent(new Event('load'))
+    expect(document.querySelector('output').textContent).toBe('2 d')
+  })
+
+  it('initialises a collection item added later', () => {
+    document.body.innerHTML = `<form><div id="added"><input id="delay" type="number" value="60" data-pw-delay-preview>
+      <output for="delay" data-delay-output data-immediate="Immediately" data-days="d" data-hours="h" data-minutes="min"></output></div></form>`
+    document.dispatchEvent(new CustomEvent('ea.collection.item-added', { detail: { newElement: document.querySelector('#added') } }))
+    expect(document.querySelector('output').textContent).toBe('1 h')
+  })
 })

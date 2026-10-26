@@ -1,5 +1,5 @@
 ---
-title: 'sites created since 1.0.76 can delete the unused demo video'
+title: 'sites created since 1.0.76 can delete the unused demo video; newsletter admin assets moved to their bundle'
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -35,7 +35,7 @@ belongs in the feature doc, which you link to instead.
 Several changes land here between two tags: append to the file, do not replace it.
 -->
 
-**Concerns:** `pushword/core`
+**Concerns:** `pushword/admin`, `pushword/core`, `pushword/newsletter`
 
 ## Motion demo video no longer copied into new sites
 
@@ -48,3 +48,9 @@ library lists it.
 Since 1.0.76 every started session was saved before its controller ran, and Symfony
 then silently skips `migrate()` and `invalidate()`. Only `/admin` requests are saved
 early now; login, logout and site controllers keep their session open. Nothing to do.
+
+## Newsletter admin assets
+
+The newsletter screens' styles and scripts left the admin bundle for
+`/bundles/pushwordnewsletter/admin.css` and `admin.js`, loaded by the newsletter layout only.
+**Sites serving copied bundle assets:** refresh them with `assets:install`; installations using symbolic links need no refresh.

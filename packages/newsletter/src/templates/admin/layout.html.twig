@@ -11,6 +11,16 @@
   {% endguard %}
 {% endblock %}
 
+{% block configured_stylesheets %}
+  {{ parent() }}
+  <link rel="stylesheet" href="{{ versionedAsset('/bundles/pushwordnewsletter/admin.css') }}">
+{% endblock %}
+
+{% block configured_javascripts %}
+  {{ parent() }}
+  <script type="module" src="{{ versionedAsset('/bundles/pushwordnewsletter/admin.js') }}"></script>
+{% endblock %}
+
 {% block body_attr %}{{ parent() }} data-newsletter{% endblock %}
 
 {% block content_header_wrapper %}

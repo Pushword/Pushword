@@ -37,6 +37,20 @@ final class NewsletterAdminTest extends AbstractAdminTestClass
         self::assertCount(0, $crawler->filter('.content-header .action-new, .pw-newsletter-status'));
     }
 
+    /** The newsletter screens bring their own assets; the rest of the admin does not pay for them. */
+    public function testNewsletterAssetsLoadOnlyOnNewsletterScreens(): void
+    {
+        $client = $this->loginUser();
+        $assets = 'link[href^="/bundles/pushwordnewsletter/admin.css"], script[type="module"][src^="/bundles/pushwordnewsletter/admin.js"]';
+
+        $crawler = $client->request(Request::METHOD_GET, '/admin/newsletter/audience');
+        self::assertCount(2, $crawler->filter($assets));
+
+        $crawler = $client->request(Request::METHOD_GET, '/admin/page');
+        self::assertResponseIsSuccessful();
+        self::assertCount(0, $crawler->filter($assets));
+    }
+
     public function testAudienceActionsRemainAvailableInOneMenu(): void
     {
         $client = $this->loginUser();

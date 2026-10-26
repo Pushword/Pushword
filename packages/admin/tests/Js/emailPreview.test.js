@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { initEmailPreview } from '../../src/Resources/assets/admin.emailPreview.js'
+import { initEmailPreview } from '../../../newsletter/src/Resources/public/admin.js'
 
 function pendingResponse() {
   let resolve
