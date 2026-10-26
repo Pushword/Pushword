@@ -28,6 +28,21 @@ final class StatisticsContractTest extends TestCase
         new Metric(null);
     }
 
+    public function testIncompleteCountsKeepTheirObservedFactsButNeverBecomeAnExhaustiveRate(): void
+    {
+        $partial = new Metric(1, complete: false);
+        $sum = Metric::sum([$partial, new Metric(2)]);
+        self::assertSame(3, $sum->value);
+        self::assertFalse($sum->complete);
+        $report = new Report('pushword', 'partial', 'Partial', '', null, ['accepted' => new Metric(10), 'delivered' => $sum, 'clickers' => new Metric(2)]);
+        self::assertNull($report->rate('deliveryRate')['value']);
+        self::assertSame('unavailable', $report->rate('deliveryRate')['state']);
+        self::assertNull($report->rate('clickRateDelivered')['value']);
+        self::assertFalse(new StatisticsDashboard([])->totals([$report])->metric('delivered')->complete);
+        $zeroLowerBound = new Report('external', 'zero', 'Partial zero', '', null, ['delivered' => new Metric(0, complete: false), 'clickers' => new Metric(1)]);
+        self::assertSame('unavailable', $zeroLowerBound->rate('clickRateDelivered')['state']);
+    }
+
     public function testSourcesKeepTheirIdentityManagementLinkAndWeightedFractions(): void
     {
         $local = new Report('pushword', '42', 'Local', '/admin/local/42', null, ['accepted' => new Metric(2), 'delivered' => new Metric(2), 'clickers' => new Metric(1)], rateDenominators: ['clickRate' => 'delivered']);
@@ -83,6 +98,8 @@ final class StatisticsContractTest extends TestCase
             'deliveryRate' => [80.0, 'accepted'],
             'bounceRate' => [10.0, 'accepted'],
             'unsubscribeRate' => [0.0, 'accepted'],
+            'clickRateDelivered' => [12.5, 'delivered'],
+            'filteredClickRateDelivered' => [25.0, 'delivered'],
         ] as $name => [$value, $denominator]) {
             foreach ([$report, new StatisticsDashboard([])->totals([$report])] as $result) {
                 $rate = $result->rate($name);

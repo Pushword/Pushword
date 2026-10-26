@@ -166,12 +166,13 @@ final readonly class NewsletterMailer
     {
         $message ??= new DeliveryMessage(
             $contact,
-            $audience->clickTracking && $contact->hasClickTrackingConsent(),
+            $audience->clickTracking && $contact->hasClickTrackingConsent() && [] !== $this->renderer->trackingScopes(),
             $trackedMail instanceof Campaign ? $trackedMail : null,
             $trackedMail->automation,
             $trackedMail instanceof Campaign ? $trackedMail->automationStepId : $trackedMail->getUtmId(),
             $trackedMail instanceof AutomationStep ? $trackedMail->position : null,
             $trackedMail instanceof Campaign ? $trackedMail->triggerSubjectId : $occurrenceId,
+            $this->renderer->trackingScopes(),
         );
         $this->entityManager->persist($message);
         // Persist the correlation reference before anything reaches the transport.
@@ -205,6 +206,7 @@ final readonly class NewsletterMailer
             ->html($this->renderer->html($audience, $contact, $subject, $bodyMarkdown, $preheader, $unsubscribeUrl, $utmTag, $trackedMail, $sendContext, $locale, $untrackedUrls, $emailLayout, $message->reference));
 
         $message->identify(trim($email->getHeaders()->get('Message-ID')?->getBodyAsString() ?? throw new LogicException('Missing message identity.'), '<> '));
+        $email->getHeaders()->addTextHeader('X-Pushword-Newsletter-Message', $message->reference);
 
         if (null !== $unsubscribeUrl) {
             $headers = $email->getHeaders();

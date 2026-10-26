@@ -4,6 +4,6 @@
   <div class="table-responsive"><table class="table pw-statistics-windows">
     <thead><tr><th scope="col">{{ 'newsletter.statistics.overview'|trans }}</th>{% for days, report in comparisons %}<th scope="col">{{ ('newsletter.statistics.day' ~ days)|trans }}{% if not report.mature %}<small>{{ 'newsletter.statistics.provisional'|trans }}</small>{% endif %}</th>{% endfor %}</tr></thead>
     <tbody>{% for name in ['accepted', 'delivered', 'bounced', 'unsubscribed', 'clicks', 'clickers'] %}<tr><th scope="row">{{ ('newsletter.statistics.' ~ name)|trans }}</th>{% for report in comparisons %}<td>{{ statistics.measure(report.metric(name)) }}</td>{% endfor %}</tr>{% endfor %}
-    <tr><th scope="row">{{ 'newsletter.statistics.clickRate'|trans }}</th>{% for report in comparisons %}<td>{{ statistics.fraction(report.rate('clickRate')) }}</td>{% endfor %}</tr></tbody>
+    {% for name in ['clickRate', 'clickRateDelivered'] %}<tr><th scope="row">{{ ('newsletter.statistics.' ~ name)|trans }}</th>{% for report in comparisons %}<td>{{ statistics.fraction(report.rate(name)) }}</td>{% endfor %}</tr>{% endfor %}</tbody>
   </table></div>
 </section>

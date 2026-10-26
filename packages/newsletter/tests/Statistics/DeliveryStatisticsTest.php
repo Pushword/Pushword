@@ -19,6 +19,7 @@ use Pushword\Newsletter\Entity\DeliveryMessage;
 use Pushword\Newsletter\Enum\ContactStatus;
 use Pushword\Newsletter\Enum\DeliveryEventKind;
 use Pushword\Newsletter\Enum\RecipientState;
+use Pushword\Newsletter\Event\QualifyDeliveryCoverage;
 use Pushword\Newsletter\Repository\ClickEventRepository;
 use Pushword\Newsletter\Service\CampaignSender;
 use Pushword\Newsletter\Service\ContactManager;
@@ -102,6 +103,8 @@ final class DeliveryStatisticsTest extends AbstractNewsletterTestCase
         $email = self::getMailerMessage();
         self::assertInstanceOf(Email::class, $email);
         self::assertSame($message->messageId, trim($email->getHeaders()->get('Message-ID')?->getBodyAsString() ?? '', '<> '));
+        self::assertSame($message->reference, $email->getHeaders()->get('X-Pushword-Newsletter-Message')?->getBodyAsString());
+        self::assertSame(['body'], $message->trackingScopes);
         $html = $email->getHtmlBody();
         self::assertIsString($html);
         self::assertStringContainsString('message='.$message->reference, $html);
@@ -121,6 +124,23 @@ final class DeliveryStatisticsTest extends AbstractNewsletterTestCase
         $this->client->request(Request::METHOD_GET, '/newsletter/c/'.$payload);
         self::assertResponseRedirects();
         self::assertSame(0, $this->entityManager->getRepository(ClickEvent::class)->count(['message' => $message]));
+    }
+
+    public function testUnrecordedConfirmationAndPreviewDoNotExposeTheLedgerHeader(): void
+    {
+        $audience = $this->createAudience();
+        $contact = $this->createContact($audience, 'unrecorded@example.tld');
+        $mailer = self::getContainer()->get(NewsletterMailer::class);
+        $mailer->sendConfirmation($contact);
+        $mailer->sendTest($audience, 'Preview', 'Body', null, 'preview@example.tld', null);
+        self::assertEmailCount(2);
+        foreach ([0, 1] as $index) {
+            $email = self::getMailerMessage($index);
+            self::assertInstanceOf(Email::class, $email);
+            self::assertFalse($email->getHeaders()->has('X-Pushword-Newsletter-Message'));
+        }
+
+        self::assertSame(0, $this->entityManager->getRepository(DeliveryMessage::class)->count([]));
     }
 
     public function testDeliveryEventsAreIdempotentAndKeepRemoteDatesAndReasons(): void
@@ -145,6 +165,85 @@ final class DeliveryStatisticsTest extends AbstractNewsletterTestCase
         self::assertCount(2, $events);
         self::assertSame('250 accepted by destination', $events[0]->reason);
         self::assertSame('2026-01-03', $events[0]->occurredAt->format('Y-m-d'));
+    }
+
+    public function testIncompleteDeliveryFactsDoNotBecomeRatesAndQualificationPrecedesReadingEvents(): void
+    {
+        $audience = $this->createAudience();
+        $contacts = [];
+        foreach (['one', 'two'] as $name) {
+            $contacts[] = $this->createContact($audience, $name.'@example.tld');
+        }
+
+        $campaign = $this->createCampaign($audience)->markSending(2);
+        foreach ($contacts as $contact) {
+            self::getContainer()->get(NewsletterMailer::class)->sendCampaign($campaign, $contact);
+            $campaign->incrementSent();
+        }
+
+        $campaign->markSent();
+        $this->entityManager->flush();
+        $messages = $this->entityManager->getRepository(DeliveryMessage::class)->findBy(['campaign' => $campaign]);
+        foreach ($messages as $message) {
+            $this->backdate($message, '2026-01-01');
+        }
+
+        $recorder = self::getContainer()->get(DeliveryEventRecorder::class);
+        $recorder->record(new DeliveryNotification('provider', 'one', $messages[0]->reference, DeliveryEventKind::RemoteAccepted, new DateTimeImmutable('2026-01-02'), '250 accepted'));
+
+        $provider = self::getContainer()->get(LocalStatisticsProvider::class);
+        $query = new ReportQuery(new DateTimeImmutable('2026-01-01'), new DateTimeImmutable('2026-11-01'), $audience->id, asOf: new DateTimeImmutable('2026-11-02'));
+        $partial = $provider->campaign($campaign->id ?? 0, $query);
+        self::assertSame(1, $partial->metric('delivered')->value);
+        self::assertFalse($partial->metric('delivered')->complete);
+        self::assertNull($partial->rate('deliveryRate')['value']);
+        self::assertNull($partial->rate('clickRateDelivered')['denominatorMetric']);
+
+        $watermark = new DateTimeImmutable('2026-11-01');
+        self::getContainer()->get(EventDispatcherInterface::class)->addListener(QualifyDeliveryCoverage::class, static function (QualifyDeliveryCoverage $event) use ($recorder, $messages, &$watermark): void {
+            self::assertCount(2, $event->messages);
+            $recorder->record(new DeliveryNotification('provider', 'two', $messages[1]->reference, DeliveryEventKind::RemoteAccepted, new DateTimeImmutable('2026-01-03'), '250 accepted'));
+            $event->complete = true;
+            $event->observedAt = $watermark;
+            $event->notice = 'Complete collector snapshot';
+        });
+        foreach ([$provider->campaign($campaign->id ?? 0, $query), $this->reports($query)[0]] as $complete) {
+            self::assertSame(2, $complete->metric('delivered')->value);
+            self::assertTrue($complete->metric('delivered')->complete);
+            self::assertSame(100.0, $complete->rate('deliveryRate')['value']);
+            self::assertSame('2026-11-01', $complete->observedAt?->format('Y-m-d'));
+            self::assertSame('Complete collector snapshot', $complete->notice);
+        }
+
+        $watermark = new DateTimeImmutable('2026-01-02');
+        $snapshot = $provider->campaign($campaign->id ?? 0, $query);
+        self::assertSame(1, $snapshot->metric('delivered')->value, 'Events beyond the durable collector watermark belong to a later snapshot.');
+        self::assertTrue($snapshot->metric('delivered')->complete);
+        self::assertSame(50.0, $snapshot->rate('deliveryRate')['value']);
+    }
+
+    public function testOnlyCompleteDeliveryCoverageCanProveZeroAndLegacySendsCannotBeQualified(): void
+    {
+        $audience = $this->createAudience();
+        $contact = $this->createContact($audience, 'zero@example.tld');
+        $automation = $this->createAutomation($audience, [['delay' => 0, 'subject' => 'Step']]);
+        $message = self::getContainer()->get(NewsletterMailer::class)->sendStep($automation->getOrderedSteps()[0], $contact, 'Step', 'Body');
+        $this->backdate($message, '2026-01-01');
+        self::getContainer()->get(EventDispatcherInterface::class)->addListener(QualifyDeliveryCoverage::class, static function (QualifyDeliveryCoverage $event): void {
+            $event->complete = true;
+        });
+        $query = new ReportQuery(new DateTimeImmutable('2026-01-01'), new DateTimeImmutable('2026-11-01'), $audience->id, asOf: new DateTimeImmutable('2026-11-02'));
+        $report = $this->reports($query)[0];
+        self::assertSame(0, $report->metric('delivered')->value);
+        self::assertTrue($report->metric('delivered')->complete);
+        self::assertSame(0.0, $report->rate('deliveryRate')['value']);
+
+        $legacy = $this->createCampaign($audience)->markSending(1)->incrementSent()->markSent();
+        $this->entityManager->flush();
+        $report = self::getContainer()->get(LocalStatisticsProvider::class)->campaign($legacy->id ?? 0, $query);
+        self::assertFalse($report->metric('delivered')->complete);
+        self::assertNull($report->metric('delivered')->value);
+        self::assertNull($report->rate('deliveryRate')['value']);
     }
 
     public function testAnOlderMessageGetsItsBounceAndUnsubscribeAndResubscribeKeepsHistory(): void

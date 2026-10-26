@@ -54,6 +54,9 @@ class DeliveryMessage implements IdInterface
         public private(set) ?int $position = null,
         #[ORM\Column(type: Types::INTEGER, nullable: true)]
         public private(set) ?int $occurrenceId = null,
+        /** @var list<string> */
+        #[ORM\Column(type: Types::JSON, options: ['default' => '["body"]'])]
+        public private(set) array $trackingScopes = ['body'],
     ) {
         $this->reference = Uuid::v7()->toRfc4122();
         $this->attemptedAt = new DateTimeImmutable();

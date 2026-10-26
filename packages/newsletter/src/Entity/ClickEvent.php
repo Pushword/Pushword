@@ -40,6 +40,12 @@ class ClickEvent implements IdInterface
     #[ORM\Column(type: Types::STRING, length: 255, options: ['default' => 'unclassified'])]
     public string $qualificationMethod = 'unclassified';
 
+    #[ORM\Column(type: Types::STRING, length: 32, options: ['default' => 'body'])]
+    public string $scope = 'body';
+
+    #[ORM\Column(type: Types::STRING, length: 100, nullable: true)]
+    public ?string $linkId = null;
+
     private function __construct(
         #[ORM\ManyToOne(targetEntity: Contact::class)]
         #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]

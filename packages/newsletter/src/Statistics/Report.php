@@ -8,9 +8,12 @@ use DateTimeImmutable;
 
 final readonly class Report
 {
-    public const array METRICS = ['accepted', 'delivered', 'transportFailed', 'bounced', 'deferred', 'unsubscribed', 'clicks', 'clickers', 'filteredClicks', 'filteredClickers', 'qualifiedClicks', 'trackedMessages', 'coverageKnownMessages'];
+    /** Frozen prefix of the 1.0.81 CSV format. New columns are appended. */
+    public const array BASE_METRICS = ['accepted', 'delivered', 'transportFailed', 'bounced', 'deferred', 'unsubscribed', 'clicks', 'clickers', 'filteredClicks', 'filteredClickers', 'qualifiedClicks', 'trackedMessages', 'coverageKnownMessages'];
 
-    public const array RATES = [
+    public const array METRICS = [...self::BASE_METRICS, 'complaints', 'automatedClicks', 'unclassifiedClicks', 'clicksWithoutKnownBots', 'clickersWithoutKnownBots'];
+
+    public const array BASE_RATES = [
         'clickRate' => ['clickers', 'trackedMessages'],
         'filteredClickRate' => ['filteredClickers', 'trackedMessages'],
         'coverage' => ['trackedMessages', 'accepted'],
@@ -19,9 +22,18 @@ final readonly class Report
         'unsubscribeRate' => ['unsubscribed', 'accepted'],
     ];
 
+    public const array RATES = [
+        ...self::BASE_RATES,
+        'clickRateDelivered' => ['clickers', 'delivered'],
+        'filteredClickRateDelivered' => ['filteredClickers', 'delivered'],
+        'clickRateWithoutKnownBots' => ['clickersWithoutKnownBots', 'trackedMessages'],
+        'clickRateWithoutKnownBotsDelivered' => ['clickersWithoutKnownBots', 'delivered'],
+    ];
+
     /** @param array<string, Metric> $metrics
      * @param array<key-of<self::RATES>, value-of<self::METRICS>|null> $rateDenominators overrides the default base; null makes only that rate unavailable
      * @param 'info'|'warning'|'danger'                                $noticeLevel
+     * @param list<LinkReport>                                         $links
      */
     public function __construct(
         public string $source,
@@ -39,6 +51,7 @@ final readonly class Report
         public ?DateTimeImmutable $observedAt = null,
         public ?string $notice = null,
         public string $noticeLevel = 'info',
+        public array $links = [],
     ) {
     }
 
@@ -56,7 +69,11 @@ final readonly class Report
         $top = $this->metric($numerator);
         $bottom = null === $denominator ? Metric::unavailable() : $this->metric($denominator);
         $state = Metric::sum([$top, $bottom])->state;
-        if (! $this->ratesAvailable || 0 === $bottom->value) {
+        if ('measured' === $state && (! $top->complete || ! $bottom->complete)) {
+            $state = 'unavailable';
+        }
+
+        if (! $this->ratesAvailable || (0 === $bottom->value && $bottom->complete)) {
             $state = 'notMeasured';
         }
 

@@ -1,0 +1,22 @@
+{% import '@PushwordNewsletter/admin/_statistics_macros.html.twig' as statistics %}
+{% set maxLinkContacts = 1 %}
+{% for link in report.links %}{% set maxLinkContacts = max(maxLinkContacts, link.clickers.value ?? 0) %}{% endfor %}
+<div class="table-responsive">
+  <table class="table pw-statistics-table pw-statistics-links" role="table">
+    <caption class="visually-hidden">{{ 'newsletter.statistics.links'|trans }}</caption>
+    <thead role="rowgroup"><tr role="row"><th scope="col" role="columnheader">{{ 'newsletter.statistics.url'|trans }}</th><th scope="col" role="columnheader" class="pw-statistics-number">{{ 'newsletter.statistics.clickers'|trans }}</th><th scope="col" role="columnheader" class="pw-statistics-number">{{ 'newsletter.campaign.field.clicks'|trans }}</th></tr></thead>
+    <tbody role="rowgroup">
+      {% for link in report.links %}
+        <tr role="row">
+          <th scope="row" role="rowheader" class="pw-statistics-url">
+            {% if link.safeUrl() %}<a href="{{ link.safeUrl() }}" target="_blank" rel="noopener noreferrer">{{ link.host() }}{{ link.path() }} <i class="fa fa-arrow-up-right-from-square" aria-hidden="true"></i><span class="visually-hidden"> {{ 'newsletter.statistics.opensNewTab'|trans }}</span></a>{% endif %}
+            <code>{{ link.url }}</code>
+            <small data-link-scope="{{ link.scope }}" data-link-id="{{ link.linkId }}" title="{{ link.linkId }}">{{ ('newsletter.statistics.scope' ~ link.scope|capitalize)|trans }} · {{ link.linkId starts with 'auto-' ? 'newsletter.statistics.automaticLinkId'|trans : (link.linkId ?? 'newsletter.statistics.unknownLinkId'|trans) }}</small>
+          </th>
+          <td role="cell" class="pw-statistics-number"><span class="pw-statistics-mobile-label" aria-hidden="true">{{ 'newsletter.statistics.clickers'|trans }}</span><div class="pw-statistics-rate">{% if link.clickers.value is not null %}<meter min="0" max="{{ maxLinkContacts }}" value="{{ link.clickers.value }}" aria-label="{{ 'newsletter.statistics.clickers'|trans }}">{{ link.clickers.value }}</meter>{% endif %}<strong>{{ statistics.measure(link.clickers) }}</strong></div></td>
+          <td role="cell" class="pw-statistics-number"><span class="pw-statistics-mobile-label" aria-hidden="true">{{ 'newsletter.campaign.field.clicks'|trans }}</span>{{ statistics.measure(link.clicks) }}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
