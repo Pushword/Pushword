@@ -1,5 +1,5 @@
 ---
-title: ''
+title: 'newsletter links drop utm_term, the catalogue needs an external source and StatisticsRepository::totals() is gone; admin reference help is opt-in per field; weight column and editor widget overrides need updating; motion audio errors name their track; sites may refuse the audio uploads accepted since 1.0.83'
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -34,3 +34,40 @@ belongs in the feature doc, which you link to instead.
 
 Several changes land here between two tags: append to the file, do not replace it.
 -->
+
+**Concerns:** `pushword/admin`, `pushword/admin-block-editor`, `pushword/core`, `pushword/newsletter`, `pushword/repurpose`
+
+## Audio uploads
+
+Since 1.0.83 the admin, the block editor and the media API accept MP3, WAV, M4A, OGG and FLAC uploads on every site; the bytes must match the extension.
+**Sites that do not want audio files:** map a constraint on `Pushword\Core\Entity\Media` rejecting a `getMediaFile()` MIME type that starts with `audio/` or is `application/ogg`; every interactive upload runs it ([Media rules](/media-rules)).
+
+## Reference help is opted into per field
+
+Admin help moves into the label's help button only for fields setting the `context_help` form option: `true`, or the translation key of a short line kept under the field ([Reference help](/extension/admin#reference-help)).
+**Sites with custom admin fields or forms:** add `->setFormTypeOption('context_help', true)` where help should open on demand.
+**Sites overriding `@pwAdmin/components/weight_inline_field.html.twig`:** copy the new one; it reads its label, help and entity type from the field.
+
+## Block editor widget template
+
+"Report a problem" stays available below the editor before any failure; the mode buttons' container names its editor.
+**Sites overriding `@PushwordAdminBlockEditor/editorjs_widget.html.twig` with a full copy:** add `data-pw-editor-modes-for="{{ editor_id }}"` to the `.pw-editor-modes` div, add `closeOutline: "{{ 'editorOutlineClose'|trans|e('js') }}"` to `outline.labels`, and move the `.pw-editor-diagnostics` panel, `hidden` attribute included, after the editor's wrapper, as in the default template. Older copies keep working until then.
+
+## Newsletter links no longer carry `utm_term`
+
+Automation step links drop `utm_term`, which analytics tools report as the paid-search keyword; `utm_id` and `utm_content` are unchanged.
+**Reports reading steps from `utm_term`:** use `utm_content`.
+
+## Campaigns open the list until another source joins the catalogue
+
+**Newsletter → Campaigns** opens the campaign list, and the catalogue only when the application listens to `CollectCampaignIndex`. The catalogue shows other sources' statuses as given (`paused`, `archived` are no longer translated): pass the label editors should read.
+**Sites overriding `_navigation.html.twig`:** link the campaign entry to `newsletter_campaigns_route()`.
+
+## Newsletter statistics totals
+
+`StatisticsRepository::totals()` and the per-campaign `clickRate`, `bounceRate` and `unsubscribeRate` keys are gone: use `StatisticsDashboard::totals()` and `Report::rate()`.
+
+## Motion audio errors name their track
+
+`pw:repurpose:motion` reports an unusable audio file on `audio.voice.media` or `audio.music.media` rather than `audio`, and no longer reports other errors as audio problems. Update scripts that match the path `audio`.
+Slideshow `.mp4` exports with audio now also run on FFmpeg 4.4 (Ubuntu 22.04) and always come out stereo.
