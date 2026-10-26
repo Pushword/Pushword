@@ -30,7 +30,8 @@ Content editors only access the content repository, never the source code.
 
 Lock production while you edit, so admin saves cannot conflict with your changes.
 Requests authenticate with a user's API token: **Admin > Users**, edit the user, then
-**Generate Token** in the **API Access** section and save (or `pw:user:token {email}`).
+**Generate Token** in the **API Access** section and save. `pw:user:token {email}` only
+prints an existing token.
 
 ### Lock Production
 

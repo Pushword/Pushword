@@ -27,6 +27,10 @@ Each create or update stores a serialized snapshot. The page form links to the p
 version list (under the *created at* field), where you compare two versions side by side
 or restore one.
 
+Restoring leaves the page's current relations (main image, parent, translations and
+inherited-from page) unchanged. Restoring an older slug creates no redirect from the
+current URL and removes any redirect-only page occupying the restored URL.
+
 Snapshots live in `var/log/version/{id}/` for pages and `var/log/version/{type}/{id}/`
 for other entities (`pushword_version.storage_dir`). History is pruned on save: every
 version younger than 30 days is kept, then one per day up to 90 days, then one per week.

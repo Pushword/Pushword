@@ -20,6 +20,10 @@ and field before authenticating.
 Every request (except `/api/docs`) requires a Bearer token in the `Authorization` header,
 matched against the `apiToken` field of the `User` entity. The user must hold `ROLE_EDITOR`.
 
+Generate and save a token in **Admin > Users > API Access**. `pw:user:token` only prints
+an existing token and fails if none exists. `pw:user:create` generates one automatically
+only for `ROLE_SUPER_ADMIN`.
+
 ```bash
 TOKEN=$(bin/console pw:user:token robin@example.tld)
 curl -H "Authorization: Bearer $TOKEN" https://example.com/api/page/search
