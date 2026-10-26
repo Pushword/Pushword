@@ -1,5 +1,5 @@
 ---
-title: 'statistics declare their rate bases and source snapshot freshness'
+title: ''
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -34,10 +34,3 @@ belongs in the feature doc, which you link to instead.
 
 Several changes land here between two tags: append to the file, do not replace it.
 -->
-
-**Concerns:** `pushword/newsletter`
-
-## Statistics source metadata
-
-Rates display their actual denominator; incompatible total rate bases are unavailable while other measurements remain unchanged. Existing providers keep their defaults.
-CSV appends snapshot metadata and rate metric names after existing columns. Adapters may set `rateDenominators`, `observedAt`, `notice` and `noticeLevel`; see the [source contract](../extension/newsletter#add-a-statistics-source). No database update is needed.
