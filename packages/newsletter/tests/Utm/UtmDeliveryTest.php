@@ -59,6 +59,8 @@ final class UtmDeliveryTest extends AbstractNewsletterTestCase
         $html = $this->lastHtml();
         self::assertStringContainsString('utm_campaign=welcome', $html);
         self::assertStringContainsString('utm_content=step-1', $html);
+        self::assertStringContainsString('utm_id='.$automation->getUtmId(), $html);
+        self::assertStringNotContainsString('utm_term', $html, 'Analytics tools report utm_term as the paid-search keyword.');
     }
 
     /** The audience is the on-switch: without a source, links leave exactly as written. */

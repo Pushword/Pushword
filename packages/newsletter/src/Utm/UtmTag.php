@@ -16,20 +16,19 @@ final readonly class UtmTag
         public string $campaign,
         public ?string $content = null,
         public ?string $id = null,
-        public ?string $step = null,
     ) {
     }
 
     public static function forCampaign(Campaign $campaign): self
     {
-        return new self($campaign->slug, id: $campaign->automation?->getUtmId() ?? $campaign->getUtmId(), step: $campaign->automationStepId);
+        return new self($campaign->slug, id: $campaign->automation?->getUtmId() ?? $campaign->getUtmId());
     }
 
     /**
      * A drip counts as one campaign, each step as a content variant of it — so
      * the sequence can be read as a whole and step by step.
      *
-     * Editorial names may change; utm_id and the step identity never do.
+     * Editorial names may change; utm_id never does.
      */
     public static function forStep(Automation $automation, AutomationStep $step): self
     {
@@ -37,7 +36,6 @@ final readonly class UtmTag
             new Slugify()->slugify($automation->name),
             'step-'.($step->position + 1),
             $automation->getUtmId(),
-            $step->getUtmId(),
         );
     }
 }

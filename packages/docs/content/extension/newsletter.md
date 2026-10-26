@@ -1097,11 +1097,12 @@ set; the date is stamped when the campaign is armed (scheduled in March, sent in
 April: dated April). Rewording the subject afterwards renames nothing.
 
 Every campaign also carries a permanent `utm_id`. Automations use their own permanent
-`utm_id` across all occurrences, plus the step's permanent identity in `utm_term`.
-`utm_campaign` and `utm_content=step-2` remain editorial labels: renaming an automation
-or reordering a step does not change its permanent identifiers. Existing persisted
-entities derive their first identity from their entity kind and database ID; entities
-used before persistence receive a UUID. The identity is then stored unchanged.
+`utm_id` across all occurrences. `utm_campaign` and `utm_content=step-2` remain
+editorial labels: renaming an automation or reordering a step does not change its
+`utm_id`. `utm_term` is left unset, since analytics tools report it as the paid-search
+keyword. Existing persisted entities derive their first identity from their entity
+kind and database ID; entities used before persistence receive a UUID. The identity
+is then stored unchanged.
 
 It never touches a link to another domain, a link you tagged by hand, or the
 unsubscribe link, and tags nothing while the audience has no source.
