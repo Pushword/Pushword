@@ -12,6 +12,7 @@ beforeEach(() => {
   document.body.innerHTML = '<div class="pw-campaign-preview"><iframe sandbox="allow-same-origin" srcdoc="Email"></iframe></div>'
   frame = document.querySelector('iframe')
   email = document.implementation.createHTMLDocument('Email')
+  Object.defineProperty(email, 'readyState', { value: 'loading', configurable: true })
   Object.defineProperty(frame, 'contentDocument', { get: () => email })
   height = 1200.5
   vi.spyOn(email.body, 'getBoundingClientRect').mockImplementation(() => ({ height }))

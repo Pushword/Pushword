@@ -17,11 +17,9 @@ describe('History observation', () => {
   it('captures both contenteditable edits and input values', async () => {
     const f = fixture()
     f.holder.querySelector('[contenteditable]')!.textContent = 'Changed'
-    await tick()
-    expect(f.changed).toHaveBeenCalledTimes(1)
+    await vi.waitFor(() => expect(f.changed).toHaveBeenCalledTimes(1))
     f.holder.querySelector('input')!.dispatchEvent(new Event('input', { bubbles: true }))
-    await tick()
-    expect(f.changed).toHaveBeenCalledTimes(2)
+    await vi.waitFor(() => expect(f.changed).toHaveBeenCalledTimes(2))
     f.observer.destroy()
   })
   it('does not serialize an unchanged document at keyboard boundaries', () => {
