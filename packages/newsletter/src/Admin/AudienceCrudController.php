@@ -53,7 +53,7 @@ class AudienceCrudController extends AbstractCrudController
     {
         return $crud
             ->overrideTemplate('layout', '@PushwordNewsletter/admin/layout.html.twig')
-            ->overrideTemplate('crud/index', '@PushwordNewsletter/admin/index.html.twig')
+            ->overrideTemplate('crud/index', '@PushwordNewsletter/admin/audience_index.html.twig')
             ->setEntityLabelInSingular('newsletter.audience.label.singular')
             ->setEntityLabelInPlural('newsletter.audience.label.plural')
             ->setDefaultSort(['slug' => 'ASC'])
@@ -145,17 +145,20 @@ class AudienceCrudController extends AbstractCrudController
         $hosts = $this->siteRegistry->getHosts();
 
         yield FormField::addFieldset('newsletter.audience.fieldset.identity')->setIcon('fa fa-users');
-        yield TextField::new('name', 'newsletter.audience.field.name');
+        yield TextField::new('name', 'newsletter.audience.field.name')->setMaxLength(255);
         if (Crud::PAGE_INDEX === $pageName) {
             $contactCounts = $this->contactRepository->countByAudience();
             yield IntegerField::new('contactCount', 'newsletter.audience.field.contactCount')
                 ->onlyOnIndex()
                 ->setValue(0)
                 ->setSortable(false)
+                ->setTextAlign('right')
+                ->setTemplatePath('@PushwordNewsletter/admin/field/audience_contact_count.html.twig')
                 ->formatValue(static fn (mixed $value, Audience $audience): int => $contactCounts[$audience->id ?? 0] ?? 0);
         }
 
         yield TextField::new('slug', 'newsletter.audience.field.slug')
+            ->setMaxLength(100)
             ->setHelp('newsletter.audience.field.slug.help')
             ->setFormTypeOption('context_help', true);
         yield ChoiceField::new('mainHost', 'newsletter.audience.field.mainHost')

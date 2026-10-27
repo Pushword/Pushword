@@ -95,6 +95,12 @@ export function initNewsletterIndexes(root = document) {
       label.className = 'pw-newsletter-selection'
       input.before(label)
       label.append(input)
+      if (all) {
+        const text = document.createElement('span')
+        text.className = 'pw-newsletter-selection-text'
+        text.textContent = name
+        label.append(text)
+      }
     })
     panel.querySelectorAll('tbody .dropdown-toggle[role="button"]').forEach((button) => {
       button.setAttribute('aria-label', panel.dataset.rowActions.replace('%id%', button.closest('tr').dataset.id))

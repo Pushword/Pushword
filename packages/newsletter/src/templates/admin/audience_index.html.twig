@@ -1,0 +1,11 @@
+{% extends '@PushwordNewsletter/admin/index.html.twig' %}
+
+{% block sort_actions %}
+  {% if sortable_fields|length > 0 %}
+    <div class="datagrid-sort pw-newsletter-audience-sort">
+      <twig:ea:Modal:Trigger target="#modal-sort" variant="secondary" icon="internal:sort-arrows">
+        {{ t('datagrid.sort', ea.i18n.translationParameters, 'EasyAdminBundle')|trans }}
+      </twig:ea:Modal:Trigger>
+    </div>
+  {% endif %}
+{% endblock %}
