@@ -614,4 +614,21 @@ describe('Quiz assessment', () => {
     switchTo('assessment')
     expect(tool.save()).toMatchObject({ recordResults: true, showComparison: false })
   })
+
+  it('offers the comparison line in assessment mode, with its own default', () => {
+    const data: QuizData = { mode: 'profile', labels: { share: '{p}% like you' }, questions: [{ q: 'Q', answers: [{ a: 'A' }, { a: 'B' }] }] }
+    const tool = new Quiz({ data, api, readOnly: false })
+    const el = tool.render()
+    const share = el.querySelector<HTMLInputElement>('.cdx-quiz__label[data-label="share"]')!
+    expect(share.placeholder).toBe('{p}% got the same profile')
+
+    const select = el.querySelector<HTMLSelectElement>('.cdx-quiz__mode-select')!
+    select.value = 'assessment'
+    select.dispatchEvent(new Event('change'))
+
+    expect(share.hidden).toBe(false)
+    expect(share.placeholder).toBe('{p}% got the same result')
+    expect(share.getAttribute('aria-label')).toBe('{p}% got the same result')
+    expect(tool.save().labels).toMatchObject({ share: '{p}% like you' })
+  })
 })

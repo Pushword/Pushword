@@ -259,8 +259,6 @@
 }
 
 .pw-quiz-back { display: inline-block; margin: 1rem .75rem 0 0; }
-.pw-quiz-q-label { font-weight: 600; }
-.pw-quiz-hint { color: var(--pw-quiz-muted); margin-bottom: 1rem; }
 .pw-quiz--assessment .pw-quiz-band { font-size: inherit; font-weight: inherit; }
 
 .pw-quiz-progress { display: block; width: 100%; height: .375rem; margin-bottom: 1rem; accent-color: var(--pw-quiz-accent); }

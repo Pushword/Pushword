@@ -88,7 +88,7 @@ const LABELS: { key: string; placeholder: string; only?: QuizMode[] }[] = [
   { key: 'level', placeholder: 'Level', only: ['levels'] },
   { key: 'nextLevel', placeholder: 'Next level', only: ['levels'] },
   { key: 'profile', placeholder: 'Your profile:', only: ['profile'] },
-  { key: 'share', placeholder: '{p}% got the same profile', only: ['profile'] },
+  { key: 'share', placeholder: '{p}% got the same profile', only: ['profile', 'assessment'] },
 ]
 
 /**
@@ -344,6 +344,12 @@ export default class Quiz extends BaseTool {
       const only = (el as HTMLElement).dataset.only
       ;(el as HTMLElement).hidden = undefined !== only && !only.split(' ').includes(this.mode)
     })
+    // An assessment compares numeric outcomes, not profiles: its comparison line has its own default.
+    const share = this.wrapper.querySelector('.cdx-quiz__label[data-label="share"]') as HTMLInputElement | null
+    if (share) {
+      share.placeholder = this.assessmentMode ? '{p}% got the same result' : '{p}% got the same profile'
+      share.setAttribute('aria-label', share.placeholder)
+    }
     this.wrapper.querySelectorAll<HTMLInputElement>('.cdx-quiz__result-min').forEach(input => this.configureResultThreshold(input))
     if (this.profileMode) this.refreshChips()
   }

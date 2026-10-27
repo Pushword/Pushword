@@ -32,6 +32,8 @@ final class QuizResultCrudControllerTest extends AbstractAdminTestClass
         $html = (string) $response->getContent();
         self::assertStringContainsString('admin-test-quiz', $html);
         self::assertStringContainsString('73', $html);
+        // One column holds both a profile key and an assessment's numeric outcome.
+        self::assertStringContainsString('Profile or value', $html);
 
         // Read-only: the New action is disabled, so the index offers no create link.
         self::assertStringNotContainsString('/admin/quiz-result/new', $html);

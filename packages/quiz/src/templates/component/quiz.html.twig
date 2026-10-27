@@ -36,8 +36,8 @@
     {{ quiz_figure(q) }}
 
     <p class="pw-quiz-question {{ pwQuizQuestionClass|default('mt-0 mb-4 text-[1.15rem] font-semibold') }}">{{ q.q }}</p>
-    {% if q.label %}<p class="pw-quiz-q-label">{{ q.label }}</p>{% endif %}
-    {% if q.hint %}<p class="pw-quiz-hint">{{ q.hint }}</p>{% endif %}
+    {% if q.label %}<p class="pw-quiz-q-label {{ pwQuizQLabelClass|default('font-semibold') }}">{{ q.label }}</p>{% endif %}
+    {% if q.hint %}<p class="pw-quiz-hint {{ pwQuizHintClass|default('mb-4 text-gray-500') }}">{{ q.hint }}</p>{% endif %}
 
     {# 540px is deliberately below Tailwind's sm: two answers fit side by side
        well before a tablet. auto-rows-fr keeps both boxes in a row as tall as
@@ -130,7 +130,7 @@
     editAnswers: quiz.labels.editAnswers|default('quiz.label.editAnswers'|trans),
     nextLevel: quiz.labels.nextLevel|default('quiz.label.nextLevel'|trans),
     profile: quiz.labels.profile|default('quiz.label.profile'|trans),
-    share: quiz.labels.share|default('quiz.label.share'|trans),
+    share: quiz.labels.share|default((quiz.mode == 'assessment' ? 'quiz.label.shareResult' : 'quiz.label.share')|trans),
     restart: quiz.labels.restart|default('quiz.label.restart'|trans),
   } %}
 

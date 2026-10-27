@@ -40,8 +40,6 @@
             "properties": {
                 "question": { "type": "string" },
                 "questions": { "type": "string" },
-                "label": { "type": "string", "description": "Optional question topic." },
-                "hint": { "type": "string", "description": "Optional instruction before the answers." },
                 "explanation": { "type": "string" },
                 "score": { "type": "string" },
                 "better": { "type": "string" },

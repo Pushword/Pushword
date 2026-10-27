@@ -73,6 +73,47 @@ final class QuizValidationTest extends KernelTestCase
         self::assertStringContainsString('"recordResults":false', $output);
     }
 
+    public function testOnlyARecordedQuizCarriesAResultSignature(): void
+    {
+        self::bootKernel();
+        self::getContainer()->get(RequestContext::class)->setRequestContext('localhost.dev');
+        $extension = self::getContainer()->get(QuizExtension::class);
+        $signed = '/"resultSignature":"[0-9a-f]{64}"/';
+
+        $assessment = ['mode' => 'assessment', 'questions' => [['q' => 'Q', 'answers' => [['a' => 'A', 'value' => 0], ['a' => 'B', 'value' => 1]]]]];
+        $output = $extension->renderQuiz(json_encode($assessment, \JSON_THROW_ON_ERROR));
+        self::assertStringContainsString('"resultSignature":""', $output);
+        self::assertDoesNotMatchRegularExpression($signed, $output);
+
+        $assessment['recordResults'] = true;
+        self::assertMatchesRegularExpression($signed, $extension->renderQuiz(json_encode($assessment, \JSON_THROW_ON_ERROR)));
+
+        $levels = ['recordResults' => false, 'levels' => [$this->validQuiz() + ['difficulty' => 'Easy'], $this->validQuiz() + ['difficulty' => 'Hard']]];
+        $output = $extension->renderQuiz(json_encode($levels, \JSON_THROW_ON_ERROR));
+        self::assertSame(2, substr_count($output, '"resultSignature":""'));
+        self::assertDoesNotMatchRegularExpression($signed, $output);
+    }
+
+    public function testAssessmentComparisonLineSpeaksOfAResultNotAProfile(): void
+    {
+        self::bootKernel();
+        self::getContainer()->get(RequestContext::class)->setRequestContext('localhost.dev');
+        self::getContainer()->get(TranslatorInterface::class)->setLocale('en');
+        $extension = self::getContainer()->get(QuizExtension::class);
+        $assessment = ['mode' => 'assessment', 'questions' => [['q' => 'Q', 'answers' => [['a' => 'A', 'value' => 0], ['a' => 'B', 'value' => 1]]]]];
+        $profile = [
+            'mode' => 'profile',
+            'profiles' => [['key' => 'explorer', 'title' => 'Explorer']],
+            'questions' => [['q' => 'Q', 'answers' => [['a' => 'A', 'weights' => ['explorer' => 1]], ['a' => 'B']]]],
+        ];
+
+        self::assertStringContainsString('"share":"{p}% got the same result"', $extension->renderQuiz(json_encode($assessment, \JSON_THROW_ON_ERROR)));
+        self::assertStringContainsString('"share":"{p}% got the same profile"', $extension->renderQuiz(json_encode($profile, \JSON_THROW_ON_ERROR)));
+
+        $assessment['labels'] = ['share' => '{p}% share your level'];
+        self::assertStringContainsString('"share":"{p}% share your level"', $extension->renderQuiz(json_encode($assessment, \JSON_THROW_ON_ERROR)));
+    }
+
     public function testAssessmentLastStepLabelIsLocalizedAndOverridable(): void
     {
         self::bootKernel();
@@ -334,6 +375,57 @@ final class QuizValidationTest extends KernelTestCase
         self::assertStringContainsString('class="pw-quiz-q question-card-of-my-own"', $output);
         self::assertStringContainsString('quiz-root-of-my-own', $output);
         self::assertStringNotContainsString('rounded-xl border border-gray-200 bg-white p-5', $output);
+    }
+
+    public function testTheTopicLabelAndHintCarryDefaultUtilities(): void
+    {
+        self::bootKernel();
+        self::getContainer()->get(RequestContext::class)->setRequestContext('localhost.dev');
+
+        $output = self::getContainer()->get(QuizExtension::class)->renderQuiz($this->labelledQuizJson());
+
+        self::assertStringContainsString('class="pw-quiz-q-label font-semibold"', $output);
+        self::assertStringContainsString('class="pw-quiz-hint mb-4 text-gray-500"', $output);
+    }
+
+    public function testAClassGlobalOverridesTheTopicLabelAndHintUtilities(): void
+    {
+        self::bootKernel();
+        self::getContainer()->get(RequestContext::class)->setRequestContext('localhost.dev');
+        $twig = self::getContainer()->get(Environment::class);
+        $twig->addGlobal('pwQuizQLabelClass', 'label-of-my-own');
+        $twig->addGlobal('pwQuizHintClass', 'hint-of-my-own');
+
+        $output = self::getContainer()->get(QuizExtension::class)->renderQuiz($this->labelledQuizJson());
+
+        self::assertStringContainsString('class="pw-quiz-q-label label-of-my-own"', $output);
+        self::assertStringContainsString('class="pw-quiz-hint hint-of-my-own"', $output);
+        self::assertStringNotContainsString('mb-4 text-gray-500', $output);
+        self::assertStringNotContainsString('pw-quiz-q-label font-semibold', $output);
+    }
+
+    public function testFrenchAssessmentComparisonLineSpeaksOfAResult(): void
+    {
+        self::bootKernel();
+        self::getContainer()->get(RequestContext::class)->setRequestContext('localhost.dev');
+        self::getContainer()->get(TranslatorInterface::class)->setLocale('fr');
+        $assessment = ['mode' => 'assessment', 'questions' => [['q' => 'Q', 'answers' => [['a' => 'A', 'value' => 0], ['a' => 'B', 'value' => 1]]]]];
+
+        $output = self::getContainer()->get(QuizExtension::class)->renderQuiz(json_encode($assessment, \JSON_THROW_ON_ERROR));
+
+        self::assertStringContainsString('ont obtenu le m\\u00eame r\\u00e9sultat', $output);
+    }
+
+    private function labelledQuizJson(): string
+    {
+        return json_encode([
+            'questions' => [[
+                'q' => 'Capital of France?',
+                'label' => 'Topic',
+                'hint' => 'A hint',
+                'answers' => [['a' => 'Paris', 'correct' => true], ['a' => 'Lyon']],
+            ]],
+        ], \JSON_THROW_ON_ERROR);
     }
 
     /**

@@ -197,6 +197,7 @@ twig:
 | `pwQuizHeadClass` / `pwQuizTitleClass` | header, `<h2>` |
 | `pwQuizMetaClass` / `pwQuizLevelMetaClass` / `pwQuizDiffClass` | meta line, per-level meta line, difficulty badge |
 | `pwQuizQuestionsClass` / `pwQuizQClass` / `pwQuizQNumClass` / `pwQuizQuestionClass` | question list, card, "Question 1/5", the question text |
+| `pwQuizQLabelClass` / `pwQuizHintClass` | question topic (`label`), hint |
 | `pwQuizAnswersClass` / `pwQuizAnswerItemClass` / `pwQuizAClass` | answer grid, its `<li>`, the answer button |
 | `pwQuizAPrefixClass` / `pwQuizATextClass` / `pwQuizAMarkClass` | A/B/C bullet, answer text, ✓/✗ slot |
 | `pwQuizExplanationClass` / `pwQuizExplanationLabelClass` | explanation box and its label |
@@ -268,7 +269,10 @@ Restart; Back and Change retain selections. `labels.back`, `labels.editAnswers`,
 Set `recordResults` and `showComparison` independently. Both default to **false** for
 assessments and **true** for existing quiz/profile content. Recording an assessment
 posts `{mode: "assessment", result: "<numeric outcome>"}` and stores the value in
-the existing result column; no database migration is needed.
+the existing result column; no database migration is needed. With `recordResults: false`
+the page carries no result signature, so the endpoint refuses (`403`) any attempt
+posted for the quiz. An assessment's comparison line reads "{p}% got the same
+result" (`labels.share`).
 
 ## Extending the result
 

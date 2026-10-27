@@ -6,6 +6,7 @@ namespace Pushword\Quiz\Service;
 
 use Psr\Log\LoggerInterface;
 use Pushword\Conversation\Twig\AppExtension;
+use Pushword\Core\Entity\Page;
 use Pushword\Core\Service\EditorNotice\TwigErrorMarker;
 use Pushword\Core\Service\Markdown\BrokenImageComment;
 use Pushword\Core\Site\SiteRegistry;
@@ -87,7 +88,7 @@ final class QuizRenderer implements RuntimeExtensionInterface
         $template = $app->getView('/component/quiz.html.twig', '@PushwordQuiz');
         $page = $this->apps->getCurrentPage();
         $baseSlug = '';
-        if (null !== $page) {
+        if ($page instanceof Page) {
             $baseSlug = $page->slug;
         }
 
@@ -130,13 +131,22 @@ final class QuizRenderer implements RuntimeExtensionInterface
     /** @return array<string, string> */
     private function resultSignatures(Quiz $quiz, string $host, string $baseSlug): array
     {
-        $signatures = [$baseSlug => $this->resultSigner->sign($host, $baseSlug)];
-        foreach (array_keys($quiz->levels) as $index) {
+        $signatures = [$baseSlug => $this->signIfRecorded($quiz, $host, $baseSlug)];
+        foreach ($quiz->levels as $index => $level) {
             $slug = $baseSlug.'.'.$index;
-            $signatures[$slug] = $this->resultSigner->sign($host, $slug);
+            $signatures[$slug] = $this->signIfRecorded($level, $host, $slug);
         }
 
         return $signatures;
+    }
+
+    /**
+     * `recordResults: false` is enforced here, not only by the runtime: without a
+     * signature, the result endpoint refuses (403) any attempt posted for the quiz.
+     */
+    private function signIfRecorded(Quiz $quiz, string $host, string $slug): string
+    {
+        return $quiz->recordResults ? $this->resultSigner->sign($host, $slug) : '';
     }
 
     /**

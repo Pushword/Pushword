@@ -38,7 +38,7 @@ class MarkdownParser implements ResetInterface
      * Bump when the renderer configuration changes in a way that
      * alters output, to invalidate previously cached fragments.
      */
-    private const int CACHE_VERSION = 30;
+    private const int CACHE_VERSION = 31;
 
     private const int NATIVE_CACHE_VERSION = 3;
 

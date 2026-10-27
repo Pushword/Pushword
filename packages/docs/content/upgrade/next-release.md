@@ -1,5 +1,5 @@
 ---
-title: 'quiz completion events may report an assessment; an assessment''s last button reads "See my result"; pushword/core no longer installs piedweb/extractor'
+title: 'quiz completion events may report an assessment; assessments get their own wording; a quiz with recordResults false refuses posted attempts; pushword/core no longer installs piedweb/extractor'
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -42,10 +42,15 @@ Several changes land here between two tags: append to the file, do not replace i
 Since 1.0.91, `QuizCompletedEvent::getMode()` can return `assessment`, with the numeric outcome in `getResult()`, and `ResultBand::$min` is a `float`.
 **Sites with a `QuizCompletedEvent` listener, or code reading `ResultBand::$min`:** handle the `assessment` mode and a float threshold. See [Quiz](/extension/quiz#numeric-assessments).
 
-## Assessment last step
+## Assessment wording
 
-The last step of a numeric assessment now reads "See my result" ("Voir mon résultat" in French) instead of the confirm label.
-To keep the previous wording, set `labels.finish` in the quiz JSON.
+The last step of a numeric assessment now reads "See my result" ("Voir mon résultat" in French) instead of the confirm label, and its comparison line "{p}% got the same result" instead of "{p}% got the same profile".
+To keep the previous wording, set `labels.finish` or `labels.share` in the quiz JSON.
+
+## Unrecorded quizzes
+
+A quiz with `recordResults: false` (the default for assessments) is rendered without a result signature, so `POST /quiz/result` now refuses its attempts (`403`).
+**Sites posting results for such a quiz from their own client:** set `recordResults: true` on it. See [Quiz](/extension/quiz#numeric-assessments).
 
 ## piedweb/extractor dropped
 
