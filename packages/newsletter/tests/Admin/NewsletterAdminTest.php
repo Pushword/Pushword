@@ -686,7 +686,7 @@ final class NewsletterAdminTest extends AbstractAdminTestClass
         self::assertSame(200, $client->getResponse()->getStatusCode());
         $audienceLink = $crawler->filter('td.field-association a[href$="/admin/newsletter/audience/'.$audience->id.'"]');
         self::assertCount(1, $audienceLink);
-        self::assertSame('Admin test', $audienceLink->text());
+        self::assertSame('Admin test (localhost.dev)', $audienceLink->text());
     }
 
     public function testTheCampaignIndexShowsTheActualOrScheduledSendDate(): void
@@ -749,6 +749,68 @@ final class NewsletterAdminTest extends AbstractAdminTestClass
         self::assertMatchesRegularExpression('/name="[^"]*\[segmentAsJson\]"/', $html);
         self::assertMatchesRegularExpression('/name="[^"]*\[audience\]"/', $html);
         self::assertMatchesRegularExpression('/name="[^"]*\[translationsAsJson\]"/', $html);
+    }
+
+    /** @return iterable<string, array{string, string}> */
+    public static function audienceSelectors(): iterable
+    {
+        yield 'campaign' => ['/admin/newsletter/campaign/new', 'Campaign[audience]'];
+        yield 'automation' => ['/admin/newsletter/automation/new', 'Automation[audience]'];
+        yield 'statistics' => ['/admin/newsletter/statistics', 'audience'];
+    }
+
+    #[DataProvider('audienceSelectors')]
+    public function testAudienceChoicesIdentifyTheBrandAndHost(string $url, string $field): void
+    {
+        $client = $this->loginUser();
+        $french = $this->createAudience('Newsletter');
+        $french->fromName = 'Grand Angle';
+        $french->mainHost = 'www.grandangle.fr';
+
+        $german = $this->createAudience('Newsletter');
+        $german->fromName = 'Grand Angle';
+        $german->mainHost = 'grandangle.de';
+
+        $kelifos = $this->createAudience('Newsletter');
+        $kelifos->fromName = 'Kelifos';
+        $kelifos->mainHost = 'www.kelifos.travel';
+        $this->entityManager()->flush();
+
+        $crawler = $client->request(Request::METHOD_GET, $url);
+        self::assertResponseIsSuccessful();
+        foreach ([$french, $german, $kelifos] as $audience) {
+            self::assertSame(
+                $audience->fromName.' · Newsletter ('.$audience->mainHost.')',
+                $crawler->filter('select[name="'.$field.'"] option[value="'.$audience->id.'"]')->text(),
+            );
+        }
+    }
+
+    public function testContactEditAudienceChoicesIdentifyTheBrandAndHost(): void
+    {
+        $client = $this->loginUser();
+        $french = $this->createAudience('Newsletter');
+        $french->fromName = 'Grand Angle';
+        $french->mainHost = 'www.grandangle.fr';
+        $contact = $this->phoneContact($french);
+
+        $german = $this->createAudience('Newsletter');
+        $german->fromName = 'Grand Angle';
+        $german->mainHost = 'grandangle.de';
+
+        $kelifos = $this->createAudience('Newsletter');
+        $kelifos->fromName = 'Kelifos';
+        $kelifos->mainHost = 'www.kelifos.travel';
+        $this->entityManager()->flush();
+
+        $crawler = $client->request(Request::METHOD_GET, '/admin/newsletter/contact/'.$contact->id.'/edit');
+        self::assertResponseIsSuccessful();
+        foreach ([$french, $german, $kelifos] as $audience) {
+            self::assertSame(
+                $audience->fromName.' · Newsletter ('.$audience->mainHost.')',
+                $crawler->filter('select[name="Contact[audience]"] option[value="'.$audience->id.'"]')->text(),
+            );
+        }
     }
 
     public function testACampaignChoosesItsOwnDesignAndCanReturnToTheAudienceDefault(): void

@@ -242,7 +242,6 @@ final class StatisticsController extends AbstractController
             ->add('audience', EntityType::class, [
                 'class' => Audience::class,
                 'choices' => $this->audiences->findBy([], ['name' => 'ASC']),
-                'choice_label' => 'name',
                 'placeholder' => 'newsletter.statistics.allAudiences',
                 'label' => 'newsletter.statistics.audience',
                 'invalid_message' => $this->translator->trans('newsletter.statistics.invalidAudience'),

@@ -216,7 +216,12 @@ class Audience implements IdInterface, Stringable
 
     public function __toString(): string
     {
-        return $this->name;
+        $label = $this->name;
+        if ($this->fromName !== $label) {
+            $label = $this->fromName.' · '.$label;
+        }
+
+        return '' === $this->mainHost ? $label : $label.' ('.$this->mainHost.')';
     }
 
     /**
