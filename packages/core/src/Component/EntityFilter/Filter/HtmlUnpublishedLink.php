@@ -56,7 +56,7 @@ final readonly class HtmlUnpublishedLink implements FilterInterface
 
     private function warmupLinkTargets(string $body, Page $currentPage): void
     {
-        if (false === preg_match_all(self::HTML_REGEX, $body, $matches) || [] === ($matches['href'] ?? [])) {
+        if (false === preg_match_all(self::HTML_REGEX, $body, $matches) || [] === $matches['href']) {
             return;
         }
 
@@ -84,7 +84,7 @@ final readonly class HtmlUnpublishedLink implements FilterInterface
         $href = $match['href'];
         $target = $this->resolveTargetPage($href, $currentPage);
 
-        if (null === $target || $target->isPublished()) {
+        if (! $target instanceof Page || $target->isPublished()) {
             return $match[0];
         }
 
