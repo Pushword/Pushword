@@ -112,7 +112,7 @@
   1: 1..30,
 } %}
 
-<link rel="stylesheet" href="{{ asset('bundles/pushwordquiz/quiz.css') }}">
+<link rel="stylesheet" href="{{ asset(versionedAsset('bundles/pushwordquiz/quiz.css', true)) }}">
 
 {% if quiz.levels is empty %}
   {# UI words default to the site locale; the quiz JSON `labels` override them. #}
@@ -225,4 +225,4 @@
   {% endfor %}
 {% endif %}
 
-<script src="{{ asset('bundles/pushwordquiz/quiz.js') }}" defer></script>
+<script src="{{ asset(versionedAsset('bundles/pushwordquiz/quiz.js', true)) }}" defer></script>

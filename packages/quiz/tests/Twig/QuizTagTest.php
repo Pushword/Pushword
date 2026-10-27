@@ -27,6 +27,19 @@ final class QuizTagTest extends KernelTestCase
         self::assertStringContainsString('Paris', $html);
     }
 
+    public function testRuntimeAssetsUseTheirContentHashToBypassStaleCaches(): void
+    {
+        $html = $this->render('{% quiz %}'.self::QUESTION.'{% endquiz %}');
+        $projectDir = self::getContainer()->getParameter('kernel.project_dir');
+
+        foreach (['css', 'js'] as $extension) {
+            $path = 'bundles/pushwordquiz/quiz.'.$extension;
+            $hash = hash_file('sha256', $projectDir.'/public/'.$path);
+            self::assertNotFalse($hash);
+            self::assertStringContainsString($path.'?v='.$hash, $html);
+        }
+    }
+
     /** Apostrophes are the reason the tag form exists; they must survive verbatim. */
     public function testApostrophesNeedNoEscaping(): void
     {
