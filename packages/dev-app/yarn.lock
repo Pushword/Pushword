@@ -264,19 +264,19 @@
 
 "@pushword/js-helper@github:Pushword/js-helper":
   version "0.0.139"
-  resolved "https://codeload.github.com/Pushword/js-helper/tar.gz/d0d1cc921c253931d47cb53985d89cdf6a7d886c"
+  resolved "https://codeload.github.com/Pushword/js-helper/tar.gz/b569a77bf16a11369c8aeed813d10a15a48c5d4c"
   dependencies:
     "140.css" "^1.0"
     "@tailwindcss/forms" "^0.5"
     "@tailwindcss/typography" "^0.5"
     "@tailwindcss/vite" "^4.1"
-    alpinejs "^3.15.2"
+    alpinejs "^3.17.5"
     codemirror "^6.0"
     fuzzysearch "^1.0.3"
     glightbox "^3.3"
-    mermaid "12.1.0"
+    mermaid "12.2.0"
     tailwindcss-animated "^2"
-    vite "^8.3.3"
+    vite "^8.3.5"
     vite-plugin-compression2 "^2.3.1"
     vite-plugin-static-copy "^4.1.1"
     vite-plugin-symfony "^8.2"
@@ -743,7 +743,7 @@
   resolved "https://registry.yarnpkg.com/@vue/shared/-/shared-3.5.44.tgz#eefe91aa2e17c617260c4ae4c21246be5d85642e"
   integrity sha512-H82XLH0DjmSOdbEwO15x3QTo1f5PWEtv237eLpYKc0mqLu+B8hnq16lFWmuBmNurkeiG3wr+oM1FhOll/YVFRg==
 
-alpinejs@^3.15.2:
+alpinejs@^3.17.5:
   version "3.17.5"
   resolved "https://registry.yarnpkg.com/alpinejs/-/alpinejs-3.17.5.tgz#85027affeb3a9b8030e82cc1ca4c09ac9f5c1687"
   integrity sha512-XewMqRC6zjy8iaUPn86dxjvooAsNai3hUtQbdn0A5H2w7Jt10xHGZ1SczN5+Dvp3UKkuSEt9moy/UaUWOwKdnQ==
@@ -814,10 +814,10 @@ commander@7:
   resolved "https://registry.yarnpkg.com/commander/-/commander-7.2.0.tgz#a36cb57d0b501ce108e4d20559a150a391d97ab7"
   integrity sha512-QrWXB+ZQSVPmIWIhtEO9H+gwHaMGYiF5ChvoJ+K9ZGHG/sVsa6yiesAD1GC/x46sET00Xlwo1u49RVVVzvcSkw==
 
-commander@^8.3.0:
-  version "8.3.0"
-  resolved "https://registry.yarnpkg.com/commander/-/commander-8.3.0.tgz#4837ea1b2da67b9c616a67afbb0fafee567bca66"
-  integrity sha512-OkTL9umf+He2DZkUq8f8J9of7yL6RJKI24dVITBmNfZBmri9zYZQrKkuXiKhyfPSu8tUhnVBB1iKXevvnlR4Ww==
+commander@^15.0.0:
+  version "15.0.0"
+  resolved "https://registry.yarnpkg.com/commander/-/commander-15.0.0.tgz#96f3961f12adac1799ef3fbd8bc61d40572d1b11"
+  integrity sha512-z67u4ZhzCL/Tydu1lJARtEZYWbWaN7oYLHbsuzocr6y4N6WZAagG3RQ4FW61V1/0+jImpj293XfrcYnd1qxtPg==
 
 cose-base@^1.0.0:
   version "1.0.3"
@@ -1308,12 +1308,12 @@ jiti@^2.7.0:
   resolved "https://registry.yarnpkg.com/jiti/-/jiti-2.7.0.tgz#974228f2f4ca2bc21885a1797b45fea68e950c64"
   integrity sha512-AC/7JofJvZGrrneWNaEnJeOLUx+JlGt7tNa0wZiRPT4MY1wmfKjt2+6O2p2uz2+skll8OZZmJMNqeke7kKbNgQ==
 
-katex@^0.16.47:
-  version "0.16.47"
-  resolved "https://registry.yarnpkg.com/katex/-/katex-0.16.47.tgz#0a13a42c2deb4f74e61f162d440b9165a548030f"
-  integrity sha512-Eeo8Ys1doU1z+x8AZsPpQu+p/QcZBI5PeOo7QGQdy2x2m0MU/hYagBbGOmXwr5KVbEfVuWv9LpnQWeehogurjg==
+katex@^0.18.0:
+  version "0.18.11"
+  resolved "https://registry.yarnpkg.com/katex/-/katex-0.18.11.tgz#ca4e9e6db78aeff485c3a1dbe46a08bf196defe9"
+  integrity sha512-yvyz/2VMKqoho/35Hat5w37wIEdWJ5ElVMidTAlWrxr5uW4aBGsEpveTmKh18/zw08v/7lGswCPon4OhqmqrTA==
   dependencies:
-    commander "^8.3.0"
+    commander "^15.0.0"
 
 khroma@^2.1.0:
   version "2.1.0"
@@ -1500,10 +1500,10 @@ merge2@^1.3.0:
   resolved "https://registry.yarnpkg.com/merge2/-/merge2-1.4.1.tgz#4368892f885e907455a6fd7dc55c0c9d404990ae"
   integrity sha512-8q7VEgMJW4J8tcfVPy8g09NcQwZdbwFEqhe/WZkoIzjn/3TGDwtOCYtXGxA3O8tPzpczCCDgv+P2P5y00ZJOOg==
 
-mermaid@12.1.0:
-  version "12.1.0"
-  resolved "https://registry.yarnpkg.com/mermaid/-/mermaid-12.1.0.tgz#b9f893f32dc2f86bf7b31d3399e2e2d381e0464b"
-  integrity sha512-wlVCp+8eTupfCeeFvoZNNiTuHrvag0P2jz/ILgb/f/6jkVokUefOcujefi8qUe/j2asHiSePncVsz/xzzA80LQ==
+mermaid@12.2.0:
+  version "12.2.0"
+  resolved "https://registry.yarnpkg.com/mermaid/-/mermaid-12.2.0.tgz#8500d2500a57bd10f0c8ab03ec4deff87df36c39"
+  integrity sha512-w7nr/SFrLO7BaVTs3dQTvYSV6nYSBj0Yy9DjBhsIJtAcHqRzXSq4Pg32ujHZ/AdWsAMNEvvhbm5dt9E2tOiHzw==
   dependencies:
     "@braintree/sanitize-url" "^7.1.2"
     "@iconify/utils" "^3.0.2"
@@ -1521,7 +1521,7 @@ mermaid@12.1.0:
     dompurify "^3.4.12"
     elkjs "^0.9.3"
     es-toolkit "^1.45.1"
-    katex "^0.16.47"
+    katex "^0.18.0"
     khroma "^2.1.0"
     marked "^16.3.0"
     roughjs "^4.6.6"
@@ -1613,7 +1613,7 @@ postcss-selector-parser@6.0.10:
     cssesc "^3.0.0"
     util-deprecate "^1.0.2"
 
-postcss@^8.5.28, postcss@^8.5.30:
+postcss@^8.5.30:
   version "8.5.31"
   resolved "https://registry.yarnpkg.com/postcss/-/postcss-8.5.31.tgz#d44731fa02f8ae8371629ec7220e2ae0dbdf23ec"
   integrity sha512-YUbWYCgErwnMAVkjUnYa+KlMBzGpHwiIt/DE7f0G33AuX2LH9UcTk6KgWxd3zRU+pN3u/C+Xl3EnMLM4Hea7Sg==
@@ -1644,7 +1644,7 @@ robust-predicates@^3.0.2:
   resolved "https://registry.yarnpkg.com/robust-predicates/-/robust-predicates-3.0.3.tgz#1099061b3349e2c5abec6c2ab0acd440d24d4062"
   integrity sha512-NS3levdsRIUOmiJ8FZWCP7LG3QpJyrs/TE0Zpf1yvZu8cAJJ6QMW92H1c7kWpdIHo8RvmLxN/o2JXTKHp74lUA==
 
-rolldown@~1.2.11, rolldown@~1.2.14:
+rolldown@~1.2.14:
   version "1.2.15"
   resolved "https://registry.yarnpkg.com/rolldown/-/rolldown-1.2.15.tgz#d232b8201e1be3471d636375fe10af1dfc4eac35"
   integrity sha512-6odND+fel5zVw3I4Yc2e69gvguDnX0CAAGiNDZSq4ik5WUcaLrkD2GLuog0XcODbor31hZ5ayEMgVDno+KPV5g==
@@ -1785,9 +1785,9 @@ util-deprecate@^1.0.2:
   integrity sha512-Sc5u1VVln93y1Xnz4R+CunOZc7R9LUcTmhj7Rc7Eg3HVcf7rVn2FOoa812fe0W8p3jD7xeoGSYbfqCGGH2B6xw==
 
 vite-plugin-compression2@^2.3.1:
-  version "2.5.3"
-  resolved "https://registry.yarnpkg.com/vite-plugin-compression2/-/vite-plugin-compression2-2.5.3.tgz#cd8b4f8e0fcbc21d937b3b8f39895bdd475c5dd9"
-  integrity sha512-ItPgqQWkcnBbVw7is9OKwiZ8v6+ju9rYROl5Lp6QfQDEx/d55AwJQb/KLpsQqsU9HoigYBsZ8tK6I02UwJNvEw==
+  version "2.5.4"
+  resolved "https://registry.yarnpkg.com/vite-plugin-compression2/-/vite-plugin-compression2-2.5.4.tgz#203c46dfe2841a4d09214730e8391d616a59cbca"
+  integrity sha512-zZ8gKdboMu+yoD1GD3MIgdEdN0ds8+leZ253/641yxMRa8bwa8Tl71DFcJR2IKLGLve1B+GRdLfIYyecv06QQQ==
   dependencies:
     "@rollup/pluginutils" "^5.1.0"
     tar-mini "^0.2.0"
@@ -1811,19 +1811,6 @@ vite-plugin-symfony@^8.2, vite-plugin-symfony@^8.2.2:
     fast-glob "^3.3.3"
     picocolors "^1.1.1"
     sirv "^3.0.1"
-
-vite@^8.3.3:
-  version "8.3.3"
-  resolved "https://registry.yarnpkg.com/vite/-/vite-8.3.3.tgz#12651726ab1cca0a9e1e649e3cb4dca5b6b006a9"
-  integrity sha512-cTAldKPImjg6c+gk48U19POPn3GCBzZwpdsN8ZMEEcbpes+6/wvfqUd0C2y3qYY4wsj8PwgFwrZ/1jBPVttMSg==
-  dependencies:
-    lightningcss "^1.33.0"
-    picomatch "^4.0.7"
-    postcss "^8.5.28"
-    rolldown "~1.2.11"
-    tinyglobby "^0.2.17"
-  optionalDependencies:
-    fsevents "~2.3.3"
 
 vite@^8.3.5:
   version "8.3.5"
