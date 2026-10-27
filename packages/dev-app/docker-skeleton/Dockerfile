@@ -5,7 +5,7 @@
 # https://pushword.piedweb.com/docker
 
 # Pin the multi-platform release index, including its patched Go dependencies.
-FROM dunglas/frankenphp:1.13.2-php8.5@sha256:8a7a935deb33959200628497b8201423c8b777d513a62ac1b69a91c624afdb3d AS pushword_base
+FROM dunglas/frankenphp:1.13.4-php8.5@sha256:ada77754f475352a9105b7961f89ab17ece97048514799532d2d27a1dea2fda7 AS pushword_base
 
 WORKDIR /app
 
