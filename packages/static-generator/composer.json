@@ -17,7 +17,9 @@
     }
   ],
   "require": {
-    "pushword/core": "*"
+    "pushword/core": "*",
+    "symfony/css-selector": "^7.3 || ^8.0",
+    "symfony/dom-crawler": "^7.3 || ^8.0"
   },
   "suggest": {
     "ext-zstd": "For zstd compression support",
