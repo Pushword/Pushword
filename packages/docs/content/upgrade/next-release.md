@@ -1,5 +1,5 @@
 ---
-title: 'quiz assessment events, labels and recording; removed core dependencies'
+title: 'quiz assessments and API result maps; removed core dependencies'
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -51,6 +51,11 @@ Set `labels.finish` or `labels.share` in the quiz JSON to override them.
 
 A quiz with `recordResults: false` (the assessment default) has no result signature; `POST /quiz/result` refuses its attempts (`403`).
 **Sites posting attempts from a custom client:** set `recordResults: true` on the quiz. See [Quiz](/extension/quiz#numeric-assessments).
+
+## Quiz result statistics
+
+`GET /api/quiz/result/stats` now always returns `profiles` as a JSON object, including empty maps and numeric assessment keys such as `"0"`.
+**Clients treating `profiles` as an array:** read its result keys instead.
 
 ## piedweb/extractor and piedweb/curl dropped
 

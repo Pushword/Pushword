@@ -56,10 +56,9 @@ class QuizResultRepository extends ServiceEntityRepository
     }
 
     /**
-     * Participation per (quiz, host): how many attempts were made, the average
-     * score of the knowledge ones, and how the personality ones split between
-     * profiles. One grouped query — the two kinds live in the same table, told
-     * apart by `result`.
+     * Participation per (quiz, host): attempt counts, the average knowledge score,
+     * and counts by profile key or numeric assessment outcome. One grouped query;
+     * a null `result` identifies knowledge attempts.
      *
      * An empty $host or $quiz does not filter on it.
      *

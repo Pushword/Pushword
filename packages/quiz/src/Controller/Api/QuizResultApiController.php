@@ -64,6 +64,9 @@ final class QuizResultApiController extends AbstractApiController
             $request->query->getString('host'),
             $request->query->getString('quiz'),
         );
+        foreach ($stats as $index => $row) {
+            $stats[$index]['profiles'] = (object) $row['profiles'];
+        }
 
         return $this->respond(['items' => $stats, 'total' => \count($stats)]);
     }
@@ -90,7 +93,7 @@ final class QuizResultApiController extends AbstractApiController
                 '/api/quiz/result' => [
                     'get' => [
                         'summary' => 'List quiz attempts, newest first',
-                        'description' => 'Anonymous data points: one row per completed quiz. `score` is a percentage; `result` names the profile of a personality test and is null for a knowledge quiz.',
+                        'description' => 'Anonymous data points: one row per completed quiz. `score` is a percentage; `result` holds a profile key or numeric assessment outcome and is null for a knowledge quiz.',
                         'tags' => ['Quiz'],
                         'parameters' => [
                             ['name' => 'host', 'in' => 'query', 'schema' => ['type' => 'string']],
@@ -102,7 +105,7 @@ final class QuizResultApiController extends AbstractApiController
                 '/api/quiz/result/stats' => [
                     'get' => [
                         'summary' => 'Participation per quiz and host',
-                        'description' => 'Attempts, the average score of the knowledge ones, and the profile split of the personality ones. Unpaginated.',
+                        'description' => 'Attempts, the average knowledge score, and counts by profile key or numeric assessment outcome. Unpaginated.',
                         'tags' => ['Quiz'],
                         'parameters' => [
                             ['name' => 'host', 'in' => 'query', 'schema' => ['type' => 'string']],
@@ -119,10 +122,10 @@ final class QuizResultApiController extends AbstractApiController
                         'properties' => [
                             'quiz' => ['type' => 'string'],
                             'host' => ['type' => 'string'],
-                            'attempts' => ['type' => 'integer', 'description' => 'Both kinds together'],
+                            'attempts' => ['type' => 'integer', 'description' => 'All quiz, personality and assessment attempts'],
                             'knowledgeAttempts' => ['type' => 'integer'],
                             'averageScore' => ['type' => 'number', 'nullable' => true, 'description' => 'Over the knowledge attempts only; null when there is none'],
-                            'profiles' => ['type' => 'object', 'description' => 'Profile key to how many personality attempts landed on it', 'additionalProperties' => ['type' => 'integer']],
+                            'profiles' => ['type' => 'object', 'description' => 'Counts by profile key or numeric assessment outcome', 'additionalProperties' => ['type' => 'integer']],
                         ],
                     ],
                 ],

@@ -141,6 +141,7 @@ final class QuizResultApiControllerTest extends WebTestCase
             'averageScore' => 65.3,
             'profiles' => [],
         ]], $items);
+        self::assertStringContainsString('"profiles":{}', (string) $this->client->getResponse()->getContent());
     }
 
     /** A personality test scores nothing; what it has to report is how the profiles split. */
@@ -162,6 +163,18 @@ final class QuizResultApiControllerTest extends WebTestCase
         self::assertSame(2, $stats['knowledgeAttempts']);
         self::assertSame(52.5, $stats['averageScore'], 'the profile attempts do not weigh on the score');
         self::assertSame(['calm' => 2, 'sommet' => 1], $stats['profiles']);
+    }
+
+    public function testStatsKeepNumericAssessmentOutcomesAsAnObject(): void
+    {
+        $this->record(0, result: '0');
+        $this->record(0, result: '0');
+        $this->record(0, result: '1');
+
+        $body = $this->get('/api/quiz/result/stats?quiz='.$this->quiz);
+
+        self::assertSame(1, $body['total']);
+        self::assertStringContainsString('"profiles":{"0":2,"1":1}', (string) $this->client->getResponse()->getContent());
     }
 
     public function testStatsOfAQuizNobodyPlayed(): void
