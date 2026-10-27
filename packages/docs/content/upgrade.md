@@ -16,6 +16,7 @@ Package names omit `pushword/`; `js-helper` is the npm package
 
 | Version | Packages | What changed |
 | --- | --- | --- |
+| [1.0.91](/upgrade/1.0.91) | `admin-block-editor` `quiz` | quiz result templates gain an extension partial |
 | [1.0.86](/upgrade/1.0.86) | `repurpose` | motion projects use HyperFrames |
 | [1.0.85](/upgrade/1.0.85) | `newsletter` | campaign subjects open their first catalogue action |
 | [1.0.84](/upgrade/1.0.84) | `admin` `admin-block-editor` `core` `newsletter` `repurpose` | newsletter statistics require a schema update; tracking and catalogue links change; admin help, editor overrides and audio handling need review — run `doctrine:schema:update --force` |
