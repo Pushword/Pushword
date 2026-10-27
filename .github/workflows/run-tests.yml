@@ -142,7 +142,11 @@ jobs:
         # The runner image ships Google Chrome and Microsoft Edge, which the chrome and
         # msedge channels use as they are; reinstalling Edge took about ten minutes.
         if: matrix.browser == 'firefox'
-        run: yarn --cwd packages/admin-block-editor playwright install --with-deps firefox
+        timeout-minutes: 5
+        run: |
+          # Playwright also installs Ubuntu packages; use the same mirrors as the PHP jobs.
+          sudo sed -i '/azure\.archive\.ubuntu\.com/d' /etc/apt/apt-mirrors.txt
+          yarn --cwd packages/admin-block-editor playwright install --with-deps firefox
 
       - name: Build the editor under test
         run: yarn --cwd packages/admin-block-editor build
