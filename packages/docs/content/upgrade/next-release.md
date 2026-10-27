@@ -1,5 +1,5 @@
 ---
-title: 'quiz assessments and API result maps; removed core dependencies'
+title: ''
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -34,30 +34,3 @@ belongs in the feature doc, which you link to instead.
 
 Several changes land here between two tags: append to the file, do not replace it.
 -->
-
-**Concerns:** `pushword/core`, `pushword/quiz`.
-
-## Quiz completion event
-
-Since 1.0.91, `QuizCompletedEvent::getMode()` can return `assessment`, with the numeric outcome in `getResult()`, and `ResultBand::$min` is a `float`.
-**Sites with a `QuizCompletedEvent` listener, or code reading `ResultBand::$min`:** handle the `assessment` mode and a float threshold. See [Quiz](/extension/quiz#numeric-assessments).
-
-## Assessment wording
-
-Numeric assessments use "See my result" for the last step and "{p}% got the same result" for comparisons, with translated defaults.
-Set `labels.finish` or `labels.share` in the quiz JSON to override them.
-
-## Unrecorded quizzes
-
-A quiz with `recordResults: false` (the assessment default) has no result signature; `POST /quiz/result` refuses its attempts (`403`).
-**Sites posting attempts from a custom client:** set `recordResults: true` on the quiz. See [Quiz](/extension/quiz#numeric-assessments).
-
-## Quiz result statistics
-
-`GET /api/quiz/result/stats` now always returns `profiles` as a JSON object, including empty maps and numeric assessment keys such as `"0"`.
-**Clients treating `profiles` as an array:** read its result keys instead.
-
-## piedweb/extractor and piedweb/curl dropped
-
-`pushword/core` no longer requires `piedweb/extractor` or `piedweb/curl`.
-**Sites using either package or its dependencies directly:** require them in the site's `composer.json`.

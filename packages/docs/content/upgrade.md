@@ -16,6 +16,7 @@ Package names omit `pushword/`; `js-helper` is the npm package
 
 | Version | Packages | What changed |
 | --- | --- | --- |
+| [1.0.92](/upgrade/1.0.92) | `core` `quiz` | quiz assessments and API result maps; removed core dependencies |
 | [1.0.91](/upgrade/1.0.91) | `admin-block-editor` `quiz` | quiz result templates gain an extension partial |
 | [1.0.86](/upgrade/1.0.86) | `repurpose` | motion projects use HyperFrames |
 | [1.0.85](/upgrade/1.0.85) | `newsletter` | campaign subjects open their first catalogue action |
