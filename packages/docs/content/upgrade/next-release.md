@@ -1,5 +1,5 @@
 ---
-title: 'quiz completion events may report an assessment; assessments get their own wording; a quiz with recordResults false refuses posted attempts; pushword/core no longer installs piedweb/extractor and piedweb/curl'
+title: 'quiz assessment events, labels and recording; removed core dependencies'
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -44,15 +44,15 @@ Since 1.0.91, `QuizCompletedEvent::getMode()` can return `assessment`, with the 
 
 ## Assessment wording
 
-The last step of a numeric assessment now reads "See my result" ("Voir mon résultat" in French) instead of the confirm label, and its comparison line "{p}% got the same result" instead of "{p}% got the same profile".
-To keep the previous wording, set `labels.finish` or `labels.share` in the quiz JSON.
+Numeric assessments use "See my result" for the last step and "{p}% got the same result" for comparisons, with translated defaults.
+Set `labels.finish` or `labels.share` in the quiz JSON to override them.
 
 ## Unrecorded quizzes
 
-A quiz with `recordResults: false` (the default for assessments) is rendered without a result signature, so `POST /quiz/result` now refuses its attempts (`403`).
-**Sites posting results for such a quiz from their own client:** set `recordResults: true` on it. See [Quiz](/extension/quiz#numeric-assessments).
+A quiz with `recordResults: false` (the assessment default) has no result signature; `POST /quiz/result` refuses its attempts (`403`).
+**Sites posting attempts from a custom client:** set `recordResults: true` on the quiz. See [Quiz](/extension/quiz#numeric-assessments).
 
 ## piedweb/extractor and piedweb/curl dropped
 
-`pushword/core` no longer installs `piedweb/extractor` and `piedweb/curl`, nor the `league/uri`, `spatie/robots-txt`, `jeremykendall/php-domain-parser` and `kelvinzer0/curl-impersonate-php` they brought along.
-**Sites whose own code uses one of these packages:** require it in the site's `composer.json`.
+`pushword/core` no longer requires `piedweb/extractor` or `piedweb/curl`.
+**Sites using either package or its dependencies directly:** require them in the site's `composer.json`.

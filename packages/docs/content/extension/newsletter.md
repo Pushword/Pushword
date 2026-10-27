@@ -85,10 +85,9 @@ twig:
 fragment `pwNewsletterAlertClass` plus `pwNewsletterAlertSuccessClass` /
 `pwNewsletterAlertErrorClass`.
 
-Values are HTML-escaped, so an arbitrary variant containing `&` or `>`
-(`[&>p]:mt-0`) arrives mangled — put those in CSS. Tailwind only emits classes
-it scans: a class named only in `twig.yaml` needs that file in your `@source`
-list.
+Arbitrary variants such as `[&>p]:mt-0` work in these globals. Tailwind only emits
+classes it scans: add `twig.yaml` to your CSS `@source` list if it contains your
+overrides.
 
 For structural changes, override `/newsletter/form.html.twig` and
 `/newsletter/alert.html.twig` in the site's views.

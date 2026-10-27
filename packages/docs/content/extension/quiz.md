@@ -207,23 +207,23 @@ twig:
 
 - **It must be a global, not a render variable.** Most of the markup is built in
   `{% macro %}`, and a macro sees no render context — only globals reach inside.
-- **The value is HTML-escaped.** An arbitrary variant containing `&` or `>`
-  (`[&>p]:mt-0`) comes out as `[&amp;&gt;p]:mt-0` and matches nothing. Put those
-  in CSS instead.
+- HTML escaping preserves arbitrary variants such as `[&>p]:mt-0`: the browser
+  decodes the attribute before matching classes.
 - Tailwind must *see* your override to emit it. A class named only in
   `twig.yaml` is not scanned — add `@source "../config/packages/twig.yaml";` to
   your CSS, or keep the classes in a file already scanned.
 
 ### What is still CSS
 
-`quiz.css` ships alongside and holds only what a class attribute cannot express:
+`quiz.css` supplies these shared styles:
 
-1. **runtime state** — rules like "hide the explanation until its question is
-   answered" read a class `quiz.js` toggles on an *ancestor*, and Tailwind has no
-   ancestor variant;
-2. **markup built by `quiz.js`** — the score donut, the restart/next/share
-   buttons. Tailwind scans templates, not JS, so utilities there would be purged;
-3. **images rendered from `QuizRenderer.php`**, for the same reason.
+1. **runtime state** — rules tied to the answered/correct/wrong classes toggled
+   by `quiz.js`;
+2. **markup built by `quiz.js`** — the score donut and restart/next/share buttons;
+3. **images rendered from `QuizRenderer.php`**.
+
+To use Tailwind utilities in generated markup, include the corresponding JS or PHP
+source files in Tailwind's scan.
 
 The file is unlayered, so its rules outrank the template's utilities whatever the
 source order — which is what lets the answered/correct/wrong states override the
@@ -324,8 +324,8 @@ GET /api/quiz/result?host=&quiz=       # attempts, newest first, paginated
 GET /api/quiz/result/stats?host=&quiz= # participation per quiz, unpaginated
 ```
 
-A stats row reports `attempts` (both kinds), `knowledgeAttempts` and their
-`averageScore`, and the `profiles` split of a personality test:
+A stats row reports all `attempts`, `knowledgeAttempts` and their `averageScore`.
+The `profiles` map counts profile keys or numeric assessment outcomes:
 
 ```json
 {"quiz":"Mountains","host":"example.tld","attempts":48,"knowledgeAttempts":40,
