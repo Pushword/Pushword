@@ -80,6 +80,30 @@ final class ContactRepositoryTest extends AbstractNewsletterTestCase
         self::assertSame(1, $this->repository()->countMailable($audience));
     }
 
+    public function testContactTotalsCountEveryStatusAndIdentityWithinEachAudience(): void
+    {
+        $first = $this->createAudience();
+        $second = $this->createAudience();
+        $empty = $this->createAudience();
+        $this->createContact($first, 'both@example.tld');
+        $this->createContact($second, 'both@example.tld');
+        $this->createContact($first, 'pending@example.tld', subscribed: false);
+        $this->createPhoneContact($first, '+33612345678');
+        $gone = $this->createContact($first, 'gone@example.tld');
+        $gone->unsubscribe();
+
+        $this->entityManager->flush();
+
+        $counts = $this->repository()->countByAudience();
+
+        self::assertIsInt($first->id);
+        self::assertIsInt($second->id);
+        self::assertIsInt($empty->id);
+        self::assertSame(4, $counts[$first->id]);
+        self::assertSame(1, $counts[$second->id]);
+        self::assertArrayNotHasKey($empty->id, $counts);
+    }
+
     /**
      * What decides whether a broadcast needs narrowing by language, and what the
      * campaign form counts its translations against. It answers about one

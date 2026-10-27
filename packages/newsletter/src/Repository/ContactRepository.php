@@ -165,6 +165,19 @@ class ContactRepository extends ServiceEntityRepository
             ->getResult();
     }
 
+    /** @return array<int, int> Contact totals by audience, across all statuses. */
+    public function countByAudience(): array
+    {
+        /** @var list<array{audienceId: int, total: int}> $rows */
+        $rows = $this->createQueryBuilder('c')
+            ->select('IDENTITY(c.audience) AS audienceId, COUNT(c.id) AS total')
+            ->groupBy('c.audience')
+            ->getQuery()
+            ->getResult();
+
+        return array_column($rows, 'total', 'audienceId');
+    }
+
     /**
      * How the audience splits between statuses. Every status is present, so a
      * reader never has to tell "none yet" from "key missing".

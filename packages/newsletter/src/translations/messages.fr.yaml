@@ -11,6 +11,7 @@ newsletter:
     field:
       clickTracking: Suivi des clics
       clickTracking.help: Enregistre les clics des contacts ayant accepté ce suivi. Les autres liens restent inchangés.
+      contactCount: Contacts
       doubleOptIn: Double opt-in
       doubleOptIn.help: Demander une confirmation avant qu'un contact devienne joignable. À laisser activé sauf import d'une base ayant déjà consenti.
       fromEmail: Adresse d'expédition

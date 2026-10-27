@@ -11,6 +11,7 @@ newsletter:
     field:
       clickTracking: Click tracking
       clickTracking.help: Record clicks only for contacts with explicit tracking consent. Other links remain unchanged.
+      contactCount: Contacts
       doubleOptIn: Double opt-in
       doubleOptIn.help: Ask for a confirmation click before a subscriber becomes mailable. Leave on unless you are importing a base that already consented.
       fromEmail: From address

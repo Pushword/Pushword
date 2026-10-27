@@ -23,6 +23,7 @@ use Pushword\Core\Site\SiteRegistry;
 use Pushword\Newsletter\Admin\Form\EmailDesignType;
 use Pushword\Newsletter\Entity\Audience;
 use Pushword\Newsletter\Entity\Contact;
+use Pushword\Newsletter\Repository\ContactRepository;
 use Pushword\Newsletter\Service\MailRenderer;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -36,8 +37,10 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 #[AdminRoute(path: '/newsletter/audience', name: 'newsletter_audience')]
 class AudienceCrudController extends AbstractCrudController
 {
-    public function __construct(private readonly SiteRegistry $siteRegistry)
-    {
+    public function __construct(
+        private readonly SiteRegistry $siteRegistry,
+        private readonly ContactRepository $contactRepository,
+    ) {
     }
 
     public static function getEntityFqcn(): string
@@ -143,6 +146,15 @@ class AudienceCrudController extends AbstractCrudController
 
         yield FormField::addFieldset('newsletter.audience.fieldset.identity')->setIcon('fa fa-users');
         yield TextField::new('name', 'newsletter.audience.field.name');
+        if (Crud::PAGE_INDEX === $pageName) {
+            $contactCounts = $this->contactRepository->countByAudience();
+            yield IntegerField::new('contactCount', 'newsletter.audience.field.contactCount')
+                ->onlyOnIndex()
+                ->setValue(0)
+                ->setSortable(false)
+                ->formatValue(static fn (mixed $value, Audience $audience): int => $contactCounts[$audience->id ?? 0] ?? 0);
+        }
+
         yield TextField::new('slug', 'newsletter.audience.field.slug')
             ->setHelp('newsletter.audience.field.slug.help')
             ->setFormTypeOption('context_help', true);

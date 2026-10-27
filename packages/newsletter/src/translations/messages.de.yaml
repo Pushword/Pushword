@@ -3,6 +3,7 @@ newsletter:
     field:
       clickTracking: "Klicktracking"
       clickTracking.help: "Klicks nur für Kontakte mit ausdrücklicher Tracking-Einwilligung erfassen. Andere Links bleiben unverändert."
+      contactCount: Kontakte
       doubleOptIn: "Double-Opt-in"
       doubleOptIn.help: "Vor dem ersten Versand einen Bestätigungsklick verlangen. Aktiviert lassen, außer Sie importieren einen Bestand, der bereits eingewilligt hat."
       fromEmail: "Absenderadresse"

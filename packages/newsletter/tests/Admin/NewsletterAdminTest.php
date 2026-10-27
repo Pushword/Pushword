@@ -109,6 +109,24 @@ final class NewsletterAdminTest extends AbstractAdminTestClass
         self::assertCount($rows->count(), $rows->filter('.actions-as-dropdown [data-action-name="delete"]'));
     }
 
+    public function testAudienceIndexShowsContactTotalsIncludingEmptyLists(): void
+    {
+        $client = $this->loginUser();
+        $audience = $this->seed();
+        $empty = $this->createAudience('Empty list');
+        $this->phoneContact($audience);
+
+        $crawler = $client->request(Request::METHOD_GET, '/admin/newsletter/audience');
+        self::assertResponseIsSuccessful();
+        self::assertSame('Contacts', $crawler->filter('th[data-column="contactCount"]')->text());
+        self::assertSame('2', $crawler->filter('tr[data-id="'.$audience->id.'"] td[data-column="contactCount"]')->text());
+        self::assertSame('0', $crawler->filter('tr[data-id="'.$empty->id.'"] td[data-column="contactCount"]')->text());
+
+        $crawler = $client->request(Request::METHOD_GET, '/admin/newsletter/audience/'.$audience->id.'/edit');
+        self::assertResponseIsSuccessful();
+        self::assertCount(0, $crawler->filter('[name="Audience[contactCount]"]'));
+    }
+
     private ?int $audienceId = null;
 
     /** @var list<int> */
