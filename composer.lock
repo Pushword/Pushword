@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "2d4baa87de45f95cd4a7dfb2aa4da479",
+    "content-hash": "c6f709aa6f259e5ca52d70bd602b3d19",
     "packages": [
         {
             "name": "babdev/pagerfanta-bundle",
@@ -2483,55 +2483,6 @@
             "time": "2025-07-23T18:42:26+00:00"
         },
         {
-            "name": "kelvinzer0/curl-impersonate-php",
-            "version": "v3.2",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/kelvinzer0/curl-impersonate-php.git",
-                "reference": "a810c43d02482bae488f7e3a21f65ec8fbbd451c"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/kelvinzer0/curl-impersonate-php/zipball/a810c43d02482bae488f7e3a21f65ec8fbbd451c",
-                "reference": "a810c43d02482bae488f7e3a21f65ec8fbbd451c",
-                "shasum": ""
-            },
-            "require": {
-                "php": ">=5.4.0"
-            },
-            "type": "library",
-            "autoload": {
-                "psr-4": {
-                    "CurlImpersonate\\": "src/"
-                }
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "Kelvin Yuli Andrian",
-                    "homepage": "https://kelvinzer0.github.io",
-                    "role": "Maintainer"
-                }
-            ],
-            "description": "Curl-Impersonate-PHP - Library to execute HTTP requests using cURL in PHP with the ability to impersonate the behavior of major browsers (Chrome, Firefox, Safari, and Microsoft Edge).",
-            "homepage": "https://github.com/kelvinzer0/curl-impersonate-php",
-            "keywords": [
-                "browser",
-                "curl",
-                "http",
-                "http-client",
-                "impersonation"
-            ],
-            "support": {
-                "issues": "https://github.com/kelvinzer0/curl-impersonate-php/issues",
-                "source": "https://github.com/kelvinzer0/curl-impersonate-php/tree/v3.2"
-            },
-            "time": "2023-12-20T12:04:39+00:00"
-        },
-        {
             "name": "knplabs/knp-menu",
             "version": "v3.8.0",
             "source": {
@@ -4035,54 +3986,6 @@
                 "source": "https://github.com/Pagerfanta/twig/tree/v4.10.0"
             },
             "time": "2026-10-09T12:41:36+00:00"
-        },
-        {
-            "name": "piedweb/curl",
-            "version": "v0.1.960",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/PiedWeb/curl.git",
-                "reference": "9987a83dbd15f215ac69180bea11d752855680ce"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/PiedWeb/curl/zipball/9987a83dbd15f215ac69180bea11d752855680ce",
-                "reference": "9987a83dbd15f215ac69180bea11d752855680ce",
-                "shasum": ""
-            },
-            "require": {
-                "kelvinzer0/curl-impersonate-php": "^3.2",
-                "php": ">=8.4",
-                "thecodingmachine/safe": "^3"
-            },
-            "type": "library",
-            "autoload": {
-                "psr-4": {
-                    "PiedWeb\\Curl\\": "src"
-                }
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "Robin D. (ak Pied Web)",
-                    "email": "contact@piedweb.com",
-                    "homepage": "https://piedweb.com"
-                }
-            ],
-            "description": "curl OOP Wrapper",
-            "homepage": "https://dev.piedweb.com",
-            "keywords": [
-                "Pied Web",
-                "curl"
-            ],
-            "support": {
-                "issues": "https://github.com/PiedWeb/curl/issues",
-                "source": "https://github.com/PiedWeb/curl/tree/v0.1.960"
-            },
-            "time": "2026-03-28T15:38:14+00:00"
         },
         {
             "name": "piedweb/linksimprover",

@@ -66,7 +66,6 @@
     "loupe/loupe": "^1.0",
     "nette/utils": "^4.0",
     "pagerfanta/twig": "^4.1",
-    "piedweb/curl": "^0.1",
     "piedweb/linksimprover": "^0.2.2",
     "piedweb/render-html-attributes": "^0",
     "pushword/dev-app": "^1.0",

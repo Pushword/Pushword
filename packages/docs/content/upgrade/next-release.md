@@ -1,5 +1,5 @@
 ---
-title: 'quiz completion events may report an assessment; assessments get their own wording; a quiz with recordResults false refuses posted attempts; pushword/core no longer installs piedweb/extractor'
+title: 'quiz completion events may report an assessment; assessments get their own wording; a quiz with recordResults false refuses posted attempts; pushword/core no longer installs piedweb/extractor and piedweb/curl'
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -52,7 +52,7 @@ To keep the previous wording, set `labels.finish` or `labels.share` in the quiz 
 A quiz with `recordResults: false` (the default for assessments) is rendered without a result signature, so `POST /quiz/result` now refuses its attempts (`403`).
 **Sites posting results for such a quiz from their own client:** set `recordResults: true` on it. See [Quiz](/extension/quiz#numeric-assessments).
 
-## piedweb/extractor dropped
+## piedweb/extractor and piedweb/curl dropped
 
-`pushword/core` no longer installs `piedweb/extractor`, nor the `league/uri`, `spatie/robots-txt` and `jeremykendall/php-domain-parser` it brought along.
+`pushword/core` no longer installs `piedweb/extractor` and `piedweb/curl`, nor the `league/uri`, `spatie/robots-txt`, `jeremykendall/php-domain-parser` and `kelvinzer0/curl-impersonate-php` they brought along.
 **Sites whose own code uses one of these packages:** require it in the site's `composer.json`.
