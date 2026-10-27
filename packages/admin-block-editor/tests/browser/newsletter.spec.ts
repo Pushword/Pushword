@@ -4,7 +4,7 @@ import type { Page } from '@playwright/test'
 async function openCampaign(page: Page): Promise<void> {
   await page.setViewportSize({ width: 1440, height: 1000 })
   await page.goto('/admin/newsletter/campaign/new')
-  await page.locator('#Campaign_audience').selectOption({ label: 'Localhost news' })
+  await page.locator('#Campaign_audience').selectOption({ label: 'Localhost news (localhost.dev)' })
   await page.waitForFunction(() => {
     const holder = document.querySelector<HTMLElement>('.editorjs-holder')
     return holder && window.editors?.[holder.id]?.blocks
@@ -110,7 +110,7 @@ test('automation preview width controls fit and remain clickable on a narrow scr
 }) => {
   await page.setViewportSize({ width: 375, height: 812 })
   await page.goto('/admin/newsletter/automation/new')
-  await page.locator('#Automation_audience').selectOption({ label: 'Localhost news' })
+  await page.locator('#Automation_audience').selectOption({ label: 'Localhost news (localhost.dev)' })
   // Criteria editors mount asynchronously and can move the sequence button during a click.
   await expect(page.locator('textarea[data-pw-criteria]:not(.pw-criteria-hidden)')).toHaveCount(0)
   await page.locator('.field-collection-add-button').first().click()
