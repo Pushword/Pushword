@@ -1,5 +1,5 @@
 ---
-title: ''
+title: 'quiz completion events may report an assessment; an assessment''s last button reads "See my result"; pushword/core no longer installs piedweb/extractor'
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -34,3 +34,20 @@ belongs in the feature doc, which you link to instead.
 
 Several changes land here between two tags: append to the file, do not replace it.
 -->
+
+**Concerns:** `pushword/core`, `pushword/quiz`.
+
+## Quiz completion event
+
+Since 1.0.91, `QuizCompletedEvent::getMode()` can return `assessment`, with the numeric outcome in `getResult()`, and `ResultBand::$min` is a `float`.
+**Sites with a `QuizCompletedEvent` listener, or code reading `ResultBand::$min`:** handle the `assessment` mode and a float threshold. See [Quiz](/extension/quiz#numeric-assessments).
+
+## Assessment last step
+
+The last step of a numeric assessment now reads "See my result" ("Voir mon résultat" in French) instead of the confirm label.
+To keep the previous wording, set `labels.finish` in the quiz JSON.
+
+## piedweb/extractor dropped
+
+`pushword/core` no longer installs `piedweb/extractor`, nor the `league/uri`, `spatie/robots-txt` and `jeremykendall/php-domain-parser` it brought along.
+**Sites whose own code uses one of these packages:** require it in the site's `composer.json`.

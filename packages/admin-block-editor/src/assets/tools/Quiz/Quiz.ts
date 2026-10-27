@@ -226,7 +226,8 @@ export default class Quiz extends BaseTool {
         while (this.profilesList.children.length < 2) this.profilesList.appendChild(this.buildProfile({}))
       }
 
-      this.wrapper.querySelectorAll<HTMLInputElement>('[data-setting]').forEach(input => {
+      // A setting the author chose survives the switch; an untouched one follows the new mode's default.
+      this.wrapper.querySelectorAll<HTMLInputElement>('[data-setting]:not([data-explicit])').forEach(input => {
         input.checked = !this.assessmentMode
       })
       this.applyMode()
@@ -269,6 +270,8 @@ export default class Quiz extends BaseTool {
       const label = make.element('label', 'cdx-quiz__stats-label')
       const input = make.element('input', null, {type: 'checkbox', 'data-setting': key}) as HTMLInputElement
       input.checked = this.data[key] ?? !this.assessmentMode
+      if (undefined !== this.data[key]) input.dataset.explicit = '1'
+      input.addEventListener('change', () => { input.dataset.explicit = '1' })
       label.append(input, document.createTextNode(title))
       stats.appendChild(label)
     }
@@ -1010,9 +1013,8 @@ export default class Quiz extends BaseTool {
       data.mode = 'assessment'
       data.feedback = 'end'
     }
-    root.querySelectorAll<HTMLInputElement>('[data-setting]').forEach(input => {
-      const key = input.dataset.setting as 'recordResults' | 'showComparison'
-      if (undefined !== this.data[key] || input.checked !== !this.assessmentMode) data[key] = input.checked
+    root.querySelectorAll<HTMLInputElement>('[data-setting][data-explicit]').forEach(input => {
+      data[input.dataset.setting as 'recordResults' | 'showComparison'] = input.checked
     })
     this.data = data
     return data

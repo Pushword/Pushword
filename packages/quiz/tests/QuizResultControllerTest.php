@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace Pushword\Quiz\Tests;
 
 use PHPUnit\Framework\Attributes\Group;
+use Pushword\Quiz\Event\QuizCompletedEvent;
 use Pushword\Quiz\Service\QuizResultSigner;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -17,9 +19,17 @@ final class QuizResultControllerTest extends WebTestCase
     public function testRecordsNumericAssessmentOutcomesAndRejectsInvalidValues(): void
     {
         $client = self::createClient();
+        $events = [];
+        // Before the first request: the client reboots the kernel (and drops the listener) on the next one.
+        self::getContainer()->get(EventDispatcherInterface::class)->addListener(
+            QuizCompletedEvent::class,
+            static function (QuizCompletedEvent $event) use (&$events): void { $events[] = $event; },
+        );
         $data = ['quiz' => 'numeric-assessment', 'mode' => 'assessment', 'result' => '0'];
         $this->post($client, $data, clientIp: '192.0.2.62');
         self::assertSame(Response::HTTP_OK, $client->getResponse()->getStatusCode());
+        self::assertCount(1, $events);
+        self::assertSame(['assessment', '0', null], [$events[0]->getMode(), $events[0]->getResult(), $events[0]->getScore()]);
         $data['result'] = '-2.5';
         $this->post($client, $data, clientIp: '192.0.2.62');
         self::assertSame(Response::HTTP_OK, $client->getResponse()->getStatusCode());

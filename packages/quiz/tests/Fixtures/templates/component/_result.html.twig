@@ -1,0 +1,6 @@
+{# A site override of the result partial, as documented in extension/quiz.md. #}
+{% extends '@!PushwordQuiz/component/_result.html.twig' %}
+
+{% block quiz_result_extra %}
+  <div class="site-recommendations" data-quiz="{{ slug }}" data-mode="{{ quiz.mode }}"></div>
+{% endblock %}

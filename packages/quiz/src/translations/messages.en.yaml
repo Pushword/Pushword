@@ -5,6 +5,7 @@ quiz:
     confirm: 'Confirm answer'
     editAnswers: 'Change my answers'
     explanation: 'Explanation'
+    finish: 'See my result'
     level: 'Level'
     nextLevel: 'Next level'
     profile: 'Your profile:'

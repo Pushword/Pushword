@@ -262,12 +262,17 @@ answers, difficulty tabs, score donut or schema.org accepted answers in this mod
 The native Quiz editor exposes this type, answer values, optional question `label`
 and `hint`, and the result messages. The player offers Back, Change my answers and
 Restart; Back and Change retain selections. `labels.back`, `labels.editAnswers`,
-`labels.confirm`, `labels.finish` (last step) and `labels.restart` override those controls.
+`labels.confirm`, `labels.finish` (last step, "See my result" by default) and
+`labels.restart` override those controls.
 
 Set `recordResults` and `showComparison` independently. Both default to **false** for
 assessments and **true** for existing quiz/profile content. Recording an assessment
 posts `{mode: "assessment", result: "<numeric outcome>"}` and stores the value in
 the existing result column; no database migration is needed.
+
+## Extending the result
+
+These hooks work in every mode.
 
 For a site-specific result (for example, catalogue recommendations), override
 `@PushwordQuiz/component/_result.html.twig`, extend
@@ -295,7 +300,8 @@ optional `answers` (`[{q, a}]`). The endpoint is rate-limited per IP (`429`) and
 answers are never persisted.
 
 Listen to `Pushword\Quiz\Event\QuizCompletedEvent` to act on an attempt — host,
-quiz, mode, profile or score, and the chosen answers — for instance to enrich a
+quiz, mode (`quiz`, `profile` or `assessment`), profile key or numeric outcome
+(`getResult()`) or score, and the chosen answers — for instance to enrich a
 logged-in visitor's account under your own consent rules.
 
 If a `cta` is set, the Conversation form is shown at the end, pre-filled from a

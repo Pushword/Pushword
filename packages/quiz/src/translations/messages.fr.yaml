@@ -5,6 +5,7 @@ quiz:
     confirm: 'Valider ma réponse'
     editAnswers: 'Modifier mes réponses'
     explanation: 'Explication'
+    finish: 'Voir mon résultat'
     level: 'Niveau'
     nextLevel: 'Niveau suivant'
     profile: 'Votre profil :'

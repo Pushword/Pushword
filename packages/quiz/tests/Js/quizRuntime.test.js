@@ -303,6 +303,25 @@ describe('quiz runtime — personality test (profile mode)', () => {
     expect(cards.length).toBe(2)
   })
 
+  it('announces the winning profile on completion', () => {
+    document.body.innerHTML = profileQuiz()
+    bootRuntime()
+    let detail
+    document.querySelector('[data-pw-quiz]').addEventListener('pushword:quiz:complete', (e) => {
+      detail = e.detail
+    })
+
+    const answers = document.querySelectorAll('.pw-quiz-a')
+    confirmAnswer(answers[1])
+    confirmAnswer(answers[3])
+
+    expect(detail).toMatchObject({ quiz: 'perso', mode: 'profile', profile: 'builder', restored: false })
+    expect(detail.answers).toEqual([
+      { q: 'Q0', a: 'B' },
+      { q: 'Q1', a: 'B' },
+    ])
+  })
+
   it('breaks a tie by profile declaration order', () => {
     // One question whose only answer weighs both profiles equally → a tie, which
     // must resolve to the first-declared card (explorer), not builder.

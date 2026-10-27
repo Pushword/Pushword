@@ -25,7 +25,7 @@ use Symfony\Contracts\EventDispatcher\Event;
 final class QuizCompletedEvent extends Event
 {
     /**
-     * @param 'assessment'|'profile'|'quiz' $mode    personality test vs knowledge quiz
+     * @param 'assessment'|'profile'|'quiz' $mode    knowledge quiz, personality test or numeric assessment
      * @param ?string                       $result  the profile key or numeric assessment outcome, else null
      * @param ?int                          $score   the percentage score (quiz mode), else null
      * @param list<QuizAnswer>              $answers the visitor's chosen answers, in order (may be empty)

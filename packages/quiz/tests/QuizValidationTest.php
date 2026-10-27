@@ -26,6 +26,7 @@ use Symfony\Component\Routing\RouterInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use Twig\Environment;
+use Twig\Loader\FilesystemLoader;
 
 #[Group('integration')]
 final class QuizValidationTest extends KernelTestCase
@@ -70,6 +71,78 @@ final class QuizValidationTest extends KernelTestCase
         self::assertStringContainsString('Choose comfortably.', $output);
         self::assertStringNotContainsString('acceptedAnswer', $output);
         self::assertStringContainsString('"recordResults":false', $output);
+    }
+
+    public function testAssessmentLastStepLabelIsLocalizedAndOverridable(): void
+    {
+        self::bootKernel();
+        self::getContainer()->get(RequestContext::class)->setRequestContext('localhost.dev');
+        self::getContainer()->get(TranslatorInterface::class)->setLocale('en');
+        $extension = self::getContainer()->get(QuizExtension::class);
+        $data = ['mode' => 'assessment', 'questions' => [['q' => 'Q', 'answers' => [['a' => 'A', 'value' => 0], ['a' => 'B', 'value' => 1]]]]];
+
+        self::assertStringContainsString('"finish":"See my result"', $extension->renderQuiz(json_encode($data, \JSON_THROW_ON_ERROR)));
+
+        $data['labels'] = ['finish' => 'Show my level'];
+        self::assertStringContainsString('"finish":"Show my level"', $extension->renderQuiz(json_encode($data, \JSON_THROW_ON_ERROR)));
+    }
+
+    public function testLastStepLabelFollowsTheLocaleAndEachLevelOverride(): void
+    {
+        self::bootKernel();
+        self::getContainer()->get(RequestContext::class)->setRequestContext('localhost.dev');
+        self::getContainer()->get(TranslatorInterface::class)->setLocale('fr');
+        $level = static fn (string $difficulty, array $labels): array => [
+            'difficulty' => $difficulty,
+            'labels' => $labels,
+            'questions' => [['q' => 'Q', 'answers' => [['a' => 'A', 'correct' => true], ['a' => 'B']]]],
+        ];
+        $output = self::getContainer()->get(QuizExtension::class)->renderQuiz(json_encode(
+            ['levels' => [$level('Easy', []), $level('Hard', ['finish' => 'Terminer'])]],
+            \JSON_THROW_ON_ERROR,
+        ));
+
+        self::assertSame(1, substr_count($output, '"finish":"Voir mon r\u00e9sultat"'));
+        self::assertSame(1, substr_count($output, '"finish":"Terminer"'));
+    }
+
+    public function testASiteOverrideFillsTheResultExtensionBlock(): void
+    {
+        self::bootKernel();
+        self::getContainer()->get(RequestContext::class)->setRequestContext('localhost.dev');
+        $loader = self::getContainer()->get(Environment::class)->getLoader();
+        self::assertInstanceOf(FilesystemLoader::class, $loader);
+        // Where a site's templates/bundles/PushwordQuizBundle/ would sit: ahead of the bundle.
+        $loader->prependPath(__DIR__.'/Fixtures/templates', 'PushwordQuiz');
+
+        $output = self::getContainer()->get(QuizExtension::class)->renderQuiz(json_encode([
+            'mode' => 'assessment',
+            'questions' => [['q' => 'Q', 'answers' => [['a' => 'A', 'value' => 0], ['a' => 'B', 'value' => 1]]]],
+        ], \JSON_THROW_ON_ERROR));
+
+        self::assertMatchesRegularExpression(
+            '#<div class="pw-quiz-result [^"]*" hidden>\s*<div class="pw-quiz-score" aria-live="polite"></div>\s*'
+            .'<div class="site-recommendations" data-quiz="[^"]*" data-mode="assessment"></div>#',
+            $output,
+        );
+    }
+
+    public function testScoreBandOutsideZeroToHundredIsRejected(): void
+    {
+        self::bootKernel();
+        $data = $this->validQuiz();
+        $data['results'] = [['min' => 101, 'msg' => 'Too high'], ['min' => -1, 'msg' => 'Too low'], ['min' => 50, 'msg' => 'Fine']];
+        $levels = ['levels' => [$data + ['difficulty' => 'Easy']]];
+
+        foreach ([[$data, 'results'], [$levels, 'levels[0].results']] as [$quizData, $path]) {
+            $paths = [];
+            $quiz = self::getContainer()->get(QuizFactory::class)->fromArray($quizData);
+            foreach (self::getContainer()->get(ValidatorInterface::class)->validate($quiz) as $violation) {
+                $paths[] = $violation->getPropertyPath();
+            }
+
+            self::assertSame([$path.'[0].min', $path.'[1].min'], $paths);
+        }
     }
 
     public function testAssessmentRejectsANonFiniteResultThreshold(): void
