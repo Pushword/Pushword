@@ -71,6 +71,25 @@ final class MailRendererTest extends AbstractNewsletterTestCase
         }
     }
 
+    public function testDesignImagesUseTheAudienceHostAndPersonalSignaturesUseTheSendContextHost(): void
+    {
+        $audience = $this->createAudience();
+        $image = '![Brand](1.jpg)';
+        $audience->headerMarkdown = $image;
+        $audience->footerMarkdown = $image;
+        $audience->signatureMarkdown = $image;
+
+        $contact = $this->createContact($audience, 'reader@example.tld');
+        $renderer = self::getContainer()->get(MailRenderer::class);
+        $html = $renderer->html($audience, $contact, 'Subject', 'Body', null, null, null);
+        self::assertCount(2, new Crawler($html)->filter('img[src="https://localhost.dev/media/default/1.jpg"]'));
+
+        $audience->emailLayout = 'personal';
+        $context = new SendContext('admin-block-editor.test', 'mail@example.tld', 'Brand');
+        $html = $renderer->html($audience, $contact, 'Subject', 'Body', null, null, null, sendContext: $context);
+        self::assertCount(1, new Crawler($html)->filter('img[src="https://admin-block-editor.test/media/default/1.jpg"]'));
+    }
+
     /** @return iterable<string, array{bool}> */
     public static function layouts(): iterable
     {
@@ -272,16 +291,23 @@ final class MailRendererTest extends AbstractNewsletterTestCase
         self::assertStringNotContainsString('info@example.test', $web);
     }
 
-    /** @return iterable<string, array{string}> */
+    /** @return iterable<string, array{string, string}> */
     public static function optionalImages(): iterable
     {
-        yield 'absolute JPEG' => ['![Mountain & lake](https://admin-block-editor.test/images/trip.jpg "Trip photo")'];
-        yield 'JPEG with fixed dimensions' => ['![Mountain & lake](https://admin-block-editor.test/images/trip.jpg "Trip photo"){width="1200" height="800"}'];
-        yield 'no image' => [''];
+        $external = 'https://admin-block-editor.test/images/trip.jpg';
+        $internal = 'https://admin-block-editor.test/media/default/1.jpg';
+        yield 'absolute JPEG' => ['![Mountain & lake]('.$external.' "Trip photo")', $external];
+        yield 'JPEG with fixed dimensions' => ['![Mountain & lake]('.$external.' "Trip photo"){width="1200" height="800"}', $external];
+        yield 'media filename from the block editor' => ['![Mountain & lake](1.jpg "Trip photo")', $internal];
+        yield 'media without an extension' => ['![Mountain & lake](1 "Trip photo")', $internal];
+        yield 'editor preview path' => ['![Mountain & lake](/media/md/1.webp "Trip photo")', $internal];
+        yield 'root-relative JPEG' => ['![Mountain & lake](/images/trip.jpg "Trip photo")', $external];
+        yield 'external host' => ['![Mountain & lake](https://cdn.example.test/trip.jpg "Trip photo")', 'https://cdn.example.test/trip.jpg'];
+        yield 'no image' => ['', ''];
     }
 
     #[DataProvider('optionalImages')]
-    public function testAnOptionalImagePlaceholderRendersBeforeTheGreetingWithoutWebMediaMarkup(string $image): void
+    public function testAnOptionalImagePlaceholderRendersBeforeTheGreetingWithoutWebMediaMarkup(string $image, string $expectedSrc): void
     {
         $audience = $this->createAudience();
         $audience->headerMarkdown = '';
@@ -299,7 +325,7 @@ final class MailRendererTest extends AbstractNewsletterTestCase
         if ('' !== $image) {
             foreach ($images as $element) {
                 $img = new Crawler($element);
-                self::assertSame('https://admin-block-editor.test/images/trip.jpg', $img->attr('src'));
+                self::assertSame($expectedSrc, $img->attr('src'));
                 self::assertSame('Mountain & lake', $img->attr('alt'));
                 self::assertSame('Trip photo', $img->attr('title'));
                 self::assertSame('100%', $img->attr('width'));

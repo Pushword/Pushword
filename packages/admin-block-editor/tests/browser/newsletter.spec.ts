@@ -12,6 +12,62 @@ async function openCampaign(page: Page): Promise<void> {
   await expect(page.locator('.pw-newsletter-design-canvas')).toBeVisible()
 }
 
+for (const kind of ['campaign', 'automation'] as const) {
+  test(`${kind} preview loads an image from the media library`, async ({
+    page,
+  }, testInfo) => {
+    // The fixture's canonical domain is not served by the local test server.
+    await page.route('https://localhost.dev/media/**', async (route) => {
+      const response = await route.fetch({
+        url: route
+          .request()
+          .url()
+          .replace('https://localhost.dev', 'http://127.0.0.1:9079'),
+      })
+      await route.fulfill({ response })
+    })
+    if (kind === 'campaign') {
+      await openCampaign(page)
+      await render(page, [
+        { type: 'image', data: { media: '1.jpg', caption: 'Initial caption' } },
+      ])
+      await page.locator('.image-tool__caption').fill('Mountain & lake')
+      await expect(page.locator('#Campaign_bodyMarkdown')).toHaveValue(
+        '![Mountain & lake](1.jpg)',
+      )
+    } else {
+      await page.goto('/admin/newsletter/automation/new')
+      await page
+        .locator('#Automation_audience')
+        .selectOption({ label: 'Localhost news (localhost.dev)' })
+      await expect(
+        page.locator('textarea[data-pw-criteria]:not(.pw-criteria-hidden)'),
+      ).toHaveCount(0)
+      await page.locator('.field-collection-add-button').first().click()
+      await page
+        .locator('textarea[id$="_bodyMarkdown"]')
+        .fill('![Mountain & lake](1.jpg)')
+      await page.locator('.pw-newsletter-step-preview summary').first().click()
+    }
+    await page.locator('[id$="_subject"]').fill('Trip newsletter')
+    const preview = page.locator(`[data-preview-kind="${kind}"]`)
+    await expect(preview.locator('iframe')).toHaveAttribute(
+      'srcdoc',
+      /src="https:\/\/localhost\.dev\/media\/default\/1\.jpg"/,
+    )
+    await expect(preview.locator('[data-preview-status]')).toHaveAttribute('data-state', 'ready')
+    const image = preview.frameLocator('iframe').locator('img[alt="Mountain & lake"]')
+    await expect
+      .poll(() => image.evaluate((img) => (img as HTMLImageElement).naturalWidth))
+      .toBeGreaterThan(0)
+    for (const width of ['mobile', 'desktop']) {
+      await preview.locator(`[data-preview-width="${width}"]`).click()
+      await expect(image).toBeVisible()
+    }
+    await preview.screenshot({ path: testInfo.outputPath(`${kind}-image.png`) })
+  })
+}
+
 test('campaign link options remain clickable over the live preview', async ({ page }) => {
   await openCampaign(page)
   await render(page, [

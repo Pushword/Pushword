@@ -194,13 +194,14 @@ final class EmailTemplateAdminTest extends AbstractAdminTestClass
         self::assertArrayHasKey(1, $matches);
         $data = [
             '_preview_token' => html_entity_decode($matches[1]), '_preview_step' => '2',
-            'Automation' => ['audience' => (string) $audience->id, 'steps' => [2 => ['subject' => 'Unsaved step', 'bodyMarkdown' => '**Unsaved sequence** for %name%.']]],
+            'Automation' => ['audience' => (string) $audience->id, 'steps' => [2 => ['subject' => 'Unsaved step', 'bodyMarkdown' => "**Unsaved sequence** for %name%.\n\n![Trip](1.jpg)"]]],
         ];
         $client->request(Request::METHOD_POST, '/admin/newsletter/automation-preview', $data);
         self::assertResponseIsSuccessful();
         $html = $this->previewHtml($client);
         self::assertStringContainsString('<title>Unsaved step</title>', $html);
         self::assertStringContainsString('<strong>Unsaved sequence</strong> for Alex.', $html);
+        self::assertStringContainsString('src="https://localhost.dev/media/default/1.jpg" alt="Trip"', $html);
         self::assertStringContainsString('Saved Pushword', $html);
         self::assertStringContainsString('#unsubscribe', $html);
         $data['Automation']['transactional'] = '1';
@@ -260,7 +261,7 @@ final class EmailTemplateAdminTest extends AbstractAdminTestClass
             'emailLayout' => 'saved:'.$template->id,
             'subject' => 'Hello %name%',
             'preheader' => 'Your preview line',
-            'bodyMarkdown' => 'Latest **unsaved content** for %name%.',
+            'bodyMarkdown' => "Latest **unsaved content** for %name%.\n\n![Trip](1.jpg)",
         ];
         $client->request(Request::METHOD_POST, '/admin/newsletter/campaign-preview', ['_preview_token' => $token, 'Campaign' => $data]);
         self::assertResponseIsSuccessful();
@@ -268,6 +269,7 @@ final class EmailTemplateAdminTest extends AbstractAdminTestClass
         self::assertStringContainsString('<title>Hello Alex</title>', $html);
         self::assertStringContainsString('Your preview line', $html);
         self::assertStringContainsString('<strong>unsaved content</strong> for Alex.', $html);
+        self::assertStringContainsString('src="https://localhost.dev/media/default/1.jpg" alt="Trip"', $html);
         self::assertStringContainsString('Saved Pushword', $html);
         self::assertStringContainsString('Saved signature', $html);
         self::assertStringContainsString('12 Baker Street', $html);
