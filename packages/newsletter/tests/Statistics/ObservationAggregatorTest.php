@@ -75,6 +75,31 @@ final class ObservationAggregatorTest extends TestCase
         self::assertSame(1, $metrics['clicks']->value);
     }
 
+    public function testFailedAttemptsAndFutureSendsDoNotInflateAcceptedOrTrackedCounts(): void
+    {
+        $messages = [
+            new ObservedMessage('failed', 'a', $this->date(), trackingAllowed: true, transportFailed: true),
+            new ObservedMessage('future', 'b', $this->date('+31 days'), $this->date('+31 days'), true, trackingScopes: ['body']),
+        ];
+        $metrics = new ObservationAggregator()->metrics($messages, $this->query(), $this->complete());
+
+        self::assertSame(0, $metrics['accepted']->value);
+        self::assertSame(1, $metrics['transportFailed']->value);
+        self::assertSame(0, $metrics['trackedMessages']->value);
+        self::assertSame(0, $metrics['coverageKnownMessages']->value);
+    }
+
+    public function testSystemLinksNeverCountAsCampaignClicks(): void
+    {
+        $messages = [$this->message('a', [new ObservedEvent('click', $this->date('+1 day'), scope: 'system', url: 'https://example.org/unsubscribe')])];
+        $aggregator = new ObservationAggregator();
+        $metrics = $aggregator->metrics($messages, $this->query(), $this->complete());
+
+        self::assertSame(0, $metrics['clicks']->value);
+        self::assertSame(0, $metrics['clickers']->value);
+        self::assertSame([], $aggregator->links($messages, $this->query(), $this->complete()));
+    }
+
     public function testUnknownRecipientsAndSendDatesDoNotAcquireSyntheticReferences(): void
     {
         $message = new ObservedMessage(null, null, null, events: [new ObservedEvent('click', $this->date('+1 day'))]);
