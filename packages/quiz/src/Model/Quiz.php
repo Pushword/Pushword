@@ -51,16 +51,41 @@ class Quiz
         public ?string $label = null,
         #[Assert\Valid]
         public array $levels = [],
-        #[Assert\Choice(choices: ['quiz', 'profile'], message: 'quiz.mode.invalid')]
+        #[Assert\Choice(choices: ['quiz', 'profile', 'assessment'], message: 'quiz.mode.invalid')]
         public string $mode = 'quiz',
         #[Assert\Valid]
         public array $profiles = [],
+        public bool $recordResults = true,
+        public bool $showComparison = true,
     ) {
     }
 
     #[Assert\Callback]
     public function validateStructure(ExecutionContextInterface $context): void
     {
+        if ('assessment' === $this->mode) {
+            if ([] === $this->questions) {
+                $context->buildViolation('quiz.questions.min')->atPath('questions')->addViolation();
+            }
+
+            foreach ($this->questions as $i => $question) {
+                foreach ($question->answers as $j => $answer) {
+                    if (null === $answer->value || ! is_finite($answer->value)) {
+                        $context->buildViolation('quiz.answer.value.required')
+                            ->atPath('questions['.$i.'].answers['.$j.'].value')->addViolation();
+                    }
+                }
+            }
+
+            return;
+        }
+
+        foreach ($this->results as $i => $band) {
+            if ($band->min < 0 || $band->min > 100) {
+                $context->buildViolation('quiz.result.min.range')->atPath('results['.$i.'].min')->addViolation();
+            }
+        }
+
         if ('profile' === $this->mode) {
             $this->validateProfileMode($context);
 

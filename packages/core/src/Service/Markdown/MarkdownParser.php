@@ -12,6 +12,7 @@ use League\CommonMark\Extension\Strikethrough\StrikethroughExtension;
 use League\CommonMark\Extension\Table\TableExtension;
 use League\CommonMark\Extension\TaskList\TaskListExtension;
 use League\CommonMark\MarkdownConverter;
+use Psr\Cache\CacheItemInterface;
 use Psr\Cache\CacheItemPoolInterface;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
@@ -37,7 +38,7 @@ class MarkdownParser implements ResetInterface
      * Bump when the renderer configuration changes in a way that
      * alters output, to invalidate previously cached fragments.
      */
-    private const int CACHE_VERSION = 28;
+    private const int CACHE_VERSION = 29;
 
     private const int NATIVE_CACHE_VERSION = 3;
 
@@ -88,7 +89,7 @@ class MarkdownParser implements ResetInterface
 
     public function hasNativeMarkdown(): bool
     {
-        return null !== $this->nativeWorker && ! $this->nativeFailed;
+        return $this->nativeWorker instanceof NativeWorker && ! $this->nativeFailed;
     }
 
     /**
@@ -103,7 +104,7 @@ class MarkdownParser implements ResetInterface
     {
         $results = array_fill(0, \count($texts), null);
         $worker = $this->nativeWorker;
-        if ([] === $texts || null === $worker || $this->nativeFailed) {
+        if ([] === $texts || ! $worker instanceof NativeWorker || $this->nativeFailed) {
             return $results;
         }
 
@@ -116,7 +117,7 @@ class MarkdownParser implements ResetInterface
             try {
                 foreach (['pw_md.'.$hash, $keys[$index]] as $key) {
                     $item = $this->cache?->getItem($key);
-                    if (null !== $item && $item->isHit() && \is_string($item->get())) {
+                    if ($item instanceof CacheItemInterface && $item->isHit() && \is_string($item->get())) {
                         $results[$index] = $item->get();
 
                         continue 2;
@@ -168,7 +169,7 @@ class MarkdownParser implements ResetInterface
 
             try {
                 $item = $this->cache?->getItem($keys[$index]);
-                if (null !== $item) {
+                if ($item instanceof CacheItemInterface) {
                     $item->set($html);
                     $this->cache->save($item);
                 }
@@ -235,7 +236,7 @@ class MarkdownParser implements ResetInterface
      */
     private function convertCached(string $keyPrefix, string $text, bool $inline): string
     {
-        if (null === $this->cache) {
+        if (! $this->cache instanceof CacheItemPoolInterface) {
             return $this->convert($text, $inline);
         }
 
@@ -281,7 +282,7 @@ class MarkdownParser implements ResetInterface
 
     private function converter(): MarkdownConverter
     {
-        if (null !== $this->converter) {
+        if ($this->converter instanceof MarkdownConverter) {
             return $this->converter;
         }
 
@@ -299,7 +300,7 @@ class MarkdownParser implements ResetInterface
 
     private function inlineConverter(): MarkdownConverter
     {
-        if (null !== $this->inlineConverter) {
+        if ($this->inlineConverter instanceof MarkdownConverter) {
             return $this->inlineConverter;
         }
 
@@ -379,7 +380,7 @@ class MarkdownParser implements ResetInterface
         }
 
         $mediaVersion = 0;
-        if (null !== $this->versionCache) {
+        if ($this->versionCache instanceof CacheItemPoolInterface) {
             $item = $this->versionCache->getItem(MediaRepository::VERSION_CACHE_KEY);
             $mediaVersion = $item->isHit() && \is_int($item->get()) ? $item->get() : 0;
         }

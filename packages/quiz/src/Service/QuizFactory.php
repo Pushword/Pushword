@@ -23,17 +23,17 @@ final class QuizFactory
     public function fromArray(array $data): Quiz
     {
         $mode = $this->stringOr($data['mode'] ?? null, 'quiz');
-        $isProfile = 'profile' === $mode;
+        $isUnscored = 'profile' === $mode || 'assessment' === $mode;
 
-        // A personality test has no difficulty levels; it always owns its questions.
-        $levels = $isProfile ? [] : $this->buildLevels($data['levels'] ?? null, $data);
+        // Profile tests and assessments have no difficulty levels; they always own their questions.
+        $levels = $isUnscored ? [] : $this->buildLevels($data['levels'] ?? null, $data);
 
         return new Quiz(
             title: $this->stringOrNull($data['title'] ?? null),
             // `levels` owns the questions; the root keeps only the shared metadata.
             questions: [] === $levels ? $this->buildQuestions($data['questions'] ?? null) : [],
-            // No correct answer to reveal, so a personality test only ever scores at the end.
-            feedback: $isProfile ? 'end' : $this->stringOr($data['feedback'] ?? null, 'immediate'),
+            // Profile tests and assessments have no correct answer to reveal.
+            feedback: $isUnscored ? 'end' : $this->stringOr($data['feedback'] ?? null, 'immediate'),
             difficulty: $this->stringOrNull($data['difficulty'] ?? null),
             results: $this->buildResults($data['results'] ?? null),
             cta: $this->stringOrNull($data['cta'] ?? null),
@@ -45,6 +45,8 @@ final class QuizFactory
             levels: $levels,
             mode: $mode,
             profiles: $this->buildProfiles($data['profiles'] ?? null),
+            recordResults: (bool) ($data['recordResults'] ?? ('assessment' !== $mode)),
+            showComparison: (bool) ($data['showComparison'] ?? ('assessment' !== $mode)),
         );
     }
 
@@ -96,6 +98,8 @@ final class QuizFactory
             pass: $this->intOrNull($data['pass'] ?? $root['pass'] ?? null),
             label: $this->stringOrNull($data['label'] ?? null),
             levels: [],
+            recordResults: (bool) ($root['recordResults'] ?? true),
+            showComparison: (bool) ($root['showComparison'] ?? true),
         );
     }
 
@@ -140,6 +144,8 @@ final class QuizFactory
                 video: $this->stringOrNull($question['video'] ?? null),
                 alt: $this->stringOrNull($question['alt'] ?? null),
                 explanation: $this->stringOrNull($question['explanation'] ?? null),
+                label: $this->stringOrNull($question['label'] ?? null),
+                hint: $this->stringOrNull($question['hint'] ?? null),
             );
         }
 
@@ -167,6 +173,7 @@ final class QuizFactory
                 media: $this->stringOrNull($answer['media'] ?? null),
                 alt: $this->stringOrNull($answer['alt'] ?? null),
                 weights: $this->buildWeights($answer['weights'] ?? null, $answer['profile'] ?? null),
+                value: is_numeric($answer['value'] ?? null) ? (float) $answer['value'] : null,
             );
         }
 
@@ -240,7 +247,7 @@ final class QuizFactory
             }
 
             $results[] = new ResultBand(
-                min: $this->toInt($band['min'] ?? 0),
+                min: is_numeric($band['min'] ?? null) ? (float) $band['min'] : 0,
                 msg: $this->toString($band['msg'] ?? $band['message'] ?? ''),
             );
         }
@@ -265,15 +272,6 @@ final class QuizFactory
         }
 
         return \is_scalar($value) ? (string) $value : '';
-    }
-
-    private function toInt(mixed $value): int
-    {
-        if (\is_int($value)) {
-            return $value;
-        }
-
-        return is_numeric($value) ? (int) $value : 0;
     }
 
     private function intOrNull(mixed $value): ?int

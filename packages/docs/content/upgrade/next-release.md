@@ -1,5 +1,5 @@
 ---
-title: ''
+title: 'quiz result templates gain an extension partial'
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -34,3 +34,10 @@ belongs in the feature doc, which you link to instead.
 
 Several changes land here between two tags: append to the file, do not replace it.
 -->
+
+**Concerns:** `pushword/admin-block-editor`, `pushword/quiz`.
+
+## Quiz result template
+
+The default quiz template now includes `@PushwordQuiz/component/_result.html.twig`.
+**Sites overriding the whole quiz template:** include this partial to expose the `quiz_result_extra` extension block, or retain your existing markup. Existing quiz/profile content and recording defaults remain compatible. See [Quiz](/extension/quiz#numeric-assessments).

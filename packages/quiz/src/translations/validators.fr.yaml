@@ -12,15 +12,18 @@ quiz:
       altRequired: 'Une question vidéo nécessite un texte alternatif (accessibilité).'
       posterRequired: 'Une question vidéo nécessite un nom de fichier image, utilisé comme poster.'
   answer:
+    value:
+      required: 'Chaque réponse d’une évaluation doit avoir une valeur numérique finie.'
     text:
       empty: 'Une réponse ne peut pas être vide.'
   result:
     min:
+      finite: 'Le seuil d’un résultat doit être fini.'
       range: 'Le seuil d''une tranche de score doit être compris entre 0 et 100.'
     msg:
       empty: 'Une tranche de score doit avoir un message.'
   mode:
-    invalid: 'Le mode doit être « quiz » ou « profile ».'
+    invalid: 'Le mode doit être « quiz », « profile » ou « assessment ».'
     hint: 'Vous avez défini des profils ou des poids de réponse, mais le mode est « quiz » — vouliez-vous mode:"profile" ?'
   profiles:
     min: 'Un test de personnalité nécessite au moins un profil.'

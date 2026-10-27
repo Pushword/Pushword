@@ -251,6 +251,38 @@ and emits its own schema.org `Quiz`. A personality test (`mode: profile`) is
 server-rendered the same way but emits **no** schema.org `Quiz` — it has no
 accepted answer, so that markup would be misleading.
 
+## Numeric assessments
+
+Use `mode: "assessment"` when answers describe a capacity rather than knowledge.
+Every answer needs a finite numeric `value`; the **minimum** selected value is the
+outcome. Zero and decimal values are supported. `results` uses the same `min`/`msg`
+bands, with numeric thresholds instead of percentages. There are no correct
+answers, difficulty tabs, score donut or schema.org accepted answers in this mode.
+
+The native Quiz editor exposes this type, answer values, optional question `label`
+and `hint`, and the result messages. The player offers Back, Change my answers and
+Restart; Back and Change retain selections. `labels.back`, `labels.editAnswers`,
+`labels.confirm`, `labels.finish` (last step) and `labels.restart` override those controls.
+
+Set `recordResults` and `showComparison` independently. Both default to **false** for
+assessments and **true** for existing quiz/profile content. Recording an assessment
+posts `{mode: "assessment", result: "<numeric outcome>"}` and stores the value in
+the existing result column; no database migration is needed.
+
+For a site-specific result (for example, catalogue recommendations), override
+`@PushwordQuiz/component/_result.html.twig`, extend
+`@!PushwordQuiz/component/_result.html.twig`, and fill `quiz_result_extra`. The
+partial receives `quiz`, `slug` and `conversationAvailable`; `quiz_result` wraps
+the complete result box. Keep the `.pw-quiz-result` and `.pw-quiz-score` hooks.
+
+The browser dispatches **`pushword:quiz:complete`** from the `[data-pw-quiz]` root.
+It bubbles with `detail: {quiz, mode, answers: [{q, a}], restored}` plus `score`
+(quiz percentage), `profile` (profile key) or `value` (numeric assessment).
+It fires after the result is rendered, including on a saved-attempt replay.
+The same JSON is available as `root.dataset.pwQuizResult` for integrations that
+initialize later. Editing or restarting removes it. Listening needs no result POST.
+The PHP `QuizCompletedEvent` still fires only after a recorded attempt.
+
 ## Percentile & leads
 
 On completion the browser posts the attempt to `POST /quiz/result` and gets back

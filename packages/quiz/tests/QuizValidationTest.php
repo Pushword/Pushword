@@ -49,6 +49,58 @@ final class QuizValidationTest extends KernelTestCase
         ];
     }
 
+    public function testAssessmentRendersNumericAnswersAndHasNoCorrectAnswerSchema(): void
+    {
+        self::bootKernel();
+        self::getContainer()->get(RequestContext::class)->setRequestContext('localhost.dev');
+        $data = [
+            'mode' => 'assessment',
+            'questions' => [['q' => 'How far?', 'label' => 'Distance', 'hint' => 'Choose comfortably.', 'answers' => [['a' => 'None', 'value' => 0], ['a' => 'Far', 'value' => 200.5]]]],
+            'results' => [['min' => 0, 'msg' => 'Start here'], ['min' => 200.5, 'msg' => 'Go further']],
+        ];
+        $quiz = self::getContainer()->get(QuizFactory::class)->fromArray($data);
+        self::assertCount(0, self::getContainer()->get(ValidatorInterface::class)->validate($quiz));
+        self::assertFalse($quiz->recordResults);
+        self::assertFalse($quiz->showComparison);
+        self::assertSame('end', $quiz->feedback);
+        $output = self::getContainer()->get(QuizExtension::class)->renderQuiz(json_encode($data, \JSON_THROW_ON_ERROR));
+        self::assertStringContainsString('pw-quiz--assessment', $output);
+        self::assertStringContainsString('data-value="0"', $output);
+        self::assertStringContainsString('data-value="200.5"', $output);
+        self::assertStringContainsString('Choose comfortably.', $output);
+        self::assertStringNotContainsString('acceptedAnswer', $output);
+        self::assertStringContainsString('"recordResults":false', $output);
+    }
+
+    public function testAssessmentRejectsANonFiniteResultThreshold(): void
+    {
+        self::bootKernel();
+        $quiz = self::getContainer()->get(QuizFactory::class)->fromArray([
+            'mode' => 'assessment',
+            'questions' => [['q' => 'Q', 'answers' => [['a' => 'A', 'value' => 0], ['a' => 'B', 'value' => 1]]]],
+            'results' => [['min' => \INF, 'msg' => 'Invalid']],
+        ]);
+        $violations = self::getContainer()->get(ValidatorInterface::class)->validate($quiz);
+        self::assertCount(1, $violations);
+        self::assertSame('results[0].min', $violations->get(0)->getPropertyPath());
+    }
+
+    public function testAssessmentRejectsMissingAndNonFiniteValues(): void
+    {
+        self::bootKernel();
+        $quiz = self::getContainer()->get(QuizFactory::class)->fromArray([
+            'mode' => 'assessment',
+            'questions' => [['q' => 'Q', 'answers' => [['a' => 'Missing'], ['a' => 'Infinite', 'value' => \INF]]]],
+        ]);
+        $violations = self::getContainer()->get(ValidatorInterface::class)->validate($quiz);
+        $paths = [];
+        foreach ($violations as $violation) {
+            $paths[] = $violation->getPropertyPath();
+        }
+
+        self::assertSame(['questions[0].answers[0].value', 'questions[0].answers[1].value'], $paths);
+    }
+
     public function testValidQuizPasses(): void
     {
         self::bootKernel();
@@ -223,6 +275,7 @@ final class QuizValidationTest extends KernelTestCase
         $dir = __DIR__.'/../src';
         $css = (string) file_get_contents($dir.'/Resources/public/quiz.css');
         $markup = file_get_contents($dir.'/templates/component/quiz.html.twig')
+            .file_get_contents($dir.'/templates/component/_result.html.twig')
             .file_get_contents($dir.'/Resources/public/quiz.js')
             .file_get_contents($dir.'/Service/QuizRenderer.php');
 

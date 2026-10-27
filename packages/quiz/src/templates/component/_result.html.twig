@@ -1,0 +1,27 @@
+{% block quiz_result %}
+  <div class="pw-quiz-result {{ pwQuizResultClass|default('mt-6 rounded-[14px] border border-gray-200 bg-white p-6') }}" hidden>
+    <div class="pw-quiz-score" aria-live="polite"></div>
+    {% if quiz.mode == 'profile' %}
+      {# Every possible outcome is server-rendered (SEO + no-JS); the runtime reveals the winning one. #}
+      <div class="pw-quiz-profiles">
+        {% for p in quiz.profiles %}
+          <div class="pw-quiz-profile" data-profile-key="{{ p.key }}" hidden>
+            <h3 class="pw-quiz-profile-title {{ pwQuizProfileTitleClass|default('mt-0 mb-3 text-center text-[1.4rem] text-primary') }}">{{ p.title }}</h3>
+            {{ quiz_profile_image(p) }}
+            {# Holds rendered Markdown; quiz.css collapses the outer margins of the
+               blocks inside. That stays CSS on purpose: a `[&>…]` arbitrary variant
+               would come out of `{{ }}` HTML-escaped and match nothing. #}
+            {% if p.msg %}<div class="pw-quiz-profile-msg {{ pwQuizProfileMsgClass|default('mx-auto mt-1 max-w-2xl leading-[1.6]') }}">{{ p.msg|markdown }}</div>{% endif %}
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+    {% block quiz_result_extra %}{% endblock %}
+    {% if quiz.cta and conversationAvailable %}
+      <div class="pw-quiz-cta {{ pwQuizCtaClass|default('mt-6 border-t border-gray-200 pt-5') }}">
+        {% if quiz.ctaTitle %}<p class="pw-quiz-cta-title {{ pwQuizCtaTitleClass|default('mt-0 mb-3 text-[1.05rem] font-semibold') }}">{{ quiz.ctaTitle }}</p>{% endif %}
+        <div class="pw-quiz-cta-form" data-quiz-cta="{{ conversation(quiz.cta, 'quiz-' ~ slug) }}"></div>
+      </div>
+    {% endif %}
+  </div>
+{% endblock %}

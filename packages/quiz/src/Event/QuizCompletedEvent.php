@@ -25,10 +25,10 @@ use Symfony\Contracts\EventDispatcher\Event;
 final class QuizCompletedEvent extends Event
 {
     /**
-     * @param 'profile'|'quiz' $mode    personality test vs knowledge quiz
-     * @param ?string          $result  the chosen profile key (profile mode), else null
-     * @param ?int             $score   the percentage score (quiz mode), else null
-     * @param list<QuizAnswer> $answers the visitor's chosen answers, in order (may be empty)
+     * @param 'assessment'|'profile'|'quiz' $mode    personality test vs knowledge quiz
+     * @param ?string                       $result  the profile key or numeric assessment outcome, else null
+     * @param ?int                          $score   the percentage score (quiz mode), else null
+     * @param list<QuizAnswer>              $answers the visitor's chosen answers, in order (may be empty)
      */
     public function __construct(
         private readonly string $host,

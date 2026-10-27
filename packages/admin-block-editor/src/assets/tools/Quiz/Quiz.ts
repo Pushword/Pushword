@@ -16,6 +16,7 @@ import { BaseTool } from '../Abstract/BaseTool'
 interface QuizAnswer {
   a?: string
   correct?: boolean
+  value?: number
   weights?: Record<string, number>
   profile?: string
   media?: string
@@ -28,6 +29,8 @@ interface QuizQuestion {
   video?: string
   alt?: string
   explanation?: string
+  label?: string
+  hint?: string
   answers?: QuizAnswer[]
 }
 
@@ -46,6 +49,8 @@ interface QuizProfile {
 
 export interface QuizData extends BlockToolData {
   mode?: string
+  recordResults?: boolean
+  showComparison?: boolean
   title?: string
   difficulty?: string
   label?: string
@@ -61,8 +66,8 @@ export interface QuizData extends BlockToolData {
   levels?: QuizData[]
 }
 
-/** The three shapes a quiz block can take; `levels`/`profile` are mutually exclusive by construction. */
-type QuizMode = 'quiz' | 'levels' | 'profile'
+/** The shapes a quiz block can take; `levels`/`profile` are mutually exclusive by construction. */
+type QuizMode = 'quiz' | 'levels' | 'profile' | 'assessment'
 
 /**
  * Every UI word a quiz may override, with the English default it otherwise falls
@@ -71,6 +76,11 @@ type QuizMode = 'quiz' | 'levels' | 'profile'
  */
 const LABELS: { key: string; placeholder: string; only?: QuizMode[] }[] = [
   { key: 'question', placeholder: 'Question' },
+  { key: 'confirm', placeholder: 'Confirm answer' },
+  { key: 'restart', placeholder: 'Restart the quiz' },
+  { key: 'finish', placeholder: 'See my result', only: ['assessment'] },
+  { key: 'back', placeholder: 'Back', only: ['assessment'] },
+  { key: 'editAnswers', placeholder: 'Change my answers', only: ['assessment'] },
   { key: 'questions', placeholder: 'questions' },
   { key: 'explanation', placeholder: 'Explanation' },
   { key: 'score', placeholder: 'Your score:', only: ['quiz', 'levels'] },
@@ -117,6 +127,10 @@ export default class Quiz extends BaseTool {
     return 'profile' === this.mode
   }
 
+  private get assessmentMode(): boolean {
+    return 'assessment' === this.mode
+  }
+
   private get levelsMode(): boolean {
     return 'levels' === this.mode
   }
@@ -145,7 +159,9 @@ export default class Quiz extends BaseTool {
         : [{ q: '', answers: [{ a: '', correct: true }, { a: '' }] }]
 
     this.data = {
-      mode: 'profile' === data.mode ? 'profile' : 'quiz',
+      mode: ['profile', 'assessment'].includes(data.mode || '') ? data.mode : 'quiz',
+      recordResults: data.recordResults,
+      showComparison: data.showComparison,
       title: data.title || '',
       difficulty: data.difficulty || '',
       feedback: data.feedback || 'immediate',
@@ -158,7 +174,8 @@ export default class Quiz extends BaseTool {
       questions,
       levels: Array.isArray(data.levels) ? data.levels : [],
     }
-    this.mode = 'profile' === this.data.mode ? 'profile' : ((this.data.levels || []).length > 0 ? 'levels' : 'quiz')
+    if ('profile' === this.data.mode || 'assessment' === this.data.mode) this.mode = this.data.mode
+    else if ((this.data.levels || []).length > 0) this.mode = 'levels'
   }
 
   public render(): HTMLElement {
@@ -196,6 +213,7 @@ export default class Quiz extends BaseTool {
     make.option(this.modeSelect, 'quiz', 'Knowledge quiz')
     make.option(this.modeSelect, 'levels', 'Knowledge quiz with difficulty levels (tabs)')
     make.option(this.modeSelect, 'profile', 'Personality test (answers weigh profiles)')
+    make.option(this.modeSelect, 'assessment', 'Assessment (lowest answer value)')
     this.modeSelect.value = this.mode
     this.modeSelect.addEventListener('change', () => {
       this.mode = this.modeSelect.value as QuizMode
@@ -208,6 +226,9 @@ export default class Quiz extends BaseTool {
         while (this.profilesList.children.length < 2) this.profilesList.appendChild(this.buildProfile({}))
       }
 
+      this.wrapper.querySelectorAll<HTMLInputElement>('[data-setting]').forEach(input => {
+        input.checked = !this.assessmentMode
+      })
       this.applyMode()
     })
     modeWrap.appendChild(this.modeSelect)
@@ -241,6 +262,17 @@ export default class Quiz extends BaseTool {
     // The end form renders after the last question, so its config sits after the
     // questions too. Folded away until it holds something.
     this.wrapper.appendChild(this.buildCtaBlock())
+
+    const stats = make.element('details', 'cdx-quiz__stats')
+    stats.appendChild(make.element('summary', null, {}, 'Results and comparisons'))
+    for (const [key, title] of [['recordResults', 'Record completed attempts'], ['showComparison', 'Show participant comparisons']] as const) {
+      const label = make.element('label', 'cdx-quiz__stats-label')
+      const input = make.element('input', null, {type: 'checkbox', 'data-setting': key}) as HTMLInputElement
+      input.checked = this.data[key] ?? !this.assessmentMode
+      label.append(input, document.createTextNode(title))
+      stats.appendChild(label)
+    }
+    this.wrapper.appendChild(stats)
 
     // Author-defined UI words (no i18n). Empty = English default (the placeholder).
     this.wrapper.appendChild(
@@ -299,6 +331,7 @@ export default class Quiz extends BaseTool {
     // A CSS class swaps the per-answer control (correct flag <-> profile chips)
     // and hides the score bands / difficulty in personality mode.
     this.wrapper.classList.toggle('cdx-quiz--profile', this.profileMode)
+    this.wrapper.classList.toggle('cdx-quiz--assessment', this.assessmentMode)
     // The questions live in the single section, reused by the personality test.
     this.singleSection.hidden = this.levelsMode
     this.levelsSection.hidden = !this.levelsMode
@@ -308,6 +341,7 @@ export default class Quiz extends BaseTool {
       const only = (el as HTMLElement).dataset.only
       ;(el as HTMLElement).hidden = undefined !== only && !only.split(' ').includes(this.mode)
     })
+    this.wrapper.querySelectorAll<HTMLInputElement>('.cdx-quiz__result-min').forEach(input => this.configureResultThreshold(input))
     if (this.profileMode) this.refreshChips()
   }
 
@@ -473,6 +507,8 @@ export default class Quiz extends BaseTool {
     el.appendChild(head)
 
     el.appendChild(this.textareaEl('cdx-quiz__q-text', 'Question text', q.q || ''))
+    el.appendChild(this.inputEl('cdx-quiz__q-label', 'Topic (optional)', q.label || ''))
+    el.appendChild(this.inputEl('cdx-quiz__q-hint', 'Hint (optional)', q.hint || ''))
 
     el.appendChild(
       this.buildMediaField('cdx-quiz__q-media', 'Image filename — also the video poster', q.media || ''),
@@ -509,6 +545,10 @@ export default class Quiz extends BaseTool {
     }) as HTMLInputElement
     correct.checked = !!a.correct
     main.appendChild(correct)
+    const value = this.inputEl('cdx-quiz__a-value', 'Value', undefined === a.value ? '' : String(a.value))
+    value.type = 'number'
+    value.step = 'any'
+    main.appendChild(value)
     main.appendChild(this.inputEl('cdx-quiz__a-text', 'Answer', a.a || ''))
     main.appendChild(
       make.element('button', 'cdx-quiz__del', { type: 'button', title: 'Remove answer' }, '✕', () => {
@@ -648,6 +688,19 @@ export default class Quiz extends BaseTool {
     return `${count} ${word}${1 === count ? '' : 's'}`
   }
 
+  private configureResultThreshold(input: HTMLInputElement): void {
+    input.step = this.assessmentMode ? 'any' : '1'
+    input.placeholder = this.assessmentMode ? 'Minimum value' : 'min %'
+    input.setAttribute('aria-label', input.placeholder)
+    if (this.assessmentMode) {
+      input.removeAttribute('min')
+      input.removeAttribute('max')
+    } else {
+      input.min = '0'
+      input.max = '100'
+    }
+  }
+
   private buildResult(r: QuizResultBand): HTMLElement {
     const el = make.element('div', 'cdx-quiz__result-row')
     const min = make.element('input', ['cdx-quiz__input', 'cdx-quiz__result-min'], {
@@ -656,9 +709,10 @@ export default class Quiz extends BaseTool {
       max: '100',
       placeholder: 'min %',
     }) as HTMLInputElement
+    this.configureResultThreshold(min)
     min.value = String(r.min ?? 0)
     el.appendChild(min)
-    el.appendChild(this.inputEl('cdx-quiz__result-msg', 'Message', r.msg || ''))
+    el.appendChild(this.textareaEl('cdx-quiz__result-msg', 'Message (Markdown)', r.msg || ''))
     el.appendChild(
       make.element('button', 'cdx-quiz__del', { type: 'button' }, '✕', () => el.remove()),
     )
@@ -831,12 +885,19 @@ export default class Quiz extends BaseTool {
       if (alt) question.alt = alt
       const explanation = val('.cdx-quiz__q-explanation', qEl)
       if (explanation) question.explanation = explanation
+      const label = val('.cdx-quiz__q-label', qEl)
+      if (label) question.label = label
+      const hint = val('.cdx-quiz__q-hint', qEl)
+      if (hint) question.hint = hint
 
       qEl.querySelectorAll('.cdx-quiz__a').forEach((aEl) => {
         const text = val('.cdx-quiz__a-text', aEl)
         if (!text) return
         const answer: QuizAnswer = { a: text }
-        if (this.profileMode) {
+        if (this.assessmentMode) {
+          const value = val('.cdx-quiz__a-value', aEl)
+          if (value !== '' && Number.isFinite(Number(value))) answer.value = Number(value)
+        } else if (this.profileMode) {
           const weights: Record<string, number> = {}
           Object.entries(Quiz.readChips(aEl)).forEach(([pid, weight]) => {
             const key = keyByPid[pid]
@@ -945,6 +1006,14 @@ export default class Quiz extends BaseTool {
       if (results.length > 0) data.results = results
     }
 
+    if (this.assessmentMode) {
+      data.mode = 'assessment'
+      data.feedback = 'end'
+    }
+    root.querySelectorAll<HTMLInputElement>('[data-setting]').forEach(input => {
+      const key = input.dataset.setting as 'recordResults' | 'showComparison'
+      if (undefined !== this.data[key] || input.checked !== !this.assessmentMode) data[key] = input.checked
+    })
     this.data = data
     return data
   }
@@ -961,10 +1030,13 @@ export default class Quiz extends BaseTool {
       if (q.video) cq.video = q.video
       if (q.alt) cq.alt = q.alt
       if (q.explanation) cq.explanation = q.explanation
+      if (q.label) cq.label = q.label
+      if (q.hint) cq.hint = q.hint
       ;(q.answers || []).forEach((a) => {
         if (!a.a) return
         const ca: QuizAnswer = { a: a.a }
         if (a.correct) ca.correct = true
+        if (undefined !== a.value) ca.value = a.value
         // Canonicalise personality weights: an explicit map, or the `profile` shorthand (== {key: 1}).
         if (a.weights && Object.keys(a.weights).length > 0) ca.weights = a.weights
         else if (a.profile) ca.weights = { [a.profile]: 1 }
@@ -1009,11 +1081,14 @@ export default class Quiz extends BaseTool {
   /** Strip empty optional fields so the exported JSON stays compact. */
   private static clean(data: QuizData): QuizData {
     const isProfile = 'profile' === data.mode
+    const isAssessment = 'assessment' === data.mode
 
     // Shared metadata, in one place for every mode. Personality tests always
     // score at the end (no correct answer to reveal).
-    const out: QuizData = { feedback: isProfile || 'end' === data.feedback ? 'end' : 'immediate' }
-    if (isProfile) out.mode = 'profile'
+    const out: QuizData = { feedback: isProfile || isAssessment || 'end' === data.feedback ? 'end' : 'immediate' }
+    if (isProfile || isAssessment) out.mode = data.mode
+    if (undefined !== data.recordResults) out.recordResults = data.recordResults
+    if (undefined !== data.showComparison) out.showComparison = data.showComparison
     if (data.title) out.title = data.title
     if (data.cta) out.cta = data.cta
     if (data.ctaTitle) out.ctaTitle = data.ctaTitle
@@ -1029,7 +1104,7 @@ export default class Quiz extends BaseTool {
     }
 
     // Levels own the questions; the root keeps only the shared metadata.
-    if (Array.isArray(data.levels) && data.levels.length > 0) {
+    if (!isAssessment && Array.isArray(data.levels) && data.levels.length > 0) {
       out.levels = data.levels.map((level) => Quiz.cleanLevel(level))
       return out
     }

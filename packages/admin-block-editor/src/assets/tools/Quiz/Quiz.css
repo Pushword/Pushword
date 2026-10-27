@@ -459,3 +459,10 @@
 .cdx-quiz__media-box .cdx-quiz__input {
   font-size: 0.85rem;
 }
+
+.cdx-quiz__a-value { display: none; width: 6rem; }
+.cdx-quiz--assessment .cdx-quiz__a-value { display: block; }
+.cdx-quiz--assessment .cdx-quiz__a-correct,
+.cdx-quiz--assessment .cdx-quiz__feedback,
+.cdx-quiz--assessment .cdx-quiz__difficulty { display: none; }
+.cdx-quiz__stats-label { display: flex; gap: .5rem; margin-top: .5rem; }

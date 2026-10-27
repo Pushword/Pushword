@@ -2,7 +2,7 @@
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "$id": "https://pushword.piedweb.com/schema/quiz.json",
     "title": "Pushword Quiz",
-    "description": "A quiz declared inline in a page via {% quiz %}…{% endquiz %} (raw JSON body) or {{ quiz('…json…') }} (single-quoted Twig string). The Symfony Validator on the Quiz model is the source of truth; this schema mirrors its structure as an authoring aid. Two modes: a knowledge quiz (default) scored on `correct` answers, or a personality test (`mode: profile`) where answers carry `weights` toward named `profiles` and the highest-tallied one wins. Cross-field rules this schema cannot fully express: a quiz needs `questions` unless it delegates them to `levels`; in the default mode each question needs at least one `correct` answer; in `mode: profile` it needs at least one `profile` and every answer weight must reference a declared profile key; a `video` requires both `media` (used as the poster) and `alt`.",
+    "description": "A quiz declared inline in a page via {% quiz %}…{% endquiz %} (raw JSON body) or {{ quiz('…json…') }} (single-quoted Twig string). The Symfony Validator on the Quiz model is the source of truth; this schema mirrors its structure as an authoring aid. Three modes: a numeric assessment (`mode: assessment`, minimum selected value), a knowledge quiz (default) scored on `correct` answers, or a personality test (`mode: profile`) where answers carry `weights` toward named `profiles` and the highest-tallied one wins. Cross-field rules this schema cannot fully express: a quiz needs `questions` unless it delegates them to `levels`; in the default mode each question needs at least one `correct` answer; in `mode: profile` it needs at least one `profile` and every answer weight must reference a declared profile key; a `video` requires both `media` (used as the poster) and `alt`.",
     "type": "object",
     "anyOf": [
         { "required": ["questions"] },
@@ -11,7 +11,9 @@
     "if": { "properties": { "mode": { "const": "profile" } }, "required": ["mode"] },
     "then": { "required": ["profiles"] },
     "properties": {
-        "mode": { "enum": ["quiz", "profile"], "default": "quiz", "description": "\"quiz\" (default): scored on correct answers. \"profile\": a personality test scored on answer weights toward named profiles." },
+        "mode": { "enum": ["quiz", "profile", "assessment"], "default": "quiz", "description": "\"quiz\" (default): scored on correct answers. \"profile\": a personality test scored on answer weights toward named profiles." },
+        "recordResults": { "type": "boolean", "description": "Record completed attempts. Defaults to false for assessments, true otherwise." },
+        "showComparison": { "type": "boolean", "description": "Show participant comparisons. Defaults to false for assessments, true otherwise." },
         "title": { "type": "string" },
         "difficulty": { "type": "string", "description": "Free label shown as a badge, e.g. \"Easy\"." },
         "feedback": { "enum": ["immediate", "end"], "default": "immediate", "description": "Ignored in mode:profile (always scored at the end)." },
@@ -21,7 +23,7 @@
         "pass": { "type": "integer", "minimum": 0, "maximum": 100, "description": "Score %% needed to pass a level and reveal the next-level button (default 50). Knowledge quiz only." },
         "label": { "type": "string", "description": "Tab label for a difficulty level; falls back to `difficulty`." },
         "labels": { "$ref": "#/$defs/labels" },
-        "results": { "type": "array", "items": { "$ref": "#/$defs/band" }, "description": "Score bands (knowledge quiz)." },
+        "results": { "type": "array", "items": { "$ref": "#/$defs/band" }, "description": "Percentage score bands, or numeric thresholds in assessment mode." },
         "profiles": { "type": "array", "items": { "$ref": "#/$defs/profile" }, "description": "Possible outcomes of a personality test (mode:profile)." },
         "questions": { "type": "array", "items": { "$ref": "#/$defs/question" } },
         "levels": {
@@ -38,6 +40,8 @@
             "properties": {
                 "question": { "type": "string" },
                 "questions": { "type": "string" },
+                "label": { "type": "string", "description": "Optional question topic." },
+                "hint": { "type": "string", "description": "Optional instruction before the answers." },
                 "explanation": { "type": "string" },
                 "score": { "type": "string" },
                 "better": { "type": "string" },
@@ -56,6 +60,8 @@
                 "media": { "type": "string", "description": "Image filename; also the poster when `video` is set." },
                 "video": { "type": "string", "description": "Video URL; requires `media` (poster) and `alt`." },
                 "alt": { "type": "string" },
+                "label": { "type": "string", "description": "Optional question topic." },
+                "hint": { "type": "string", "description": "Optional instruction before the answers." },
                 "explanation": { "type": "string" }
             },
             "additionalProperties": false
@@ -66,6 +72,7 @@
             "properties": {
                 "a": { "type": "string", "minLength": 1, "description": "The answer text (alias: text)." },
                 "text": { "type": "string" },
+                "value": { "type": "number", "description": "Required in assessment mode. The smallest selected value sets the outcome." },
                 "correct": { "type": "boolean", "default": false, "description": "Knowledge quiz: marks an expected answer." },
                 "weights": {
                     "type": "object",
@@ -96,7 +103,7 @@
             "type": "object",
             "required": ["min", "msg"],
             "properties": {
-                "min": { "type": "integer", "minimum": 0, "maximum": 100 },
+                "min": { "type": "number", "description": "0–100 for a knowledge quiz; a numeric threshold for assessments." },
                 "msg": { "type": "string", "description": "Message for scores ≥ min (alias: message)." },
                 "message": { "type": "string" }
             },

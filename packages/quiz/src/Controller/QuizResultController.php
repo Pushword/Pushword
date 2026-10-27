@@ -92,6 +92,11 @@ final class QuizResultController extends AbstractController
         // Personality test: a chosen profile key instead of a numeric score.
         $profileRaw = $data['result'] ?? null;
         $profile = \is_string($profileRaw) ? trim($profileRaw) : '';
+        $assessment = 'assessment' === ($data['mode'] ?? null);
+        if ($assessment && ('' === $profile || ! is_numeric($profile) || ! is_finite((float) $profile))) {
+            return $this->json(['error' => 'Invalid payload'], Response::HTTP_BAD_REQUEST);
+        }
+
         if ('' !== $profile) {
             if (mb_strlen($profile) > 255) {
                 return $this->json(['error' => 'Invalid payload'], Response::HTTP_BAD_REQUEST);
@@ -108,7 +113,7 @@ final class QuizResultController extends AbstractController
             $this->entityManager->persist($entity);
             $this->entityManager->flush();
 
-            $this->eventDispatcher->dispatch(new QuizCompletedEvent($host, $quiz, 'profile', $profile, null, $answers));
+            $this->eventDispatcher->dispatch(new QuizCompletedEvent($host, $quiz, $assessment ? 'assessment' : 'profile', $profile, null, $answers));
 
             return $this->json(['share' => $share]);
         }

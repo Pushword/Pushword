@@ -1,7 +1,9 @@
 quiz:
   label:
+    back: 'Retour'
     better: 'Mieux que {p}% des participants'
     confirm: 'Valider ma réponse'
+    editAnswers: 'Modifier mes réponses'
     explanation: 'Explication'
     level: 'Niveau'
     nextLevel: 'Niveau suivant'

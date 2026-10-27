@@ -1,7 +1,9 @@
 quiz:
   label:
+    back: 'Back'
     better: 'Better than {p}% of participants'
     confirm: 'Confirm answer'
+    editAnswers: 'Change my answers'
     explanation: 'Explanation'
     level: 'Level'
     nextLevel: 'Next level'

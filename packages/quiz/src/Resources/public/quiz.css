@@ -160,6 +160,8 @@
 /* "Restart" — shown on a finished quiz (also when a completed attempt is replayed
    on return); resets it in place. Secondary/ghost styling so it never competes
    with the primary "next level" action. */
+.pw-quiz-back,
+.pw-quiz-edit,
 .pw-quiz-restart {
   display: block;
   font: inherit;
@@ -173,10 +175,14 @@
   cursor: pointer;
   transition: background 0.15s, color 0.15s;
 }
+.pw-quiz-back:hover,
+.pw-quiz-edit:hover,
 .pw-quiz-restart:hover {
   background: var(--pw-quiz-accent);
   color: #fff;
 }
+.pw-quiz-back:focus-visible,
+.pw-quiz-edit:focus-visible,
 .pw-quiz-restart:focus-visible {
   outline: 2px solid var(--pw-quiz-accent);
   outline-offset: 2px;
@@ -251,3 +257,10 @@
     transition: none;
   }
 }
+
+.pw-quiz-back { display: inline-block; margin: 1rem .75rem 0 0; }
+.pw-quiz-q-label { font-weight: 600; }
+.pw-quiz-hint { color: var(--pw-quiz-muted); margin-bottom: 1rem; }
+.pw-quiz--assessment .pw-quiz-band { font-size: inherit; font-weight: inherit; }
+
+.pw-quiz-progress { display: block; width: 100%; height: .375rem; margin-bottom: 1rem; accent-color: var(--pw-quiz-accent); }

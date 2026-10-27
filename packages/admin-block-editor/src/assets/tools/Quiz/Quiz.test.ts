@@ -569,3 +569,23 @@ describe('Quiz media fields', () => {
     )
   })
 })
+
+describe('Quiz assessment', () => {
+  it('round-trips numeric zero, hints, thresholds and result settings through the native editor', () => {
+    const data: QuizData = {
+      mode: 'assessment', feedback: 'end', recordResults: true, showComparison: false,
+      labels: {confirm: 'Continue', back: 'Previous', editAnswers: 'Edit', restart: 'Again'},
+      questions: [{q: 'Distance?', label: 'Distance', hint: 'Comfortably', answers: [{a: 'None', value: 0}, {a: 'Far', value: 200.5}]}],
+      results: [{min: 0, msg: 'Start'}, {min: 200.5, msg: '### Further\n\nMore details.'}],
+    }
+    const tool = new Quiz({data, api, readOnly: false})
+    const el = tool.render()
+    expect(el.classList.contains('cdx-quiz--assessment')).toBe(true)
+    expect(el.querySelector<HTMLInputElement>('.cdx-quiz__a-value')!.value).toBe('0')
+    expect(el.querySelector<HTMLInputElement>('.cdx-quiz__result-min')!.hasAttribute('max')).toBe(false)
+    expect(tool.save()).toMatchObject(data)
+    expect(parseBlock(Quiz.exportToMarkdown(tool.save()))).toMatchObject(data)
+    const importApi = {blocks: {insert: () => ({id: 'assessment'}), update: () => {}}} as unknown as API
+    expect(Quiz.importFromMarkdown(importApi, Quiz.exportToMarkdown(data))).toMatchObject(data)
+  })
+})

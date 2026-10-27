@@ -24,6 +24,7 @@ class Answer
         public ?string $media = null,
         public ?string $alt = null,
         public array $weights = [],
+        public ?float $value = null,
     ) {
     }
 }

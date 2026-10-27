@@ -14,6 +14,22 @@ use Symfony\Component\HttpFoundation\Response;
 #[Group('integration')]
 final class QuizResultControllerTest extends WebTestCase
 {
+    public function testRecordsNumericAssessmentOutcomesAndRejectsInvalidValues(): void
+    {
+        $client = self::createClient();
+        $data = ['quiz' => 'numeric-assessment', 'mode' => 'assessment', 'result' => '0'];
+        $this->post($client, $data, clientIp: '192.0.2.62');
+        self::assertSame(Response::HTTP_OK, $client->getResponse()->getStatusCode());
+        $data['result'] = '-2.5';
+        $this->post($client, $data, clientIp: '192.0.2.62');
+        self::assertSame(Response::HTTP_OK, $client->getResponse()->getStatusCode());
+        foreach (['', 'INF', '1e999', 'invalid'] as $invalid) {
+            $data['result'] = $invalid;
+            $this->post($client, $data, clientIp: '192.0.2.62');
+            self::assertSame(Response::HTTP_BAD_REQUEST, $client->getResponse()->getStatusCode());
+        }
+    }
+
     public function testRecordsAttemptsAndComputesPercentile(): void
     {
         $client = self::createClient();

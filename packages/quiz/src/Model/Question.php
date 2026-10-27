@@ -26,7 +26,9 @@ class Question
         public ?string $media = null,
         public ?string $video = null,
         public ?string $alt = null,
-        public ?string $explanation = null
+        public ?string $explanation = null,
+        public ?string $label = null,
+        public ?string $hint = null,
     ) {
     }
 

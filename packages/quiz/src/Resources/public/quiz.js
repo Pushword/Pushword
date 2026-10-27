@@ -97,7 +97,9 @@
     var config = readConfig(root)
     var slug = root.getAttribute('data-slug')
     var profileMode = 'profile' === config.mode
-    var immediate = !profileMode && 'end' !== config.feedback
+    var assessmentMode = 'assessment' === config.mode
+    var recordResults = undefined === config.recordResults ? !assessmentMode : config.recordResults
+    var immediate = !profileMode && !assessmentMode && 'end' !== config.feedback
     var questions = Array.prototype.slice.call(root.querySelectorAll('.pw-quiz-q'))
     if (0 === questions.length) return
 
@@ -114,10 +116,27 @@
       var confirm = document.createElement('button')
       confirm.type = 'button'
       confirm.className = 'pw-quiz-confirm'
-      confirm.textContent = (config.labels && config.labels.confirm) || 'Confirm answer'
+      var labels = config.labels || {}
+      confirm.textContent = (assessmentMode && idx === total - 1 ? labels.finish : '') || labels.confirm || 'Confirm answer'
       confirm.disabled = true
       q.appendChild(confirm)
 
+      if (assessmentMode) {
+        var progress = document.createElement('progress')
+        progress.className = 'pw-quiz-progress'
+        progress.value = idx + 1
+        progress.max = total
+        progress.setAttribute('aria-label', (labels.question || 'Question') + ' ' + (idx + 1) + '/' + total)
+        q.insertBefore(progress, q.firstChild)
+      }
+      if (assessmentMode && idx > 0) {
+        var back = document.createElement('button')
+        back.type = 'button'
+        back.className = 'pw-quiz-back'
+        back.textContent = (config.labels && config.labels.back) || 'Back'
+        back.addEventListener('click', function () { assessmentStep(idx - 1, true) })
+        q.insertBefore(back, confirm)
+      }
       buttons.forEach(function (btn) {
         btn.addEventListener('click', function () {
           if (q.hasAttribute('data-answered') || q.hasAttribute('data-locked')) return
@@ -125,6 +144,7 @@
             a.setAttribute('aria-pressed', a === btn ? 'true' : 'false')
             a.classList.toggle('pw-quiz-a--selected', a === btn)
           })
+          if (assessmentMode) rememberChoice(q, idx, btn, buttons)
           confirm.disabled = false
         })
       })
@@ -139,20 +159,56 @@
     // + result + a "restart" button) instead of showing a blank quiz. Only fully
     // completed attempts are stored, and a changed question count discards a stale one.
     var done = readDone(slug)
-    if (done && done.a && done.a.length === total) restore(done.a)
+    if (assessmentMode) assessmentStep(0, false)
+    if (done && Array.isArray(done.a) && done.a.length === total &&
+      (done.mode ? done.mode === (config.mode || 'quiz') : !assessmentMode) &&
+      done.a.every(function (a, idx) { return Number.isInteger(a) && a >= 0 && a < questions[idx].querySelectorAll('.pw-quiz-a').length })) restore(done.a)
+
+    function rememberChoice(q, idx, chosen, buttons) {
+      var qText = q.querySelector('.pw-quiz-question')
+      var aText = chosen.querySelector('.pw-quiz-a-text')
+      chosenAnswers[idx] = {
+        q: qText ? qText.textContent.trim() : '',
+        a: (aText ? aText.textContent : chosen.textContent).trim(),
+      }
+      chosenIdx[idx] = buttons.indexOf(chosen)
+    }
+
+    function assessmentStep(idx, focus) {
+      root.classList.remove('pw-quiz--done')
+      delete root.dataset.pwQuizResult
+      var resultBox = root.querySelector('.pw-quiz-result')
+      if (resultBox) resultBox.hidden = true
+      questions.forEach(function (q, i) {
+        q.hidden = i !== idx
+        if (i !== idx) q.setAttribute('data-locked', '1')
+        else q.removeAttribute('data-locked')
+        q.removeAttribute('data-answered')
+        var confirm = q.querySelector('.pw-quiz-confirm')
+        confirm.hidden = false
+        confirm.disabled = undefined === chosenIdx[i]
+        Array.prototype.forEach.call(q.querySelectorAll('.pw-quiz-a'), function (btn, a) {
+          btn.disabled = false
+          btn.removeAttribute('aria-disabled')
+          var selected = a === chosenIdx[i]
+          btn.setAttribute('aria-pressed', selected ? 'true' : 'false')
+          btn.classList.toggle('pw-quiz-a--selected', selected)
+        })
+      })
+      if (focus) {
+        softScroll(questions[idx])
+        var heading = questions[idx].querySelector('.pw-quiz-question')
+        heading.tabIndex = -1
+        heading.focus({preventScroll: true})
+      }
+    }
 
     // The per-question answered state, shared by a live click and a restore replay.
     function applyChoice(q, idx, chosen, buttons) {
       q.setAttribute('data-answered', '1')
       q.classList.add('pw-quiz-q--answered')
 
-      var qText = q.querySelector('.pw-quiz-question')
-      var aText = chosen.querySelector('.pw-quiz-a-text')
-      chosenAnswers.push({
-        q: qText ? qText.textContent.trim() : '',
-        a: (aText ? aText.textContent : chosen.textContent).trim(),
-      })
-      chosenIdx[idx] = buttons.indexOf(chosen)
+      rememberChoice(q, idx, chosen, buttons)
 
       var isCorrect = false
       if (profileMode) {
@@ -180,6 +236,12 @@
     }
 
     function answer(q, idx, chosen, buttons) {
+      if (assessmentMode) {
+        rememberChoice(q, idx, chosen, buttons)
+        if (idx === total - 1) finish(false)
+        else assessmentStep(idx + 1, true)
+        return
+      }
       applyChoice(q, idx, chosen, buttons)
 
       if (answered >= total) {
@@ -198,6 +260,14 @@
     // Replay a stored attempt: reveal every question at once, mark its recorded
     // answer, then show the result. finish(true) skips re-recording the attempt.
     function restore(savedAnswers) {
+      if (assessmentMode) {
+        questions.forEach(function (q, idx) {
+          var buttons = Array.prototype.slice.call(q.querySelectorAll('.pw-quiz-a'))
+          rememberChoice(q, idx, buttons[savedAnswers[idx]], buttons)
+        })
+        finish(true)
+        return
+      }
       questions.forEach(function (q, idx) {
         q.removeAttribute('data-locked')
         var buttons = Array.prototype.slice.call(q.querySelectorAll('.pw-quiz-a'))
@@ -218,13 +288,46 @@
         }
       }
 
-      if (profileMode) finishProfile(resultBox, restored)
+      if (assessmentMode) finishAssessment(resultBox, restored)
+      else if (profileMode) finishProfile(resultBox, restored)
       else finishScore(resultBox, restored)
 
       addRestartButton(resultBox)
       // Persist a fresh finish only — a replay is already stored (and its
       // finishScore/finishProfile skip the result POST so stats aren't inflated).
-      if (!restored) storeDone(slug, chosenIdx)
+      if (!restored) storeDone(slug, chosenIdx, config.mode || 'quiz')
+      var outcome = {quiz: slug, mode: config.mode || 'quiz', answers: chosenAnswers.slice(), restored: restored}
+      if (assessmentMode) outcome.value = assessmentValue()
+      else if (profileMode) outcome.profile = winningKey(root, scores)
+      else outcome.score = Math.round((score / total) * 100)
+      root.dataset.pwQuizResult = JSON.stringify(outcome)
+      root.dispatchEvent(new CustomEvent('pushword:quiz:complete', {bubbles: true, detail: outcome}))
+    }
+
+    function assessmentValue() {
+      return Math.min.apply(null, questions.map(function (q, i) {
+        return Number(q.querySelectorAll('.pw-quiz-a')[chosenIdx[i]].getAttribute('data-value'))
+      }))
+    }
+
+    function finishAssessment(resultBox, restored) {
+      questions.forEach(function (q) { q.hidden = true })
+      var value = assessmentValue()
+      var scoreBox = root.querySelector('.pw-quiz-score')
+      if (scoreBox) scoreBox.innerHTML = '<div class="pw-quiz-band">' + bandMessage(value, config.results || []) + '</div>'
+      if (resultBox) {
+        if (!restored) softScroll(resultBox)
+        if (!resultBox.querySelector('.pw-quiz-edit')) {
+          var edit = document.createElement('button')
+          edit.type = 'button'
+          edit.className = 'pw-quiz-edit'
+          edit.textContent = (config.labels && config.labels.editAnswers) || 'Change my answers'
+          edit.addEventListener('click', function () { clearDone(slug); assessmentStep(0, true) })
+          resultBox.appendChild(edit)
+        }
+      }
+      if (!restored && recordResults) submitProfileResult(slug, String(value), scoreBox, config, chosenAnswers)
+      maybeShowCta(root, 'quizValue=' + encodeURIComponent(value))
     }
 
     function finishScore(resultBox, restored) {
@@ -233,7 +336,7 @@
       if (scoreBox) scoreBox.innerHTML = buildScoreHtml(pct, score, total, config)
       if (resultBox && !restored) softScroll(resultBox)
 
-      if (!restored) submitResult(slug, pct, scoreBox, config, chosenAnswers)
+      if (!restored && recordResults) submitResult(slug, pct, scoreBox, config, chosenAnswers)
       maybeShowCta(root, 'quizScore=' + pct)
       maybeOfferNextLevel(scoreBox, pct, config, levelCtx)
     }
@@ -256,7 +359,7 @@
       }
       if (resultBox && !restored) softScroll(resultBox)
 
-      if (!restored) submitProfileResult(slug, winner, scoreBox, config, chosenAnswers)
+      if (!restored && recordResults) submitProfileResult(slug, winner, scoreBox, config, chosenAnswers)
       maybeShowCta(root, 'quizProfile=' + encodeURIComponent(winner || ''))
     }
 
@@ -314,7 +417,9 @@
         })
       })
 
-      softScroll(root)
+      delete root.dataset.pwQuizResult
+      if (assessmentMode) assessmentStep(0, true)
+      else softScroll(root)
     }
   }
 
@@ -431,7 +536,7 @@
       })
       .then(function (data) {
         // Skip "better than 0%": it is meaningless and reads as a put-down.
-        if (!data || 'number' !== typeof data.percentile || data.percentile <= 0 || !line) return
+        if (false === config.showComparison || !data || 'number' !== typeof data.percentile || data.percentile <= 0 || !line) return
         var tpl = (config.labels && config.labels.better) || 'Better than {p}% of participants'
         line.textContent = tpl.replace('{p}', data.percentile)
         line.hidden = false
@@ -445,13 +550,13 @@
 
     fetch(resultEndpoint(config), {
       method: 'POST',
-      body: JSON.stringify({ quiz: slug, result: result, answers: answers || [], signature: config.resultSignature }),
+      body: JSON.stringify({ quiz: slug, mode: config.mode, result: result, answers: answers || [], signature: config.resultSignature }),
     })
       .then(function (r) {
         return r.ok ? r.json() : null
       })
       .then(function (data) {
-        if (!data || 'number' !== typeof data.share || data.share <= 0) return
+        if (false === config.showComparison || !data || 'number' !== typeof data.share || data.share <= 0) return
         var tpl = (config.labels && config.labels.share) || '{p}% got the same profile'
         var line = document.createElement('p')
         line.className = 'pw-quiz-share'
@@ -542,10 +647,10 @@
     }
   }
 
-  function storeDone(slug, answers) {
+  function storeDone(slug, answers, mode) {
     if (!slug) return
     try {
-      window.localStorage.setItem(doneKey(slug), JSON.stringify({ v: 1, a: answers }))
+      window.localStorage.setItem(doneKey(slug), JSON.stringify({ v: 1, mode: mode, a: answers }))
     } catch (e) {}
   }
 

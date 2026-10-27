@@ -36,6 +36,8 @@
     {{ quiz_figure(q) }}
 
     <p class="pw-quiz-question {{ pwQuizQuestionClass|default('mt-0 mb-4 text-[1.15rem] font-semibold') }}">{{ q.q }}</p>
+    {% if q.label %}<p class="pw-quiz-q-label">{{ q.label }}</p>{% endif %}
+    {% if q.hint %}<p class="pw-quiz-hint">{{ q.hint }}</p>{% endif %}
 
     {# 540px is deliberately below Tailwind's sm: two answers fit side by side
        well before a tablet. auto-rows-fr keeps both boxes in a row as tall as
@@ -44,7 +46,7 @@
       {% for a in q.answers %}
         <li class="{{ pwQuizAnswerItemClass|default('flex') }}">
           {# [font:inherit] — a button does not inherit the page font on its own. #}
-          <button type="button" class="pw-quiz-a {{ pwQuizAClass|default('flex w-full cursor-default items-center gap-[0.6rem] rounded-full border border-gray-200 bg-gray-50 px-4 py-[0.7rem] text-left [font:inherit] transition-colors motion-reduce:transition-none') }}"{{ a.correct ? ' data-correct' : '' }}{% if a.weights is not empty %} data-weights="{{ a.weights|json_encode }}"{% endif %} aria-pressed="false">
+          <button type="button" class="pw-quiz-a {{ pwQuizAClass|default('flex w-full cursor-default items-center gap-[0.6rem] rounded-full border border-gray-200 bg-gray-50 px-4 py-[0.7rem] text-left [font:inherit] transition-colors motion-reduce:transition-none') }}"{{ a.correct ? ' data-correct' : '' }}{% if a.weights is not empty %} data-weights="{{ a.weights|json_encode }}"{% endif %}{% if a.value is not null %} data-value="{{ a.value }}"{% endif %} aria-pressed="false">
             {% if prefixes[loop.index0] is defined %}<span class="pw-quiz-a-prefix {{ pwQuizAPrefixClass|default('inline-flex h-[1.7rem] w-[1.7rem] shrink-0 items-center justify-center rounded-full bg-primary/15 text-[0.85rem] font-bold text-primary') }}" aria-hidden="true">{{ prefixes[loop.index0] }}</span>{% endif %}
             {{ quiz_answer_image(a) }}
             <span class="pw-quiz-a-text {{ pwQuizATextClass|default('grow') }}">{{ a.text }}</span>
@@ -62,30 +64,7 @@
 
 {# ---- end-of-quiz result box (score or personality card + optional conversion form) ---- #}
 {% macro resultBox(quiz, slug, conversationAvailable) %}
-  <div class="pw-quiz-result {{ pwQuizResultClass|default('mt-6 rounded-[14px] border border-gray-200 bg-white p-6') }}" hidden>
-    <div class="pw-quiz-score" aria-live="polite"></div>
-    {% if quiz.mode == 'profile' %}
-      {# Every possible outcome is server-rendered (SEO + no-JS); the runtime reveals the winning one. #}
-      <div class="pw-quiz-profiles">
-        {% for p in quiz.profiles %}
-          <div class="pw-quiz-profile" data-profile-key="{{ p.key }}" hidden>
-            <h3 class="pw-quiz-profile-title {{ pwQuizProfileTitleClass|default('mt-0 mb-3 text-center text-[1.4rem] text-primary') }}">{{ p.title }}</h3>
-            {{ quiz_profile_image(p) }}
-            {# Holds rendered Markdown; quiz.css collapses the outer margins of the
-               blocks inside. That stays CSS on purpose: a `[&>…]` arbitrary variant
-               would come out of `{{ }}` HTML-escaped and match nothing. #}
-            {% if p.msg %}<div class="pw-quiz-profile-msg {{ pwQuizProfileMsgClass|default('mx-auto mt-1 max-w-2xl leading-[1.6]') }}">{{ p.msg|markdown }}</div>{% endif %}
-          </div>
-        {% endfor %}
-      </div>
-    {% endif %}
-    {% if quiz.cta and conversationAvailable %}
-      <div class="pw-quiz-cta {{ pwQuizCtaClass|default('mt-6 border-t border-gray-200 pt-5') }}">
-        {% if quiz.ctaTitle %}<p class="pw-quiz-cta-title {{ pwQuizCtaTitleClass|default('mt-0 mb-3 text-[1.05rem] font-semibold') }}">{{ quiz.ctaTitle }}</p>{% endif %}
-        <div class="pw-quiz-cta-form" data-quiz-cta="{{ conversation(quiz.cta, 'quiz-' ~ slug) }}"></div>
-      </div>
-    {% endif %}
-  </div>
+  {% include '@PushwordQuiz/component/_result.html.twig' %}
 {% endmacro %}
 
 {# ---- JS runtime config (mode, score bands, pass threshold, labels) ---- #}
@@ -96,9 +75,11 @@
   <script type="application/json" class="pw-quiz-config">{{ {
     mode: quiz.mode,
     feedback: quiz.feedback,
+    recordResults: quiz.recordResults,
+    showComparison: quiz.showComparison,
     pass: quiz.pass,
     results: quiz.results|map(b => {min: b.min, msg: b.msg|markdown}),
-    labels: {score: l.score, better: l.better, confirm: l.confirm, nextLevel: l.nextLevel, profile: l.profile, share: l.share, restart: l.restart},
+    labels: {question: l.question, finish: quiz.labels.finish|default(l.confirm), score: l.score, better: l.better, confirm: l.confirm, back: l.back, editAnswers: l.editAnswers, nextLevel: l.nextLevel, profile: l.profile, share: l.share, restart: l.restart},
     resultEndpoint: resultEndpoint,
     resultSignature: resultSignature,
   }|json_encode(constant('JSON_HEX_TAG'))|raw }}</script>
@@ -144,13 +125,15 @@
     score: quiz.labels.score|default('quiz.label.score'|trans),
     better: quiz.labels.better|default('quiz.label.better'|trans),
     confirm: quiz.labels.confirm|default('quiz.label.confirm'|trans),
+    back: quiz.labels.back|default('quiz.label.back'|trans),
+    editAnswers: quiz.labels.editAnswers|default('quiz.label.editAnswers'|trans),
     nextLevel: quiz.labels.nextLevel|default('quiz.label.nextLevel'|trans),
     profile: quiz.labels.profile|default('quiz.label.profile'|trans),
     share: quiz.labels.share|default('quiz.label.share'|trans),
     restart: quiz.labels.restart|default('quiz.label.restart'|trans),
   } %}
 
-  <section class="pw-quiz{% if quiz.mode == 'profile' %} pw-quiz--profile{% endif %} {{ pwQuizClass|default('my-8 block') }}" id="{{ id }}" data-pw-quiz data-slug="{{ baseSlug }}"{% if quiz.title %} aria-label="{{ quiz.title }}"{% endif %}>
+  <section class="pw-quiz{% if quiz.mode == 'profile' %} pw-quiz--profile{% elseif quiz.mode == 'assessment' %} pw-quiz--assessment{% endif %} {{ pwQuizClass|default('my-8 block') }}" id="{{ id }}" data-pw-quiz data-slug="{{ baseSlug }}"{% if quiz.title %} aria-label="{{ quiz.title }}"{% endif %}>
     {% if quiz.title or quiz.difficulty %}
       <header class="pw-quiz-head {{ pwQuizHeadClass|default('mb-5') }}">
         {% if quiz.title %}<h2 class="pw-quiz-title {{ pwQuizTitleClass|default('mt-0 mb-1') }}">{{ quiz.title }}</h2>{% endif %}
@@ -170,7 +153,7 @@
   </section>
 
   {# A personality test has no accepted answer, so the schema.org/Quiz markup would be misleading. #}
-  {% if quiz.mode != 'profile' %}
+  {% if quiz.mode == 'quiz' %}
     {{ _self.schemaOrg(quiz, quiz.title|default('Quiz')) }}
   {% endif %}
 
@@ -204,6 +187,8 @@
         score: level.labels.score|default('quiz.label.score'|trans),
         better: level.labels.better|default('quiz.label.better'|trans),
         confirm: level.labels.confirm|default('quiz.label.confirm'|trans),
+        back: level.labels.back|default('quiz.label.back'|trans),
+        editAnswers: level.labels.editAnswers|default('quiz.label.editAnswers'|trans),
         nextLevel: level.labels.nextLevel|default('quiz.label.nextLevel'|trans),
         profile: level.labels.profile|default('quiz.label.profile'|trans),
         share: level.labels.share|default('quiz.label.share'|trans),

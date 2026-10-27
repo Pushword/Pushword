@@ -12,15 +12,18 @@ quiz:
       altRequired: 'A video question requires an alternative text (accessibility).'
       posterRequired: 'A video question requires an image filename, used as its poster.'
   answer:
+    value:
+      required: 'Every assessment answer needs a finite numeric value.'
     text:
       empty: 'An answer cannot be empty.'
   result:
     min:
+      finite: 'A result threshold must be finite.'
       range: 'A score band threshold must be between 0 and 100.'
     msg:
       empty: 'A score band needs a message.'
   mode:
-    invalid: 'Mode must be "quiz" or "profile".'
+    invalid: 'Mode must be "quiz", "profile" or "assessment".'
     hint: 'You defined profiles or answer weights but mode is "quiz" — did you mean mode:"profile"?'
   profiles:
     min: 'A personality test needs at least one profile.'

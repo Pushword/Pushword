@@ -367,11 +367,11 @@ describe('quiz runtime — score band (Markdown)', () => {
 })
 
 // Stub window.fetch, recording every call; the caller restores it afterwards.
-function mockFetch() {
+function mockFetch(response = { percentile: 0 }) {
   const calls = []
   window.fetch = (url, opts) => {
     calls.push({ url: url, opts: opts })
-    return Promise.resolve({ ok: true, json: () => Promise.resolve({ percentile: 0 }) })
+    return Promise.resolve({ ok: true, json: () => Promise.resolve(response) })
   }
   return calls
 }
@@ -542,5 +542,108 @@ describe('quiz runtime — result submission endpoint', () => {
     bootRuntime()
     expect(document.querySelector('.pw-quiz-restart')).not.toBeNull() // proof it restored
     expect(calls.length).toBe(1) // no second POST
+  })
+})
+
+function assessmentQuiz(values = [1, 2, 3, 4], extra = {}) {
+  const questions = Array.from({ length: 4 }, (_, i) => `<li class="pw-quiz-q" data-q="${i}"><p class="pw-quiz-question">Q${i}</p><ul>${values.map(v => `<li><button class="pw-quiz-a" data-value="${v}" aria-pressed="false"><span class="pw-quiz-a-text">${v}</span></button></li>`).join('')}</ul></li>`).join('')
+  return `<section class="pw-quiz pw-quiz--assessment" data-pw-quiz data-slug="assessment"><ol>${questions}</ol><div class="pw-quiz-result" hidden><div class="pw-quiz-score"></div></div><script class="pw-quiz-config" type="application/json">${JSON.stringify({mode: 'assessment', results: values.map(v => ({min: v, msg: `<h3>Level ${v}</h3>`})), ...extra})}</script></section>`
+}
+function completeAssessment(indices) {
+  document.querySelectorAll('.pw-quiz-q').forEach((q, i) => confirmAnswer(q.querySelectorAll('.pw-quiz-a')[indices[i]]))
+}
+describe('numeric assessment', () => {
+  const realFetch = window.fetch
+  afterEach(() => { window.fetch = realFetch })
+  it('uses the minimum for every combination and emits an outcome without recording by default', () => {
+    const calls = mockFetch()
+    for (let n = 0; n < 256; n++) {
+      window.localStorage.clear()
+      document.body.innerHTML = assessmentQuiz()
+      bootRuntime()
+      const indices = Array.from({length: 4}, (_, i) => (n >> (i * 2)) & 3)
+      const root = document.querySelector('[data-pw-quiz]')
+      let detail
+      root.addEventListener('pushword:quiz:complete', e => { detail = e.detail })
+      completeAssessment(indices)
+      const expected = Math.min(...indices.map(i => i + 1))
+      expect(detail).toMatchObject({quiz: 'assessment', mode: 'assessment', value: expected, restored: false})
+      expect(detail.answers).toHaveLength(4)
+      expect(JSON.parse(root.dataset.pwQuizResult)).toEqual(detail)
+      expect(root.querySelector('.pw-quiz-score').textContent).toBe(`Level ${expected}`)
+      expect(root.querySelector('.pw-quiz-donut')).toBeNull()
+    }
+    expect(calls).toHaveLength(0)
+  }, 20000)
+  it('keeps selections on Back and Change answers, recomputes, restores, then restarts', () => {
+    mockFetch()
+    document.body.innerHTML = assessmentQuiz([0, 1, 2, 3])
+    bootRuntime()
+    let questions = document.querySelectorAll('.pw-quiz-q')
+    confirmAnswer(questions[0].querySelectorAll('.pw-quiz-a')[0])
+    expect(questions[0].hidden).toBe(true)
+    expect(questions[1].hidden).toBe(false)
+    questions[1].querySelector('.pw-quiz-back').click()
+    expect(questions[0].hidden).toBe(false)
+    expect(questions[0].querySelector('.pw-quiz-a').getAttribute('aria-pressed')).toBe('true')
+    completeAssessment([0, 3, 3, 3])
+    expect(document.querySelector('.pw-quiz-score').textContent).toBe('Level 0')
+    document.querySelector('.pw-quiz-edit').click()
+    expect(questions[0].hidden).toBe(false)
+    completeAssessment([2, 3, 3, 3])
+    expect(document.querySelector('.pw-quiz-score').textContent).toBe('Level 2')
+    document.body.innerHTML = assessmentQuiz([0, 1, 2, 3])
+    let restored
+    document.body.addEventListener('pushword:quiz:complete', e => {restored = e.detail}, {once: true})
+    bootRuntime()
+    expect(restored).toMatchObject({value: 2, restored: true})
+    document.querySelector('.pw-quiz-restart').click()
+    questions = document.querySelectorAll('.pw-quiz-q')
+    expect(questions[0].hidden).toBe(false)
+    expect(questions[0].querySelector('.pw-quiz-confirm').disabled).toBe(true)
+    expect(document.querySelector('.pw-quiz-result').hidden).toBe(true)
+    expect(window.localStorage.getItem('pwQuizDone:assessment')).toBeNull()
+  })
+  it('rejects stale knowledge attempts and out-of-range saved answer indices', () => {
+    for (const saved of [{a: [0,0,0,0]}, {mode: 'assessment', a: [0,0,0,9]}]) {
+      window.localStorage.setItem('pwQuizDone:assessment', JSON.stringify(saved))
+      document.body.innerHTML = assessmentQuiz()
+      bootRuntime()
+      expect(document.querySelector('.pw-quiz-result').hidden).toBe(true)
+    }
+  })
+  it('records an explicitly enabled assessment and suppresses comparisons', async () => {
+    const calls = mockFetch({share: 80})
+    document.body.innerHTML = assessmentQuiz([1,2,3,4], {recordResults: true, showComparison: false})
+    bootRuntime()
+    completeAssessment([1,2,3,3])
+    await Promise.resolve(); await Promise.resolve(); await Promise.resolve()
+    expect(calls).toHaveLength(1)
+    expect(JSON.parse(calls[0].opts.body)).toMatchObject({mode: 'assessment', result: '2'})
+    expect(document.querySelector('.pw-quiz-share')).toBeNull()
+  })
+})
+
+describe('knowledge quiz recording settings', () => {
+  const realFetch = window.fetch
+  afterEach(() => {window.fetch = realFetch})
+  it('emits completion without posting when recording is disabled', () => {
+    const calls = mockFetch()
+    document.body.innerHTML = resultQuiz('optout', 'optout', {recordResults: false})
+    bootRuntime()
+    let detail
+    document.body.addEventListener('pushword:quiz:complete', e => {detail = e.detail}, {once: true})
+    confirmAnswer(document.querySelector('.pw-quiz-a'))
+    expect(detail).toMatchObject({mode: 'quiz', score: 100, restored: false})
+    expect(calls).toHaveLength(0)
+  })
+  it('records while hiding a nonzero percentile when comparisons are disabled', async () => {
+    const calls = mockFetch({percentile: 90})
+    document.body.innerHTML = resultQuiz('private-comparison', 'private-comparison', {showComparison: false})
+    bootRuntime()
+    confirmAnswer(document.querySelector('.pw-quiz-a'))
+    await new Promise(resolve => setTimeout(resolve, 0))
+    expect(calls).toHaveLength(1)
+    expect(document.querySelector('.pw-quiz-percentile').hidden).toBe(true)
   })
 })
