@@ -5,7 +5,7 @@ publishedAt: '2025-02-26 12:00'
 toc: true
 ---
 
-HTTP endpoints to list, upload, read, update and delete media and their metadata (alt, localized alts, tags, custom properties). Shipped by [`pushword/api`](/extension/api).
+HTTP endpoints to list, upload, replace, read, update and delete media and their metadata (alt, localized alts, tags, custom properties). Shipped by [`pushword/api`](/extension/api).
 
 {id=authentication}
 ## Authentication
@@ -147,6 +147,35 @@ curl -X POST \
 License keys sent in `customProperties` with the file outrank the rights embedded in
 it, key by key — see [image license](/image-license#upload).
 
+### POST /api/media/{filename}/replace
+
+Replaces the file of an **existing** media, without deleting or recreating it.
+Accepts the current filename or a previous name from its history. The current name,
+media ID, page associations (including `mainImage`), alt texts, tags, custom properties,
+license metadata and filename history are preserved. Size, hash, modification date
+and image dimensions/color are refreshed. The image cache is cleared, a quick preview
+is generated immediately and full variant generation is queued, as for a new upload.
+
+Send a multipart `file` with the **same MIME type** as the stored media. Other form
+fields are ignored; use the JSON metadata endpoint for editorial changes. Embedded
+rights are not reimported: this operation retains the media's existing license metadata.
+Even when another media has identical bytes, the target media is kept and replaced.
+Ordinary uploads to `/api/media/{filename}` still create or deduplicate; they never replace.
+
+```bash
+curl -X POST \
+  -H "Authorization: Bearer your-secret-token" \
+  -F "file=@./corrected-photo.jpg" \
+  https://example.com/api/media/photo.jpg/replace
+```
+
+**Responses:**
+
+- `200 OK` + full updated metadata — file replaced
+- `400 Bad Request` — missing, invalid or rejected file; the original is kept
+- `404 Not Found` — unknown media; nothing is created
+- `422 Unprocessable Entity` — different MIME type or a [media rule](/media-rules) refused the replacement; the original is kept
+
 ### DELETE /api/media/{filename}
 
 Deletes the media and its file. As in the admin, pages using it as `mainImage` get `null` and its image cache is cleared.
@@ -166,7 +195,7 @@ curl -X DELETE \
 | Status | Meaning                                             |
 | ------ | --------------------------------------------------- |
 | 401    | Missing or invalid Bearer token                     |
-| 404    | No media found for this filename (GET / JSON POST / DELETE)  |
+| 404    | No media found for this filename (GET / metadata update / replacement / DELETE) |
 | 400    | Empty or invalid JSON body, invalid `rotate`, or missing/invalid upload file |
 | 409    | DELETE vetoed by a listener: `{"error": "…", "reasons": ["…"]}`  |
 | 422    | Write refused by a [media rule](/media-rules), Pushword's or the app's: `{"error": "validation", "violations": [{"path": "…", "message": "…"}]}`. Nothing is saved, and a `rotate` in the same request is not applied |

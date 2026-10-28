@@ -32,6 +32,7 @@ final class DocsApiControllerTest extends WebTestCase
             '/api/page/search',
             '/api/media',
             '/api/media/{filename}',
+            '/api/media/{filename}/replace',
             '/api/redirection',
             '/api/snippet',
             '/api/conversation',

@@ -6,6 +6,7 @@ namespace Pushword\Api\Controller;
 
 use Doctrine\ORM\EntityManagerInterface;
 use InvalidArgumentException;
+use Pushword\Api\Service\MediaFileReplacer;
 use Pushword\Core\Controller\RoutePatterns;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Event\MediaPreRemoveEvent;
@@ -30,6 +31,7 @@ final class MediaApiController extends AbstractApiController
         private readonly ImageRotator $imageRotator,
         private readonly MediaUploadValidator $mediaUploadValidator,
         private readonly EventDispatcherInterface $eventDispatcher,
+        private readonly MediaFileReplacer $mediaFileReplacer,
     ) {
     }
 
@@ -67,6 +69,37 @@ final class MediaApiController extends AbstractApiController
         $payload = array_map($this->mediaToArray(...), $items);
 
         return $this->respond($this->paginated($payload, $total, $pagination['page'], $pagination['perPage']));
+    }
+
+    #[Route('/api/media/{filename}/replace', name: 'pushword_api_media_replace', requirements: ['filename' => RoutePatterns::MEDIA], methods: ['POST'], priority: 10)]
+    public function replace(string $filename, Request $request): JsonResponse
+    {
+        $media = $this->mediaRepository->findOneByFileNameOrHistory($filename);
+        if (! $media instanceof Media) {
+            return $this->notFound('Media not found');
+        }
+
+        $file = $this->uploadedFile($request);
+        if ($file instanceof JsonResponse) {
+            return $file;
+        }
+
+        // Validate the replacement against the stored MIME type and the app's rules
+        // before touching the master. Keep Vich out of the flush: it renames uploads
+        // and reimports license metadata, whereas this operation preserves both.
+        $candidate = clone $media;
+        $candidate->setMediaFile($file);
+        $candidate->size = $file->getSize();
+
+        $violations = $this->mediaUploadValidator->validateMedia($candidate);
+        if (\count($violations) > 0) {
+            return $this->validationErrors($violations);
+        }
+
+        $this->mediaFileReplacer->replace($media, $file);
+        $this->entityManager->flush();
+
+        return $this->respond($this->mediaToArray($media));
     }
 
     #[Route('/api/media/{filename}', name: 'pushword_api_media', requirements: ['filename' => RoutePatterns::MEDIA], methods: ['GET', 'POST', 'PATCH', 'DELETE'])]
@@ -136,7 +169,7 @@ final class MediaApiController extends AbstractApiController
         return $this->respond($this->mediaToArray($media));
     }
 
-    private function handleUpload(string $filename, Request $request): JsonResponse
+    private function uploadedFile(Request $request): UploadedFile|JsonResponse
     {
         $file = $request->files->get('file');
         if (! $file instanceof UploadedFile) {
@@ -151,6 +184,16 @@ final class MediaApiController extends AbstractApiController
             $this->mediaUploadValidator->validate($file);
         } catch (InvalidArgumentException $invalidArgumentException) {
             return $this->badRequest($invalidArgumentException->getMessage());
+        }
+
+        return $file;
+    }
+
+    private function handleUpload(string $filename, Request $request): JsonResponse
+    {
+        $file = $this->uploadedFile($request);
+        if ($file instanceof JsonResponse) {
+            return $file;
         }
 
         $hash = sha1_file($file->getPathname(), true);
@@ -401,6 +444,27 @@ final class MediaApiController extends AbstractApiController
                                     'per_page' => ['type' => 'integer'],
                                 ],
                             ]]]],
+                        ],
+                    ],
+                ],
+                '/api/media/{filename}/replace' => [
+                    'parameters' => [['name' => 'filename', 'in' => 'path', 'required' => true, 'schema' => ['type' => 'string']]],
+                    'post' => [
+                        'summary' => 'Replace an existing media file, preserving its name, metadata and page associations',
+                        'description' => 'Accepts the current filename or its history. The file must have the same MIME type. Does not deduplicate or import embedded license metadata. Image variants are regenerated. Other multipart fields are ignored; use PATCH to edit metadata.',
+                        'requestBody' => [
+                            'required' => true,
+                            'content' => ['multipart/form-data' => ['schema' => [
+                                'type' => 'object',
+                                'required' => ['file'],
+                                'properties' => ['file' => ['type' => 'string', 'format' => 'binary']],
+                            ]]],
+                        ],
+                        'responses' => [
+                            '200' => ['description' => 'Replaced', 'content' => ['application/json' => ['schema' => ['$ref' => '#/components/schemas/Media']]]],
+                            '400' => ['description' => 'Missing, invalid or rejected file'],
+                            '404' => ['description' => 'Media not found; nothing is created'],
+                            '422' => ['description' => 'MIME type mismatch or media constraint violation; the original is kept'],
                         ],
                     ],
                 ],

@@ -9,7 +9,9 @@ use Override;
 use PHPUnit\Framework\Attributes\Group;
 use Pushword\Api\Controller\MediaApiController;
 use Pushword\Core\Entity\Media;
+use Pushword\Core\Entity\Page;
 use Pushword\Core\Entity\User;
+use Pushword\Core\Image\ImageCacheManager;
 use Pushword\Core\Image\License\MediaLicense;
 use Pushword\Core\Tests\Media\Policy\MediaPolicyFixture;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
@@ -31,6 +33,9 @@ final class MediaApiControllerTest extends WebTestCase
 
     /** @var list<string> */
     private array $createdMediaFileNames = [];
+
+    /** @var list<int> */
+    private array $createdPageIds = [];
 
     #[Override]
     protected function setUp(): void
@@ -58,6 +63,13 @@ final class MediaApiControllerTest extends WebTestCase
     {
         $container = $this->client->getContainer();
         $em = $container->get('doctrine.orm.default_entity_manager');
+        foreach ($this->createdPageIds as $id) {
+            $page = $em->find(Page::class, $id);
+            if ($page instanceof Page) {
+                $em->remove($page);
+            }
+        }
+
         foreach ($this->createdMediaFileNames as $fileName) {
             $media = $em->getRepository(Media::class)->findOneBy(['fileName' => $fileName]);
             if ($media instanceof Media) {
@@ -153,6 +165,194 @@ final class MediaApiControllerTest extends WebTestCase
         self::assertIsArray($data['image']);
         self::assertSame(3, $data['image']['width'], 'width and height must be swapped');
         self::assertSame(6, $data['image']['height']);
+    }
+
+    public function testReplacementPreservesIdentityMetadataAndPageAssociations(): void
+    {
+        $fileName = 'zz-replace-'.uniqid().'.jpg';
+        $media = $this->createRealImageMedia($fileName, 6, 3);
+        $media->setAlt('Keep this caption')->setAlts('fr: Légende')->setTags(['landscape']);
+        $media->setCustomProperty(MediaLicense::CREDIT_TEXT, 'Keep this credit');
+        $media->setCustomProperty('editorial', ['keep' => true]);
+        $media->fileNameHistory = ['old-'.$fileName];
+        $media->hiddenFromAdmin = true;
+
+        $page = new Page();
+        $page->slug = 'replacement-'.uniqid();
+        $page->h1 = 'Replacement';
+        $page->setMainImage($media);
+
+        $this->em->persist($page);
+        $this->em->flush();
+        self::assertNotNull($page->id);
+        $this->createdPageIds[] = $page->id;
+        $id = $media->id;
+        $createdAt = $media->createdAt;
+        $licenseState = $media->licenseState;
+        $beforeCount = $this->em->getRepository(Media::class)->count([]);
+
+        $cache = self::getContainer()->get(ImageCacheManager::class);
+        $previewPath = $cache->getFilterPath($media, 'md');
+        $webpPath = $cache->getFilterPath($media, 'md', 'webp');
+        $cache->createFilterDir(\dirname($previewPath));
+        file_put_contents($previewPath, 'stale preview');
+        file_put_contents($webpPath, 'stale webp');
+
+        $file = $this->replacementImage();
+        $hash = sha1_file($file->getPathname());
+        $size = $file->getSize();
+        // A historic name must resolve to the same media; multipart metadata is ignored.
+        $this->client->request('POST', '/api/media/old-'.$fileName.'/replace', [
+            'alt' => 'Do not apply',
+            'customProperties' => '{"creditText":"Do not apply"}',
+        ], ['file' => $file], ['HTTP_AUTHORIZATION' => 'Bearer '.$this->testToken]);
+
+        self::assertResponseStatusCodeSame(200);
+        $data = $this->decode();
+        self::assertSame($fileName, $data['filename']);
+        self::assertSame($hash, $data['hash']);
+        self::assertSame($size, $data['size']);
+        self::assertSame('Keep this caption', $data['alt']);
+        self::assertSame(['fr' => 'Légende'], $data['alts']);
+        self::assertSame(['landscape'], $data['tags']);
+        self::assertSame(['old-'.$fileName], $data['fileNameHistory']);
+        self::assertIsArray($data['customProperties']);
+        self::assertSame('Keep this credit', $data['customProperties'][MediaLicense::CREDIT_TEXT]);
+        self::assertSame(['keep' => true], $data['customProperties']['editorial']);
+        self::assertSame($licenseState, $data['licenseState']);
+        self::assertIsArray($data['image']);
+        self::assertSame(4, $data['image']['width']);
+        self::assertSame(7, $data['image']['height']);
+        self::assertSame($hash, sha1_file($media->getPath()));
+        self::assertSame($hash, sha1_file($previewPath));
+        self::assertFileDoesNotExist($webpPath, 'old derivatives must be removed');
+
+        $this->em->clear();
+        $stored = $this->em->find(Media::class, $id);
+        self::assertInstanceOf(Media::class, $stored);
+        self::assertSame($fileName, $stored->getFileName());
+        self::assertSame(4, $stored->getWidth());
+        self::assertSame(7, $stored->getHeight());
+        self::assertSame($createdAt?->getTimestamp(), $stored->createdAt?->getTimestamp());
+        self::assertTrue($stored->hiddenFromAdmin);
+        self::assertSame($beforeCount, $this->em->getRepository(Media::class)->count([]));
+        self::assertSame($id, $this->em->find(Page::class, $page->id)?->getMainImage()?->id);
+        $this->request('GET', '/api/media/'.$fileName);
+        self::assertSame($hash, $this->decode()['hash']);
+    }
+
+    public function testReplacementDoesNotDeduplicateIntoAnotherMedia(): void
+    {
+        $target = $this->createRealImageMedia('zz-target-'.uniqid().'.jpg', 6, 3);
+        $other = $this->createRealImageMedia('zz-other-'.uniqid().'.jpg', 4, 7);
+        $beforeCount = $this->em->getRepository(Media::class)->count([]);
+        $file = $this->replacementImage();
+        self::assertSame(sha1_file($other->getPath()), sha1_file($file->getPathname()));
+
+        $this->replaceFile($target->getFileName(), $file);
+
+        self::assertResponseStatusCodeSame(200);
+        self::assertSame($target->getFileName(), $this->decode()['filename']);
+        self::assertArrayNotHasKey('duplicate', $this->decode());
+        $this->em->clear();
+        self::assertSame($target->getFileName(), $this->em->find(Media::class, $target->id)?->getFileName());
+        self::assertSame($other->getFileName(), $this->em->find(Media::class, $other->id)?->getFileName());
+        self::assertSame($beforeCount, $this->em->getRepository(Media::class)->count([]));
+    }
+
+    public function testReplacementRejectsDifferentMimeTypeWithoutChangingOriginal(): void
+    {
+        $media = $this->createRealImageMedia('zz-type-'.uniqid().'.jpg', 6, 3);
+        $hash = sha1_file($media->getPath());
+        $path = tempnam(sys_get_temp_dir(), 'replacement-png-');
+        self::assertIsString($path);
+        $image = imagecreatetruecolor(4, 7);
+        self::assertNotFalse($image);
+        imagepng($image, $path);
+
+        $this->replaceFile($media->getFileName(), new UploadedFile($path, 'photo.png', 'image/png', null, true));
+
+        self::assertResponseStatusCodeSame(422);
+        self::assertSame('validation', $this->decode()['error']);
+        self::assertSame($hash, sha1_file($media->getPath()));
+        $this->em->clear();
+        self::assertSame(6, $this->em->find(Media::class, $media->id)?->getWidth());
+    }
+
+    public function testReplacementHonorsAppRulesBeforeWriting(): void
+    {
+        $media = $this->createRealImageMedia(MediaPolicyFixture::REJECTED.'-'.uniqid().'.jpg', 6, 3);
+        $hash = sha1_file($media->getPath());
+
+        $this->replaceFile($media->getFileName(), $this->replacementImage());
+
+        self::assertResponseStatusCodeSame(422);
+        self::assertSame($hash, sha1_file($media->getPath()));
+        $this->em->clear();
+        self::assertSame(6, $this->em->find(Media::class, $media->id)?->getWidth());
+    }
+
+    public function testReplacementRejectsInvalidUploadWithoutChangingOriginal(): void
+    {
+        $media = $this->createRealImageMedia('zz-invalid-'.uniqid().'.jpg', 6, 3);
+        $hash = sha1_file($media->getPath());
+        $path = tempnam(sys_get_temp_dir(), 'replacement-invalid-');
+        self::assertIsString($path);
+        file_put_contents($path, '<?php echo "owned";');
+
+        $this->replaceFile($media->getFileName(), new UploadedFile($path, 'photo.jpg', 'image/jpeg', null, true));
+
+        self::assertResponseStatusCodeSame(400);
+        self::assertSame($hash, sha1_file($media->getPath()));
+    }
+
+    public function testReplacementRequiresAnExistingMediaAndAFile(): void
+    {
+        $this->replaceFile('unknown-'.uniqid().'.jpg', $this->replacementImage());
+        self::assertResponseStatusCodeSame(404);
+
+        $media = $this->createRealImageMedia('zz-missing-file-'.uniqid().'.jpg', 6, 3);
+        $this->request('POST', '/api/media/'.$media->getFileName().'/replace');
+        self::assertResponseStatusCodeSame(400);
+    }
+
+    public function testReplacementRequiresAuthentication(): void
+    {
+        $media = $this->createRealImageMedia('zz-auth-'.uniqid().'.jpg', 6, 3);
+        $hash = sha1_file($media->getPath());
+
+        $this->client->request('POST', '/api/media/'.$media->getFileName().'/replace', [], ['file' => $this->replacementImage()]);
+
+        self::assertResponseStatusCodeSame(401);
+        self::assertSame($hash, sha1_file($media->getPath()));
+    }
+
+    public function testReplacementOfADocumentCanBeRepeatedWithoutCreatingMedia(): void
+    {
+        $media = $this->createMedia('zz-document-'.uniqid().'.txt', 'Document caption', 'text/plain');
+        file_put_contents($media->getPath(), 'before');
+        $media->setHash();
+        $this->em->flush();
+        $beforeCount = $this->em->getRepository(Media::class)->count([]);
+
+        foreach ([1, 2] as $attempt) {
+            $path = tempnam(sys_get_temp_dir(), 'replacement-document-');
+            self::assertIsString($path);
+            file_put_contents($path, 'after');
+            $this->replaceFile($media->getFileName(), new UploadedFile($path, 'document.txt', 'text/plain', null, true));
+
+            self::assertResponseStatusCodeSame(200, 'Replacement attempt '.$attempt);
+            $data = $this->decode();
+            self::assertNull($data['image']);
+            self::assertSame('text/plain', $data['mimeType']);
+            self::assertSame('Document caption', $data['alt']);
+            self::assertSame(sha1('after'), $data['hash']);
+            self::assertSame('after', file_get_contents($media->getPath()));
+        }
+
+        $this->em->clear();
+        self::assertSame($beforeCount, $this->em->getRepository(Media::class)->count([]));
+        self::assertSame($media->getFileName(), $this->em->find(Media::class, $media->id)?->getFileName());
     }
 
     public function testRotateRejectsNonMultipleOf90(): void
@@ -358,6 +558,24 @@ final class MediaApiControllerTest extends WebTestCase
         self::assertSame([MediaPolicyFixture::LOCK_REASON], $data['reasons']);
         $this->em->clear();
         self::assertNotNull($this->em->getRepository(Media::class)->findOneBy(['fileName' => $fileName]));
+    }
+
+    private function replacementImage(): UploadedFile
+    {
+        $path = tempnam(sys_get_temp_dir(), 'replacement-');
+        self::assertIsString($path);
+        $image = imagecreatetruecolor(4, 7);
+        self::assertNotFalse($image);
+        imagejpeg($image, $path);
+
+        return new UploadedFile($path, 'different-name.jpg', 'image/jpeg', null, true);
+    }
+
+    private function replaceFile(string $fileName, UploadedFile $file): void
+    {
+        $this->client->request('POST', '/api/media/'.$fileName.'/replace', [], ['file' => $file], [
+            'HTTP_AUTHORIZATION' => 'Bearer '.$this->testToken,
+        ]);
     }
 
     /**
