@@ -21,7 +21,7 @@ Requires `ext-gd` (text measurement) and `ext-zip` (export); no Imagick.
 
 Installed before seeding a fresh site, the demo fixtures add a ten-slide carousel of
 the `examples` page, one feature per slide. Its spec, `src/DataFixtures/Carousel.json`,
-is the reference to copy from; the post sits under **Social posts**. For motion, see
+is the reference to copy from; the post sits under **Social carousels**. For motion, see
 the [NORD. example](#packaged-example-nord) below.
 
 ## How it fits together
@@ -49,6 +49,17 @@ Page ──► CarouselDrafter ──► SocialPost ◄──► social-post/{pa
   the network's mobile feed width (zoom slider or Ctrl+scroll; always reopens at
   100%) and exporting it. Click a text to edit it in place; drag any text on the
   slide (a stack field becomes a free text box where it lands).
+
+## In the admin
+
+From a page without carousels, choose **Repurpose** to create a draft. Existing
+carousels appear in the page editor's sidebar with their network and status;
+each opens in the studio. The page list shows their count, opening the studio
+for one carousel or a list filtered to that page and host for several.
+
+**Social carousels** groups each cover, title, network and source in one column.
+Choose **Preview** to enlarge the cover or **Studio** to edit it. The studio's
+source card links back to the page editor; standalone carousels have no source.
 
 ## Author with an agent
 

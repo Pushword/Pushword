@@ -680,6 +680,10 @@ day after it goes out". An automation has:
   written in the source's own vocabulary;
 - **steps** — the mails, in order, each after its own delay.
 
+Each step uses the block editor when `pushword/admin-block-editor` is installed,
+including existing Markdown messages. Switch an individual step to Markdown or
+JSON with its editor controls; messages remain stored as Markdown.
+
 Open **Preview this email** under any step to see its unsaved subject and Markdown
 with the selected audience's email design. The preview starts at mobile width;
 it does not save the automation or send an email. Trigger-specific placeholders
@@ -1117,7 +1121,8 @@ the next section.
 As soon as an application listens to `CollectCampaignIndex` (below), **Newsletter →
 Campaigns** opens a read-only catalogue at `/admin/newsletter/campaigns`; until then it
 opens the campaign list. An overridden admin template gets the same route from
-`newsletter_campaigns_route()`. Filter by source, status or subject/audience text.
+`newsletter_campaigns_route()`. Filter by status or subject/audience text; the
+source filter and column appear only when an external source is listed.
 Scheduled and sent dates use the editorial timezone; missing values stay unknown.
 Use **Create in Pushword** or **Manage in Pushword** for the native campaign editor,
 bulk actions and delivery controls. Existing CRUD routes remain available.
