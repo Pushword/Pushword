@@ -18,6 +18,7 @@
 
 {% block configured_javascripts %}
   {{ parent() }}
+  <script src="{{ versionedAsset('/bundles/pushwordnewsletter/blocks/blocks.js') }}"></script>
   <script type="module" src="{{ versionedAsset('/bundles/pushwordnewsletter/admin.js') }}"></script>
 {% endblock %}
 

@@ -69,10 +69,12 @@ for (const kind of ['campaign', 'automation'] as const) {
   })
 }
 
-test('automation steps keep their editors independent when added, saved and reopened', async ({ page }) => {
+test('automation steps keep campaign tools and independent editors when added, saved and reopened', async ({ page }) => {
   const errors: string[] = []
   page.on('pageerror', error => errors.push(error.message))
-  await page.setViewportSize({ width: 1440, height: 1000 })
+  await openCampaign(page)
+  const campaignTools = await page.evaluate(() => Object.keys(window.editorjsConfig!.tools).sort())
+  expect(campaignTools).toContain('newsletterBlock')
   await page.goto('/admin/newsletter/automation/new')
   await page.locator('#Automation_name').fill('Editor sequence')
   await page.locator('#Automation_audience').selectOption({ label: 'Localhost news (localhost.dev)' })
@@ -80,7 +82,15 @@ test('automation steps keep their editors independent when added, saved and reop
   await page.locator('.field-collection-add-button').first().click()
   await page.locator('.field-collection-add-button').first().click()
   const entries = page.locator('.pw-newsletter-sequence .field-collection-item')
+  const expectCampaignTools = async () => {
+    for (const entry of await entries.all()) {
+      await expect.poll(() => entry.locator('.editorjs-holder').evaluate(holder =>
+        Object.keys(window.editorjsConfigs![holder.id]!.tools!).sort(),
+      )).toEqual(campaignTools)
+    }
+  }
   await expect(entries).toHaveCount(2)
+  await expectCampaignTools()
   await expect(entries.nth(0).locator('.accordion-button').first()).toContainText('Email 1')
   await expect(entries.nth(1).locator('.accordion-button').first()).toContainText('Email 2')
   for (const [index, text] of ['First message', 'Second message'].entries()) {
@@ -115,6 +125,17 @@ test('automation steps keep their editors independent when added, saved and reop
   await expect(entries).toHaveCount(2)
   await expect(first.locator('.ce-paragraph')).toHaveText('First message')
   await expect(second.locator('.ce-paragraph')).toHaveText('Second message')
+  await expectCampaignTools()
+  await second.locator('.ce-paragraph').click()
+  await second.locator('.ce-toolbar__plus').click()
+  await second.locator('.ce-popover-item[data-item-name="newsletterBlock"]').click()
+  const block = second.locator('.pw-newsletter-block')
+  await expect(block.getByRole('combobox', { name: 'Source', exact: true })).toHaveValue('library')
+  const search = page.waitForResponse(response => response.url().includes('/newsletter/block-content?provider=library'))
+  await block.getByRole('button', { name: 'Search', exact: true }).click()
+  const response = await search
+  expect(new URL(response.url()).searchParams.get('audience')).toBe(await page.locator('#Automation_audience').inputValue())
+  expect(response.status()).toBe(200)
   await second.locator('[data-pw-editor-mode="markdown"]').click()
   await expect(second.locator('.monaco-editor')).toBeVisible()
   await second.locator('.field-collection-delete-button').click()

@@ -71,7 +71,7 @@ class AutomationCrudController extends AbstractCrudController
             ->setSearchFields(['name']);
 
         if (class_exists(EditorjsType::class)) {
-            return $crud->addFormTheme('@PushwordAdminBlockEditor/editorjs_widget.html.twig');
+            return $crud->addFormTheme('@PushwordNewsletter/admin/block_editor_theme.html.twig');
         }
 
         return $crud;

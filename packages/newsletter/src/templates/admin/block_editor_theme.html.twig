@@ -1,10 +1,5 @@
 {% use '@PushwordAdminBlockEditor/editorjs_widget.html.twig' %}
 
-{% block editorjs_widget %}
-  <script src="{{ versionedAsset('/bundles/pushwordnewsletter/blocks/blocks.js') }}"></script>
-  {{ parent() }}
-{% endblock %}
-
 {% block editorjs_config %}
   {{ parent() }}
   editorjsConfig.readOnly = {{ disabled ? 'true' : 'false' }};

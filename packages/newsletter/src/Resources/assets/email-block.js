@@ -122,7 +122,7 @@ export class EmailBlock {
     const form = this.root.closest('form')
     const url = new URL(this.config.url, window.location.origin)
     for (const [key, value] of Object.entries(params)) url.searchParams.set(key, value)
-    url.searchParams.set('audience', form?.querySelector('[name="Campaign[audience]"]')?.value || '')
+    url.searchParams.set('audience', form?.querySelector('[name$="[audience]"]')?.value || '')
     url.searchParams.set('scheduledAt', form?.querySelector('[name="Campaign[scheduledAt]"]')?.value || '')
     this.setStatus(this.config.labels.loading)
     this.picker.setAttribute('aria-busy', 'true')

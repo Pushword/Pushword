@@ -743,6 +743,8 @@ final class NewsletterAdminTest extends AbstractAdminTestClass
         $prototype = $crawler->filter('[data-prototype]')->attr('data-prototype') ?? '';
         self::assertStringContainsString('data-pw-editor-widget="editorjs_Automation_steps___stepsname___bodyMarkdown"', $prototype);
         self::assertStringContainsString('data-pw-editorjs-config=', $prototype);
+        self::assertStringContainsString('class: window.PushwordNewsletterBlock', $prototype);
+        self::assertCount(1, $crawler->filter('script[src*="/bundles/pushwordnewsletter/blocks/blocks.js"]'));
         self::assertSame('Add an email', $crawler->filter('.field-collection-add-button')->text());
         $triggerBody = $crawler->filter('input[name="Automation[activeFrom]"]')->closest('.form-fieldset-body');
         self::assertNotNull($triggerBody);
@@ -777,6 +779,13 @@ final class NewsletterAdminTest extends AbstractAdminTestClass
         self::assertCount(1, $crawler->filter('#Automation_steps_0_bodyMarkdown-preview'));
         self::assertCount(1, $crawler->filter('#Automation_steps_1_bodyMarkdown-preview'));
         self::assertCount(2, $crawler->filter('.pw-newsletter-sequence .editorjs-holder'));
+        self::assertCount(1, $crawler->filter('script[src*="/bundles/pushwordnewsletter/blocks/blocks.js"]'));
+        $configs = $crawler->filter('.pw-newsletter-sequence [data-pw-editorjs-config]');
+        self::assertCount(2, $configs);
+        foreach ($configs as $config) {
+            self::assertStringContainsString('class: window.PushwordNewsletterBlock', $config->textContent);
+        }
+
         self::assertSame('Hello!', $crawler->filter('#Automation_steps_0_bodyMarkdown')->text());
         self::assertSame('Some news.', $crawler->filter('#Automation_steps_1_bodyMarkdown')->text());
     }
