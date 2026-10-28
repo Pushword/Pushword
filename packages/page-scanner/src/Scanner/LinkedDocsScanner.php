@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pushword\PageScanner\Scanner;
 
 use Doctrine\ORM\EntityManagerInterface;
+use DOMNode;
 use Exception;
 use Override;
 use Pushword\Core\Entity\Media;
@@ -291,7 +292,7 @@ final class LinkedDocsScanner extends AbstractScanner
      */
     private function getLinkedDocs(): array
     {
-        if (null !== $this->nativeFacts) {
+        if ($this->nativeFacts instanceof RenderedPageFacts) {
             foreach ($this->nativeFacts->mailtoLinks as $uri) {
                 $this->addError(ScanErrorCode::LinkMailto, '<code>'.$uri.'</code> '.$this->trans('page_scanObfuscateMail'));
             }
@@ -585,9 +586,9 @@ final class LinkedDocsScanner extends AbstractScanner
     #[Override]
     public function scan(Page $page, string $pageHtml, ?RenderedPageFacts $facts = null): array
     {
-        $this->nativeAnchors = null === $facts ? null : array_fill_keys($facts->anchors, true);
+        $this->nativeAnchors = $facts instanceof RenderedPageFacts ? array_fill_keys($facts->anchors, true) : null;
         $this->nativeFacts = $facts;
-        $this->domPage = null === $facts ? new DomCrawler($pageHtml) : null;
+        $this->domPage = $facts instanceof RenderedPageFacts ? null : new DomCrawler($pageHtml);
 
         try {
             return parent::scan($page, $pageHtml);
@@ -612,7 +613,7 @@ final class LinkedDocsScanner extends AbstractScanner
         $node = $this->getDomPage()->filter('[name="'.$target.'"]')->getNode(0)
             ?? $this->getDomPage()->filter('[id="'.$target.'"]')->getNode(0);
 
-        return null !== $node;
+        return $node instanceof DOMNode;
     }
 
     /**
@@ -626,7 +627,7 @@ final class LinkedDocsScanner extends AbstractScanner
         }
 
         // Use persistent cache if available
-        if (null !== $this->externalUrlCache) {
+        if ($this->externalUrlCache instanceof CacheInterface) {
             /** @var UrlCheckResult $result */
             $result = $this->externalUrlCache->get(ParallelUrlChecker::cacheKey($url), function (ItemInterface $item) use ($url): true|array {
                 $checked = $this->checkUrlViaHttp($url);
@@ -712,7 +713,7 @@ final class LinkedDocsScanner extends AbstractScanner
             return null; // not a filter-prefixed URL: originals are not plain files on disk
         }
 
-        if (null !== $this->mediaCacheStorage) {
+        if ($this->mediaCacheStorage instanceof MediaCacheStorageAdapter) {
             if (! $this->mediaCacheStorage->fileExists($mediaSlug)) {
                 return 'page_scanDerivativeMissing';
             }

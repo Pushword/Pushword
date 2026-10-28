@@ -23,6 +23,7 @@ use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Stopwatch\Stopwatch;
+use Symfony\Component\Stopwatch\StopwatchEvent;
 
 /**
  * @phpstan-import-type CorpusState from PageRepository
@@ -128,7 +129,7 @@ final class PageScannerCommand
             $event = $this->stopwatch?->stop('scan:'.$page->slug);
             $this->stopwatch?->stop('scanPage');
 
-            if (! $this->agentMode && null !== $event && $event->getDuration() > 500 && null !== $this->output && $this->output->isVerbose()) {
+            if (! $this->agentMode && $event instanceof StopwatchEvent && $event->getDuration() > 500 && $this->output instanceof OutputInterface && $this->output->isVerbose()) {
                 $this->output->writeln("\n".\sprintf('<comment>⏱ %s/%s: %dms (slow)</comment>', $pageHost, $pageSlug, $event->getDuration()));
                 $lastLineWasError = true;
             }
@@ -454,7 +455,7 @@ final class PageScannerCommand
 
     private function printTimingBreakdown(OutputInterface $output): void
     {
-        if (null === $this->stopwatch) {
+        if (! $this->stopwatch instanceof Stopwatch) {
             return;
         }
 
