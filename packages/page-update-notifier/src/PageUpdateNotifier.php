@@ -125,7 +125,7 @@ class PageUpdateNotifier
             return NotificationStatus::WasEverRunSinceInterval;
         }
 
-        if (($lastTime30min = $lastTime->get('30 minutes ago')) === null) {
+        if (! ($lastTime30min = $lastTime->get('30 minutes ago')) instanceof DateTimeInterface) {
             throw new LogicException();
         }
 
