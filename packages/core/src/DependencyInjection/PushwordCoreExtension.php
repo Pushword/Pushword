@@ -72,7 +72,23 @@ final class PushwordCoreExtension extends ConfigurableExtension implements Prepe
 
         $this->registerResolveTargetEntities($container);
         $this->registerDqlFunctions($container);
+        $this->registerMediaCachePool($container);
         $this->registerMarkdownCachePool($container);
+    }
+
+    private function registerMediaCachePool(ContainerBuilder $container): void
+    {
+        // Filename indexes and their invalidation counter must be shared by web
+        // workers and CLI, even when cache.app uses a process-local adapter.
+        $container->prependExtensionConfig('framework', [
+            'cache' => [
+                'pools' => [
+                    'cache.pushword_media' => [
+                        'adapter' => 'cache.adapter.filesystem',
+                    ],
+                ],
+            ],
+        ]);
     }
 
     /**

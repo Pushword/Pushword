@@ -18,7 +18,7 @@ use Symfony\Component\DependencyInjection\Attribute\Autowire;
 final readonly class MediaCacheInvalidationListener
 {
     public function __construct(
-        #[Autowire(service: 'cache.app')]
+        #[Autowire(service: 'cache.pushword_media')]
         private ?CacheItemPoolInterface $cache,
         private EntityManagerInterface $em,
         private RenderEpoch $renderEpoch,

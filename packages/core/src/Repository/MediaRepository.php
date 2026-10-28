@@ -48,7 +48,7 @@ class MediaRepository extends ServiceEntityRepository implements ObjectRepositor
     /**
      * Lightweight filename index. Scalar rows only — enough to resolve a
      * filename to a Media id without hydrating the full entity. Built via a
-     * single DQL array-hydration query, then optionally persisted to cache.app
+     * single DQL array-hydration query, then optionally persisted to cache.pushword_media
      * across requests and invalidated by bumping a version counter on writes.
      *
      * @var array<string, array{id: int, fileName: string, fileNameHistory: list<string>}>|null
@@ -91,7 +91,7 @@ class MediaRepository extends ServiceEntityRepository implements ObjectRepositor
 
     public function __construct(
         ManagerRegistry $registry,
-        #[Autowire(service: 'cache.app')]
+        #[Autowire(service: 'cache.pushword_media')]
         private readonly ?CacheItemPoolInterface $cache = null,
         #[Autowire(param: 'kernel.debug')]
         private readonly bool $debug = false,
@@ -104,16 +104,13 @@ class MediaRepository extends ServiceEntityRepository implements ObjectRepositor
      * No Media entity hydration. Kept for the lifetime of the repo instance and
      * revalidated against a per-table version counter, so an EntityManager
      * clear() costs a version read instead of a rebuild. Also persisted across
-     * requests via cache.app under that same counter (unless kernel.debug is
+     * requests via cache.pushword_media under that same counter (unless kernel.debug is
      * true or no cache pool is available, in which case the index lives for the
      * repo instance only).
      */
     public function warmupFileNameIndexLight(): void
     {
-        if ($this->warmedLight) {
-            return;
-        }
-
+        // Even a warm repository must observe writes made by another process.
         $version = $this->readVersion();
 
         // Scalar rows only, so EntityManager::clear() cannot make them stale.
@@ -358,7 +355,7 @@ class MediaRepository extends ServiceEntityRepository implements ObjectRepositor
     }
 
     /**
-     * Resolve an id taken from the filename index. A persisted index (cache.app,
+     * Resolve an id taken from the filename index. A persisted index (cache.pushword_media,
      * reused across requests in worker mode) can point at an id that no longer
      * exists if media changed out of band without bumping the version counter —
      * a bulk import bypassing the lifecycle listener, a DB restore. Rather than

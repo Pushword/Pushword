@@ -87,7 +87,7 @@ final class RepositoryBenchmarkTest extends KernelTestCase
         $this->seedPages($host, self::PAGE_COUNT);
         $this->seedMedias(self::MEDIA_COUNT);
 
-        // Reset repo-level caches + cache.app-backed media index so the warmup
+        // Reset repo-level caches + the shared media index so the warmup
         // we're measuring actually runs fresh DQL, not a cache hit.
         $this->em->clear();
         $this->pageRepo->onClear();

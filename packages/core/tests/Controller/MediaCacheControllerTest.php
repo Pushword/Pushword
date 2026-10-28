@@ -24,6 +24,7 @@ use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\StreamedResponse;
+use Symfony\Component\Process\Process;
 
 #[Group('integration')]
 final class MediaCacheControllerTest extends WebTestCase
@@ -63,6 +64,75 @@ final class MediaCacheControllerTest extends WebTestCase
 
         self::assertResponseIsSuccessful();
         self::assertFileExists($originalPath);
+    }
+
+    /** @return iterable<string, array{bool}> */
+    public static function readerResets(): iterable
+    {
+        yield 'warm reader' => [false];
+        yield 'reset reader' => [true];
+    }
+
+    #[DataProvider('readerResets')]
+    public function testGeneratesMissingWebpAfterRenameInAnotherProcess(bool $resetReader): void
+    {
+        $this->client->disableReboot();
+        $em = self::getContainer()->get(EntityManagerInterface::class);
+        $repo = self::getContainer()->get(MediaRepository::class);
+        $cacheManager = self::getContainer()->get(ImageCacheManager::class);
+        $filesystem = new Filesystem();
+        $oldName = 'rename-cache-before.png';
+        $newName = 'rename-cache-after.png';
+        $filesystem->copy($this->getMediaDir().'/piedweb-logo.png', $this->getMediaDir().'/'.$oldName, true);
+        $media = new Media()->setFileName($oldName)->setMimeType('image/png');
+        $em->persist($media);
+        $em->flush();
+
+        $id = $media->id;
+        self::assertIsInt($id);
+        $em->clear();
+
+        try {
+            self::assertSame($id, $repo->getFileNameToIdMap()[$oldName]);
+            self::assertNull($repo->findOneByFileNameOrHistory($newName));
+
+            $process = new Process([\PHP_BINARY, __DIR__.'/fixtures/rename-media.php', (string) $id, $newName], timeout: 30);
+            $process->mustRun();
+            self::assertSame(
+                ['fileName' => $newName, 'queued' => ['pw:image:cache']],
+                json_decode($process->getOutput(), true, flags: \JSON_THROW_ON_ERROR),
+            );
+            self::assertFileExists($this->getMediaDir().'/'.$newName);
+            $webpPath = $cacheManager->getFilterPath($newName, 'md', 'webp');
+            self::assertFileDoesNotExist($webpPath, 'The queued image job must remain unconsumed.');
+
+            if ($resetReader) {
+                $repo->reset();
+            }
+
+            $this->client->request(Request::METHOD_GET, '/media/md/rename-cache-after.webp');
+
+            self::assertResponseIsSuccessful();
+            self::assertSame($repo, self::getContainer()->get(MediaRepository::class));
+            self::assertFileExists($webpPath);
+            $dimensions = getimagesize($webpPath);
+            self::assertIsArray($dimensions);
+            self::assertSame('image/webp', $dimensions['mime']);
+            self::assertGreaterThan(0, $dimensions[0]);
+            self::assertGreaterThan(0, $dimensions[1]);
+            self::assertSame($id, $repo->findOneByFileNameOrHistory($oldName)?->id);
+            self::assertSame($id, $repo->getFileNameToIdMap()[$newName]);
+        } finally {
+            $renamed = $em->find(Media::class, $id);
+            if (null !== $renamed) {
+                $em->remove($renamed);
+                $em->flush();
+            }
+
+            $cacheManager->remove($oldName);
+            $cacheManager->remove($newName);
+            $filesystem->remove([$this->getMediaDir().'/'.$oldName, $this->getMediaDir().'/'.$newName]);
+        }
     }
 
     public function testServesAlreadyGeneratedVariantWithoutRegenerating(): void
