@@ -30,6 +30,7 @@ import HyperlinkTune from './tools/HyperlinkTune/HyperlinkTune'
 import PasteLink from './tools/Hyperlink/PasteLink'
 import ClipboardManager, { setupBlockCut } from './tools/utils/ClipboardManager'
 import { setupBlockSelection } from './tools/utils/BlockSelection'
+import { setupBlankBlockDeletion } from './tools/utils/BlankBlockDeletion'
 import { setupEditorPopovers } from './tools/utils/editorPopovers'
 import Raw from './tools/Raw/Raw'
 import CodeBlock from './tools/CodeBlock/CodeBlock'
@@ -257,6 +258,7 @@ export class editorJs {
     this.editors[config.holder!] = editor
     const holder = document.getElementById(config.holder!)
     if (holder) setupBlockSelection(editor, holder, editorListeners.signal)
+    if (holder) setupBlankBlockDeletion(editor, holder, editorListeners.signal)
     if (holder && diagnosticConfig) diagnostics = new EditorDiagnostics(holder, editor, {
       ...diagnosticConfig,
       editorjsVersion: EditorJS.version,
