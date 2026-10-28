@@ -1,6 +1,6 @@
 ---
-title: 'Media Metadata API'
-h1: Media Metadata API
+title: 'Media API'
+h1: Media API
 publishedAt: '2025-02-26 12:00'
 toc: true
 ---

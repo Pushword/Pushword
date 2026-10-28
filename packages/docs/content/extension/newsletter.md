@@ -449,7 +449,8 @@ saved rows; the API returns `estimatedRecipients` on any draft campaign.
 
 Write the body in Markdown (the block editor takes over when
 `pushword/admin-block-editor` is installed), pick an audience and optionally a
-segment, then **Send**. A future date schedules delivery; an empty or past date starts it immediately. `%name%` and `%email%` are substituted in
+segment, then **Send**. A future date schedules delivery; an empty or past date
+starts it immediately. `%name%` and `%email%` are substituted in
 the subject and the body. The **analytics name** is the campaign's slug, derived
 from the subject when empty; the send date is prefixed to it when the campaign
 goes out.
@@ -476,29 +477,25 @@ asks which language to send.
 
 ### Editorial planning and calendar
 
-The existing list remains available. **Calendar** opens an additional view with month,
-week, year and agenda scales. The list and calendar share site, audience, source,
-delivery status, preparation stage and search filters. Undated newsletters remain
-visible below the calendar. FullCalendar Standard 7 is bundled locally under MIT;
-these views and dragging use no Premium features. Resource timelines and optimized
-printing are outside this integration. Rebuild with `yarn --cwd packages/newsletter
-install --frozen-lockfile` and `yarn --cwd packages/newsletter build`.
+**Calendar** offers month, week, year and agenda views alongside the existing list.
+Both share site, audience, source, delivery status, preparation stage and search
+filters. Undated newsletters remain visible below the calendar.
 
 Save an idea with a **working title**, optional audience, date and internal notes.
-An email subject can serve as the title when no working title is given. Working titles
-and notes never enter the email, preview or tracking identity. The preparation labels
-**Draft**, **To review**, **Ready** are optional organization aids, independent of
-`CampaignStatus`; Ready is neither an approval requirement nor permission to send.
-Duplicates copy the working title and notes but reset preparation to Draft.
+The subject serves as its title when no working title is given. Working titles and
+notes never enter the email, preview or tracking identity. Preparation labels
+**Draft**, **To review**, **Ready** organize work independently of delivery status;
+Ready never authorizes sending. Duplicates copy the title and notes but reset
+preparation to Draft.
 
 `scheduledAt` is the single planned/send date. Saving it on a draft never makes the
 campaign eligible for `pw:newsletter:tick`, even when the date is past. **Send** in
 admin, API or CLI authorizes delivery at that date if future, or immediately otherwise.
-The legacy API/admin schedule endpoint also explicitly authorizes delivery and remains
-available for integrations. All send/schedule/arming entry points require an audience,
-subject and body; previews remain usable while preparing content. Automations do not
-require an editorial stage. Cancelling a scheduled send returns it to Draft and retains
-its date as a plan. Actual `sentAt` remains delivery history.
+The existing schedule endpoint also authorizes delivery. Sending requires an audience,
+subject, body and successful [preflight](#campaign-preflight); previews remain usable
+while preparing content. Automations do not require an editorial stage. Cancelling
+a scheduled send returns it to Draft and retains its date as a plan. `sentAt` records
+actual delivery.
 
 Drag a native authored draft to change its date, or open its edit form for keyboard
 entry. The editorial timezone controls the display; a month-cell drop retains the
@@ -522,9 +519,9 @@ or **Send** to authorize delivery. Previewing sends no mail.
 
 **More actions → Duplicate as draft** opens an unsaved copy of any campaign, including
 one already sent. Save it to create a new campaign. Content, translations, audience,
-segment, design, working title, internal notes, transactional setting and cadence are copied; schedules, automation
-provenance, recipients, counters and tracking identity are reset. The analytics name
-is derived anew from the subject. Shared audience and saved-template settings remain
+segment, design, working title, internal notes, transactional setting and cadence are
+copied; schedules, automation provenance, recipients, counters and tracking identity
+are reset. The analytics name is derived anew from the subject. Audience and template settings remain
 shared. The API equivalent, `POST /api/newsletter/campaign/{id}/duplicate`, immediately
 creates the draft and returns it with status 201; it requires an editor.
 
@@ -1549,25 +1546,23 @@ The campaign review page shows blocking errors and suggestions. The same
 `CampaignPreflight` runs for admin, API and CLI sends, scheduling, and again when
 the tick arms a due campaign. It checks audience, subject and body in every
 authored language, rendered link destinations, the marketing unsubscribe link,
-sender availability and referenced blocks. Long subjects are suggestions. URL
-checks are local syntax checks; they do not request remote pages or promise that
-a destination is live. A failed check returns the campaign to draft, preserves
-its planned date and records `sendIssues`. Correct it and explicitly choose Send
-again. Other due campaigns continue. The tick report includes `blocked`.
+sender availability and referenced blocks. Block checks receive the requested send
+date. Long subjects are suggestions. URL checks validate syntax without requesting
+remote pages. A blocked send returns the campaign to draft, preserves its planned
+date and records `sendIssues`. Correct it and choose Send again. Other due campaigns
+continue; the tick report includes `blocked`.
 
 `GET /api/newsletter/campaign/{id}/check` returns `issues` without sending. Send
 and schedule return HTTP 422 with the same issue structure when blocked. CLI
 send exits unsuccessfully with structured issues in agent mode. Each issue has
 `code`, `message` (translation key or plain text), `field`, `severity` (`error` or
-`warning`), optional `locale` and optional `block` label.
+`warning`), and nullable `locale` and `block` labels. Warnings do not block sending.
 
 Subscribe to `Pushword\Newsletter\Event\CheckCampaign` to add business checks.
 The event exposes the campaign, effective contents per locale and untracked HTML;
 append `CampaignIssue` objects to `issues`. Checks must be read-only and must not
-send mail. An exception blocks sending. No human approval is required for valid
-automatically generated campaigns. Preparation labels remain optional and never
-authorize sending. Once authorized, delivery fields are read-only in the admin;
-cancel a schedule before editing it.
+send mail. An exception blocks sending. Once authorized, delivery fields are
+read-only in the admin; cancel a schedule before editing it.
 
 ## Campaign sender profiles
 
@@ -1596,9 +1591,10 @@ blocks a draft or scheduled campaign until another identity is selected.
 ## Reusable email blocks
 
 **Newsletter → Reusable blocks** stores named groups of text, images, links,
-quotes and signatures. The link tool’s Button and Button outline styles are rendered as inline email styles. In the campaign block editor, insert **Reusable block**,
-select a source and search. The inserted copy can be edited as Markdown; the live
-email preview shows the result. **Save a copy to the library** creates a separate
+quotes and signatures. Button and Button outline links use inline email styles.
+In the campaign block editor, insert **Reusable block**, select a source and search.
+Edit the inserted Markdown copy and check the live email preview.
+**Save a copy to the library** creates a separate
 library entry. **Refresh from source** explicitly replaces that copy after
 confirmation. Editing or deleting a library entry never changes existing copies.
 Duplication retains the references, parameters, order and manual edits.
@@ -1662,7 +1658,7 @@ from becoming a burst.
 
 ```shell
 php bin/console pw:newsletter:tick
-php bin/console pw:newsletter:send 12    # arm a campaign now; the tick delivers
+php bin/console pw:newsletter:send 12    # authorize delivery at its planned date, or now
 ```
 
 The transport is the site's own `MAILER_DSN`: each site owns its provider and its
@@ -1819,6 +1815,7 @@ GET    /api/newsletter/campaign/{id}/check  # structured preflight issues
 GET    /api/newsletter/campaign/{id}    # includes estimatedRecipients while draft, clicksByUrl once sent
 PATCH  /api/newsletter/campaign/{id}    # drafts only
 DELETE /api/newsletter/campaign/{id}
+POST   /api/newsletter/campaign/{id}/duplicate  # creates a draft copy
 POST   /api/newsletter/campaign/{id}/schedule
 POST   /api/newsletter/campaign/{id}/send
 POST   /api/newsletter/campaign/{id}/test
