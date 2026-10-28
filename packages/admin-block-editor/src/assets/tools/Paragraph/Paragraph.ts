@@ -8,6 +8,34 @@ export interface ParagraphData extends BlockToolData {
 }
 
 export default class Paragraph extends ParagraphTool {
+  render(): HTMLDivElement {
+    const field = super.render()
+    if (this.readOnly) return field
+
+    field.addEventListener('keydown', event => {
+      if (event.key !== 'Delete' || event.defaultPrevented || event.isComposing ||
+        event.shiftKey || event.ctrlKey || event.altKey || event.metaKey ||
+        /[^\s\u200b]/u.test(field.textContent ?? '')) return
+      const selection = window.getSelection()
+      if (!selection?.isCollapsed || !selection.rangeCount) return
+      const rest = selection.getRangeAt(0).cloneRange()
+      if (!field.contains(rest.endContainer)) return
+      rest.setEnd(field, field.childNodes.length)
+      if (/[^\t\n\r ]/.test(rest.toString())) return
+
+      const index = this.api.blocks.getCurrentBlockIndex()
+      const next = this.api.blocks.getBlockByIndex(index + 1)
+      if (!next) return
+
+      // Editor.js counts spaces as content and would merge the next block into this paragraph.
+      event.preventDefault()
+      event.stopPropagation()
+      this.api.blocks.delete(index)
+      this.api.caret.setToBlock(next.id, 'start')
+    })
+    return field
+  }
+
   save(content: HTMLDivElement): { text: string } {
     const data = super.save(content)
     // Firefox leaves a caret placeholder after cutting all text. It is empty.
