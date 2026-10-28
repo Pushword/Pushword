@@ -12,15 +12,15 @@ use EasyCorp\Bundle\EasyAdminBundle\Context\AdminContext;
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
 use EasyCorp\Bundle\EasyAdminBundle\Field\ChoiceField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\DateTimeField;
+use EasyCorp\Bundle\EasyAdminBundle\Field\Field;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextField;
 use Override;
 use Pushword\Repurpose\Entity\SocialPost;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
- * Read-mostly list of carousels: filter by status/host/network, jump to the
- * studio to preview and export. Carousels are authored by the drafter or the API,
- * not typed into a form, so creation is disabled here.
+ * Read-mostly list of carousels: filter by status/host/network, preview a cover,
+ * or open the studio to author and export the carousel.
  *
  * @extends AbstractCrudController<SocialPost>
  */
@@ -37,6 +37,7 @@ class SocialPostCrudController extends AbstractCrudController
         return $crud
             ->setEntityLabelInSingular('repurpose.label.singular')
             ->setEntityLabelInPlural('repurpose.label.plural')
+            ->showEntityActionsInlined()
             ->setDefaultSort(['updatedAt' => 'DESC'])
             ->setSearchFields(['page', 'network', 'host']);
     }
@@ -72,6 +73,7 @@ class SocialPostCrudController extends AbstractCrudController
                 ->setLabel('repurpose.action.new')
                 ->setIcon('fas fa-wand-magic-sparkles'))
             ->update(Crud::PAGE_INDEX, Action::EDIT, $toStudio)
+            ->update(Crud::PAGE_INDEX, Action::DELETE, static fn (Action $action): Action => $action->addCssClass('pw-action-delete'))
             ->update(Crud::PAGE_DETAIL, Action::EDIT, $toStudio)
             ->setPermission(Action::DELETE, 'ROLE_PUSHWORD_ADMIN');
     }
@@ -91,13 +93,17 @@ class SocialPostCrudController extends AbstractCrudController
     #[Override]
     public function configureFields(string $pageName): iterable
     {
-        yield TextField::new('page', 'repurpose.field.page');
-        yield TextField::new('network', 'repurpose.field.network');
-        yield TextField::new('format', 'repurpose.field.format')->hideOnIndex();
-        yield TextField::new('host', 'repurpose.field.host');
         yield ChoiceField::new('status', 'repurpose.field.status')
             ->setChoices(['repurposeStatusDraft' => 'draft', 'repurposeStatusPlanned' => 'planned', 'repurposeStatusPosted' => 'posted'])
             ->renderAsBadges(['draft' => 'warning', 'planned' => 'info', 'posted' => 'success']);
+        yield Field::new('id', 'repurposeListPreview')
+            ->setTemplatePath('@PushwordRepurpose/admin/cover.html.twig')
+            ->setSortable(false)
+            ->onlyOnIndex();
+        yield TextField::new('page', 'repurpose.field.page')->addCssClass('text-break');
+        yield TextField::new('network', 'repurpose.field.network');
+        yield TextField::new('format', 'repurpose.field.format')->hideOnIndex();
+        yield TextField::new('host', 'repurpose.field.host');
         yield DateTimeField::new('plannedAt', 'repurpose.field.plannedAt')->setRequired(false);
         yield DateTimeField::new('updatedAt', 'repurpose.field.updatedAt')->onlyOnIndex();
     }

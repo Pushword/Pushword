@@ -1,0 +1,29 @@
+{% set post = entity.instance %}
+{% if post.spec.slides|default([]) is empty %}
+    <span class="text-muted">{{ 'repurposeListNoCover'|trans }}</span>
+{% else %}
+    {% set previewId = 'repurpose-cover-' ~ post.id %}
+    {% set coverUrl = path('repurpose_cover', {id: post.id}) %}
+    <button type="button" class="btn btn-link p-0 flex-column text-decoration-none" data-bs-toggle="modal" data-bs-target="#{{ previewId }}" aria-label="{{ 'repurposeListPreviewLabel'|trans({'%page%': post.page, '%network%': post.network}) }}">
+        <img src="{{ coverUrl }}" alt="" loading="lazy" width="64" height="80" class="d-block rounded" style="object-fit: contain">
+        <span class="d-block small mt-1">{{ 'repurposeListPreview'|trans }}</span>
+    </button>
+    <div class="modal fade" id="{{ previewId }}" tabindex="-1" aria-labelledby="{{ previewId }}-title" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 class="modal-title fs-5" id="{{ previewId }}-title">{{ 'repurposeListPreview'|trans }}</h2>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ 'repurposeListClose'|trans }}"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <p class="text-muted text-break">{{ post.page }} · {{ post.network }}</p>
+                    <img src="{{ coverUrl }}" alt="{{ 'repurposeListCoverLabel'|trans({'%page%': post.page, '%network%': post.network}) }}" loading="lazy" style="max-width: 100%; max-height: 65vh">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ 'repurposeListClose'|trans }}</button>
+                    <a href="{{ path('repurpose_studio', {id: post.id}) }}" class="btn btn-primary">{{ 'repurposeListOpenStudio'|trans }}</a>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endif %}
