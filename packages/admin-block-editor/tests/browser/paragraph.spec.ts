@@ -38,7 +38,7 @@ test('the preserved heading keeps its level and attributes after saving and relo
   await expect(page.locator('h3.ce-header b')).toHaveText('title')
   expect(await page.evaluate(async () => {
     const holder = document.querySelector<HTMLElement>('.editorjs-holder')!
-    return (await window.editors[holder.id]!.save()).blocks.map(({ id, ...block }: OutputBlockData) => block)
+    return (await window.editors[holder.id]!.save()).blocks.map(({ id: _id, ...block }: OutputBlockData) => block)
   })).toEqual([{ type: heading.type, data: heading.data, tunes: heading.tunes }])
 })
 
