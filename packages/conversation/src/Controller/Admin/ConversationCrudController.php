@@ -282,7 +282,7 @@ class ConversationCrudController extends AbstractAdminCrudController
     {
         $instance = $this->getContext()?->getEntity()?->getInstance();
         $message = $instance instanceof Message ? $instance : null;
-        if (null === $message) {
+        if (! $message instanceof Message) {
             $class = $this->getModelClass();
             $message = new $class();
         }
@@ -562,7 +562,7 @@ class ConversationCrudController extends AbstractAdminCrudController
 
     private function getAdminUrlGenerator(): AdminUrlGenerator
     {
-        if (null !== $this->adminUrlGenerator) {
+        if ($this->adminUrlGenerator instanceof AdminUrlGenerator) {
             return $this->adminUrlGenerator;
         }
 

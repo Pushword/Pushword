@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pushword\Conversation\Flat;
 
+use Pushword\Conversation\Entity\Message;
 use Pushword\Core\Site\SiteRegistry;
 use Pushword\Flat\FlatFileContentDirFinder;
 use Pushword\Flat\Sync\ConversationSyncInterface;
@@ -78,7 +79,7 @@ final class ConversationSync implements ConversationSyncInterface
                 $isGlobalMode ? null : $this->resolveHost($host),
             );
 
-            if (null !== $lastMessage && filemtime($csvPath) >= $lastMessage->updatedAt->getTimestamp()) { // @phpstan-ignore method.nonObject
+            if ($lastMessage instanceof Message && filemtime($csvPath) >= $lastMessage->updatedAt->getTimestamp()) { // @phpstan-ignore method.nonObject
                 return;
             }
         }
@@ -92,7 +93,7 @@ final class ConversationSync implements ConversationSyncInterface
                 $isGlobalMode ? null : $this->resolveHost($host),
             );
 
-            if (null !== $lastMessage) {
+            if ($lastMessage instanceof Message) {
                 touch($csvPath, $lastMessage->updatedAt->getTimestamp()); // @phpstan-ignore method.nonObject
             }
         }
@@ -111,9 +112,9 @@ final class ConversationSync implements ConversationSyncInterface
 
         if (! $this->filesystem->exists($csvPath)) {
             $result = false;
-        } elseif (null === ($lastMessage = $this->importer->getLastUpdatedMessage(
+        } elseif (! ($lastMessage = $this->importer->getLastUpdatedMessage(
             $isGlobalMode ? null : $this->resolveHost($host),
-        ))) {
+        )) instanceof Message) {
             $result = true;
         } else {
             $result = filemtime($csvPath) > $lastMessage->updatedAt->getTimestamp(); // @phpstan-ignore method.nonObject

@@ -272,7 +272,7 @@ final class ConversationImporter
         foreach ($fileNames as $fileName) {
             $media = $this->mediaRepository->findOneByFileName($fileName)
               ?? $this->mediaRepository->findOneBySearch($fileName);
-            if (null !== $media) {
+            if ($media instanceof Media) {
                 $medias[] = $media;
             }
         }
@@ -355,7 +355,7 @@ final class ConversationImporter
             }
 
             $parsed = ConversationCsvHelper::parseDate($value, $this->editorialTimezone);
-            if (null !== $parsed) {
+            if ($parsed instanceof DateTime) {
                 $dates[$field] = $parsed;
             }
         }
@@ -429,7 +429,7 @@ final class ConversationImporter
 
         try {
             $reader = $this->createReader($csvPath);
-            if (null === $reader) {
+            if (! $reader instanceof Reader) {
                 return;
             }
 
@@ -554,7 +554,7 @@ final class ConversationImporter
         $rowUpdatedAt = ConversationCsvHelper::parseDate($row['updatedAt'] ?? null, $this->editorialTimezone);
         // Compare at second precision — all the CSV can express; the in-memory
         // entity may carry microseconds the exported value never had.
-        if (null === $rowUpdatedAt
+        if (! $rowUpdatedAt instanceof DateTime
             || ($message->updatedAt?->getTimestamp() ?? 0) <= $rowUpdatedAt->getTimestamp()) {
             return false;
         }

@@ -9,6 +9,7 @@ use Pushword\Core\Entity\User;
 use Symfony\Component\Form\Extension\Core\Type\EmailType;
 use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 use Symfony\Component\Form\FormBuilderInterface;
+use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 
 class MessageForm extends AbstractConversationForm implements ConversationFormInterface
 {
@@ -16,7 +17,7 @@ class MessageForm extends AbstractConversationForm implements ConversationFormIn
     {
         $formBuilder = $this->initForm();
 
-        if (null === $this->getUser()) { // ! isset($user) ||
+        if (! $this->getUser() instanceof User) { // ! isset($user) ||
             $formBuilder->add('authorEmail', EmailType::class, ['constraints' => $this->getAuthorEmailConstraints()]);
             $formBuilder->add('authorName', null, ['constraints' => $this->getAuthorNameConstraints()]);
         }
@@ -28,7 +29,7 @@ class MessageForm extends AbstractConversationForm implements ConversationFormIn
 
     protected function getUser(): ?User
     {
-        if (null === $token = $this->security->getToken()) {
+        if (! ($token = $this->security->getToken()) instanceof TokenInterface) {
             return null;
         }
 

@@ -17,6 +17,7 @@ use Pushword\Core\Utils\LastTime;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
+use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Contracts\Cache\CacheInterface;
 use Symfony\Contracts\Cache\ItemInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
@@ -76,7 +77,7 @@ class NewMessageMailNotifier
             return; // Skip notifications during import
         }
 
-        if (null !== $this->security->getUser()) {
+        if ($this->security->getUser() instanceof UserInterface) {
             return;
         } // we send notification only for message sent by not logged people
 

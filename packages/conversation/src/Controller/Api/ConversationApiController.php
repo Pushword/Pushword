@@ -85,7 +85,7 @@ final class ConversationApiController extends AbstractApiController
         $message = $this->messageRepository->find($id);
         // A tombstoned message is gone as far as the API contract goes, and a
         // review is only reachable through /api/review.
-        if (! $message instanceof Message || $message instanceof Review || null !== $message->deletedAt) {
+        if (! $message instanceof Message || $message instanceof Review || $message->deletedAt instanceof DateTimeInterface) {
             return $this->notFound('Message not found');
         }
 

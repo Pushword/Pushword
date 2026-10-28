@@ -20,7 +20,7 @@ final class MessageAuthorIpTest extends KernelTestCase
 
     protected function tearDown(): void
     {
-        if (null !== $this->entityManager && null !== $this->createdMessageId) {
+        if ($this->entityManager instanceof EntityManagerInterface && null !== $this->createdMessageId) {
             try {
                 $message = $this->entityManager->find(Message::class, $this->createdMessageId);
                 if (null !== $message) {

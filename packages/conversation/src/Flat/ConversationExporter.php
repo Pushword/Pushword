@@ -121,7 +121,7 @@ final class ConversationExporter
      */
     private function detectBaseColumns(?Message $sampleMessage): array
     {
-        if (null === $sampleMessage) {
+        if (! $sampleMessage instanceof Message) {
             return ConversationCsvHelper::BASE_COLUMNS;
         }
 

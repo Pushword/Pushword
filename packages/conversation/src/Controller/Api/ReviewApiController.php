@@ -76,7 +76,7 @@ final class ReviewApiController extends AbstractApiController
     {
         $review = $this->reviewRepository->find($id);
         // A tombstoned review is gone as far as the API contract goes.
-        if (! $review instanceof Review || null !== $review->deletedAt) {
+        if (! $review instanceof Review || $review->deletedAt instanceof DateTimeInterface) {
             return $this->notFound('Review not found');
         }
 

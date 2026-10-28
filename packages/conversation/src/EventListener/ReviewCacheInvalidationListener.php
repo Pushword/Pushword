@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pushword\Conversation\EventListener;
 
+use DateTimeInterface;
 use Doctrine\Bundle\DoctrineBundle\Attribute\AsEntityListener;
 use Doctrine\ORM\Event\PreUpdateEventArgs;
 use Doctrine\ORM\Events;
@@ -77,7 +78,7 @@ final class ReviewCacheInvalidationListener implements ResetInterface
     /** Mirrors MessageRepository's published queries: publishedAt set, no tombstone. */
     private function isPublished(Message $message): bool
     {
-        return null !== $message->publishedAt && null === $message->deletedAt;
+        return $message->publishedAt instanceof DateTimeInterface && ! $message->deletedAt instanceof DateTimeInterface;
     }
 
     private function bump(Message $message): void

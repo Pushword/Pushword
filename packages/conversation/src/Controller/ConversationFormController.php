@@ -85,7 +85,7 @@ final class ConversationFormController extends AbstractController
      */
     private function getFormManager(string $type, Request $request): ConversationFormInterface
     {
-        if (null !== $this->form) {
+        if ($this->form instanceof ConversationFormInterface) {
             return $this->form;
         }
 

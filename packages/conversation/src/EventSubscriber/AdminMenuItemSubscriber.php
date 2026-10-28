@@ -7,8 +7,10 @@ namespace Pushword\Conversation\EventSubscriber;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Menu\ControllerMenuItem;
 use EasyCorp\Bundle\EasyAdminBundle\Config\MenuItem;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Option\EA;
+use EasyCorp\Bundle\EasyAdminBundle\Contracts\Context\AdminContextInterface;
 use EasyCorp\Bundle\EasyAdminBundle\Contracts\Menu\MenuItemInterface;
 use EasyCorp\Bundle\EasyAdminBundle\Contracts\Provider\AdminContextProviderInterface;
+use EasyCorp\Bundle\EasyAdminBundle\Dto\CrudDto;
 use Pushword\Admin\Menu\AdminMenuItemsEvent;
 use Pushword\Conversation\Controller\Admin\ConversationCrudController;
 use Pushword\Conversation\Controller\Admin\ReviewCrudController;
@@ -130,12 +132,12 @@ final readonly class AdminMenuItemSubscriber implements EventSubscriberInterface
     {
         $context = $this->adminContextProvider->getContext();
 
-        if (null === $context) {
+        if (! $context instanceof AdminContextInterface) {
             return false;
         }
 
         $crud = $context->getCrud();
-        if (null === $crud || $crud->getControllerFqcn() !== $controller) {
+        if (! $crud instanceof CrudDto || $crud->getControllerFqcn() !== $controller) {
             return false;
         }
 
@@ -149,12 +151,12 @@ final readonly class AdminMenuItemSubscriber implements EventSubscriberInterface
     {
         $context = $this->adminContextProvider->getContext();
 
-        if (null === $context) {
+        if (! $context instanceof AdminContextInterface) {
             return false;
         }
 
         $crud = $context->getCrud();
-        if (null === $crud || $crud->getControllerFqcn() !== $controller) {
+        if (! $crud instanceof CrudDto || $crud->getControllerFqcn() !== $controller) {
             return false;
         }
 
