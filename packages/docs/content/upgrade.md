@@ -16,6 +16,7 @@ Package names omit `pushword/`; `js-helper` is the npm package
 
 | Version | Packages | What changed |
 | --- | --- | --- |
+| [1.0.98](/upgrade/1.0.98) | `newsletter` | newsletter site filters, planning and preflight; sender profiles and reusable blocks; first-name placeholders — run `doctrine:schema:update --force` |
 | [1.0.97](/upgrade/1.0.97) | `admin-block-editor` `newsletter` | automation emails use the block editor |
 | [1.0.92](/upgrade/1.0.92) | `core` `quiz` | quiz assessments and API result maps; removed core dependencies |
 | [1.0.91](/upgrade/1.0.91) | `admin-block-editor` `quiz` | quiz result templates gain an extension partial |
