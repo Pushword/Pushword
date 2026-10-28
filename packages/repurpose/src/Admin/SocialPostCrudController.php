@@ -96,14 +96,14 @@ class SocialPostCrudController extends AbstractCrudController
         yield ChoiceField::new('status', 'repurpose.field.status')
             ->setChoices(['repurposeStatusDraft' => 'draft', 'repurposeStatusPlanned' => 'planned', 'repurposeStatusPosted' => 'posted'])
             ->renderAsBadges(['draft' => 'warning', 'planned' => 'info', 'posted' => 'success']);
-        yield Field::new('id', 'repurposeListPreview')
-            ->setTemplatePath('@PushwordRepurpose/admin/cover.html.twig')
+        yield Field::new('id', 'repurposeListCarousel')
+            ->setTemplatePath('@PushwordRepurpose/admin/carousel.html.twig')
             ->setSortable(false)
             ->onlyOnIndex();
-        yield TextField::new('page', 'repurpose.field.page')->addCssClass('text-break');
-        yield TextField::new('network', 'repurpose.field.network');
+        yield TextField::new('page', 'repurpose.field.page')->hideOnIndex();
+        yield TextField::new('network', 'repurpose.field.network')->hideOnIndex();
         yield TextField::new('format', 'repurpose.field.format')->hideOnIndex();
-        yield TextField::new('host', 'repurpose.field.host');
+        yield TextField::new('host', 'repurpose.field.host')->hideOnIndex();
         yield DateTimeField::new('plannedAt', 'repurpose.field.plannedAt')->setRequired(false);
         yield DateTimeField::new('updatedAt', 'repurpose.field.updatedAt')->onlyOnIndex();
     }

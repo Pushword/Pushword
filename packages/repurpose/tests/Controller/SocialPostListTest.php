@@ -79,9 +79,16 @@ final class SocialPostListTest extends WebTestCase
 
         self::assertResponseIsSuccessful();
         self::assertSame('Status', trim($crawler->filter('thead th[data-column]')->first()->text()));
+        self::assertSame(['status', 'id', 'plannedAt', 'updatedAt'], $crawler->filter('thead th[data-column]')->each(static fn (Crawler $node): ?string => $node->attr('data-column')));
+        self::assertSame('Carousel', trim($crawler->filter('thead th[data-column="id"]')->text()));
         $row = $crawler->filter('tr[data-id="'.$this->post->id.'"]');
         self::assertCount(1, $row);
         self::assertSame('status', $row->filter('td[data-column]')->first()->attr('data-column'));
+        $summary = $row->filter('td[data-column="id"]');
+        self::assertSame('The cover', $summary->filter('a.pw-list-title')->text());
+        self::assertSame('/admin/repurpose/studio/'.$this->post->id, $summary->filter('a.pw-list-title')->attr('href'));
+        self::assertStringContainsString('linkedin · '.$this->post->host, $summary->text());
+        self::assertStringContainsString($this->post->page, $summary->text());
         $trigger = $row->filter('button[data-bs-toggle="modal"]');
         self::assertSame('Preview the cover of '.$this->post->page.' · linkedin', $trigger->attr('aria-label'));
         self::assertSame('/admin/repurpose/'.$this->post->id.'/cover.svg', $trigger->filter('img')->attr('src'));
@@ -91,6 +98,91 @@ final class SocialPostListTest extends WebTestCase
         self::assertSame('/admin/repurpose/studio/'.$this->post->id, $modal->filter('a')->attr('href'));
         self::assertCount(1, $row->filter('td.actions .action-edit'));
         self::assertCount(0, $row->filter('td.actions.actions-as-dropdown'));
+    }
+
+    public function testUntitledPageCarouselFallsBackToItsSource(): void
+    {
+        $this->post->spec = [...$this->post->spec, 'slides' => [['title' => '   ']]];
+        $this->em->flush();
+
+        $this->client->request(Request::METHOD_GET, '/admin/social-post', ['query' => $this->post->page]);
+
+        self::assertResponseIsSuccessful();
+        self::assertSelectorTextSame('a.pw-list-title', $this->post->page);
+    }
+
+    public function testStandaloneCarouselShowsItsTitleAndStandaloneContext(): void
+    {
+        $this->post->spec = [...$this->post->spec, 'page' => 'standalone/'.uniqid()];
+        $this->em->flush();
+
+        $this->client->request(Request::METHOD_GET, '/admin/social-post', ['query' => $this->post->page]);
+
+        self::assertResponseIsSuccessful();
+        self::assertSelectorTextSame('a.pw-list-title', 'The cover');
+        self::assertSelectorTextContains('td[data-column="id"]', 'Standalone carousel');
+
+        $this->post->spec = [...$this->post->spec, 'slides' => []];
+        $this->em->flush();
+        $this->client->request(Request::METHOD_GET, '/admin/social-post', ['query' => $this->post->page]);
+
+        self::assertResponseIsSuccessful();
+        self::assertSelectorTextSame('a.pw-list-title', 'Untitled carousel');
+        self::assertSelectorNotExists('button[data-bs-target^="#repurpose-cover-"]');
+    }
+
+    public function testCarouselTitleIsEscaped(): void
+    {
+        $title = '<script>alert("title")</script>';
+        $this->post->spec = [...$this->post->spec, 'slides' => [['title' => $title]]];
+        $this->em->flush();
+
+        $this->client->request(Request::METHOD_GET, '/admin/social-post', ['query' => $this->post->page]);
+
+        self::assertResponseIsSuccessful();
+        self::assertSelectorTextSame('a.pw-list-title', $title);
+        self::assertSelectorNotExists('a.pw-list-title script');
+    }
+
+    public function testGroupedMetadataRemainsSearchable(): void
+    {
+        foreach ([$this->post->host, $this->post->network] as $query) {
+            $this->client->request(Request::METHOD_GET, '/admin/social-post', ['query' => $query]);
+
+            self::assertResponseIsSuccessful();
+            self::assertSelectorExists('tr[data-id="'.$this->post->id.'"]');
+        }
+    }
+
+    public function testMetadataFiltersAndDateSortingRemainAvailable(): void
+    {
+        $filters = [
+            'host' => ['comparison' => '=', 'value' => $this->post->host],
+            'network' => ['comparison' => '=', 'value' => $this->post->network],
+        ];
+        $crawler = $this->client->request(Request::METHOD_GET, '/admin/social-post', ['filters' => $filters, 'sort' => ['plannedAt' => 'ASC']]);
+
+        self::assertResponseIsSuccessful();
+        self::assertSelectorExists('tr[data-id="'.$this->post->id.'"]');
+        self::assertStringContainsString('sort%5BplannedAt%5D=DESC', (string) $crawler->filter('th[data-column="plannedAt"] a')->attr('href'));
+        self::assertSelectorExists('th[data-column="updatedAt"] a');
+
+        $filters['network']['value'] = 'instagram';
+        $this->client->request(Request::METHOD_GET, '/admin/social-post', ['filters' => $filters]);
+
+        self::assertResponseIsSuccessful();
+        self::assertSelectorNotExists('tr[data-id="'.$this->post->id.'"]');
+    }
+
+    public function testEmptyHostDoesNotLeaveAMetadataSeparator(): void
+    {
+        $this->post->host = '';
+        $this->em->flush();
+
+        $crawler = $this->client->request(Request::METHOD_GET, '/admin/social-post', ['query' => $this->post->page]);
+
+        self::assertResponseIsSuccessful();
+        self::assertSame('linkedin', $crawler->filter('td[data-column="id"] a.pw-list-title + div')->text());
     }
 
     public function testCoverMatchesTheCanonicalFirstSlideWithoutChangingThePost(): void
@@ -121,6 +213,7 @@ final class SocialPostListTest extends WebTestCase
 
         self::assertResponseIsSuccessful();
         self::assertSelectorTextContains('td[data-column="id"]', 'No slides');
+        self::assertSelectorTextSame('a.pw-list-title', $this->post->page);
         self::assertSelectorNotExists('button[data-bs-target^="#repurpose-cover-"]');
 
         $this->client->request(Request::METHOD_GET, '/admin/repurpose/'.$this->post->id.'/cover.svg');

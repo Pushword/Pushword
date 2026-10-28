@@ -1,0 +1,19 @@
+{% set post = entity.instance %}
+{% set standalone = post.page starts with 'standalone/' %}
+{% set title = post.spec.slides[0].title|default('')|trim %}
+{% if title is empty %}
+    {% set title = standalone ? 'repurposeListUntitled'|trans : post.page %}
+{% endif %}
+
+<div class="d-flex align-items-start gap-3">
+    <div class="flex-shrink-0">
+        {{ include('@PushwordRepurpose/admin/cover.html.twig') }}
+    </div>
+    <div style="min-width: 0">
+        <a href="{{ path('repurpose_studio', {id: post.id}) }}" class="pw-list-title">{{ title }}</a>
+        <div class="text-muted small mt-1 text-break">{{ post.network }}{% if post.host %} · {{ post.host }}{% endif %}</div>
+        {% if standalone or title != post.page %}
+            <div class="text-muted small text-break">{{ standalone ? 'repurposeListStandalone'|trans : post.page }}</div>
+        {% endif %}
+    </div>
+</div>
