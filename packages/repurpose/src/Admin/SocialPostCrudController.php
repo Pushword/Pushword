@@ -49,6 +49,7 @@ class SocialPostCrudController extends AbstractCrudController
             ->add('status')
             ->add('host')
             ->add('network')
+            ->add('page')
             ->add('plannedAt');
     }
 

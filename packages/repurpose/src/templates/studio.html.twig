@@ -364,6 +364,9 @@
       <span class="badge" :class="spec.status" x-text="spec.status"></span>
     </div>
     <div class="studio-actions">
+      {% if repurpose_source_page(post) %}
+        <a class="btn" href="{{ path('admin_repurpose_source_page', {id: post.id}) }}">{{ 'repurposeEditSourcePage'|trans }}</a>
+      {% endif %}
       <div class="toggle" role="group" aria-label="Editor view">
         <button type="button" :class="view === 'visual' && 'on'" aria-pressed="true" :aria-pressed="view === 'visual'" aria-controls="rp-visual-editor" @click="setView('visual')">Visual</button>
         <button type="button" :class="view === 'source' && 'on'" aria-pressed="false" :aria-pressed="view === 'source'" aria-controls="rp-source-editor" @click="setView('source')">Source</button>

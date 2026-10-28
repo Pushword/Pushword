@@ -41,12 +41,14 @@ repurposeAudioVoiceEmpty: "Aucun enregistrement vocal sélectionné"
 repurposeAudioVoiceHint: "Joue une seule fois, au début de la vidéo."
 repurposeAudioVolume: "Volume"
 repurposeConfirmationCancel: Annuler
+repurposeEditSourcePage: Modifier la page source
 repurposeExport: 'Exporter'
 repurposeFormat: 'Format'
 repurposeHelpEffect: "S’applique à tout le carrousel. Chaque slide peut remplacer cet effet."
 repurposeHelpPalette: "Remplace le fond du carrousel pour cette slide. Laissez vide pour hériter."
 repurposeHelpPreview: "100 % correspond à la largeur habituelle du fil mobile du réseau choisi. Le zoom ne change que l’aperçu."
 repurposeHelpSource: "Le JSON est validé pendant la saisie. L’éditeur visuel et la source restent synchronisés lors du changement de vue."
+repurposeLinkedCarousels: Carrousels liés
 repurposeListCarousel: Carrousel
 repurposeListClose: Fermer
 repurposeListCoverLabel: 'Couverture de %page% · %network%'

@@ -13,6 +13,7 @@ use Pushword\Repurpose\Entity\SocialPost;
 use Pushword\Repurpose\Repository\SocialPostRepository;
 use Pushword\Repurpose\Service\CarouselDrafter;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -20,8 +21,9 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 /**
  * The "Repurpose" entry point on a page: if the page has no carousel yet, draft
- * one from its content and open the studio; if it already has some, jump to its
- * list of carousels (one row per network). Wired only when EasyAdmin is present.
+ * one from its content and open the studio; otherwise open its only carousel or
+ * list its carousels (one row per network). Also links back to a source page.
+ * Wired only when EasyAdmin is present.
  */
 #[IsGranted('ROLE_PUSHWORD_ADMIN')]
 final class RepurposeFromPageController extends AbstractController
@@ -32,6 +34,7 @@ final class RepurposeFromPageController extends AbstractController
         private readonly CarouselDrafter $drafter,
         private readonly EntityManagerInterface $entityManager,
         private readonly AdminUrlGenerator $adminUrlGenerator,
+        private readonly SourcePageResolver $sourcePageResolver,
     ) {
     }
 
@@ -42,12 +45,21 @@ final class RepurposeFromPageController extends AbstractController
         $host = $page->host;
         $slug = $page->slug;
 
-        if ([] !== $this->socialPosts->findBy(['host' => $host, 'page' => $slug])) {
+        $posts = $this->socialPosts->findBy(['host' => $host, 'page' => $slug]);
+        if (1 === \count($posts)) {
+            return $this->redirectToRoute('repurpose_studio', ['id' => $posts[0]->id]);
+        }
+
+        if ([] !== $posts) {
             return $this->redirect(
                 $this->adminUrlGenerator
+                    ->unsetAll()
                     ->setController(SocialPostCrudController::class)
                     ->setAction('index')
-                    ->set('query', $slug)
+                    ->set('filters', [
+                        'host' => ['comparison' => '=', 'value' => $host],
+                        'page' => ['comparison' => '=', 'value' => $slug],
+                    ])
                     ->generateUrl(),
             );
         }
@@ -75,5 +87,21 @@ final class RepurposeFromPageController extends AbstractController
         $this->entityManager->flush();
 
         return $this->redirectToRoute('repurpose_studio', ['id' => $post->id]);
+    }
+
+    #[AdminRoute(path: '/repurpose/source-page/{id}', name: 'repurpose_source_page', options: ['requirements' => ['id' => '\d+'], 'methods' => ['GET']])]
+    public function sourcePage(int $id): RedirectResponse
+    {
+        $post = $this->socialPosts->find($id) ?? throw new NotFoundHttpException('Carousel not found.');
+        $page = $this->sourcePageResolver->resolve($post) ?? throw new NotFoundHttpException('Source page not found.');
+
+        return $this->redirect(
+            $this->adminUrlGenerator
+                ->unsetAll()
+                ->setController(PageCrudController::class)
+                ->setAction('edit')
+                ->setEntityId($page->id)
+                ->generateUrl(),
+        );
     }
 }
