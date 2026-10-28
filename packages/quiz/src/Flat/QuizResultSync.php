@@ -119,12 +119,12 @@ final readonly class QuizResultSync implements FlatSyncInterface
             }
 
             $createdAt = $this->parseDate($row['createdAt'] ?? null);
-            if (null !== $createdAt) {
+            if ($createdAt instanceof DateTime) {
                 $quizResult->createdAt = $createdAt;
             }
 
             $updatedAt = $this->parseDate($row['updatedAt'] ?? null);
-            if (null !== $updatedAt) {
+            if ($updatedAt instanceof DateTime) {
                 $quizResult->updatedAt = $updatedAt;
             }
 
