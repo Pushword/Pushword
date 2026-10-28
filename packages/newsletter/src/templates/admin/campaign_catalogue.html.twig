@@ -8,6 +8,7 @@
   sent: 'newsletter.campaign.status.sent',
 } %}
 {% set isInitialEmpty = availableCount == 0 and not hasFilters %}
+{% set hasExternalSources = sources|filter(value => value != 'pushword') is not empty %}
 
 {% macro creations(actions) %}
   <a class="btn btn-primary" href="{{ path('admin_newsletter_campaign_new') }}">{{ 'newsletter.catalogue.createNative'|trans }}</a>
@@ -41,13 +42,13 @@
     {% endif %}
     {% if not isInitialEmpty %}
       <form method="get" class="pw-catalogue-filters" aria-label="{{ 'newsletter.catalogue.filters'|trans }}">
-        <div>
+        {% if hasExternalSources %}<div>
           <label class="form-label" for="campaign-source">{{ 'newsletter.catalogue.source'|trans }}</label>
           <select class="form-select" id="campaign-source" name="source">
             <option value="">{{ 'newsletter.workspace.filterAll'|trans }}</option>
             {% for value in sources %}<option value="{{ value }}"{% if source == value %} selected{% endif %}>{{ value|capitalize }}</option>{% endfor %}
           </select>
-        </div>
+        </div>{% endif %}
         <div>
           <label class="form-label" for="campaign-status">{{ 'newsletter.campaign.field.status'|trans }}</label>
           <select class="form-select" id="campaign-status" name="status">
@@ -77,7 +78,7 @@
           <caption class="visually-hidden">{{ 'newsletter.campaign.label.plural'|trans }}</caption>
           <thead><tr>
             <th scope="col">{{ 'newsletter.campaign.field.subject'|trans }}</th>
-            <th scope="col">{{ 'newsletter.catalogue.source'|trans }}</th>
+            {% if hasExternalSources %}<th scope="col">{{ 'newsletter.catalogue.source'|trans }}</th>{% endif %}
             <th scope="col">{{ 'newsletter.campaign.field.status'|trans }}</th>
             <th scope="col">{{ 'newsletter.campaign.field.scheduledAt'|trans }}</th>
             <th scope="col">{{ 'newsletter.catalogue.sentAt'|trans }}</th>
@@ -94,7 +95,7 @@
                   {% endif %}
                   {% if item.audience %}<span class="pw-catalogue-audience">{{ item.audience }}</span>{% endif %}
                 </th>
-                <td data-label="{{ 'newsletter.catalogue.source'|trans }}">{{ item.source|capitalize }}</td>
+                {% if hasExternalSources %}<td data-label="{{ 'newsletter.catalogue.source'|trans }}">{{ item.source|capitalize }}</td>{% endif %}
                 <td data-label="{{ 'newsletter.campaign.field.status'|trans }}">{{ item.status is null ? 'newsletter.catalogue.unknown'|trans : (statusLabels[item.status] is defined ? statusLabels[item.status]|trans : item.status) }}</td>
                 <td data-label="{{ 'newsletter.campaign.field.scheduledAt'|trans }}">{{ item.scheduledAt ? item.scheduledAt|format_datetime('medium', 'short', timezone: timezone) : 'newsletter.catalogue.unknown'|trans }}</td>
                 <td data-label="{{ 'newsletter.catalogue.sentAt'|trans }}">{{ item.sentAt ? item.sentAt|format_datetime('medium', 'short', timezone: timezone) : 'newsletter.catalogue.unknown'|trans }}</td>
