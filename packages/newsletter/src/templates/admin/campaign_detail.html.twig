@@ -16,7 +16,7 @@
 {% endblock %}
 
 {% block content_title %}
-  {{ campaign.subject }}
+  {{ campaign.title }}
   <span class="badge badge-{{ {draft: 'secondary', scheduled: 'info', sending: 'warning', sent: 'success'}[campaign.status.value] }} pw-campaign-status">{{ ('newsletter.campaign.review.status.' ~ campaign.status.value)|trans }}</span>
 {% endblock %}
 
@@ -68,7 +68,7 @@
       <aside class="pw-campaign-summary" aria-labelledby="campaign-summary-title">
         <h2 id="campaign-summary-title">{{ 'newsletter.campaign.review.summary'|trans }}</h2>
         <dl>
-          {% for property in ['audience', 'scheduledAt', 'sentAt'] %}
+          {% for property in ['audience', 'editorialStage', 'scheduledAt', 'sentAt'] %}
             {% set field = entity.fields.getByProperty(property) %}
             {% if field.value is not null %}
               <div><dt>{{ field.label|trans }}</dt><dd>{{ include(field.templatePath, {field: field, entity: entity}, with_context: false) }}</dd></div>

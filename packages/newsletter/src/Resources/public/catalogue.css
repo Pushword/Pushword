@@ -66,9 +66,9 @@ a.pw-catalogue-subject:is(:hover, :focus-visible),
 .pw-catalogue-empty p { max-inline-size: 65ch; color: var(--bs-secondary-color); line-height: 1.5; }
 
 @media (min-width: 768px) {
-  .pw-catalogue-filters { grid-template-columns: repeat(2, minmax(9rem, 1fr)) minmax(18rem, 2fr); }
+  .pw-catalogue-filters { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   .pw-catalogue-filters:has(#campaign-source) { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .pw-catalogue-search { grid-column: auto; }
+  .pw-catalogue-search { grid-column: 1 / -1; }
   .pw-catalogue-filters:has(#campaign-source) .pw-catalogue-search { grid-column: 1 / -1; }
 }
 

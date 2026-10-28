@@ -95,5 +95,13 @@ then
     cd ../../../
 fi
 
+if [ "$TYPE" = "newsletter" ] || [ "$TYPE" = "" ] || [ "$TYPE" = "all" ]
+then
+    cd packages/newsletter
+    yarn install --frozen-lockfile
+    buildAssets
+    cd ../../
+fi
+
 cd packages/dev-app
 php bin/console --symlink --relative  'assets:install'

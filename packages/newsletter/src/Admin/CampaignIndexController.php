@@ -27,16 +27,34 @@ final class CampaignIndexController extends AbstractController
     #[AdminRoute(path: '/newsletter/campaigns', name: 'newsletter_campaign_catalogue', options: ['methods' => ['GET']])]
     public function index(Request $request): Response
     {
+        return $this->listing($request, false);
+    }
+
+    #[AdminRoute(path: '/newsletter/calendar', name: 'newsletter_campaign_calendar', options: ['methods' => ['GET']])]
+    public function calendar(Request $request): Response
+    {
+        return $this->listing($request, true);
+    }
+
+    private function listing(Request $request, bool $calendar): Response
+    {
         $index = $this->campaigns->collect();
         $source = $request->query->getString('source');
         $status = $request->query->getString('status');
         $host = $request->query->getString('host', $this->defaultHost);
+        $audience = $request->query->getString('audience');
+        $stage = $request->query->getString('stage');
         $query = trim($request->query->getString('q'));
         $sources = array_fill_keys(array_keys($index->notices), true);
         $statuses = [];
+        $audiences = [];
         $hosts = '' === $host || '@unknown' === $host ? [] : [$host => true];
         foreach ($index->items as $item) {
             $sources[$item->source] = true;
+            if (null !== $item->audience) {
+                $audiences[$item->audience] = true;
+            }
+
             foreach ($item->hosts as $itemHost) {
                 $hosts[$itemHost] = true;
             }
@@ -46,11 +64,14 @@ final class CampaignIndexController extends AbstractController
             }
         }
 
+        ksort($audiences);
         ksort($sources);
         ksort($statuses);
         ksort($hosts);
         $items = array_filter($index->items, static fn (CampaignIndexItem $item): bool => ('' === $source || $source === $item->source)
             && ('' === $status || $status === $item->status)
+            && ('' === $stage || $stage === $item->editorialStage)
+            && ('' === $audience || $audience === $item->audience)
             && match ($host) {
                 '' => true,
                 '@unknown' => [] === $item->hosts,
@@ -61,13 +82,18 @@ final class CampaignIndexController extends AbstractController
             <=> (($first->sentAt ?? $first->scheduledAt)?->getTimestamp() ?? \PHP_INT_MIN)
             ?: strcmp($first->key, $second->key));
 
-        return $this->render('@PushwordNewsletter/admin/campaign_catalogue.html.twig', [
+        return $this->render($calendar ? '@PushwordNewsletter/admin/campaign_calendar.html.twig' : '@PushwordNewsletter/admin/campaign_catalogue.html.twig', [
+            'calendarView' => $calendar,
+            'viewFilters' => ['host' => $host, 'source' => $source, 'status' => $status, 'stage' => $stage, 'audience' => $audience, 'q' => $query],
+            'audiences' => array_keys($audiences),
+            'audience' => $audience,
+            'stage' => $stage,
             'newsletterSection' => 'campaign',
             'items' => $items,
             'notices' => $index->notices,
             'noticeLevels' => $index->noticeLevels,
             'availableCount' => \count($index->items),
-            'hasFilters' => '' !== $source || '' !== $status || '' !== $query || '' !== $host,
+            'hasFilters' => '' !== $audience || '' !== $stage || '' !== $source || '' !== $status || '' !== $query || '' !== $host,
             'creationActions' => $index->creationActions,
             'timezone' => $this->timezone->timezone->getName(),
             'sources' => array_keys($sources),

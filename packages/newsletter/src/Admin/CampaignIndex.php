@@ -46,13 +46,15 @@ final readonly class CampaignIndex
             $index->add(new CampaignIndexItem(
                 source: 'pushword',
                 id: (string) $campaign['id'],
-                subject: $campaign['subject'],
+                subject: '' !== trim($campaign['workingTitle']) ? $campaign['workingTitle'] : $campaign['subject'],
                 status: $campaign['status']->value,
                 scheduledAt: $campaign['scheduledAt'],
                 sentAt: $campaign['sentAt'],
                 actions: $actions,
                 audience: $campaign['audience'],
                 hosts: null === $campaign['mainHost'] || '' === $campaign['mainHost'] ? [] : [$campaign['mainHost']],
+                editorialStage: $campaign['editorialStage']->value,
+                version: null === $campaign['automationId'] ? $campaign['version'] : null,
             ));
         }
 

@@ -565,7 +565,7 @@ final class NewsletterAdminTest extends AbstractAdminTestClass
         $client->click($row->filter('a.action-detail')->link());
         self::assertResponseIsSuccessful();
         self::assertSelectorExists('form[action*="/send"]');
-        self::assertSelectorExists('form[action*="/schedule"]');
+        self::assertSelectorNotExists('form[action*="/schedule"]');
     }
 
     public function testCampaignReviewRendersTheEmailAndKeepsSourceCollapsed(): void
@@ -878,7 +878,8 @@ final class NewsletterAdminTest extends AbstractAdminTestClass
         $client = $this->loginUser();
         $audience = $this->seed();
         $crawler = $client->request(Request::METHOD_GET, '/admin/newsletter/campaign/new');
-        self::assertStringContainsString('Choose the audience and design', $crawler->filter('.form-fieldset')->first()->text());
+        self::assertStringContainsString('Preparation', $crawler->filter('.form-fieldset')->first()->text());
+        self::assertStringContainsString('Choose the audience and design', $crawler->filter('.form-fieldset')->eq(1)->text());
         foreach (['pushword', 'pushword_letter', 'pushword_bulletin'] as $preset) {
             self::assertCount(1, $crawler->filter('select[name="Campaign[emailLayout]"] option[value="twig:'.$preset.'"]'));
         }
@@ -1141,6 +1142,49 @@ final class NewsletterAdminTest extends AbstractAdminTestClass
         self::assertCount(0, $crawler->filter('a[href*="campaign-recipient"]'));
     }
 
+    public function testSavingAnIncompleteIdeaAndSendingWithOneDate(): void
+    {
+        $client = $this->loginUser();
+        $crawler = $client->request('GET', '/admin/newsletter/campaign/new');
+        $form = $crawler->filter('form[name="Campaign"]')->form();
+        $form['Campaign[workingTitle]'] = 'Incomplete calendar idea';
+        $form['Campaign[editorialStage]'] = 'review';
+        $form['Campaign[scheduledAt]'] = '2030-06-01T09:30';
+        $client->submit($form);
+        self::assertResponseRedirects();
+        $campaign = $this->entityManager()->getRepository(Campaign::class)->findOneBy(['workingTitle' => 'Incomplete calendar idea']);
+        self::assertInstanceOf(Campaign::class, $campaign);
+        $id = $campaign->id;
+
+        try {
+            self::assertNull($campaign->audience);
+            self::assertSame('', $campaign->subject);
+            self::assertTrue($campaign->isDraft());
+            $client->request('POST', '/admin/newsletter/campaign/'.$id.'/send', ['_token' => $this->adminActionToken('send', (int) $id)]);
+            self::assertResponseRedirects();
+            $this->entityManager()->clear();
+            $campaign = $this->entityManager()->find(Campaign::class, $id);
+            self::assertInstanceOf(Campaign::class, $campaign);
+            self::assertTrue($campaign->isDraft());
+            self::assertSame(0, $campaign->recipientCount);
+            $campaign->audience = $this->seed();
+            $campaign->subject = 'Complete subject';
+            $campaign->bodyMarkdown = 'Complete message';
+            $this->entityManager()->flush();
+            $client->request('POST', '/admin/newsletter/campaign/'.$id.'/send', ['_token' => $this->adminActionToken('send', (int) $id)]);
+            $this->entityManager()->clear();
+            $campaign = $this->entityManager()->find(Campaign::class, $id);
+            self::assertInstanceOf(Campaign::class, $campaign);
+            self::assertTrue($campaign->isScheduled());
+            self::assertSame(0, $campaign->recipientCount);
+            $crawler = $client->request('GET', '/admin/newsletter/campaign/'.$id.'/edit');
+            self::assertSelectorExists('[name="Campaign[scheduledAt]"][disabled]');
+            self::assertSelectorExists('[name="Campaign[editorialStage]"][disabled]');
+        } finally {
+            $this->entityManager()->getConnection()->delete('newsletter_campaign', ['id' => $id]);
+        }
+    }
+
     public function testCampaignMutationsRequirePostAndAValidToken(): void
     {
         $client = $this->loginUser();
@@ -1152,7 +1196,8 @@ final class NewsletterAdminTest extends AbstractAdminTestClass
         $token = $this->adminActionToken('schedule', $id);
 
         $crawler = $client->request(Request::METHOD_GET, '/admin/newsletter/campaign/'.$id);
-        self::assertCount(1, $crawler->filter('form[method="post"][action*="/schedule"]'));
+        self::assertCount(0, $crawler->filter('form[method="post"][action*="/schedule"]'));
+        self::assertCount(1, $crawler->filter('form[method="post"][action*="/send"]'));
 
         $client->request(Request::METHOD_GET, $url);
         self::assertContains($client->getResponse()->getStatusCode(), [Response::HTTP_NOT_FOUND, Response::HTTP_METHOD_NOT_ALLOWED]);

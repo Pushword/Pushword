@@ -449,7 +449,7 @@ saved rows; the API returns `estimatedRecipients` on any draft campaign.
 
 Write the body in Markdown (the block editor takes over when
 `pushword/admin-block-editor` is installed), pick an audience and optionally a
-segment, then **Send** or **Schedule**. `%name%` and `%email%` are substituted in
+segment, then **Send**. A future date schedules delivery; an empty or past date starts it immediately. `%name%` and `%email%` are substituted in
 the subject and the body. The **analytics name** is the campaign's slug, derived
 from the subject when empty; the send date is prefixed to it when the campaign
 goes out.
@@ -464,7 +464,7 @@ use this variable in prose, not link destinations. `%name%` and `%email%` retain
 existing behavior. Live previews use Alex; test sends use Test. Map source data into
 the property through the existing contact API; no schema update is needed.
 
-Sending never blocks: recipients are frozen into rows up front and the tick
+Sending never blocks: recipients are frozen into rows when delivery starts and the tick
 drains them at the audience's cadence. A row already sent is never re-sent, so an
 interrupted run, a deploy or a crash cannot double-send. A contact who
 unsubscribed between arming and sending is recorded as `skipped`, not as a
@@ -474,16 +474,55 @@ failure.
 touching no contact and no counter. Once the campaign carries translations, it
 asks which language to send.
 
+### Editorial planning and calendar
+
+The existing list remains available. **Calendar** opens an additional view with month,
+week, year and agenda scales. The list and calendar share site, audience, source,
+delivery status, preparation stage and search filters. Undated newsletters remain
+visible below the calendar. FullCalendar Standard 7 is bundled locally under MIT;
+these views and dragging use no Premium features. Resource timelines and optimized
+printing are outside this integration. Rebuild with `yarn --cwd packages/newsletter
+install --frozen-lockfile` and `yarn --cwd packages/newsletter build`.
+
+Save an idea with a **working title**, optional audience, date and internal notes.
+An email subject can serve as the title when no working title is given. Working titles
+and notes never enter the email, preview or tracking identity. The preparation labels
+**Draft**, **To review**, **Ready** are optional organization aids, independent of
+`CampaignStatus`; Ready is neither an approval requirement nor permission to send.
+Duplicates copy the working title and notes but reset preparation to Draft.
+
+`scheduledAt` is the single planned/send date. Saving it on a draft never makes the
+campaign eligible for `pw:newsletter:tick`, even when the date is past. **Send** in
+admin, API or CLI authorizes delivery at that date if future, or immediately otherwise.
+The legacy API/admin schedule endpoint also explicitly authorizes delivery and remains
+available for integrations. All send/schedule/arming entry points require an audience,
+subject and body; previews remain usable while preparing content. Automations do not
+require an editorial stage. Cancelling a scheduled send returns it to Draft and retains
+its date as a plan. Actual `sentAt` remains delivery history.
+
+Drag a native authored draft to change its date, or open its edit form for keyboard
+entry. The editorial timezone controls the display; a month-cell drop retains the
+original wall-clock time across daylight-saving changes. CSRF, editor permissions and
+an optimistic version check protect calendar writes; stale moves fail with a reload
+message. Scheduled campaigns must first be cancelled before changing their date.
+Sending/sent campaigns and generated broadcasts cannot be moved. External items retain
+their `source:id` identity and owning links and are always read-only.
+
+The campaign API accepts `workingTitle`, `internalNotes`, `editorialStage`
+(`draft|review|ready`) and nullable `scheduledAt` on creation and draft PATCH requests.
+An audience may be omitted for an idea and assigned later. These values are returned
+by the editor-only API; internal notes are not added to catalogue/calendar metadata.
+
 ### Reviewing a campaign
 
 Open **Review** from the campaign catalogue to see the rendered email, audience,
 schedule and delivery results. The preview starts at desktop width. **Markdown
 source** and advanced settings stay collapsed; use **Edit** to change a draft,
-or the send and schedule actions to prepare delivery. Previewing sends no mail.
+or **Send** to authorize delivery. Previewing sends no mail.
 
 **More actions → Duplicate as draft** opens an unsaved copy of any campaign, including
 one already sent. Save it to create a new campaign. Content, translations, audience,
-segment, design, transactional setting and cadence are copied; schedules, automation
+segment, design, working title, internal notes, transactional setting and cadence are copied; schedules, automation
 provenance, recipients, counters and tracking identity are reset. The analytics name
 is derived anew from the subject. Shared audience and saved-template settings remain
 shared. The API equivalent, `POST /api/newsletter/campaign/{id}/duplicate`, immediately

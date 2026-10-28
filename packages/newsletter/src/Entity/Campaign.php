@@ -12,6 +12,7 @@ use Pushword\Core\Entity\SharedTrait\IdInterface;
 use Pushword\Core\Entity\SharedTrait\IdTrait;
 use Pushword\Core\Entity\SharedTrait\TimestampableTrait;
 use Pushword\Newsletter\Enum\CampaignStatus;
+use Pushword\Newsletter\Enum\EditorialStage;
 use Pushword\Newsletter\Repository\CampaignRepository;
 use Pushword\Newsletter\Segment\SegmentCriteria;
 use Pushword\Newsletter\Segment\SegmentException;
@@ -45,7 +46,7 @@ class Campaign implements IdInterface, Stringable
     /** @var list<string> what a translation may carry, each falling back on its own */
     private const array TRANSLATED_FIELDS = ['subject', 'preheader', 'bodyMarkdown'];
 
-    #[Assert\NotNull]
+    #[Assert\When(expression: '!this.isDraft()', constraints: [new Assert\NotNull()])]
     #[ORM\ManyToOne(targetEntity: Audience::class)]
     #[ORM\JoinColumn(nullable: true, onDelete: 'CASCADE')]
     public ?Audience $audience = null;
@@ -56,9 +57,29 @@ class Campaign implements IdInterface, Stringable
         set(?string $value) => '' === $value ? null : $value;
     }
 
-    #[Assert\NotBlank]
+    #[Assert\When(expression: '!this.isDraft()', constraints: [new Assert\NotBlank()])]
     #[ORM\Column(type: Types::STRING, length: 255)]
-    public string $subject = '';
+    public string $subject = '' {
+        set(?string $value) => (string) $value;
+    }
+
+    #[ORM\Column(type: Types::STRING, length: 255, options: ['default' => ''])]
+    public string $workingTitle = '' {
+        set(?string $value) => (string) $value;
+    }
+
+    /** Private editorial text, never passed to the renderer or tracking identity. */
+    #[ORM\Column(type: Types::TEXT, options: ['default' => ''])]
+    public string $internalNotes = '' {
+        set(?string $value) => (string) $value;
+    }
+
+    #[ORM\Column(type: Types::STRING, length: 20, enumType: EditorialStage::class, options: ['default' => 'draft'])]
+    public EditorialStage $editorialStage = EditorialStage::Draft;
+
+    #[ORM\Version]
+    #[ORM\Column(type: Types::INTEGER, options: ['default' => 1])]
+    public private(set) int $version = 1;
 
     /**
      * The campaign's analytics identity, carried as `utm_campaign`. Derived from
@@ -76,6 +97,7 @@ class Campaign implements IdInterface, Stringable
     #[ORM\Column(type: Types::STRING, length: 255, nullable: true)]
     public ?string $preheader = null;
 
+    #[Assert\When(expression: '!this.isDraft()', constraints: [new Assert\NotBlank()])]
     #[ORM\Column(type: Types::TEXT)]
     public string $bodyMarkdown = '' {
         set(?string $value) => (string) $value;
@@ -195,6 +217,8 @@ class Campaign implements IdInterface, Stringable
         $copy = new self();
         $copy->audience = $this->audience;
         $copy->subject = $this->subject;
+        $copy->workingTitle = $this->workingTitle;
+        $copy->internalNotes = $this->internalNotes;
         $copy->preheader = $this->preheader;
         $copy->bodyMarkdown = $this->bodyMarkdown;
         $copy->translations = $this->translations;
@@ -484,6 +508,19 @@ class Campaign implements IdInterface, Stringable
         }
     }
 
+    public function getTitle(): string
+    {
+        return '' !== trim($this->workingTitle) ? $this->workingTitle : $this->subject;
+    }
+
+    #[Assert\Callback]
+    public function validateTitle(ExecutionContextInterface $context): void
+    {
+        if ('' === trim($this->getTitle())) {
+            $context->buildViolation('newsletter.editorial.titleRequired')->atPath('workingTitle')->addViolation();
+        }
+    }
+
     public function getStatusLabel(): string
     {
         return $this->status->value;
@@ -522,7 +559,6 @@ class Campaign implements IdInterface, Stringable
     public function revertToDraft(): self
     {
         $this->status = CampaignStatus::Draft;
-        $this->scheduledAt = null;
 
         return $this;
     }

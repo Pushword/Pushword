@@ -9,6 +9,7 @@ use PHPUnit\Framework\TestCase;
 use Pushword\Newsletter\Entity\Audience;
 use Pushword\Newsletter\Entity\Automation;
 use Pushword\Newsletter\Entity\Campaign;
+use Pushword\Newsletter\Enum\EditorialStage;
 
 final class CampaignDuplicationTest extends TestCase
 {
@@ -17,6 +18,9 @@ final class CampaignDuplicationTest extends TestCase
         $original = new Campaign();
         $original->audience = new Audience();
         $original->subject = 'Autumn news';
+        $original->workingTitle = 'Autumn editorial plan';
+        $original->internalNotes = 'Review internally';
+        $original->editorialStage = EditorialStage::Ready;
         $original->preheader = 'A short introduction';
         $original->bodyMarkdown = 'Hello **%firstName|there%**. [Read more](/news)';
         $original->translations = ['fr' => ['subject' => 'Les nouvelles', 'bodyMarkdown' => 'Bonjour']];
@@ -33,11 +37,13 @@ final class CampaignDuplicationTest extends TestCase
 
         $copy = $original->duplicate();
 
-        foreach (['audience', 'subject', 'preheader', 'bodyMarkdown', 'translations', 'segment', 'emailLayout', 'transactional', 'rateSeconds'] as $field) {
+        foreach (['audience', 'subject', 'workingTitle', 'internalNotes', 'preheader', 'bodyMarkdown', 'translations', 'segment', 'emailLayout', 'transactional', 'rateSeconds'] as $field) {
             self::assertSame($original->$field, $copy->$field, $field);
         }
 
         self::assertTrue($copy->isDraft());
+        self::assertSame(EditorialStage::Draft, $copy->editorialStage);
+        self::assertSame(1, $copy->version);
         foreach (['id', 'scheduledAt', 'sentAt', 'automation', 'triggerSubjectId', 'automationStepId'] as $field) {
             self::assertNull($copy->$field, $field);
         }

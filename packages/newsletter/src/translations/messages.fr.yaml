@@ -73,6 +73,23 @@ newsletter:
     status:
       active: Active
       paused: En pause
+  calendar:
+    agenda: "Agenda"
+    conflict: "Cette newsletter a été modifiée. Rechargez la page avant de la déplacer à nouveau."
+    empty: "Aucune newsletter sur cette période."
+    error: "La date n’a pas pu être enregistrée. La date précédente a été rétablie."
+    help: "Déplacez un brouillon pour changer sa date, ou ouvrez-le pour modifier la date dans le formulaire. Seul Envoyer autorise l’envoi. Les newsletters programmées, envoyées et externes sont en lecture seule ici."
+    javascript: "Activez JavaScript pour utiliser le calendrier, ou utilisez la liste."
+    list: "Liste"
+    month: "Mois"
+    noUndated: "Toutes les newsletters ont une date."
+    saved: "Date enregistrée. Cette newsletter reste un brouillon."
+    scheduled: "L’envoi est autorisé pour la date choisie."
+    title: "Calendrier"
+    undated: "Sans date"
+    views: "Vues des newsletters"
+    week: "Semaine"
+    year: "Année"
   campaign:
     label:
       plural: Newsletters
@@ -85,7 +102,6 @@ newsletter:
       recipients: Destinataires
       review: Vérifier et envoyer
       saveDraft: Enregistrer le brouillon
-      schedule: Programmer
       send: Envoyer
       sendTest: Envoyer un test
     design:
@@ -111,7 +127,7 @@ newsletter:
       languages: Traductions
       performance: Résultats de l'envoi
       schedule: 4. Préparer l'envoi
-      scheduleHelp: Enregistrez votre brouillon, envoyez un test, puis envoyez ou programmez depuis la fiche de la newsletter.
+      scheduleHelp: "Enregistrez le brouillon et envoyez un test. Seul Envoyer autorise l’envoi, à la date choisie ou immédiatement."
     field:
       audience: Audience
       body: Contenu
@@ -125,7 +141,7 @@ newsletter:
       rateSeconds.help: Secondes entre deux envois. Laisser vide pour utiliser la cadence de l'audience.
       recipients: Destinataires
       scheduledAt: Programmée pour
-      scheduledAt.help: Facultatif. Après enregistrement, utilisez « Programmer » pour confirmer l'envoi à cette date.
+      scheduledAt.help: "Facultatif. Cette date n’autorise aucun envoi. Après enregistrement, utilisez Envoyer : une date future programme l’envoi ; une date passée ou vide le démarre immédiatement."
       segment: Segment
       segment.help: 'À qui part cette newsletter. Sans condition, toute l''audience inscrite ; « Éditer en texte » redonne le JSON stocké.'
       sendDate: Date d'envoi
@@ -385,6 +401,15 @@ newsletter:
     view: Espace de travail de l'habillage
     viewport: Largeur de l'aperçu en pixels
     wrapped: Avec cadre
+  editorial:
+    draft: "Brouillon"
+    internalNotes: "Notes internes"
+    preparation: "Préparation"
+    ready: "Prête"
+    review: "À vérifier"
+    stage: "Étape de préparation"
+    titleRequired: "Saisissez un titre de travail ou un objet de mail."
+    workingTitle: "Titre de travail"
   email:
     unsubscribe: Se désinscrire
   form:
@@ -636,7 +661,7 @@ newsletterHelpIdentifier: "Email ou téléphone requis. Sans adresse email, aucu
 newsletterHelpMoveSubscription: "Modifier ce champ déplace l’inscription."
 newsletterHelpPhone: "Sans adresse email, ce contact ne reçoit aucun mail."
 newsletterHelpRates: "Taux calculés sur les envois effectués."
-newsletterHelpSchedule: "Enregistrez le brouillon, puis confirmez avec « Programmer »."
+newsletterHelpSchedule: "Enregistrez le brouillon, puis utilisez « Envoyer » pour autoriser l’envoi."
 newsletterHelpSharedTemplate: "Les modifications s’appliquent à toutes les audiences et campagnes utilisant ce modèle."
 newsletterHelpTransactional: "Sans lien ni en-tête de désinscription. Messages de service uniquement."
 newsletterHelpUtmSource: "Laissez vide pour conserver les liens inchangés."

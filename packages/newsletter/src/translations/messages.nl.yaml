@@ -73,6 +73,23 @@ newsletter:
     status:
       active: "Actief"
       paused: "Gepauzeerd"
+  calendar:
+    agenda: "Agenda"
+    conflict: "Deze nieuwsbrief is gewijzigd. Herlaad de pagina voordat je deze verplaatst."
+    empty: "Geen nieuwsbrieven in deze periode."
+    error: "De datum kon niet worden opgeslagen. De vorige datum is hersteld."
+    help: "Versleep een concept of open het om de datum in het formulier te wijzigen. Alleen Verzenden geeft toestemming. Geplande, verzonden en externe nieuwsbrieven zijn hier alleen-lezen."
+    javascript: "Schakel JavaScript in voor de kalender of gebruik de lijst."
+    list: "Lijst"
+    month: "Maand"
+    noUndated: "Alle nieuwsbrieven hebben een datum."
+    saved: "Datum opgeslagen. Deze nieuwsbrief blijft een concept."
+    scheduled: "Verzending is toegestaan op de gekozen datum."
+    title: "Kalender"
+    undated: "Zonder datum"
+    views: "Nieuwsbriefweergaven"
+    week: "Week"
+    year: "Jaar"
   campaign:
     action:
       cancelSchedule: "Planning annuleren"
@@ -82,7 +99,6 @@ newsletter:
       recipients: "Ontvangers"
       review: "Controleren en verzenden"
       saveDraft: "Concept opslaan"
-      schedule: "Inplannen"
       send: "Verzenden"
       sendTest: "Test verzenden"
     design:
@@ -113,7 +129,7 @@ newsletter:
       rateSeconds.help: "Seconden tussen twee e-mails. Laat leeg om het tempo van de doelgroep te gebruiken."
       recipients: "Ontvangers"
       scheduledAt: "Gepland voor"
-      scheduledAt.help: "Optioneel. Gebruik na het opslaan “Inplannen” om de verzending op deze datum te bevestigen."
+      scheduledAt.help: "Optioneel. Deze datum geeft geen toestemming voor verzending. Gebruik Verzenden na het opslaan: een toekomstige datum plant de verzending; een verstreken of lege datum start deze meteen."
       segment: "Segment"
       segment.help: "Naar wie deze nieuwsbrief gaat. Zonder voorwaarde is dat de hele geabonneerde doelgroep; “Als tekst bewerken” toont de opgeslagen JSON."
       sendDate: "Verzenddatum"
@@ -136,7 +152,7 @@ newsletter:
       languages: "Vertalingen"
       performance: "Verzendresultaten"
       schedule: "4. Bereid de verzending voor"
-      scheduleHelp: "Sla je concept op, stuur een test en verzend of plan daarna in vanuit de details van de nieuwsbrief."
+      scheduleHelp: "Sla het concept op en verstuur een test. Alleen Verzenden geeft toestemming op de gekozen datum of direct."
     flash:
       backToDraft: "Planning geannuleerd — terug naar concept."
       invalidToken: "Ongeldig token, probeer het opnieuw."
@@ -385,6 +401,15 @@ newsletter:
     view: "Opmaakwerkruimte"
     viewport: "Breedte van het voorbeeld in pixels"
     wrapped: "Met kader"
+  editorial:
+    draft: "Concept"
+    internalNotes: "Interne notities"
+    preparation: "Voorbereiding"
+    ready: "Klaar"
+    review: "Te controleren"
+    stage: "Voorbereidingsfase"
+    titleRequired: "Voer een werktitel of e-mailonderwerp in."
+    workingTitle: "Werktitel"
   email:
     unsubscribe: Uitschrijven
   form:
@@ -635,7 +660,7 @@ newsletterHelpIdentifier: "E-mail of telefoon vereist. Zonder e-mailadres wordt 
 newsletterHelpMoveSubscription: "Een wijziging verplaatst het abonnement."
 newsletterHelpPhone: "Zonder e-mailadres ontvangt dit contact geen e-mail."
 newsletterHelpRates: "Percentages zijn gebaseerd op verzonden e-mails."
-newsletterHelpSchedule: "Sla het concept op en bevestig daarna met “Inplannen”."
+newsletterHelpSchedule: "Sla het concept op en geef toestemming met Verzenden."
 newsletterHelpSharedTemplate: "Wijzigingen gelden voor elke doelgroep en campagne die dit sjabloon gebruikt."
 newsletterHelpTransactional: "Geen afmeldlinks of -headers. Alleen serviceberichten."
 newsletterHelpUtmSource: "Laat leeg om links ongewijzigd te laten."

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pushword\Newsletter\Command;
 
+use DateTimeInterface;
 use Pushword\Core\Command\AgentOutputTrait;
 use Pushword\Newsletter\Entity\Campaign;
 use Pushword\Newsletter\Repository\CampaignRepository;
@@ -69,7 +70,7 @@ final class NewsletterSendCommand
             return Command::FAILURE;
         }
 
-        $recipients = $this->campaignSender->arm($entity);
+        $recipients = $this->campaignSender->send($entity);
 
         if ($this->agentMode) {
             $this->writeAgentJson($output, [
@@ -77,8 +78,16 @@ final class NewsletterSendCommand
                 'result' => 'done',
                 'campaign' => $entity->id,
                 'recipients' => $recipients,
+                'status' => $entity->getStatusLabel(),
+                'scheduledAt' => $entity->scheduledAt?->format(DateTimeInterface::ATOM),
                 'rateSeconds' => $entity->getEffectiveRateSeconds(),
             ]);
+
+            return Command::SUCCESS;
+        }
+
+        if ($entity->isScheduled()) {
+            $io->success('Campaign scheduled. The tick will start delivery at its date.');
 
             return Command::SUCCESS;
         }

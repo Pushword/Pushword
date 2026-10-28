@@ -10,6 +10,7 @@ use Doctrine\Persistence\ManagerRegistry;
 use Pushword\Newsletter\Entity\Automation;
 use Pushword\Newsletter\Entity\Campaign;
 use Pushword\Newsletter\Enum\CampaignStatus;
+use Pushword\Newsletter\Enum\EditorialStage;
 
 /**
  * @extends ServiceEntityRepository<Campaign>
@@ -24,12 +25,12 @@ class CampaignRepository extends ServiceEntityRepository
         parent::__construct($registry, Campaign::class);
     }
 
-    /** @return list<array{id: int, subject: string, status: CampaignStatus, scheduledAt: DateTimeImmutable|null, sentAt: DateTimeImmutable|null, audience: string|null, mainHost: string|null}> */
+    /** @return list<array{id: int, subject: string, workingTitle: string, editorialStage: EditorialStage, version: int, automationId: int|null, status: CampaignStatus, scheduledAt: DateTimeImmutable|null, sentAt: DateTimeImmutable|null, audience: string|null, mainHost: string|null}> */
     public function indexRows(): array
     {
-        /** @var list<array{id: int, subject: string, status: CampaignStatus, scheduledAt: DateTimeImmutable|null, sentAt: DateTimeImmutable|null, audience: string|null, mainHost: string|null}> $rows */
+        /** @var list<array{id: int, subject: string, workingTitle: string, editorialStage: EditorialStage, version: int, automationId: int|null, status: CampaignStatus, scheduledAt: DateTimeImmutable|null, sentAt: DateTimeImmutable|null, audience: string|null, mainHost: string|null}> $rows */
         $rows = $this->createQueryBuilder('c')
-            ->select('c.id, c.subject, c.status, c.scheduledAt, c.sentAt, a.name AS audience, a.mainHost')
+            ->select('c.id, c.subject, c.workingTitle, c.editorialStage, c.version, IDENTITY(c.automation) AS automationId, c.status, c.scheduledAt, c.sentAt, a.name AS audience, a.mainHost')
             ->leftJoin('c.audience', 'a')
             ->orderBy('c.id', 'DESC')
             ->getQuery()

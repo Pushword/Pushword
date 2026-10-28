@@ -73,6 +73,23 @@ newsletter:
     status:
       active: Active
       paused: Paused
+  calendar:
+    agenda: "Agenda"
+    conflict: "This newsletter has changed. Reload the page before moving it again."
+    empty: "No newsletters in this period."
+    error: "The date could not be saved. The previous date has been restored."
+    help: "Drag a draft to change its date, or open it to edit the date with the form. Only Send authorizes delivery. Scheduled, sent and external newsletters are read-only here."
+    javascript: "Enable JavaScript to use the calendar, or use the list."
+    list: "List"
+    month: "Month"
+    noUndated: "All newsletters have a date."
+    saved: "Date saved. This newsletter remains a draft."
+    scheduled: "Sending is authorized for the selected date."
+    title: "Calendar"
+    undated: "Without a date"
+    views: "Newsletter views"
+    week: "Week"
+    year: "Year"
   campaign:
     label:
       plural: Newsletters
@@ -85,7 +102,6 @@ newsletter:
       recipients: Recipients
       review: Review and send
       saveDraft: Save draft
-      schedule: Schedule
       send: Send
       sendTest: Send test
     design:
@@ -111,7 +127,7 @@ newsletter:
       languages: Translations
       performance: Delivery results
       schedule: 4. Prepare to send
-      scheduleHelp: Save your draft, send a test, then send or schedule from the newsletter details.
+      scheduleHelp: "Save the draft and send a test. Only Send authorizes delivery, at the selected date or immediately."
     field:
       audience: Audience
       body: Body
@@ -125,7 +141,7 @@ newsletter:
       rateSeconds.help: Seconds between two mails. Leave empty to use the audience cadence.
       recipients: Recipients
       scheduledAt: Scheduled for
-      scheduledAt.help: Optional. After saving, use "Schedule" to confirm sending at this date.
+      scheduledAt.help: "Optional. This date does not authorize sending. After saving, use Send: a future date schedules delivery; a past or empty date starts it now."
       segment: Segment
       segment.help: 'Who this newsletter goes to. No condition targets the whole subscribed audience; "Edit as text" gives the stored JSON back.'
       sendDate: Send date
@@ -385,6 +401,15 @@ newsletter:
     view: Design workspace
     viewport: Preview width in pixels
     wrapped: With a frame
+  editorial:
+    draft: "Draft"
+    internalNotes: "Internal notes"
+    preparation: "Preparation"
+    ready: "Ready"
+    review: "To review"
+    stage: "Preparation stage"
+    titleRequired: "Enter a working title or an email subject."
+    workingTitle: "Working title"
   email:
     unsubscribe: Unsubscribe
   form:
@@ -636,7 +661,7 @@ newsletterHelpIdentifier: "Email or phone required. Without an email address, no
 newsletterHelpMoveSubscription: "Changing this moves the subscription."
 newsletterHelpPhone: "Without an email address, this contact receives no email."
 newsletterHelpRates: "Rates use emails sent as their base."
-newsletterHelpSchedule: "Save the draft, then confirm with “Schedule”."
+newsletterHelpSchedule: "Save the draft, then use Send to authorize delivery."
 newsletterHelpSharedTemplate: "Changes apply to every audience and campaign using this template."
 newsletterHelpTransactional: "No unsubscribe links or headers. Service messages only."
 newsletterHelpUtmSource: "Leave empty to keep links unchanged."

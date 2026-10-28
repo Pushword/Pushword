@@ -73,6 +73,23 @@ newsletter:
     status:
       active: "Attiva"
       paused: "In pausa"
+  calendar:
+    agenda: "Agenda"
+    conflict: "Questa newsletter è stata modificata. Ricarica la pagina prima di spostarla."
+    empty: "Nessuna newsletter in questo periodo."
+    error: "Impossibile salvare la data. La data precedente è stata ripristinata."
+    help: "Trascina una bozza o aprila per modificare la data nel modulo. Solo Invia autorizza l’invio. Le newsletter programmate, inviate ed esterne sono in sola lettura qui."
+    javascript: "Attiva JavaScript per il calendario o usa l’elenco."
+    list: "Elenco"
+    month: "Mese"
+    noUndated: "Tutte le newsletter hanno una data."
+    saved: "Data salvata. Questa newsletter resta una bozza."
+    scheduled: "Invio autorizzato per la data scelta."
+    title: "Calendario"
+    undated: "Senza data"
+    views: "Viste newsletter"
+    week: "Settimana"
+    year: "Anno"
   campaign:
     action:
       cancelSchedule: "Annulla la programmazione"
@@ -82,7 +99,6 @@ newsletter:
       recipients: "Destinatari"
       review: "Verifica e invia"
       saveDraft: "Salva bozza"
-      schedule: "Programma"
       send: "Invia"
       sendTest: "Invia un test"
     design:
@@ -113,7 +129,7 @@ newsletter:
       rateSeconds.help: "Secondi tra due email. Lascia vuoto per usare la cadenza del pubblico."
       recipients: "Destinatari"
       scheduledAt: "Programmata per"
-      scheduledAt.help: "Facoltativo. Dopo il salvataggio, usa «Programma» per confermare l’invio in questa data."
+      scheduledAt.help: "Facoltativa. Questa data non autorizza l’invio. Dopo il salvataggio, usa Invia: una data futura programma l’invio; una data passata o vuota lo avvia subito."
       segment: "Segmento"
       segment.help: "A chi va questa newsletter. Senza condizioni, a tutto il pubblico iscritto; «Modifica come testo» mostra il JSON salvato."
       sendDate: "Data di invio"
@@ -136,7 +152,7 @@ newsletter:
       languages: "Traduzioni"
       performance: "Risultati dell’invio"
       schedule: "4. Prepara l’invio"
-      scheduleHelp: "Salva la bozza, invia un test, poi invia o programma dalla scheda della newsletter."
+      scheduleHelp: "Salva la bozza e invia un test. Solo Invia autorizza l’invio alla data scelta o immediatamente."
     flash:
       backToDraft: "Programmazione annullata — di nuovo in bozza."
       invalidToken: "Token non valido, riprova."
@@ -385,6 +401,15 @@ newsletter:
     view: "Area di lavoro della grafica"
     viewport: "Larghezza dell’anteprima in pixel"
     wrapped: "Con cornice"
+  editorial:
+    draft: "Bozza"
+    internalNotes: "Note interne"
+    preparation: "Preparazione"
+    ready: "Pronta"
+    review: "Da verificare"
+    stage: "Fase di preparazione"
+    titleRequired: "Inserisci un titolo di lavoro o un oggetto email."
+    workingTitle: "Titolo di lavoro"
   email:
     unsubscribe: Annulla iscrizione
   form:
@@ -635,7 +660,7 @@ newsletterHelpIdentifier: "Email o telefono obbligatori. Senza indirizzo email, 
 newsletterHelpMoveSubscription: "Modificarlo sposta l’iscrizione."
 newsletterHelpPhone: "Senza indirizzo email, questo contatto non riceve email."
 newsletterHelpRates: "Tassi calcolati sulle email inviate."
-newsletterHelpSchedule: "Salva la bozza, poi conferma con «Programma»."
+newsletterHelpSchedule: "Salva la bozza, poi usa «Invia» per autorizzare l’invio."
 newsletterHelpSharedTemplate: "Le modifiche si applicano a tutti i pubblici e a tutte le campagne che usano questo modello."
 newsletterHelpTransactional: "Nessun link né intestazione di disiscrizione. Solo messaggi di servizio."
 newsletterHelpUtmSource: "Lascia vuoto per mantenere i link invariati."

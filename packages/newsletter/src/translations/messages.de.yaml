@@ -73,6 +73,23 @@ newsletter:
     status:
       active: "Aktiv"
       paused: "Pausiert"
+  calendar:
+    agenda: "Agenda"
+    conflict: "Dieser Newsletter wurde geändert. Laden Sie die Seite vor dem Verschieben neu."
+    empty: "Keine Newsletter in diesem Zeitraum."
+    error: "Das Datum konnte nicht gespeichert werden. Das vorherige Datum wurde wiederhergestellt."
+    help: "Verschieben Sie einen Entwurf oder öffnen Sie ihn, um das Datum im Formular zu ändern. Nur Senden gibt den Versand frei. Geplante, versendete und externe Newsletter sind hier schreibgeschützt."
+    javascript: "Aktivieren Sie JavaScript für den Kalender oder verwenden Sie die Liste."
+    list: "Liste"
+    month: "Monat"
+    noUndated: "Alle Newsletter haben ein Datum."
+    saved: "Datum gespeichert. Dieser Newsletter bleibt ein Entwurf."
+    scheduled: "Der Versand ist für das gewählte Datum freigegeben."
+    title: "Kalender"
+    undated: "Ohne Datum"
+    views: "Newsletter-Ansichten"
+    week: "Woche"
+    year: "Jahr"
   campaign:
     action:
       cancelSchedule: "Planung aufheben"
@@ -82,7 +99,6 @@ newsletter:
       recipients: "Empfänger"
       review: "Prüfen und senden"
       saveDraft: "Entwurf speichern"
-      schedule: "Planen"
       send: "Senden"
       sendTest: "Test senden"
     design:
@@ -113,7 +129,7 @@ newsletter:
       rateSeconds.help: "Sekunden zwischen zwei E-Mails. Leer lassen, um den Takt der Zielgruppe zu verwenden."
       recipients: "Empfänger"
       scheduledAt: "Geplant für"
-      scheduledAt.help: "Optional. Bestätigen Sie nach dem Speichern mit „Planen“ den Versand zu diesem Datum."
+      scheduledAt.help: "Optional. Das Datum gibt keinen Versand frei. Nach dem Speichern auf Senden klicken: Ein zukünftiges Datum plant den Versand, ein vergangenes oder leeres Datum startet ihn sofort."
       segment: "Segment"
       segment.help: "An wen dieser Newsletter geht. Ohne Bedingung an die gesamte abonnierte Zielgruppe; „Als Text bearbeiten“ zeigt das gespeicherte JSON."
       sendDate: "Versanddatum"
@@ -136,7 +152,7 @@ newsletter:
       languages: "Übersetzungen"
       performance: "Versandergebnisse"
       schedule: "4. Versand vorbereiten"
-      scheduleHelp: "Speichern Sie Ihren Entwurf, senden Sie einen Test und versenden oder planen Sie den Newsletter dann auf seiner Detailseite."
+      scheduleHelp: "Entwurf speichern und einen Test senden. Nur Senden gibt den Versand zum gewählten Datum oder sofort frei."
     flash:
       backToDraft: "Planung aufgehoben – wieder ein Entwurf."
       invalidToken: "Ungültiges Token, bitte erneut versuchen."
@@ -385,6 +401,15 @@ newsletter:
     view: "Design-Arbeitsbereich"
     viewport: "Vorschaubreite in Pixeln"
     wrapped: "Mit Rahmen"
+  editorial:
+    draft: "Entwurf"
+    internalNotes: "Interne Notizen"
+    preparation: "Vorbereitung"
+    ready: "Bereit"
+    review: "Zu prüfen"
+    stage: "Vorbereitungsstand"
+    titleRequired: "Geben Sie einen Arbeitstitel oder einen E-Mail-Betreff ein."
+    workingTitle: "Arbeitstitel"
   email:
     unsubscribe: Abmelden
   form:
@@ -635,7 +660,7 @@ newsletterHelpIdentifier: "E-Mail oder Telefon erforderlich. Ohne E-Mail-Adresse
 newsletterHelpMoveSubscription: "Eine Änderung verschiebt das Abonnement."
 newsletterHelpPhone: "Ohne E-Mail-Adresse erhält dieser Kontakt keine E-Mails."
 newsletterHelpRates: "Raten beziehen sich auf gesendete E-Mails."
-newsletterHelpSchedule: "Speichern Sie den Entwurf und bestätigen Sie dann mit „Planen“."
+newsletterHelpSchedule: "Entwurf speichern, dann den Versand mit „Senden“ freigeben."
 newsletterHelpSharedTemplate: "Änderungen gelten für alle Zielgruppen und Kampagnen, die diese Vorlage verwenden."
 newsletterHelpTransactional: "Keine Abmeldelinks oder -Header. Nur Servicenachrichten."
 newsletterHelpUtmSource: "Leer lassen, um Links unverändert zu lassen."

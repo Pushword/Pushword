@@ -1615,6 +1615,61 @@ final class NewsletterApiTest extends AbstractNewsletterTestCase
         return self::getContainer()->get(AutomationRunner::class);
     }
 
+    public function testAnIdeaCanBeSavedWithoutSendContentButCannotBeSent(): void
+    {
+        $data = $this->request('POST', '/api/newsletter/campaign', [
+            'workingTitle' => 'Winter idea',
+            'internalNotes' => 'Keep this private',
+            'editorialStage' => 'review',
+            'scheduledAt' => '2030-03-31T09:30:00+02:00',
+        ]);
+        self::assertResponseStatusCodeSame(201);
+        $id = $this->id($data);
+
+        try {
+            self::assertNull($data['audience']);
+            self::assertSame('draft', $data['status']);
+            self::assertSame('review', $data['editorialStage']);
+            $this->request('POST', '/api/newsletter/campaign/'.$id.'/send');
+            self::assertResponseStatusCodeSame(400);
+            $this->request('POST', '/api/newsletter/campaign/'.$id.'/schedule', ['scheduledAt' => '2030-03-31T09:30:00+02:00']);
+            self::assertResponseStatusCodeSame(400);
+            $this->request('PATCH', '/api/newsletter/campaign/'.$id, ['editorialStage' => 'unknown']);
+            self::assertResponseStatusCodeSame(400);
+            $this->request('PATCH', '/api/newsletter/campaign/'.$id, ['scheduledAt' => 'not a date']);
+            self::assertResponseStatusCodeSame(400);
+            $data = $this->request('GET', '/api/newsletter/campaign/'.$id);
+            self::assertSame('draft', $data['status']);
+            self::assertSame('review', $data['editorialStage']);
+        } finally {
+            $this->request('DELETE', '/api/newsletter/campaign/'.$id);
+        }
+    }
+
+    public function testApiSendHonorsAFutureDateEvenWithoutEditorialReview(): void
+    {
+        $audience = $this->createAudience();
+        $data = $this->request('POST', '/api/newsletter/campaign', [
+            'audience' => $audience->slug,
+            'subject' => 'Future newsletter',
+            'bodyMarkdown' => 'Hello readers',
+            'scheduledAt' => '2030-03-31T09:30:00+02:00',
+        ]);
+        self::assertResponseStatusCodeSame(201);
+        $id = $this->id($data);
+        $data = $this->request('POST', '/api/newsletter/campaign/'.$id.'/send');
+        self::assertResponseIsSuccessful();
+        self::assertSame('scheduled', $data['status']);
+        self::assertSame('draft', $data['editorialStage']);
+        self::assertIsArray($data['stats']);
+        self::assertSame(0, $data['stats']['recipients']);
+        self::assertEmailCount(0);
+        $data = $this->request('POST', '/api/newsletter/campaign/'.$id.'/send');
+        self::assertSame('scheduled', $data['status']);
+        $this->request('PATCH', '/api/newsletter/campaign/'.$id, ['scheduledAt' => null]);
+        self::assertResponseStatusCodeSame(400);
+    }
+
     private function userRepository(): UserRepository
     {
         return self::getContainer()->get(UserRepository::class);

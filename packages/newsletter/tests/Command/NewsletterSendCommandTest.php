@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pushword\Newsletter\Tests\Command;
 
+use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\Group;
 use Pushword\Newsletter\Enum\CampaignStatus;
 use Pushword\Newsletter\Tests\AbstractNewsletterTestCase;
@@ -33,6 +34,22 @@ final class NewsletterSendCommandTest extends AbstractNewsletterTestCase
         self::assertSame(1, $decoded['recipients']);
         self::assertEmailCount(0);
         self::assertSame(CampaignStatus::Sending, $campaign->status);
+    }
+
+    public function testSendSchedulesAFutureDateWithoutFreezingRecipients(): void
+    {
+        $campaign = $this->createCampaign($this->createAudience());
+        $campaign->scheduledAt = new DateTimeImmutable('+1 day');
+
+        $tester = $this->runSend(['campaign' => $campaign->id, '--format' => 'agent']);
+        $tester->assertCommandIsSuccessful();
+
+        $decoded = json_decode(trim($tester->getDisplay()), true);
+        self::assertIsArray($decoded);
+        self::assertSame('scheduled', $decoded['status']);
+        self::assertSame(0, $decoded['recipients']);
+        self::assertSame(CampaignStatus::Scheduled, $campaign->status);
+        self::assertEmailCount(0);
     }
 
     public function testHumanOutput(): void

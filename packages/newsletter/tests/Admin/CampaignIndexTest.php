@@ -14,6 +14,7 @@ use Pushword\Newsletter\Admin\CampaignIndex;
 use Pushword\Newsletter\Admin\CampaignIndexController;
 use Pushword\Newsletter\Entity\Campaign;
 use Pushword\Newsletter\Enum\CampaignStatus;
+use Pushword\Newsletter\Enum\EditorialStage;
 use Pushword\Newsletter\Event\CampaignIndexItem;
 use Pushword\Newsletter\Event\CollectCampaignIndex;
 use Pushword\Newsletter\Repository\CampaignRepository;
@@ -395,5 +396,147 @@ final class CampaignIndexTest extends AbstractNewsletterTestCase
         self::assertCount(1, $crawler->filter('[data-campaign-key="pushword:'.$other->id.'"]'));
         self::assertCount(1, $crawler->filter('[data-campaign-key="pushword:'.$native->id.'"]'));
         self::assertStringContainsString('host=', $this->client->getRequest()->getUri());
+    }
+
+    public function testCalendarKeepsListFiltersAndExternalOwnership(): void
+    {
+        $this->login();
+        $campaign = $this->createCampaign($this->createAudience(), subject: 'Calendar native');
+        $campaign->editorialStage = EditorialStage::Ready;
+        $campaign->scheduledAt = new DateTimeImmutable('2030-03-31T00:30:00+01:00');
+        $campaign->internalNotes = 'Private notes must not enter the calendar payload';
+
+        $this->entityManager->flush();
+        self::getContainer()->get(EventDispatcherInterface::class)->addListener(CollectCampaignIndex::class, static function (CollectCampaignIndex $index) use ($campaign): void {
+            $index->add(new CampaignIndexItem('external', (string) $campaign->id, '<script>Calendar remote</script>', 'draft', $campaign->scheduledAt, actions: ['Open' => 'https://example.tld/campaign'], hosts: ['localhost.dev']));
+        });
+
+        $crawler = $this->client->request('GET', '/admin/newsletter/calendar?host=localhost.dev&q=Calendar');
+        self::assertResponseIsSuccessful();
+        $events = json_decode($crawler->filter('[data-newsletter-calendar]')->attr('data-events') ?? '', true, flags: \JSON_THROW_ON_ERROR);
+        self::assertIsArray($events);
+        self::assertCount(2, $events);
+        $byId = array_column($events, null, 'id');
+        self::assertIsArray($byId['pushword:'.$campaign->id]);
+        self::assertIsArray($byId['external:'.$campaign->id]);
+        self::assertIsArray($byId['external:'.$campaign->id]['extendedProps']);
+        self::assertTrue($byId['pushword:'.$campaign->id]['editable']);
+        self::assertFalse($byId['external:'.$campaign->id]['editable']);
+        self::assertNull($byId['external:'.$campaign->id]['extendedProps']['moveUrl']);
+        self::assertSame('https://example.tld/campaign', $byId['external:'.$campaign->id]['url']);
+        self::assertStringNotContainsString($campaign->internalNotes, (string) $this->client->getResponse()->getContent());
+        self::assertStringContainsString('host=localhost.dev', $crawler->filter('.pw-catalogue-page-actions')->selectLink('List')->attr('href') ?? '');
+        self::assertStringContainsString('q=Calendar', $crawler->filter('.pw-catalogue-page-actions')->selectLink('List')->attr('href') ?? '');
+        $crawler = $this->client->click($crawler->filter('.pw-catalogue-page-actions')->selectLink('List')->link());
+        self::assertResponseIsSuccessful();
+        self::assertCount(2, $crawler->filter('[data-campaign-key]'));
+
+        $crawler = $this->client->request('GET', '/admin/newsletter/calendar?stage=ready&host=localhost.dev');
+        $events = json_decode($crawler->filter('[data-newsletter-calendar]')->attr('data-events') ?? '', true, flags: \JSON_THROW_ON_ERROR);
+        self::assertIsArray($events);
+        self::assertCount(1, $events);
+    }
+
+    public function testCalendarMovePreservesDraftAndRejectsStaleOrUnauthorizedRequests(): void
+    {
+        $this->login();
+        $campaign = $this->createCampaign($this->createAudience());
+        $campaign->editorialStage = EditorialStage::Review;
+        $campaign->scheduledAt = new DateTimeImmutable('2030-03-30T09:30:00+01:00');
+
+        $this->entityManager->flush();
+        $version = $campaign->version;
+        $crawler = $this->client->request('GET', '/admin/newsletter/calendar');
+        self::assertResponseIsSuccessful();
+        $token = $crawler->filter('[data-newsletter-calendar]')->attr('data-token');
+        $url = '/admin/newsletter/calendar/'.$campaign->id.'/date';
+        $data = ['_token' => $token, 'version' => $version, 'date' => '2030-03-31T09:30:00+02:00'];
+        $this->client->request('POST', $url, [...$data, '_token' => 'invalid']);
+        self::assertResponseStatusCodeSame(403);
+        $this->client->request('POST', $url, [...$data, 'date' => '2030-02-30T09:30:00+01:00']);
+        self::assertResponseStatusCodeSame(422);
+        $this->client->request('POST', $url, $data);
+        self::assertResponseIsSuccessful();
+        $this->entityManager->clear();
+        $campaign = $this->entityManager->find(Campaign::class, $campaign->id);
+        self::assertInstanceOf(Campaign::class, $campaign);
+        self::assertSame(CampaignStatus::Draft, $campaign->status);
+        self::assertSame(EditorialStage::Review, $campaign->editorialStage);
+        self::assertSame(new DateTimeImmutable($data['date'])->getTimestamp(), $campaign->scheduledAt?->getTimestamp());
+        self::assertSame(0, $campaign->recipientCount);
+        self::assertGreaterThan($version, $campaign->version);
+        $this->client->request('POST', $url, [...$data, 'date' => '2030-04-01T09:30:00+02:00']);
+        self::assertResponseStatusCodeSame(409);
+        $this->entityManager->clear();
+        $campaign = $this->entityManager->find(Campaign::class, $campaign->id);
+        self::assertInstanceOf(Campaign::class, $campaign);
+        self::assertSame(new DateTimeImmutable($data['date'])->getTimestamp(), $campaign->scheduledAt?->getTimestamp());
+    }
+
+    #[DataProvider('lockedCalendarStates')]
+    public function testCalendarCannotMoveDeliveryHistory(CampaignStatus $status): void
+    {
+        $this->login();
+        $campaign = $this->createCampaign($this->createAudience());
+        $date = new DateTimeImmutable('+1 day');
+        $campaign->schedule($date);
+        if (CampaignStatus::Sending === $status) {
+            $campaign->markSending(0);
+        } elseif (CampaignStatus::Sent === $status) {
+            $campaign->markSent();
+        }
+
+        $this->entityManager->flush();
+        $crawler = $this->client->request('GET', '/admin/newsletter/calendar');
+        $this->client->request('POST', '/admin/newsletter/calendar/'.$campaign->id.'/date', [
+            '_token' => $crawler->filter('[data-newsletter-calendar]')->attr('data-token'),
+            'version' => $campaign->version,
+            'date' => '2030-03-31T09:30:00+02:00',
+        ]);
+        self::assertResponseStatusCodeSame(409);
+        $this->entityManager->clear();
+        $campaign = $this->entityManager->find(Campaign::class, $campaign->id);
+        self::assertInstanceOf(Campaign::class, $campaign);
+        self::assertSame($status, $campaign->status);
+        self::assertSame($date->getTimestamp(), $campaign->scheduledAt?->getTimestamp());
+    }
+
+    /** @return iterable<string, array{CampaignStatus}> */
+    public static function lockedCalendarStates(): iterable
+    {
+        yield 'scheduled' => [CampaignStatus::Scheduled];
+        yield 'sending' => [CampaignStatus::Sending];
+        yield 'sent' => [CampaignStatus::Sent];
+    }
+
+    public function testGeneratedBroadcastsAreReadOnlyInTheCalendar(): void
+    {
+        $this->login();
+        $audience = $this->createAudience();
+        $campaign = $this->createCampaign($audience);
+        $campaign->triggeredBy($this->createAutomation($audience, []), 42);
+        $campaign->scheduledAt = new DateTimeImmutable('+1 day');
+
+        $this->entityManager->flush();
+        $crawler = $this->client->request('GET', '/admin/newsletter/calendar');
+        $events = json_decode($crawler->filter('[data-newsletter-calendar]')->attr('data-events') ?? '', true, flags: \JSON_THROW_ON_ERROR);
+        self::assertIsArray($events);
+        self::assertIsArray($events[0]);
+        self::assertFalse($events[0]['editable']);
+        $this->client->request('POST', '/admin/newsletter/calendar/'.$campaign->id.'/date', [
+            '_token' => $crawler->filter('[data-newsletter-calendar]')->attr('data-token'),
+            'version' => $campaign->version,
+            'date' => '2030-03-31T09:30:00+02:00',
+        ]);
+        self::assertResponseStatusCodeSame(409);
+    }
+
+    public function testCalendarRequiresEditorRole(): void
+    {
+        $this->login('ROLE_USER');
+        $this->client->request('GET', '/admin/newsletter/calendar');
+        self::assertResponseStatusCodeSame(403);
+        $this->client->request('POST', '/admin/newsletter/calendar/1/date');
+        self::assertResponseStatusCodeSame(403);
     }
 }

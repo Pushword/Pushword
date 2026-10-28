@@ -24,7 +24,11 @@
 
 {% block page_actions %}
   <div class="pw-catalogue-page-actions">
-    {% if not isInitialEmpty %}<div class="pw-catalogue-creations">{{ _self.creations(creationActions) }}</div>{% endif %}
+    {% if not isInitialEmpty or calendarView %}<div class="pw-catalogue-creations">{{ _self.creations(creationActions) }}</div>{% endif %}
+    <div class="btn-group" aria-label="{{ 'newsletter.calendar.views'|trans }}">
+      <a class="btn btn-secondary" href="{{ path('admin_newsletter_campaign_catalogue', viewFilters) }}"{% if not calendarView %} aria-current="page"{% endif %}>{{ 'newsletter.calendar.list'|trans }}</a>
+      <a class="btn btn-secondary" href="{{ path('admin_newsletter_campaign_calendar', viewFilters) }}"{% if calendarView %} aria-current="page"{% endif %}>{{ 'newsletter.calendar.title'|trans }}</a>
+    </div>
     <a class="pw-catalogue-manage" href="{{ path('admin_newsletter_campaign_index') }}">{{ 'newsletter.catalogue.manageNative'|trans }}</a>
   </div>
 {% endblock %}
@@ -66,12 +70,26 @@
             {% endfor %}
           </select>
         </div>
+        <div>
+          <label class="form-label" for="campaign-audience">{{ 'newsletter.campaign.field.audience'|trans }}</label>
+          <select class="form-select" id="campaign-audience" name="audience">
+            <option value="">{{ 'newsletter.workspace.filterAll'|trans }}</option>
+            {% for value in audiences %}<option value="{{ value }}"{% if audience == value %} selected{% endif %}>{{ value }}</option>{% endfor %}
+          </select>
+        </div>
+        <div>
+          <label class="form-label" for="campaign-stage">{{ 'newsletter.editorial.stage'|trans }}</label>
+          <select class="form-select" id="campaign-stage" name="stage">
+            <option value="">{{ 'newsletter.workspace.filterAll'|trans }}</option>
+            {% for value in ['draft', 'review', 'ready'] %}<option value="{{ value }}"{% if stage == value %} selected{% endif %}>{{ ('newsletter.editorial.' ~ value)|trans }}</option>{% endfor %}
+          </select>
+        </div>
         <div class="pw-catalogue-search">
           <label class="form-label" for="campaign-query">{{ 'newsletter.catalogue.search'|trans }}</label>
           <div class="pw-catalogue-search-controls">
             <input class="form-control" type="search" id="campaign-query" name="q" value="{{ query }}">
             <button class="btn btn-secondary" type="submit">{{ 'newsletter.statistics.apply'|trans }}</button>
-            {% if hasFilters and items is not empty %}<a href="{{ path('admin_newsletter_campaign_catalogue', {host: ''}) }}">{{ 'newsletter.statistics.reset'|trans }}</a>{% endif %}
+            {% if hasFilters and items is not empty %}<a href="{{ path(calendarView ? 'admin_newsletter_campaign_calendar' : 'admin_newsletter_campaign_catalogue', {host: ''}) }}">{{ 'newsletter.statistics.reset'|trans }}</a>{% endif %}
           </div>
         </div>
       </form>
@@ -80,6 +98,7 @@
         <p data-campaign-timezone>{{ 'newsletter.catalogue.timezone'|trans({'%timezone%': timezone}) }}</p>
       </div>
     {% endif %}
+    {% block campaign_results %}
     {% if items is not empty %}
       <div class="table-responsive pw-catalogue-table-container">
         <table class="table datagrid">
@@ -105,7 +124,7 @@
                   <span class="pw-catalogue-audience" data-campaign-hosts>{{ 'newsletter.catalogue.host'|trans }}: {{ item.hosts is empty ? 'newsletter.catalogue.unknownHost'|trans : item.hosts|join(', ') }}</span>
                 </th>
                 {% if hasExternalSources %}<td data-label="{{ 'newsletter.catalogue.source'|trans }}">{{ item.source|capitalize }}</td>{% endif %}
-                <td data-label="{{ 'newsletter.campaign.field.status'|trans }}">{{ item.status is null ? 'newsletter.catalogue.unknown'|trans : (statusLabels[item.status] is defined ? statusLabels[item.status]|trans : item.status) }}</td>
+                <td data-label="{{ 'newsletter.campaign.field.status'|trans }}">{% if item.editorialStage and item.status == 'draft' %}<span class="pw-catalogue-audience">{{ ('newsletter.editorial.' ~ item.editorialStage)|trans }}</span>{% endif %}{{ item.status is null ? 'newsletter.catalogue.unknown'|trans : (statusLabels[item.status] is defined ? statusLabels[item.status]|trans : item.status) }}</td>
                 <td data-label="{{ 'newsletter.campaign.field.scheduledAt'|trans }}">{{ item.scheduledAt ? item.scheduledAt|format_datetime('medium', 'short', timezone: timezone) : 'newsletter.catalogue.unknown'|trans }}</td>
                 <td data-label="{{ 'newsletter.catalogue.sentAt'|trans }}">{{ item.sentAt ? item.sentAt|format_datetime('medium', 'short', timezone: timezone) : 'newsletter.catalogue.unknown'|trans }}</td>
                 <td data-label="{{ 'newsletter.catalogue.actions'|trans }}"><div class="pw-catalogue-row-actions">{% for label, url in item.actions %}<a class="pw-catalogue-row-link" href="{{ url }}">{{ label|trans }}</a>{% endfor %}</div></td>
@@ -119,11 +138,12 @@
         <h2 id="campaign-empty-title">{{ (hasFilters ? 'newsletter.catalogue.noResultsTitle' : 'newsletter.catalogue.emptyTitle')|trans }}</h2>
         <p>{{ (hasFilters ? 'newsletter.catalogue.noResultsHelp' : 'newsletter.catalogue.emptyHelp')|trans }}</p>
         {% if hasFilters %}
-          <a class="btn btn-secondary" href="{{ path('admin_newsletter_campaign_catalogue', {host: ''}) }}">{{ 'newsletter.statistics.reset'|trans }}</a>
+          <a class="btn btn-secondary" href="{{ path(calendarView ? 'admin_newsletter_campaign_calendar' : 'admin_newsletter_campaign_catalogue', {host: ''}) }}">{{ 'newsletter.statistics.reset'|trans }}</a>
         {% else %}
           <div class="pw-catalogue-creations">{{ _self.creations(creationActions) }}</div>
         {% endif %}
       </section>
     {% endif %}
+    {% endblock %}
   </div>
 {% endblock %}

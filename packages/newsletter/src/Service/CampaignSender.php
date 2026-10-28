@@ -7,6 +7,7 @@ namespace Pushword\Newsletter\Service;
 use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
 use LogicException;
+use Pushword\Newsletter\Entity\Audience;
 use Pushword\Newsletter\Entity\Campaign;
 use Pushword\Newsletter\Entity\CampaignRecipient;
 use Pushword\Newsletter\Repository\CampaignRecipientRepository;
@@ -31,6 +32,36 @@ final readonly class CampaignSender
     ) {
     }
 
+    /** Explicit send: a future date schedules delivery, otherwise it starts now. */
+    public function send(Campaign $campaign): int
+    {
+        if ($campaign->scheduledAt instanceof DateTimeImmutable && $campaign->scheduledAt > new DateTimeImmutable()) {
+            $this->schedule($campaign, $campaign->scheduledAt);
+
+            return 0;
+        }
+
+        return $this->arm($campaign);
+    }
+
+    public function schedule(Campaign $campaign, DateTimeImmutable $when): void
+    {
+        $this->assertSendable($campaign);
+        $campaign->schedule($when);
+        $this->entityManager->flush();
+    }
+
+    private function assertSendable(Campaign $campaign): void
+    {
+        if (! $campaign->isDraft() && ! $campaign->isScheduled()) {
+            throw new LogicException('Only a draft or scheduled campaign can be armed.');
+        }
+
+        if (! $campaign->audience instanceof Audience || '' === trim($campaign->subject) || '' === trim($campaign->bodyMarkdown)) {
+            throw new LogicException('A campaign needs an audience, a subject and a message before sending.');
+        }
+    }
+
     /**
      * Freeze the audience into recipient rows and open the send.
      *
@@ -38,11 +69,8 @@ final readonly class CampaignSender
      */
     public function arm(Campaign $campaign): int
     {
+        $this->assertSendable($campaign);
         $audience = $campaign->audience ?? throw new LogicException('Campaign has no audience.');
-
-        if (! $campaign->isDraft() && ! $campaign->isScheduled()) {
-            throw new LogicException('Only a draft or scheduled campaign can be armed.');
-        }
 
         $already = array_flip($this->recipientRepository->contactIds($campaign));
         $count = 0;

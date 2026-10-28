@@ -26,6 +26,8 @@ final class CampaignIndexItem
         public array $actions = [],
         public readonly ?string $audience = null,
         public readonly array $hosts = [],
+        public readonly ?string $editorialStage = null,
+        public readonly ?int $version = null,
     ) {
         if (1 !== preg_match('/^[a-z][a-z0-9_-]*$/D', $source) || '' === $id) {
             throw new InvalidArgumentException('A campaign index item needs a source identifier and a non-empty ID.');
