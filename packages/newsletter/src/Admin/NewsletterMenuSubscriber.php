@@ -28,7 +28,6 @@ final readonly class NewsletterMenuSubscriber implements EventSubscriberInterfac
             MenuItem::subMenu('newsletter.menu.label', 'fas fa-envelope-open-text')->setSubItems([
                 MenuItem::linkToRoute('newsletter.statistics.title', 'fas fa-chart-simple', 'admin_newsletter_statistics'),
                 MenuItem::linkToRoute('newsletter.campaign.label.plural', 'fas fa-paper-plane', $this->campaigns->route()),
-                MenuItem::linkTo(EmailTemplateCrudController::class, 'newsletter.template.label.plural', 'fas fa-palette'),
                 MenuItem::linkTo(EmailBlockCrudController::class, 'newsletter.block.plural', 'fas fa-cubes'),
                 MenuItem::linkTo(AutomationCrudController::class, 'newsletter.automation.label.plural', 'fas fa-robot'),
                 MenuItem::linkTo(ContactCrudController::class, 'newsletter.contact.label.plural', 'fas fa-address-book'),

@@ -70,9 +70,8 @@ describe('campaign email design selection', () => {
   function setup() {
     document.body.innerHTML = `<form>
       <select name="Campaign[audience]"><option value="">Choose</option><option value="1">First</option><option value="2">Second</option><option value="3">Third</option></select>
-      <select data-pw-campaign-design><option value="">Audience default</option><option value="simple">Simple</option><option value="framed">Framed</option><option value="personal">Personal</option><optgroup label="Site templates"><option value="twig:brand">Brand</option></optgroup></select>
-      <a data-campaign-templates data-choices-url="/templates/choices">Templates</a>
-      <div data-campaign-design-summary data-current="In use: %theme%" data-empty="Choose an audience" data-custom="Site preset" data-shared="Identity from %audience%" data-template-edit-url="/template/__template__/edit" data-edit-template="Edit template" data-edit-audience="Edit audience" data-template-warning="Shared template" data-audience-warning="Shared audience" data-customize="Customize identity" data-personal="Personal email with signature from %audience%" data-personal-customize="Customize signature" data-personal-edit="Edit signature" data-personal-warning="Shared signature">
+      <select data-pw-campaign-design data-choices-url="/templates/choices"><option value="">Audience default</option><option value="simple">Simple</option><option value="framed">Framed</option><option value="personal">Personal</option><optgroup label="Site templates"><option value="twig:brand">Brand</option></optgroup></select>
+      <div data-campaign-design-summary data-current="In use: %theme%" data-empty="Choose an audience" data-custom="Site preset" data-shared="Identity from %audience%" data-edit-audience="Edit audience" data-audience-warning="Shared audience" data-customize="Customize identity" data-personal="Personal email with signature from %audience%" data-personal-customize="Customize signature" data-personal-edit="Edit signature" data-personal-warning="Shared signature">
         <p data-campaign-design-current></p><p data-campaign-design-description hidden></p><details data-campaign-design-edit-details hidden><summary>Customize identity</summary><a data-campaign-design-edit hidden target="_blank"></a><p data-campaign-design-warning hidden></p></details>
       </div>
       <div class="form-group"><input name="Campaign[preheader]" value="Saved preview text"></div>
@@ -155,21 +154,19 @@ describe('campaign email design selection', () => {
     expect(document.querySelector('[data-campaign-design-edit-details]').hidden).toBe(true)
   })
 
-  it('refreshes templates on returning to the campaign while preserving the selection', async () => {
+  it('refreshes configured Twig choices while preserving the campaign selection', async () => {
     setup()
     choose('[name="Campaign[audience]"]', '1')
     choose('[data-pw-campaign-design]', 'twig:brand')
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => ({ groups: { 'Saved templates': { 'New saved design': 'saved:3' }, 'Site templates': { Brand: 'twig:brand' } }, audienceLayouts: {} }) }))
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => ({ groups: { 'Site templates': { Brand: 'twig:brand', Letter: 'twig:letter' } }, audienceLayouts: {} }) }))
     window.dispatchEvent(new Event('focus'))
-    await vi.waitFor(() => expect(document.querySelector('option[value="saved:3"]')).not.toBeNull())
+    await vi.waitFor(() => expect(document.querySelector('option[value="twig:letter"]')).not.toBeNull())
     expect(document.querySelector('[data-pw-campaign-design]').value).toBe('twig:brand')
     expect(document.querySelectorAll('option[value="twig:brand"]')).toHaveLength(1)
-    choose('[data-pw-campaign-design]', 'saved:3')
-    expect(document.querySelector('[data-campaign-design-current]').textContent).toBe('In use: New saved design')
-    expect(document.querySelector('[data-campaign-design-edit]').hidden).toBe(false)
-    expect(document.querySelector('[data-campaign-design-edit]').getAttribute('href')).toBe('/template/3/edit')
-    expect(document.querySelector('[data-campaign-design-edit]').textContent).toBe('Edit template')
-    expect(document.querySelector('[data-campaign-design-warning]').textContent).toBe('Shared template')
+    choose('[data-pw-campaign-design]', 'twig:letter')
+    expect(document.querySelector('[data-campaign-design-current]').textContent).toBe('In use: Letter')
+    expect(document.querySelector('[data-campaign-design-edit]').hidden).toBe(true)
+    expect(document.querySelector('[data-campaign-design-warning]').hidden).toBe(true)
   })
 
   it('refreshes an inherited audience design after editing it in another tab', async () => {

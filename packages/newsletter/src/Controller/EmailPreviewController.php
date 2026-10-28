@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Pushword\Newsletter\Controller;
 
-use EasyCorp\Bundle\EasyAdminBundle\Attribute\AdminRoute;
 use InvalidArgumentException;
 use Pushword\Core\Site\SiteRegistry;
 use Pushword\Newsletter\Delivery\SendContext;
@@ -80,21 +79,6 @@ final class EmailPreviewController extends AbstractController
         return $this->preview($design, $data->getString('subject'), $data->getString('bodyMarkdown'), $data->getString('preheader'), $context);
     }
 
-    #[Route('/admin/newsletter/template-preview', name: 'admin_newsletter_template_preview', methods: ['POST'])]
-    public function template(Request $request): JsonResponse
-    {
-        $this->assertToken($request);
-        $data = new InputBag(array_filter($request->request->all('EmailTemplate'), \is_string(...), \ARRAY_FILTER_USE_KEY));
-        $audience = new Audience();
-        $audience->mainHost = $this->sites->getDefault()->getMainHost();
-        $audience->name = $this->translator->trans('newsletter.template.sampleAudience');
-        $audience->headerMarkdown = $data->getString('headerMarkdown');
-        $audience->footerMarkdown = $data->getString('footerMarkdown');
-        $audience->emailWrapped = $data->getBoolean('wrapped');
-
-        return $this->preview($audience, $data->getString('name'), $this->translator->trans('newsletter.design.sampleBody'), null);
-    }
-
     #[Route('/admin/newsletter/automation-preview', name: 'admin_newsletter_automation_preview', methods: ['POST'])]
     public function automation(Request $request, AudienceRepository $audiences): JsonResponse
     {
@@ -120,25 +104,6 @@ final class EmailPreviewController extends AbstractController
         $design->transactional = $design->transactional || $data->getBoolean('transactional');
 
         return $this->preview($design, $step->getString('subject'), $step->getString('bodyMarkdown'), null);
-    }
-
-    #[AdminRoute(path: '/newsletter/template/site/{name}', name: 'newsletter_site_template_preview', options: ['methods' => ['GET']])]
-    public function siteTemplate(string $name): Response
-    {
-        $label = array_search('twig:'.$name, $this->templates->siteChoices(), true);
-        if (false === $label) {
-            throw $this->createNotFoundException();
-        }
-
-        $audience = new Audience();
-        $audience->mainHost = $this->sites->getDefault()->getMainHost();
-        $audience->emailLayout = 'twig:'.$name;
-
-        return $this->render('@PushwordNewsletter/admin/site_template.html.twig', [
-            'newsletterSection' => 'emailtemplate',
-            'template_label' => $label,
-            'preview_html' => $this->renderPreview($audience, $label, $this->translator->trans('newsletter.design.sampleBody'), null),
-        ]);
     }
 
     #[Route('/admin/newsletter/template-choices', name: 'admin_newsletter_template_choices', methods: ['GET'])]

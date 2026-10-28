@@ -628,29 +628,7 @@ newsletter:
     tooMany: Trop de tentatives. Réessayez plus tard.
     unknownAudience: Cette newsletter n'existe pas.
   template:
-    back: Retour aux modèles
-    copyName: '%name% (copie)'
-    create: Créer un modèle
-    duplicate: Dupliquer
-    edit: Modifier ce modèle (nouvel onglet)
-    footerHelp: Signature en Markdown. Utilisez © %year% %siteName% pour le copyright. Le désabonnement et l'adresse postale sont ajoutés automatiquement.
-    headerHelp: En-tête en Markdown. Utilisez %siteName% pour le nom du site. Les images nécessitent une URL publique absolue.
-    help: Réutilisez cet en-tête, ce pied de page et ce cadre dans vos newsletters. Les modifications s'appliquent à toutes les audiences et campagnes utilisant ce modèle.
-    identity: Réglages du modèle
-    label:
-      plural: Modèles
-      singular: Modèle
-    layout: Mise en page
-    manage: Créer ou gérer les modèles (nouvel onglet)
-    name: Nom du modèle
-    notSaved: Nouveau modèle, pas encore enregistré
-    preview: Prévisualiser
-    sampleAudience: Votre newsletter
-    save: Enregistrer le modèle
-    savedGroup: Modèles enregistrés
     siteGroup: Modèles du site
-    siteHelp: Modèles fournis par votre site, disponibles dans le choix d’habillage des campagnes. Leur apparence est définie dans le code du site.
-    wrapped: Ajouter un cadre autour du contenu
   unknown:
     body: Ce lien n'est plus valide.
     title: Lien inconnu
@@ -681,8 +659,6 @@ newsletter:
     contactEmptyTitle: Faites connaissance avec vos abonnés
     emailblockEmptyHint: "Enregistrez vos contenus fréquents, puis insérez une copie modifiable dans vos newsletters."
     emailblockEmptyTitle: "Créez votre premier bloc réutilisable"
-    emailtemplateEmptyHint: Nommez votre modèle, ajoutez un en-tête et un pied de page, puis sélectionnez-le dans une newsletter.
-    emailtemplateEmptyTitle: Créez votre premier modèle personnalisé
     filterAll: Toutes
     filterStatus: Filtrer par statut
     rowActions: 'Actions de la ligne %id%'
@@ -699,6 +675,5 @@ newsletterHelpMoveSubscription: "Modifier ce champ déplace l’inscription."
 newsletterHelpPhone: "Sans adresse email, ce contact ne reçoit aucun mail."
 newsletterHelpRates: "Taux calculés sur les envois effectués."
 newsletterHelpSchedule: "Enregistrez le brouillon, puis utilisez « Envoyer » pour autoriser l’envoi."
-newsletterHelpSharedTemplate: "Les modifications s’appliquent à toutes les audiences et campagnes utilisant ce modèle."
 newsletterHelpTransactional: "Sans lien ni en-tête de désinscription. Messages de service uniquement."
 newsletterHelpUtmSource: "Laissez vide pour conserver les liens inchangés."

@@ -8,11 +8,8 @@
     data-custom="{{ 'newsletter.campaign.design.custom'|trans }}"
     data-customize="{{ 'newsletter.campaign.design.customize'|trans }}"
     data-shared="{{ 'newsletter.campaign.design.shared'|trans }}"
-    data-template-edit-url="{{ path('admin_newsletter_template_edit', {entityId: '__template__'}) }}"
-    data-edit-template="{{ 'newsletter.template.edit'|trans }}"
     data-edit-audience="{{ 'newsletter.campaign.design.edit'|trans }}"
     data-audience-warning="{{ 'newsletter.campaign.design.warning'|trans }}"
-    data-template-warning="{{ 'newsletter.template.help'|trans }}"
     data-personal="{{ 'newsletter.campaign.design.personal'|trans }}"
     data-personal-customize="{{ 'newsletter.campaign.design.personalCustomize'|trans }}"
     data-personal-edit="{{ 'newsletter.campaign.design.personalEdit'|trans }}"
@@ -25,5 +22,4 @@
       <a data-campaign-design-edit hidden target="_blank" rel="noopener"></a>
     </details>
   </div>
-  <a class="pw-campaign-templates-link" href="{{ path('admin_newsletter_template_index') }}" target="_blank" rel="noopener" data-campaign-templates data-choices-url="{{ path('admin_newsletter_template_choices') }}">{{ 'newsletter.template.manage'|trans }}</a>
 {% endblock %}

@@ -285,7 +285,10 @@ class CampaignCrudController extends AbstractCrudController
                 ->setRequired(false)
                 ->setColumns('col-12')
                 ->setFormTypeOption('placeholder', false)
-                ->setFormTypeOption('attr', ['data-pw-campaign-design' => json_encode($this->audienceDesigns(), \JSON_THROW_ON_ERROR)]);
+                ->setFormTypeOption('attr', [
+                    'data-pw-campaign-design' => json_encode($this->audienceDesigns(), \JSON_THROW_ON_ERROR),
+                    'data-choices-url' => $this->urlGenerator->generate('admin_newsletter_template_choices'),
+                ]);
         }
 
         yield ChoiceField::new('senderProfile', 'newsletter.sender.label')

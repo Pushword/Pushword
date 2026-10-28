@@ -7,7 +7,7 @@
 {% endblock %}
 
 {% macro layoutOption(choice) %}
-  {% set kind = choice.vars.value starts with 'twig:' or choice.vars.value starts with 'saved:' ? 'preset' : choice.vars.value %}
+  {% set kind = choice.vars.value starts with 'twig:' ? 'preset' : choice.vars.value %}
   <label class="pw-newsletter-layout-option" for="{{ choice.vars.id }}">
     {{ form_widget(choice, {attr: {class: 'form-check-input'}}) }}
     <span><strong>{{ choice.vars.label|trans }}</strong>{% if kind == 'personal' %}<span class="pw-newsletter-layout-description">{{ ('newsletter.design.' ~ kind ~ 'Help')|trans }}</span>{% endif %}</span>
@@ -38,13 +38,13 @@
           {% set layoutHelp %}<p>{{ 'newsletter.design.simpleHelp'|trans }}</p><p>{{ 'newsletter.design.framedHelp'|trans }}</p>{% endset %}
           <legend>{{ design_form.emailLayout.vars.label|trans }} {{ contextHelp.help(design_form.emailLayout.vars.label|trans, layoutHelp) }}</legend>
           {% for choice in design_form.emailLayout %}
-            {% if not (choice.vars.value starts with 'twig:' or choice.vars.value starts with 'saved:') %}
+            {% if not (choice.vars.value starts with 'twig:') %}
               {{ _self.layoutOption(choice) }}
             {% endif %}
           {% endfor %}
-          {% set presets = design_form.emailLayout|filter(choice => choice.vars.value starts with 'twig:' or choice.vars.value starts with 'saved:') %}
+          {% set presets = design_form.emailLayout|filter(choice => choice.vars.value starts with 'twig:') %}
           {% if presets|length %}
-            <details class="pw-newsletter-design-presets" data-email-presets{% if design_form.emailLayout.vars.value starts with 'twig:' or design_form.emailLayout.vars.value starts with 'saved:' %} open{% endif %}>
+            <details class="pw-newsletter-design-presets" data-email-presets{% if design_form.emailLayout.vars.value starts with 'twig:' %} open{% endif %}>
               <summary>{{ 'newsletter.design.otherTemplates'|trans }}</summary>
               {% for choice in presets %}
                 {{ _self.layoutOption(choice) }}

@@ -30,11 +30,7 @@ final readonly class SendContext
             $audience->fromName,
             $audience->replyTo,
             $audience->postalAddress,
-            footerMarkdown: match (true) {
-                str_starts_with($audience->emailLayout, 'saved:') => null,
-                null === $audience->emailTemplate => $audience->footerMarkdown,
-                default => '',
-            },
+            footerMarkdown: null === $audience->emailTemplate ? $audience->footerMarkdown : '',
             audienceName: $audience->name
         );
     }

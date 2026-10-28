@@ -10,7 +10,6 @@ use Pushword\Core\Site\SiteRegistry;
 use Pushword\Newsletter\Delivery\SendContext;
 use Pushword\Newsletter\Entity\Campaign;
 use Pushword\Newsletter\Entity\DeliveryMessage;
-use Pushword\Newsletter\Entity\EmailTemplate;
 use Pushword\Newsletter\Service\BounceSignature;
 use Pushword\Newsletter\Service\LinkGenerator;
 use Pushword\Newsletter\Service\MailRenderer;
@@ -231,43 +230,31 @@ final class NewsletterMailerTest extends AbstractNewsletterTestCase
         }
     }
 
-    public function testCampaignsTestsAndAutomationStepsUseASavedTemplateInBothParts(): void
+    public function testCampaignsTestsAndAutomationStepsUseConfiguredTwigTemplates(): void
     {
         $audience = $this->createAudience();
-        $audience->emailLayout = 'twig:pushword';
+        $audience->emailLayout = 'twig:pushword_letter';
+        $audience->headerMarkdown = 'Unused audience header';
 
         $contact = $this->createContact($audience, 'reader@example.tld');
-        $template = new EmailTemplate();
-        $template->name = 'mail-template-'.bin2hex(random_bytes(6));
-        $template->headerMarkdown = 'Saved brand heading';
-        $template->footerMarkdown = 'Saved brand signature';
+        $campaign = $this->createCampaign($audience);
+        $campaign->emailLayout = 'twig:pushword';
 
-        $this->entityManager->persist($template);
-        $this->entityManager->flush();
-
-        try {
-            $layout = 'saved:'.$template->id;
-            $campaign = $this->createCampaign($audience);
-            $campaign->emailLayout = $layout;
-            $mailer = self::getContainer()->get(NewsletterMailer::class);
-            $mailer->sendCampaign($campaign, $contact);
-            $mailer->sendTest($audience, 'Test', 'Hello', null, 'test@example.tld', null, emailLayout: $layout);
-            self::assertSame('twig:pushword', $audience->emailLayout);
-            $audience->emailLayout = $layout;
-            $automation = $this->createAutomation($audience, [['delay' => 0, 'subject' => 'Welcome']]);
-            $mailer->sendStep($automation->getOrderedSteps()[0], $contact, 'Welcome', 'Hello', SendContext::fromAudience($audience));
-            self::assertEmailCount(3);
-            foreach ([0, 1, 2] as $index) {
-                $email = self::getMailerMessage($index);
-                self::assertInstanceOf(Email::class, $email);
-                self::assertEmailHtmlBodyContains($email, 'Saved brand heading');
-                self::assertEmailHtmlBodyContains($email, 'Saved brand signature');
-                self::assertEmailTextBodyContains($email, 'Saved brand heading');
-                self::assertEmailTextBodyContains($email, 'Saved brand signature');
-            }
-        } finally {
-            $this->entityManager->remove($template);
-            $this->entityManager->flush();
+        $mailer = self::getContainer()->get(NewsletterMailer::class);
+        $mailer->sendCampaign($campaign, $contact);
+        $mailer->sendTest($audience, 'Test', 'Hello', null, 'test@example.tld', null, emailLayout: 'twig:pushword');
+        self::assertSame('twig:pushword_letter', $audience->emailLayout);
+        $audience->emailLayout = 'twig:pushword';
+        $automation = $this->createAutomation($audience, [['delay' => 0, 'subject' => 'Welcome']]);
+        $mailer->sendStep($automation->getOrderedSteps()[0], $contact, 'Welcome', 'Hello', SendContext::fromAudience($audience));
+        self::assertEmailCount(3);
+        foreach ([0, 1, 2] as $index) {
+            $email = self::getMailerMessage($index);
+            self::assertInstanceOf(Email::class, $email);
+            self::assertEmailHtmlBodyContains($email, 'font-size:24px');
+            self::assertEmailHtmlBodyContains($email, 'Pushword');
+            self::assertEmailHtmlBodyNotContains($email, 'Unused audience header');
+            self::assertEmailTextBodyNotContains($email, 'Unused audience header');
         }
     }
 

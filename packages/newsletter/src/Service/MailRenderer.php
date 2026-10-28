@@ -84,6 +84,7 @@ final readonly class MailRenderer
         }
 
         $layout = $emailLayout ?? $audience->emailLayout;
+        $this->emailTemplates->assertLayout($layout);
         if ('personal' === $layout) {
             $signature = $this->designText($sendContext->signatureMarkdown ?? $audience->signatureMarkdown, $host);
 
@@ -99,12 +100,11 @@ final readonly class MailRenderer
             return $this->templateLinks($html, $audience, $contact, $trackedMail, $utmTag, $sendContext, $untrackedUrls, $unsubscribeUrl, $messageReference);
         }
 
-        $saved = $this->emailTemplates->saved($layout);
         $template = str_starts_with($layout, 'twig:')
             ? $this->emailTemplates->template(substr($layout, 5))
             : $this->view($audience, 'email.html.twig', $sendContext);
-        $header = $this->designText($saved->headerMarkdown ?? $audience->headerMarkdown, $host);
-        $footer = $this->designText($sendContext->footerMarkdown ?? $saved->footerMarkdown ?? $audience->footerMarkdown, $host);
+        $header = $this->designText($audience->headerMarkdown, $host);
+        $footer = $this->designText($sendContext->footerMarkdown ?? $audience->footerMarkdown, $host);
 
         $html = $this->twig->render($template, [
             'audience' => $audience,
@@ -115,7 +115,7 @@ final readonly class MailRenderer
             'siteName' => $this->siteRegistry->get($host)->name,
             'year' => new DateTimeImmutable()->format('Y'),
             'postalAddress' => $sendContext instanceof SendContext ? $sendContext->postalAddress : $audience->postalAddress,
-            'wrapped' => $saved->wrapped ?? 'framed' === $layout,
+            'wrapped' => 'framed' === $layout,
             'header' => $this->markScope($this->absolutize($this->markdownParser->transform($header, $host), $host), 'navigation'),
             'footer' => $this->markScope($this->absolutize($this->markdownParser->transform($footer, $host), $host), 'footer'),
             'subject' => $this->personalize($subject, $contact),
@@ -172,6 +172,7 @@ final readonly class MailRenderer
     {
         $bodyMarkdown = BlockMarkup::expand($bodyMarkdown);
         $layout = $emailLayout ?? $audience->emailLayout;
+        $this->emailTemplates->assertLayout($layout);
         if ('personal' === $layout) {
             $signature = $this->designText($sendContext->signatureMarkdown ?? $audience->signatureMarkdown, $sendContext->mainHost ?? $audience->mainHost);
 
@@ -186,10 +187,9 @@ final readonly class MailRenderer
         }
 
         $postalAddress = $sendContext instanceof SendContext ? $sendContext->postalAddress : $audience->postalAddress;
-        $saved = $this->emailTemplates->saved($layout);
         $custom = str_starts_with($layout, 'twig:');
-        $header = $custom ? '' : ($saved->headerMarkdown ?? $audience->headerMarkdown);
-        $footer = $custom ? '' : ($saved->footerMarkdown ?? $audience->footerMarkdown);
+        $header = $custom ? '' : $audience->headerMarkdown;
+        $footer = $custom ? '' : $audience->footerMarkdown;
         $foot = array_filter(
             [$unsubscribeUrl, $postalAddress, $sendContext->footerMarkdown ?? $footer],
             static fn (?string $value): bool => null !== $value && '' !== $value,

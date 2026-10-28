@@ -144,7 +144,6 @@ final class NewsletterAdminTest extends AbstractAdminTestClass
         yield 'audience' => ['/admin/newsletter/audience/new', 9, 4];
         yield 'automation' => ['/admin/newsletter/automation/new', 8, 2];
         yield 'campaign' => ['/admin/newsletter/campaign/new', 8, 3];
-        yield 'template' => ['/admin/newsletter/template/new', 4, 1];
     }
 
     /** @return iterable<string, array{string, string, string}> */
@@ -281,10 +280,10 @@ final class NewsletterAdminTest extends AbstractAdminTestClass
         $client = $this->loginUser();
         $this->seed();
 
-        foreach (['audience', 'contact', 'campaign', 'campaigns', 'template', 'block', 'campaign-recipient', 'automation', 'automation-delivery'] as $section) {
+        foreach (['audience', 'contact', 'campaign', 'campaigns', 'block', 'campaign-recipient', 'automation', 'automation-delivery'] as $section) {
             $crawler = $client->request(Request::METHOD_GET, '/admin/newsletter/'.$section);
             self::assertSame(200, $client->getResponse()->getStatusCode(), $section.' index');
-            self::assertCount(8, $crawler->filter('.pw-newsletter-nav a'));
+            self::assertCount(7, $crawler->filter('.pw-newsletter-nav a'));
             $viewport = $crawler->filter('meta[name="viewport"]')->attr('content') ?? '';
             self::assertStringNotContainsString('user-scalable=no', $viewport);
             self::assertStringNotContainsString('maximum-scale=1', $viewport);
@@ -341,7 +340,7 @@ final class NewsletterAdminTest extends AbstractAdminTestClass
     {
         $client = $this->loginUser();
         $this->seed();
-        foreach (['audience', 'campaign', 'template', 'automation'] as $section) {
+        foreach (['audience', 'campaign', 'automation'] as $section) {
             $crawler = $client->request(Request::METHOD_GET, '/admin/newsletter/'.$section.'/new');
             self::assertResponseIsSuccessful();
             self::assertDoesNotMatchRegularExpression('/\bnewsletter\.[a-z][a-zA-Z.]+/', $crawler->filter('article')->text());

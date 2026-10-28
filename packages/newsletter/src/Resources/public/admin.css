@@ -869,13 +869,6 @@ select[data-pw-campaign-design] {
   min-block-size: 2.75rem;
 }
 
-.pw-campaign-templates-link {
-  display: inline-flex;
-  align-items: center;
-  min-block-size: 2.75rem;
-  font-size: var(--pw-text-sm);
-}
-
 .pw-newsletter-composer {
   grid-template-columns: minmax(0, 1fr) minmax(25rem, 0.85fr);
   gap: 1.5rem;
@@ -910,64 +903,6 @@ body[data-newsletter] .pw-newsletter-composer .form-group {
 body[data-newsletter] .pw-newsletter-composer .form-fieldset + .form-fieldset {
   padding-block-start: 1.5rem;
   border-block-start: 1px solid var(--bs-border-color);
-}
-
-.pw-newsletter-save-state {
-  margin-block: 0 1rem;
-  color: var(--bs-secondary-color);
-  font-size: var(--pw-text-sm);
-}
-
-.pw-newsletter-save-state[data-dirty='true'] {
-  color: var(--bs-body-color);
-  font-weight: 600;
-}
-
-.pw-newsletter-site-templates {
-  max-inline-size: 48rem;
-}
-
-.pw-newsletter-template-library {
-  display: grid;
-  grid-template-columns: minmax(0, 1.5fr) minmax(18rem, 1fr);
-  gap: 2.5rem;
-}
-
-.pw-newsletter-template-library > div {
-  min-inline-size: 0;
-}
-
-.pw-newsletter-template-library h2 {
-  font-size: var(--pw-text-lg);
-}
-
-.pw-newsletter-template-library .pw-newsletter-empty {
-  padding-block: 2rem;
-}
-
-.pw-newsletter-site-templates ul {
-  padding: 0;
-  list-style: none;
-}
-
-.pw-newsletter-site-templates li {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  padding-block: 0.75rem;
-  border-block-end: 1px solid var(--bs-border-color);
-}
-
-.pw-newsletter-site-templates a {
-  display: inline-flex;
-  align-items: center;
-  min-block-size: 2.75rem;
-}
-
-.pw-newsletter-site-preview {
-  display: block;
-  max-inline-size: 48rem;
 }
 
 .pw-newsletter-recipient-note {
@@ -1028,10 +963,6 @@ body[data-newsletter] :is(.form-fieldset-body, .form-group)[hidden] {
 }
 
 @media (max-width: 1199.98px) {
-  .pw-newsletter-template-library {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 2rem;
-  }
   .pw-newsletter-composer {
     grid-template-columns: minmax(0, 1fr);
     gap: 1rem;

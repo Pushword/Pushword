@@ -29,17 +29,11 @@ export function initCampaignDesigns(root = document) {
       }
       const label = Array.from(select.options).find((option) => option.value === layout)?.textContent || layout
       current.textContent = summary.dataset.current.replace('%theme%', label)
-      const custom = layout.startsWith('twig:') || layout.startsWith('saved:')
+      const custom = layout.startsWith('twig:')
       if (personal) description.textContent = summary.dataset.personal.replace('%audience%', design.name)
       else if (custom) description.textContent = summary.dataset.custom
       else description.textContent = summary.dataset.shared.replace('%audience%', design.name)
-      if (layout.startsWith('saved:')) {
-        edit.href = summary.dataset.templateEditUrl.replace('__template__', layout.slice(6))
-        edit.textContent = summary.dataset.editTemplate
-        edit.hidden = false
-        warning.textContent = summary.dataset.templateWarning
-        warning.hidden = false
-      } else if (!select.value || !custom) {
+      if (!select.value || !custom) {
         edit.href = design.url + (personal ? '#email_design_signatureMarkdown' : '')
         edit.textContent = personal ? summary.dataset.personalEdit : summary.dataset.editAudience
         warning.textContent = personal ? summary.dataset.personalWarning : summary.dataset.audienceWarning
@@ -52,11 +46,10 @@ export function initCampaignDesigns(root = document) {
     audience.addEventListener('change', update)
     update()
 
-    const templates = select.form.querySelector('[data-campaign-templates]')
-    if (templates) window.addEventListener('focus', async () => {
+    window.addEventListener('focus', async () => {
       if (!select.isConnected) return
       try {
-        const response = await fetch(templates.dataset.choicesUrl)
+        const response = await fetch(select.dataset.choicesUrl)
         if (!response.ok) return
         const { groups, audienceLayouts } = await response.json()
         for (const [id, layout] of Object.entries(audienceLayouts)) {
@@ -220,15 +213,13 @@ export function initEmailPreview(root = document) {
 
     function designValues() {
       const data = new FormData(form)
-      const prefix = kind === 'template' ? 'EmailTemplate' : 'email_design'
-      const fields = kind === 'template' ? ['name', 'wrapped', 'headerMarkdown', 'footerMarkdown'] : ['emailLayout', 'headerMarkdown', 'footerMarkdown', 'signatureMarkdown']
-      return JSON.stringify(fields.map((name) => data.get(`${prefix}[${name}]`)))
+      return JSON.stringify(['emailLayout', 'headerMarkdown', 'footerMarkdown', 'signatureMarkdown'].map((name) => data.get(`email_design[${name}]`)))
     }
 
     function updateLayout(layoutChanged = false) {
       if (kind === 'audience') {
         const layout = form.querySelector('[name="email_design[emailLayout]"]:checked')?.value || ''
-        const custom = layout.startsWith('twig:') || layout.startsWith('saved:')
+        const custom = layout.startsWith('twig:')
         panel.querySelector('[data-email-editable]').hidden = custom || layout === 'personal'
         if (layoutChanged) {
           const signature = panel.querySelector('[data-email-personal]')

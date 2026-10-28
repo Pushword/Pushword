@@ -14,7 +14,6 @@ use Pushword\Newsletter\Block\BlockProviderInterface;
 use Pushword\Newsletter\Block\BlockRegistry;
 use Pushword\Newsletter\Event\CampaignIssue;
 use Pushword\Newsletter\Event\CheckCampaign;
-use Pushword\Newsletter\Repository\EmailTemplateRepository;
 use Pushword\Newsletter\Service\CampaignSender;
 use Pushword\Newsletter\Service\EmailTemplateRegistry;
 use Pushword\Newsletter\Service\MailRenderer;
@@ -63,7 +62,7 @@ final class CampaignPreflightTest extends AbstractNewsletterTestCase
         $twig = self::getContainer()->get(Environment::class);
         $loader = $twig->getLoader();
         $twig->setLoader(new ChainLoader([new ArrayLoader(['newsletter-check-fixture' => '<p>{{ body|raw }}</p>']), $loader]));
-        self::getContainer()->set(EmailTemplateRegistry::class, new EmailTemplateRegistry(['fixture' => ['label' => 'Fixture', 'template' => 'newsletter-check-fixture']], self::getContainer()->get(EmailTemplateRepository::class)));
+        self::getContainer()->set(EmailTemplateRegistry::class, new EmailTemplateRegistry(['fixture' => ['label' => 'Fixture', 'template' => 'newsletter-check-fixture']]));
 
         try {
             $campaign = $this->createCampaign($this->createAudience());

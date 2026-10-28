@@ -5,13 +5,13 @@ declare(strict_types=1);
 namespace Pushword\Newsletter\Tests\Service;
 
 use DateTimeImmutable;
+use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
 use Pushword\Core\Service\Markdown\MarkdownParser;
 use Pushword\Core\Site\SiteRegistry;
 use Pushword\Newsletter\Delivery\SendContext;
 use Pushword\Newsletter\Entity\Audience;
-use Pushword\Newsletter\Entity\EmailTemplate;
 use Pushword\Newsletter\Service\MailRenderer;
 use Pushword\Newsletter\Tests\AbstractNewsletterTestCase;
 use Pushword\Newsletter\Trigger\PlaceholderRenderer;
@@ -31,6 +31,36 @@ final class MailRendererTest extends AbstractNewsletterTestCase
         yield 'empty' => ['  ', 'there'];
         yield 'wrong type' => [['unusable'], 'there'];
         yield 'literal placeholder' => ['%email%', '%email%'];
+    }
+
+    public function testRemovedSavedTemplatesCannotSilentlyUseTheDefaultDesign(): void
+    {
+        $audience = $this->createAudience();
+        $contact = $this->createContact($audience, 'reader@example.test');
+        $renderer = self::getContainer()->get(MailRenderer::class);
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessageIsOrContains('Unknown newsletter email layout "saved:12".');
+        $renderer->html($audience, $contact, 'Subject', 'Body', null, null, null, emailLayout: 'saved:12');
+    }
+
+    public function testRemovedSavedTemplatesAreRejectedByTheTextRenderer(): void
+    {
+        $audience = $this->createAudience();
+        $contact = $this->createContact($audience, 'reader@example.test');
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessageIsOrContains('Unknown newsletter email layout "saved:12".');
+        self::getContainer()->get(MailRenderer::class)->text($audience, $contact, 'Body', null, emailLayout: 'saved:12');
+    }
+
+    public function testAnAudienceCannotKeepUsingARemovedSavedTemplate(): void
+    {
+        $audience = $this->createAudience();
+        $audience->emailTemplate = 'saved:12';
+
+        $contact = $this->createContact($audience, 'reader@example.test');
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessageIsOrContains('Unknown newsletter email template "saved:12".');
+        self::getContainer()->get(MailRenderer::class)->html($audience, $contact, 'Subject', 'Body', null, null, null);
     }
 
     public function testButtonStylesRemainUsableWithoutWebsiteCss(): void
@@ -191,59 +221,6 @@ final class MailRendererTest extends AbstractNewsletterTestCase
         self::assertStringNotContainsString('Audience signature', $html);
         self::assertStringContainsString('Local signature', $renderer->text($audience, $contact, 'Body', null, $context));
         self::assertStringNotContainsString('Audience signature', $renderer->text($audience, $contact, 'Body', null, $context));
-    }
-
-    public function testASavedDesignResolvesBothPartsAndPreservesExplicitOccurrenceFooters(): void
-    {
-        $audience = $this->createAudience();
-        $audience->headerMarkdown = 'Unused audience header';
-
-        $contact = $this->createContact($audience, 'reader@example.tld');
-        $template = new EmailTemplate();
-        $template->name = 'render-template-'.bin2hex(random_bytes(6));
-        $template->headerMarkdown = '## Saved %siteName%';
-        $template->footerMarkdown = 'Saved copyright %year%';
-
-        $this->entityManager->persist($template);
-        $this->entityManager->flush();
-
-        try {
-            $audience->emailLayout = 'saved:'.$template->id;
-            $renderer = self::getContainer()->get(MailRenderer::class);
-            $context = SendContext::fromAudience($audience);
-            self::assertNull($context->footerMarkdown);
-            self::assertSame($context->toArray(), SendContext::fromArray($context->toArray())->toArray());
-            $html = $renderer->html($audience, $contact, 'Subject', 'Body', null, self::UNSUBSCRIBE, null, sendContext: $context);
-            $text = $renderer->text($audience, $contact, 'Body', self::UNSUBSCRIBE, $context);
-            self::assertStringContainsString('Saved Pushword', $html.$text);
-            self::assertStringContainsString('Saved copyright '.new DateTimeImmutable()->format('Y'), $html);
-            self::assertStringContainsString('Saved copyright '.new DateTimeImmutable()->format('Y'), $text);
-            self::assertStringNotContainsString('Unused audience header', $html.$text);
-
-            foreach (['Occurrence signature', ''] as $footer) {
-                $override = new SendContext('localhost.dev', 'mail@example.tld', 'Brand', footerMarkdown: $footer);
-                $html = $renderer->html($audience, $contact, 'Subject', 'Body', null, null, null, sendContext: $override);
-                $text = $renderer->text($audience, $contact, 'Body', null, $override);
-                self::assertStringNotContainsString('Saved copyright', $html.$text);
-                if ('' !== $footer) {
-                    self::assertStringContainsString($footer, $html);
-                    self::assertStringContainsString($footer, $text);
-                }
-            }
-
-            $template->wrapped = false;
-            $template->headerMarkdown = '';
-            $template->footerMarkdown = '';
-            $html = $renderer->html($audience, $contact, 'Subject', 'Body', null, null, null);
-            self::assertCount(1, new Crawler($html)->filter('table[role="presentation"]'));
-            self::assertSame('Body', $renderer->text($audience, $contact, 'Body', null));
-            $audience->emailLayout = 'simple';
-            self::assertNull($audience->emailTemplate);
-            self::assertStringContainsString('Unused audience header', $renderer->html($audience, $contact, 'Subject', 'Body', null, null, null));
-        } finally {
-            $this->entityManager->remove($template);
-            $this->entityManager->flush();
-        }
     }
 
     /** @return iterable<string, array{string, int}> */

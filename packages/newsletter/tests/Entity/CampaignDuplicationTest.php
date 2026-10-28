@@ -25,7 +25,7 @@ final class CampaignDuplicationTest extends TestCase
         $original->bodyMarkdown = 'Hello **%firstName|there%**. [Read more](/news)';
         $original->translations = ['fr' => ['subject' => 'Les nouvelles', 'bodyMarkdown' => 'Bonjour']];
         $original->segment = ['and' => [['tag' => 'hiking']]];
-        $original->emailLayout = 'saved:12';
+        $original->emailLayout = 'twig:brand';
         $original->transactional = true;
         $original->rateSeconds = 12;
         $original->slug = 'original-attribution';

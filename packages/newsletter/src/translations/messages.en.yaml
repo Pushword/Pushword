@@ -628,29 +628,7 @@ newsletter:
     tooMany: Too many attempts. Please try again later.
     unknownAudience: This newsletter does not exist.
   template:
-    back: Back to templates
-    copyName: '%name% (copy)'
-    create: Create template
-    duplicate: Duplicate
-    edit: Edit this template (new tab)
-    footerHelp: 'Markdown signature. Use © %year% %siteName% for copyright. Unsubscribe and postal address are added automatically.'
-    headerHelp: 'Markdown header. Use %siteName% for the site name. Images need an absolute public URL.'
-    help: Reuse this header, footer and frame across newsletters. Changes apply to every audience and campaign using this template.
-    identity: Template settings
-    label:
-      plural: Templates
-      singular: Template
-    layout: Layout
-    manage: Create or manage templates (new tab)
-    name: Template name
-    notSaved: New template, not saved yet
-    preview: Preview
-    sampleAudience: Your newsletter
-    save: Save template
-    savedGroup: Saved templates
     siteGroup: Site templates
-    siteHelp: Designs provided by your site, available in the campaign design selector. Their appearance is maintained in the site code.
-    wrapped: Add a frame around the content
   unknown:
     body: This link is no longer valid.
     title: Unknown link
@@ -681,8 +659,6 @@ newsletter:
     contactEmptyTitle: Get to know your subscribers
     emailblockEmptyHint: "Save content you use often, then insert an editable copy into any newsletter."
     emailblockEmptyTitle: "Create your first reusable block"
-    emailtemplateEmptyHint: Name your design, add a header and footer, then choose it in a newsletter.
-    emailtemplateEmptyTitle: Create your first custom template
     filterAll: All
     filterStatus: Filter by status
     rowActions: 'Actions for row %id%'
@@ -699,6 +675,5 @@ newsletterHelpMoveSubscription: "Changing this moves the subscription."
 newsletterHelpPhone: "Without an email address, this contact receives no email."
 newsletterHelpRates: "Rates use emails sent as their base."
 newsletterHelpSchedule: "Save the draft, then use Send to authorize delivery."
-newsletterHelpSharedTemplate: "Changes apply to every audience and campaign using this template."
 newsletterHelpTransactional: "No unsubscribe links or headers. Service messages only."
 newsletterHelpUtmSource: "Leave empty to keep links unchanged."

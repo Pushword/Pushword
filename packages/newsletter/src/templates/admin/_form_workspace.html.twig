@@ -1,13 +1,9 @@
-{% set kind = ea.crud.entityFqcn ends with '\\EmailTemplate' ? 'template' : 'campaign' %}
-<div class="pw-newsletter-design pw-newsletter-composer" data-pw-email-preview data-preview-kind="{{ kind }}" data-preview-url="{{ path('admin_newsletter_' ~ kind ~ '_preview') }}" data-preview-token="{{ csrf_token('newsletter_email_preview') }}" data-viewport="mobile" data-mobile-panel="settings"{% if template_saved_values is defined %} data-saved-values="{{ template_saved_values|json_encode }}"{% endif %}>
+<div class="pw-newsletter-design pw-newsletter-composer" data-pw-email-preview data-preview-kind="campaign" data-preview-url="{{ path('admin_newsletter_campaign_preview') }}" data-preview-token="{{ csrf_token('newsletter_email_preview') }}" data-viewport="mobile" data-mobile-panel="settings">
   <div class="pw-newsletter-design-switch" role="group" aria-label="{{ 'newsletter.design.view'|trans }}">
-    <button type="button" class="btn btn-secondary" data-design-panel="settings" aria-controls="newsletter-design-settings" aria-pressed="true">{{ (kind == 'campaign' ? 'newsletter.campaign.editor' : 'newsletter.design.settings')|trans }}</button>
+    <button type="button" class="btn btn-secondary" data-design-panel="settings" aria-controls="newsletter-design-settings" aria-pressed="true">{{ 'newsletter.campaign.editor'|trans }}</button>
     <button type="button" class="btn btn-secondary" data-design-panel="preview" aria-controls="newsletter-design-preview" aria-pressed="false">{{ 'newsletter.design.preview'|trans }}</button>
   </div>
   <div id="newsletter-design-settings" class="pw-newsletter-design-editor">
-    {% if kind == 'template' %}
-      <p class="pw-newsletter-save-state" role="status" data-save-state data-saved="{{ (ea.entity.primaryKeyValue is null ? 'newsletter.template.notSaved' : 'newsletter.design.savedState')|trans }}" data-unsaved="{{ 'newsletter.design.unsaved'|trans }}"></p>
-    {% endif %}
     {{ editor_form|raw }}
   </div>
   {{ include('@PushwordNewsletter/admin/_email_preview.html.twig') }}

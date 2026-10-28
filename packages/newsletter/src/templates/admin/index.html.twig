@@ -1,5 +1,4 @@
 {% extends '@pwAdmin/crud/index.html.twig' %}
-{% import '@Pushword/component/context_help.html.twig' as contextHelp %}
 
 {% set isFiltered = ea.search.query|default('')|trim is not empty or app.request.query.all('filters') is not empty %}
 {% set isInitialEmpty = entities is empty and not isFiltered %}
@@ -13,22 +12,8 @@
   {% if section in ['automation', 'campaign'] and not isInitialEmpty %}
     {{ include('@PushwordNewsletter/admin/_status_filters.html.twig') }}
   {% endif %}
-  {% set hasSiteTemplates = section == 'emailtemplate' and site_templates|default([]) is not empty %}
-  <div{% if hasSiteTemplates %} class="pw-newsletter-template-library"{% endif %}>
-    <div data-pw-newsletter-index data-select-all="{{ 'newsletter.workspace.selectAll'|trans }}" data-select-row="{{ 'newsletter.workspace.selectRow'|trans }}" data-row-actions="{{ 'newsletter.workspace.rowActions'|trans }}">
-      {% if hasSiteTemplates %}<h2>{{ 'newsletter.template.savedGroup'|trans }}</h2>{% endif %}
-      {{ parent() }}
-    </div>
-    {% if hasSiteTemplates %}
-      <section class="pw-newsletter-site-templates" aria-labelledby="newsletter-site-templates">
-        <h2 id="newsletter-site-templates">{{ 'newsletter.template.siteGroup'|trans }} {{ contextHelp.help('newsletter.template.siteGroup'|trans, 'newsletter.template.siteHelp'|trans) }}</h2>
-        <ul>
-          {% for label, layout in site_templates %}
-            <li><strong>{{ label }}</strong><a href="{{ path('admin_newsletter_site_template_preview', {name: layout|slice(5)}) }}">{{ 'newsletter.template.preview'|trans }}<span class="visually-hidden"> {{ label }}</span></a></li>
-          {% endfor %}
-        </ul>
-      </section>
-    {% endif %}
+  <div data-pw-newsletter-index data-select-all="{{ 'newsletter.workspace.selectAll'|trans }}" data-select-row="{{ 'newsletter.workspace.selectRow'|trans }}" data-row-actions="{{ 'newsletter.workspace.rowActions'|trans }}">
+    {{ parent() }}
   </div>
 {% endblock %}
 
