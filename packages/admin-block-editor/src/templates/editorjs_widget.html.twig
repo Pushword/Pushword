@@ -1,16 +1,17 @@
 {% block editorjs_widget %}
 {% set editor_id = 'editorjs_' ~ id %}
+<div data-pw-editor-widget="{{ editor_id }}">
 
 <div class="pw-editor-modes" data-pw-editor-modes-for="{{ editor_id }}" role="group" aria-label="{{ 'editorEditingTools'|trans }}">
-    <button type="button" class="pw-editor-mode" data-pw-editor-mode="json" aria-pressed="false" onclick="toggleEditor()" title="{{ 'editorSourceJson'|trans }}" aria-label="{{ 'editorSourceJson'|trans }}">
+    <button type="button" class="pw-editor-mode" data-pw-editor-mode="json" aria-pressed="false" title="{{ 'editorSourceJson'|trans }}" aria-label="{{ 'editorSourceJson'|trans }}">
         {{ svg('code') }}
         <span>JSON</span>
     </button>
-    <button type="button" class="pw-editor-mode" data-pw-editor-mode="markdown" aria-pressed="false" onclick="toggleEditor('markdown')" title="{{ 'editorSourceMarkdown'|trans }} (Ctrl + U)" aria-label="{{ 'editorSourceMarkdown'|trans }}" aria-keyshortcuts="Control+U">
+    <button type="button" class="pw-editor-mode" data-pw-editor-mode="markdown" aria-pressed="false" title="{{ 'editorSourceMarkdown'|trans }} (Ctrl + U)" aria-label="{{ 'editorSourceMarkdown'|trans }}" aria-keyshortcuts="Control+U">
         {{ svg('markdown') }}
         <span>Markdown</span>
     </button>
-    <button type="button" class="pw-editor-mode" onclick="copyPageMarkdown(this)" title="{{ 'editorCopyMarkdown'|trans }}" aria-label="{{ 'editorCopyMarkdown'|trans }}">
+    <button type="button" class="pw-editor-mode" data-pw-copy-markdown data-copied="{{ 'editorCopied'|trans }}" data-copy-label="{{ 'editorCopy'|trans }}" data-copy-status="{{ 'editorMarkdownCopied'|trans }}" title="{{ 'editorCopyMarkdown'|trans }}" aria-label="{{ 'editorCopyMarkdown'|trans }}">
         {{ svg('copy') }}
         <span data-pw-copy-label>{{ 'editorCopy'|trans }}</span>
     </button>
@@ -45,71 +46,8 @@
         <button type="button" class="btn btn-secondary btn-sm" data-pw-download-diagnostic>{{ 'editorDownloadDiagnostic'|trans }}</button>
     </details>
 </div>
-<script>
-// Attendre que l'éditeur soit initialisé pour créer les fonctions de toggle
-document.addEventListener('DOMContentLoaded', function() {
-    const editorId = '{{ editor_id }}';
-
-    // Fonctions de toggle utilisant la classe EditorModeManager
-    window.toggleEditor = function(type = 'editorjs') {
-        /** @type {editorJsHelper import('../../assets/editorJsHelper.ts').editorJsHelper} */
-        const editorJsHelper = window.editorJsHelper;
-
-        const modeManager = editorJsHelper.modeManagers[editorId];
-        if (!modeManager)
-        return;
-
-        type === 'editorjs' ? modeManager.toggleEditor() : modeManager.toggleMarkdownEditor();
-    };
-
-    // Copie le contenu (Markdown) précédé du H1 (# {h1}) dans le presse-papier
-    window.copyPageMarkdown = async function(el) {
-        const input = document.getElementById('{{ id }}');
-        const markdown = input ? input.value : '';
-        const h1Field = document.querySelector('.h1Field');
-        const h1 = h1Field ? h1Field.value.trim() : '';
-        const text = (h1 ? '# ' + h1 + '\n\n' : '') + markdown;
-
-        try {
-            if (navigator.clipboard && window.isSecureContext) {
-                await navigator.clipboard.writeText(text);
-            } else {
-                const helper = document.createElement('textarea');
-                helper.value = text;
-                helper.style.position = 'fixed';
-                helper.style.opacity = '0';
-                document.body.appendChild(helper);
-                helper.select();
-                document.execCommand('copy');
-                document.body.removeChild(helper);
-            }
-            const label = el.querySelector('[data-pw-copy-label]');
-            const status = el.parentElement.querySelector('[data-pw-copy-status]');
-            label.textContent = "{{ 'editorCopied'|trans|e('js') }}";
-            status.textContent = "{{ 'editorMarkdownCopied'|trans|e('js') }}";
-            setTimeout(function() {
-                label.textContent = "{{ 'editorCopy'|trans|e('js') }}";
-                status.textContent = '';
-            }, 2000);
-        } catch (error) {
-            document.getElementById(editorId).dispatchEvent(new CustomEvent('pw:editor-error', {
-                bubbles: true, detail: { operation: 'copy', error: error }
-            }));
-            console.error('copyPageMarkdown failed', error);
-        }
-    };
-
-    document.addEventListener('keydown', function(event) {
-        if (event.ctrlKey && !event.altKey && !event.shiftKey && event.key.toLowerCase() === 'u') {
-            event.preventDefault();
-            event.stopPropagation();
-            window.toggleEditor('markdown');
-        }
-    }, { capture: true });
-});
-</script>
-
-<script>
+<script data-pw-editorjs-config="{{ editor_id }}">
+(function () {
 window.pageLinkList = {{ editorjs_page_links(attr.page_host|default(''))|json_encode|raw }};
 // Keep the URI list available to page-list tools and custom integrations.
 window.pagesUriList = window.pageLinkList.map(page => page.uri);
@@ -332,7 +270,7 @@ var editorjsConfig = {
         }
         {% block editorjs_block_to_add_new_plugin %}{% endblock %}
     },
-    data: {}, //JSON.parse("{{ (value ? value : '{}')|raw|e('js') }}"),
+    data: {},
     logLevel: "ERROR",
     holder: "{{ editor_id }}",
 };
@@ -341,21 +279,12 @@ var editorjsConfig = {
 Object.assign(editorjsConfig.tools, {{ editorjs_extra_tools(attr.page_host|default(''))|json_encode|raw }});
 {% endblock %}
 
-window.pageMainContent = "{{ value|default('{}')|raw|e('js') }}"
+window.editorjsConfigs = window.editorjsConfigs || {};
+window.editorjsConfigs[editorjsConfig.holder] = editorjsConfig;
+window.editorjsConfig = editorjsConfig;
+})();
     </script>
 
-<script>
-(function disableBackWithKeyboard(global) {
-    global.onload = function () {
-        document.body.onkeydown = function (e) {
-            var elm = e.target.nodeName.toLowerCase();
-            if (e.which === 8 && (elm !== 'input' && elm  !== 'textarea' && !e.target.hasAttribute('contenteditable'))) {
-                e.preventDefault();
-            }
-            e.stopPropagation();
-        };
-    };
-})(window);
-</script>
+</div>
 
 {% endblock %}

@@ -6,10 +6,12 @@ namespace Pushword\Newsletter\Admin;
 
 use EasyCorp\Bundle\EasyAdminBundle\Attribute\AdminRoute;
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
+use EasyCorp\Bundle\EasyAdminBundle\Field\Field;
 use EasyCorp\Bundle\EasyAdminBundle\Field\IntegerField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextareaField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextField;
 use Override;
+use Pushword\AdminBlockEditor\Form\EditorjsType;
 use Pushword\Newsletter\Entity\AutomationStep;
 
 /**
@@ -43,8 +45,20 @@ class AutomationStepCrudController extends AbstractCrudController
             ->setFormTypeOption('context_help', true);
         yield TextField::new('subject', 'newsletter.step.field.subject')
             ->setColumns('col-12');
-        yield TextareaField::new('bodyMarkdown', 'newsletter.step.field.body')
+        if (! class_exists(EditorjsType::class)) {
+            yield TextareaField::new('bodyMarkdown', 'newsletter.step.field.body')
+                ->setColumns('col-12')
+                ->setNumOfRows(10);
+
+            return;
+        }
+
+        $step = $this->getContext()?->getEntity()->getInstance();
+        $host = $step instanceof AutomationStep ? ($step->automation?->audience->mainHost ?? '') : '';
+
+        yield Field::new('bodyMarkdown', 'newsletter.step.field.body')
             ->setColumns('col-12')
-            ->setNumOfRows(10);
+            ->setFormType(EditorjsType::class)
+            ->setFormTypeOptions(['required' => false, 'attr' => ['page_host' => $host, 'page_id' => '']]);
     }
 }

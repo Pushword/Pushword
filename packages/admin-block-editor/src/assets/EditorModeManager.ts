@@ -97,6 +97,10 @@ export class EditorModeManager {
     }
   }
 
+  destroy(textarea: HTMLTextAreaElement | null): void {
+    this.disposeMonacoInstance(textarea)
+  }
+
   private applyTextareaStyles(textarea: HTMLTextAreaElement): void {
     Object.assign(textarea.style, this.TEXTAREA_STYLES)
   }
@@ -290,7 +294,7 @@ export class EditorModeManager {
       else
         try {
           const parsedData = JSON.parse(textareaContent)
-          this.getEditorInstance().blocks.render(parsedData)
+          await this.getEditorInstance().blocks.render(parsedData)
         } catch (parseError) {
           logger.error('Erreur lors du parsing JSON pour EditorJS', {
             editorId: this.editorId,
@@ -304,6 +308,8 @@ export class EditorModeManager {
       this.disposeMonacoInstance(textarea)
 
       const hiddenInput = this.createHiddenInput(textarea)
+      const editor = this.getEditorInstance()
+      hiddenInput.value = await new window.EditorJsExportMarkdown(editor, await editor.saver.save()).exportToMarkdown()
       textarea.parentNode?.replaceChild(hiddenInput, textarea)
       this.toggleEditorJsVisibility(true)
     } catch (error) {

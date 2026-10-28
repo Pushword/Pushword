@@ -1,5 +1,5 @@
 ---
-title: ''
+title: 'automation emails use the block editor'
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -34,3 +34,9 @@ belongs in the feature doc, which you link to instead.
 
 Several changes land here between two tags: append to the file, do not replace it.
 -->
+
+**Concerns:** `pushword/admin-block-editor`, `pushword/newsletter`.
+
+## Automation message editor
+
+Automation emails now use Editor.js when the block editor bundle is installed, including existing Markdown messages. No action is required.

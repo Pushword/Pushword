@@ -21,10 +21,13 @@ function markdownMode(parseMarkdown: () => Promise<void>): EditorModeManager {
   textarea.setAttribute('data-editor', 'markdown')
   document.body.append(holder, textarea)
 
-  ;(window as any).editors = { ed: {} }
+  ;(window as any).editors = { ed: { saver: { save: vi.fn(async () => ({ blocks: [] })) } } }
   ;(window as any).monacoHelper = { destroy }
   ;(window as any).EditorJsParseMarkdown = class {
     parseMarkdown = parseMarkdown
+  }
+  ;(window as any).EditorJsExportMarkdown = class {
+    exportToMarkdown = async () => '# Title'
   }
 
   const manager = new EditorModeManager('ed')
@@ -52,10 +55,24 @@ describe('EditorModeManager – leaving the markdown mode', () => {
     expect(field()?.tagName).toBe('TEXTAREA')
 
     settle()
-    await vi.waitFor(() => expect(destroy).toHaveBeenCalledTimes(1))
-    expect((field() as HTMLInputElement).type).toBe('hidden')
+    await vi.waitFor(() => expect((field() as HTMLInputElement).type).toBe('hidden'))
+    expect(destroy).toHaveBeenCalledTimes(1)
+    expect((field() as HTMLInputElement).value).toBe('# Title')
     expect(document.getElementById('ed')!.style.display).toBe('block')
     expect(manager.getMonacoInstance()).toBeNull()
+  })
+
+  it('waits for JSON rendering and restores the Markdown field before leaving source mode', async () => {
+    let settle!: () => void
+    const manager = markdownMode(async () => {})
+    field()!.setAttribute('data-editor', 'json')
+    window.editors.ed.blocks = { render: () => new Promise<void>(resolve => { settle = resolve }) }
+    ;(manager as any).monacoInstance = { getValue: () => '{"blocks":[]}' }
+    manager.toggleEditor()
+    expect(destroy).not.toHaveBeenCalled()
+    settle()
+    await vi.waitFor(() => expect((field() as HTMLInputElement).type).toBe('hidden'))
+    expect((field() as HTMLInputElement).value).toBe('# Title')
   })
 
   it('leaves Monaco and the markdown in place when the parse fails', async () => {

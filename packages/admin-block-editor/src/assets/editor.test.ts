@@ -16,6 +16,7 @@ const outlineCreated = vi.fn()
 
 /** Config the editorJs class handed to Editor.js, captured at construction. */
 let captured: any = null
+const configs: any[] = []
 /** Options the editorJs class handed to Undo, captured at construction. */
 let undoOptions: any = null
 
@@ -36,6 +37,7 @@ vi.mock('@editorjs/editorjs', () => ({
 
     constructor(config: any) {
       captured = config
+      configs.push(config)
     }
   },
 }))
@@ -92,7 +94,7 @@ function boot(
   setUpDom(pageEditor)
   captured = null
   ;(window as any).editorjsConfig = { holder: 'ed', tools: {}, ...extraConfig }
-  ;(window as any).pageMainContent = content
+  ;(document.getElementById('inp') as HTMLTextAreaElement).value = content
   ;(window as any).EditorJsParseMarkdown = class {
     parseMarkdown = parseMarkdown
   }
@@ -101,11 +103,29 @@ function boot(
 }
 
 beforeEach(() => {
+  delete window.editorjsConfigs
+  configs.length = 0
   initialize.mockClear()
   parseMarkdown.mockClear()
   destroyEditor.mockClear()
   destroyUndo.mockClear()
   outlineCreated.mockClear()
+})
+
+it('loads each editor from its own field when a form has multiple editors', () => {
+  setUpDom(false)
+  const form = document.querySelector('form')!
+  form.insertAdjacentHTML('beforeend', '<div id="second" data-input-id="secondInput"></div><textarea id="secondInput"></textarea>')
+  for (const [id, text] of [['inp', 'First'], ['secondInput', 'Second']]) {
+    (document.getElementById(id) as HTMLTextAreaElement).value = JSON.stringify({ blocks: [{ type: 'paragraph', data: { text } }] })
+  }
+  window.editorjsConfigs = {
+    ed: { holder: 'ed', tools: {} },
+    second: { holder: 'second', tools: {} },
+  }
+  const editors = new editorJs().getEditors()
+  expect(Object.keys(editors)).toEqual(['ed', 'second'])
+  expect(configs.map(config => config.data.blocks[0].data.text)).toEqual(['First', 'Second'])
 })
 
 it('keeps the admin navigation for editors outside the page form', () => {

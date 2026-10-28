@@ -28,13 +28,6 @@ for (const kind of ['campaign', 'automation'] as const) {
     })
     if (kind === 'campaign') {
       await openCampaign(page)
-      await render(page, [
-        { type: 'image', data: { media: '1.jpg', caption: 'Initial caption' } },
-      ])
-      await page.locator('.image-tool__caption').fill('Mountain & lake')
-      await expect(page.locator('#Campaign_bodyMarkdown')).toHaveValue(
-        '![Mountain & lake](1.jpg)',
-      )
     } else {
       await page.goto('/admin/newsletter/automation/new')
       await page
@@ -44,11 +37,19 @@ for (const kind of ['campaign', 'automation'] as const) {
         page.locator('textarea[data-pw-criteria]:not(.pw-criteria-hidden)'),
       ).toHaveCount(0)
       await page.locator('.field-collection-add-button').first().click()
-      await page
-        .locator('textarea[id$="_bodyMarkdown"]')
-        .fill('![Mountain & lake](1.jpg)')
+      await page.waitForFunction(() => {
+        const holder = document.querySelector<HTMLElement>('.editorjs-holder')
+        return holder && window.editors?.[holder.id]?.blocks
+      })
       await page.locator('.pw-newsletter-step-preview summary').first().click()
     }
+    await render(page, [
+      { type: 'image', data: { media: '1.jpg', caption: 'Initial caption' } },
+    ])
+    await page.locator('.image-tool__caption').fill('Mountain & lake')
+    await expect(page.locator('textarea[id$="_bodyMarkdown"]')).toHaveValue(
+      '![Mountain & lake](1.jpg)',
+    )
     await page.locator('[id$="_subject"]').fill('Trip newsletter')
     const preview = page.locator(`[data-preview-kind="${kind}"]`)
     await expect(preview.locator('iframe')).toHaveAttribute(
@@ -67,6 +68,61 @@ for (const kind of ['campaign', 'automation'] as const) {
     await preview.screenshot({ path: testInfo.outputPath(`${kind}-image.png`) })
   })
 }
+
+test('automation steps keep their editors independent when added, saved and reopened', async ({ page }) => {
+  const errors: string[] = []
+  page.on('pageerror', error => errors.push(error.message))
+  await page.setViewportSize({ width: 1440, height: 1000 })
+  await page.goto('/admin/newsletter/automation/new')
+  await page.locator('#Automation_name').fill('Editor sequence')
+  await page.locator('#Automation_audience').selectOption({ label: 'Localhost news (localhost.dev)' })
+  await expect(page.locator('textarea[data-pw-criteria]:not(.pw-criteria-hidden)')).toHaveCount(0)
+  await page.locator('.field-collection-add-button').first().click()
+  await page.locator('.field-collection-add-button').first().click()
+  const entries = page.locator('.pw-newsletter-sequence .field-collection-item')
+  await expect(entries).toHaveCount(2)
+  await expect(entries.nth(0).locator('.accordion-button').first()).toContainText('Email 1')
+  await expect(entries.nth(1).locator('.accordion-button').first()).toContainText('Email 2')
+  for (const [index, text] of ['First message', 'Second message'].entries()) {
+    await entries.nth(index).locator('[id$="_subject"]').fill(text)
+    await entries.nth(index).locator('.ce-paragraph').fill(text)
+    await expect(entries.nth(index).locator('textarea[id$="_bodyMarkdown"]')).toHaveValue(text)
+  }
+  const first = entries.nth(0)
+  const second = entries.nth(1)
+  await first.locator('.ce-paragraph').focus()
+  await page.keyboard.press('Control+u')
+  await expect(first.locator('.editorjs-holder')).toBeHidden()
+  await expect(second.locator('.editorjs-holder')).toBeVisible()
+  await expect(first.locator('.monaco-editor')).toBeVisible()
+  await first.locator('[data-pw-editor-mode="markdown"]').click()
+  await expect(first.locator('.editorjs-holder')).toBeVisible()
+  await second.locator('[data-pw-editor-mode="json"]').click()
+  await expect(second.locator('.monaco-editor')).toBeVisible()
+  await expect(first.locator('.editorjs-holder')).toBeVisible()
+  await second.locator('[data-pw-editor-mode="json"]').click()
+  await expect(second.locator('.editorjs-holder')).toBeVisible()
+  await page.evaluate(() => Object.defineProperty(navigator.clipboard, 'writeText', {
+    value: async (text: string) => { document.body.dataset.copiedMarkdown = text },
+  }))
+  await second.locator('[data-pw-copy-markdown]').click()
+  await expect(page.locator('body')).toHaveAttribute('data-copied-markdown', 'Second message')
+  await page.getByRole('button', { name: 'Create automation', exact: true }).click()
+  await page.waitForURL('**/admin/newsletter/automation')
+  const row = page.locator('tr').filter({ hasText: 'Editor sequence' })
+  await row.getByRole('button', { name: 'Actions for row 1' }).click()
+  await row.locator('.action-edit').click()
+  await expect(entries).toHaveCount(2)
+  await expect(first.locator('.ce-paragraph')).toHaveText('First message')
+  await expect(second.locator('.ce-paragraph')).toHaveText('Second message')
+  await second.locator('[data-pw-editor-mode="markdown"]').click()
+  await expect(second.locator('.monaco-editor')).toBeVisible()
+  await second.locator('.field-collection-delete-button').click()
+  await expect(entries).toHaveCount(1)
+  await expect.poll(() => page.evaluate(() => Object.keys(window.editors).length)).toBe(1)
+  await expect.poll(() => page.evaluate(() => window.monaco!.editor.getModels().length)).toBe(0)
+  expect(errors).toEqual([])
+})
 
 test('campaign link options remain clickable over the live preview', async ({ page }) => {
   await openCampaign(page)

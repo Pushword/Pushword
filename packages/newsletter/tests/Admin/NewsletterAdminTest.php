@@ -639,6 +639,9 @@ final class NewsletterAdminTest extends AbstractAdminTestClass
         $client = $this->loginUser();
         $audience = $this->seed();
         $crawler = $client->request(Request::METHOD_GET, '/admin/newsletter/automation/new');
+        $prototype = $crawler->filter('[data-prototype]')->attr('data-prototype') ?? '';
+        self::assertStringContainsString('data-pw-editor-widget="editorjs_Automation_steps___stepsname___bodyMarkdown"', $prototype);
+        self::assertStringContainsString('data-pw-editorjs-config=', $prototype);
         self::assertSame('Add an email', $crawler->filter('.field-collection-add-button')->text());
         $triggerBody = $crawler->filter('input[name="Automation[activeFrom]"]')->closest('.form-fieldset-body');
         self::assertNotNull($triggerBody);
@@ -672,6 +675,9 @@ final class NewsletterAdminTest extends AbstractAdminTestClass
         self::assertCount(1, $crawler->filter('[data-preview-step="1"]'));
         self::assertCount(1, $crawler->filter('#Automation_steps_0_bodyMarkdown-preview'));
         self::assertCount(1, $crawler->filter('#Automation_steps_1_bodyMarkdown-preview'));
+        self::assertCount(2, $crawler->filter('.pw-newsletter-sequence .editorjs-holder'));
+        self::assertSame('Hello!', $crawler->filter('#Automation_steps_0_bodyMarkdown')->text());
+        self::assertSame('Some news.', $crawler->filter('#Automation_steps_1_bodyMarkdown')->text());
     }
 
     public function testTheCampaignIndexShowsItsAudience(): void

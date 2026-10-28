@@ -21,6 +21,7 @@ use EasyCorp\Bundle\EasyAdminBundle\Field\IntegerField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextField;
 use EasyCorp\Bundle\EasyAdminBundle\Router\AdminUrlGenerator;
 use Override;
+use Pushword\AdminBlockEditor\Form\EditorjsType;
 use Pushword\Core\Site\SiteRegistry;
 use Pushword\Newsletter\Controller\CriteriaController;
 use Pushword\Newsletter\Entity\Audience;
@@ -59,7 +60,7 @@ class AutomationCrudController extends AbstractCrudController
     #[Override]
     public function configureCrud(Crud $crud): Crud
     {
-        return $crud
+        $crud = $crud
             ->overrideTemplate('layout', '@PushwordNewsletter/admin/layout.html.twig')
             ->overrideTemplate('crud/index', '@PushwordNewsletter/admin/index.html.twig')
             ->addFormTheme('@PushwordNewsletter/admin/form_theme.html.twig')
@@ -67,6 +68,12 @@ class AutomationCrudController extends AbstractCrudController
             ->setEntityLabelInPlural('newsletter.automation.label.plural')
             ->setDefaultSort(['id' => 'DESC'])
             ->setSearchFields(['name']);
+
+        if (class_exists(EditorjsType::class)) {
+            return $crud->addFormTheme('@PushwordAdminBlockEditor/editorjs_widget.html.twig');
+        }
+
+        return $crud;
     }
 
     #[Override]

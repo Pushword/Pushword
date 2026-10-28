@@ -52,7 +52,7 @@ import {
   MonacoContext,
 } from './outline/MonacoOutlineSource'
 
-interface EditorJSConfig {
+export interface EditorJSConfig {
   holder?: string
   tools?: Record<string, any>
   onChange?: (api: API, events: BlockMutationEvent | BlockMutationEvent[]) => void
@@ -67,7 +67,7 @@ interface EditorJSTool {
   [key: string]: any
 }
 
-/** Was initially design to permit multiple editor.js in one page */
+/** Editors on the page, including dynamically added form fields. */
 export class editorJs {
   private editors: Record<string, EditorJS> = {}
   private editorjsTools: Record<string, any> = {}
@@ -75,8 +75,6 @@ export class editorJs {
   private pendingSaves = new Map<string, Promise<OutputData | null>>()
 
   constructor() {
-    if (!window.editorjsConfig) return
-
     this.editors = {}
     this.editorjsTools = window.editorjsTools || {
       HyperlinkTune: HyperlinkTune,
@@ -111,12 +109,9 @@ export class editorJs {
       Small: Small,
     }
 
-    setupEditorPopovers({
-      ...(window as any).editorjsConfig?.i18n?.messages?.toolNames,
-      ...(window as any).editorjsConfig?.i18n?.messages?.ui?.popover,
-    })
-
-    this.initEditor((window as any).editorjsConfig)
+    for (const config of Object.values(window.editorjsConfigs ?? { default: window.editorjsConfig })) {
+      if (config) this.initEditor(config)
+    }
   }
 
   getEditors(): Record<string, EditorJS> {
@@ -128,9 +123,13 @@ export class editorJs {
   }
 
   initEditor(config: EditorJSConfig): void {
-    if (typeof config.holder === 'undefined') {
+    if (typeof config.holder === 'undefined' || this.editors[config.holder]) {
       return
     }
+    setupEditorPopovers({
+      ...config.i18n?.messages?.toolNames,
+      ...config.i18n?.messages?.ui?.popover,
+    })
     if (typeof config.tools !== 'undefined') {
       // set tool classes
       Object.keys(config.tools).forEach((toolName) => {
@@ -192,8 +191,8 @@ export class editorJs {
 
     // Parse content upfront: pass JSON data directly to constructor to avoid double-render
     let markdownContent: string | null = null
-    if (window.pageMainContent) {
-      const pageContent = window.pageMainContent
+    const pageContent = boundInputOf(config.holder)?.value
+    if (pageContent) {
       try {
         config.data = JSON.parse(pageContent)
       } catch {
@@ -300,6 +299,14 @@ export class editorJs {
         toolMeta: (type) => this.toolMetaOf(config, type),
       })
     }
+  }
+
+  destroyEditor(holderId: string, input: HTMLTextAreaElement | null): void {
+    this.editors[holderId]?.destroy()
+    editorJsHelper.getModeManager(holderId)?.destroy(input)
+    delete this.editors[holderId]
+    delete window.editorJsHelper.modeManagers[holderId]
+    this.pendingSaves.delete(holderId)
   }
 
   private saveBeforeSubmit(form: HTMLFormElement | null): void {

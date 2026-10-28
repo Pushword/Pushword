@@ -1,6 +1,7 @@
 import type * as monaco from 'monaco-editor'
 import type MonacoHelper from './../../../../../admin-monaco-editor/MonacoHelper'
 import type { BlockToolAdapter } from '@editorjs/editorjs/types/tools/adapters/block-tool-adapter'
+import type { EditorJSConfig } from '../../editor'
 
 declare global {
   /**
@@ -16,13 +17,13 @@ declare global {
     initContextHelp?: (root?: ParentNode) => void
     pagesUriList?: string[]
     monaco?: typeof monaco
-    pageMainContent?: string // set in editorjs_widget.html.twig
     pageHost?: string // set in ./packages/admin/Resources/assets/admin.js on page init
     monacoHelper?: typeof MonacoHelper
     pwMonacoUrl?: string // set in Pushword\Admin\Controller\DashboardController
     pwMonacoLoading?: Promise<boolean> | null // shared with admin.monacoLoader.js
     editorjsTools?: BlockToolAdapter[]
     editorjsConfig?: Record<string, any>
+    editorjsConfigs?: Record<string, EditorJSConfig>
   }
 }
 

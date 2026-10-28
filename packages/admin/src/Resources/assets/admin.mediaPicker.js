@@ -257,6 +257,7 @@ function clearPickerSelection(select) {
 }
 
 function updateCollectionHeader(select, label) {
+  if (select.dataset.pwMediaPickerField?.startsWith('inline_')) return
   const item = select.closest('.field-collection-item')
   if (!item) {
     return
