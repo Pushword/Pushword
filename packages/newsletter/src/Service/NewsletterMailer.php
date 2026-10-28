@@ -146,6 +146,7 @@ final readonly class NewsletterMailer
     {
         $contact = new Contact($audience, $address);
         $contact->name = 'Test';
+        $contact->customProperties = ['firstName' => 'Test'];
         $contact->locale = '' !== trim($locale) ? $locale : $this->siteRegistry->get($audience->mainHost)->locale;
 
         // A test recipient has no persisted token, so the unsubscribe link would

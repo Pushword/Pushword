@@ -125,6 +125,21 @@ final class CampaignApiController extends AbstractApiController
         };
     }
 
+    #[Route('/api/newsletter/campaign/{id}/duplicate', name: 'pushword_api_newsletter_campaign_duplicate', requirements: ['id' => '\d+'], methods: ['POST'])]
+    public function duplicate(int $id): JsonResponse
+    {
+        $original = $this->campaignRepository->find($id);
+        if (! $original instanceof Campaign) {
+            return $this->notFound('Campaign not found');
+        }
+
+        $copy = $original->duplicate();
+        $this->entityManager->persist($copy);
+        $this->entityManager->flush();
+
+        return $this->respond($this->toArray($copy), Response::HTTP_CREATED);
+    }
+
     #[Route('/api/newsletter/campaign/{id}/schedule', name: 'pushword_api_newsletter_campaign_schedule', requirements: ['id' => '\d+'], methods: ['POST'])]
     public function schedule(int $id, Request $request): JsonResponse
     {
@@ -367,6 +382,10 @@ final class CampaignApiController extends AbstractApiController
                     'get' => ['summary' => 'Get a campaign, with the size of its segment while it is a draft and its clicks per link (clicksByUrl) once click tracking recorded any', 'responses' => ['200' => ['description' => 'OK']]],
                     'patch' => ['summary' => 'Update a draft campaign', 'responses' => ['200' => ['description' => 'OK']]],
                     'delete' => ['summary' => 'Delete a campaign', 'responses' => ['204' => ['description' => 'Deleted']]],
+                ],
+                '/api/newsletter/campaign/{id}/duplicate' => [
+                    'parameters' => [['name' => 'id', 'in' => 'path', 'required' => true, 'schema' => ['type' => 'integer']]],
+                    'post' => ['summary' => 'Copy authored settings into a new draft with independent delivery and tracking identity', 'responses' => ['201' => ['description' => 'Created'], '404' => ['description' => 'Campaign not found']]],
                 ],
                 '/api/newsletter/campaign/{id}/schedule' => [
                     'parameters' => [['name' => 'id', 'in' => 'path', 'required' => true, 'schema' => ['type' => 'integer']]],

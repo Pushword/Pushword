@@ -33,6 +33,40 @@ final class NewsletterMailerTest extends AbstractNewsletterTestCase
 {
     use MailerAssertionsTrait;
 
+    public function testFirstNameResolvesInTranslationsTestsAndAutomationWithoutChangingConsent(): void
+    {
+        $audience = $this->createAudience();
+        $contact = $this->createContact($audience, 'reader@example.tld', customProperties: ['firstName' => 'Élodie'], locale: 'fr');
+        $campaign = $this->createCampaign($audience);
+        $campaign->translations = ['fr' => [
+            'subject' => 'Bonjour %firstName|à vous%',
+            'preheader' => 'Pour %firstName|vous%',
+            'bodyMarkdown' => 'Bonjour **%firstName|à vous%**.',
+        ]];
+        $automation = $this->createAutomation($audience, [['delay' => 0, 'subject' => 'Hello']]);
+        $mailer = self::getContainer()->get(NewsletterMailer::class);
+        $mailer->sendCampaign($campaign, $contact);
+        $mailer->sendTest($audience, 'Hello %firstName|there%', 'Hello **%firstName|there%**.', null, 'test@example.tld', null);
+        $mailer->sendStep($automation->getOrderedSteps()[0], $contact, 'Hello %firstName|there%', 'Hello **%firstName|there%**.');
+        self::assertEmailCount(3);
+        foreach (['Bonjour Élodie', '[TEST] Hello Test', 'Hello Élodie'] as $index => $subject) {
+            $email = self::getMailerMessage($index);
+            self::assertInstanceOf(Email::class, $email);
+            self::assertSame($subject, $email->getSubject());
+            $name = 1 === $index ? 'Test' : 'Élodie';
+            self::assertEmailHtmlBodyContains($email, '<strong>'.$name.'</strong>');
+            self::assertEmailTextBodyContains($email, '**'.$name.'**');
+            if (0 === $index) {
+                self::assertEmailHtmlBodyContains($email, 'Pour Élodie');
+            }
+
+            if (1 !== $index) {
+                self::assertTrue($email->getHeaders()->has('List-Unsubscribe'));
+                self::assertTrue($email->getHeaders()->has('List-Unsubscribe-Post'));
+            }
+        }
+    }
+
     /** @return iterable<string, array{string, ?string, bool, bool}> */
     public static function campaignDesigns(): iterable
     {

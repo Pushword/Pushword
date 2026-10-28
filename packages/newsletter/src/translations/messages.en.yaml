@@ -80,6 +80,7 @@ newsletter:
     action:
       cancelSchedule: Cancel schedule
       create: Create newsletter
+      duplicate: Duplicate as draft
       previewSegment: Count audience
       recipients: Recipients
       review: Review and send
@@ -114,6 +115,7 @@ newsletter:
     field:
       audience: Audience
       body: Body
+      body.help: "Personalize with %firstName|there%, %name% or %email%. The text after | is used when the first name is missing."
       bounced: Bounced
       clicks: Clicks
       failed: Failed
@@ -179,10 +181,12 @@ newsletter:
       invalidLocale: 'Translation "%locale%" must be an object of subject, preheader and bodyMarkdown.'
   catalogue:
     actions: Actions
+    browseBySite: Browse by site
     createNative: Create in Pushword
     emptyHelp: 'Choose a tool to create a campaign. Available campaigns will appear here.'
     emptyTitle: 'No campaigns available'
     filters: Filter campaigns
+    host: Site
     manageNative: Manage in Pushword
     noResultsHelp: 'Try a different search or reset the filters to see available campaigns.'
     noResultsTitle: 'No matching campaigns'
@@ -192,6 +196,7 @@ newsletter:
     source: Source
     timezone: Times shown in %timezone%.
     unknown: Not provided
+    unknownHost: Unknown site
   confirm:
     body: Thank you for signing up! To start receiving our emails, confirm your email address below.
     button: Confirm my subscription

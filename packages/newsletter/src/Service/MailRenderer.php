@@ -20,7 +20,7 @@ use Twig\Environment as Twig;
 /**
  * Turns a campaign or step body into the two parts of a mail.
  *
- * Contact personalisation uses `%name%` and `%email%`,
+ * Contact personalisation uses `%name%`, `%email%` and `%firstName|fallback%`,
  * substituted in the subject and the body before rendering. A newsletter body is
  * authored by the site owner, but it is not a template language: anything richer
  * would mean evaluating editor input at send time.
@@ -65,7 +65,7 @@ final readonly class MailRenderer
         ?string $messageReference = null,
     ): string {
         $host = $sendContext->mainHost ?? $audience->mainHost;
-        $body = $this->markdownParser->transform($this->personalize($bodyMarkdown, $contact), $host);
+        $body = $this->markdownParser->transform($this->personalize($bodyMarkdown, $contact, markdown: true), $host);
         $body = $this->absolutize($body, $host);
         // The body is instrumented first; explicitly marked template roles follow below.
         $body = $this->utmDecorator->decorate($body, $audience, $utmTag, $untrackedUrls);
@@ -232,11 +232,23 @@ final readonly class MailRenderer
         ) ?? $html;
     }
 
-    private function personalize(string $text, Contact $contact): string
+    private function personalize(string $text, Contact $contact, bool $markdown = false): string
     {
-        return strtr($text, [
-            '%name%' => $contact->name,
-            '%email%' => $contact->email ?? '',
-        ]);
+        return preg_replace_callback('/%name%|%email%|%firstName(?:\|([^%]*))?%/', static function (array $match) use ($contact, $markdown): string {
+            if ('%name%' === $match[0]) {
+                return $contact->name;
+            }
+
+            if ('%email%' === $match[0]) {
+                return $contact->email ?? '';
+            }
+
+            $firstName = $contact->customProperties['firstName'] ?? null;
+            $value = \is_string($firstName) ? trim($firstName) : '';
+            $value = '' === $value ? ($match[1] ?? '') : $value;
+
+            // A contact property is text, never authored Markdown or HTML.
+            return $markdown ? htmlspecialchars(addcslashes($value, '\\`*_{}[]()#+-.!|'), \ENT_QUOTES | \ENT_SUBSTITUTE, 'UTF-8') : $value;
+        }, $text) ?? $text;
     }
 }

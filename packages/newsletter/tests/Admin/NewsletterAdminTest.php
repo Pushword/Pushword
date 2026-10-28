@@ -37,6 +37,59 @@ final class NewsletterAdminTest extends AbstractAdminTestClass
         self::assertCount(0, $crawler->filter('.content-header .action-new, .pw-newsletter-status'));
     }
 
+    public function testDuplicationOpensAnUnsavedDraftAndSavingLeavesTheOriginalIntact(): void
+    {
+        $client = $this->loginUser();
+        $audience = $this->seed();
+        $original = $this->campaign($audience, 'Sent campaign to copy');
+        $original->preheader = 'Original preview';
+        $original->bodyMarkdown = 'Hello **%firstName|there%**.';
+        $original->emailLayout = 'framed';
+        $original->translations = ['fr' => ['subject' => 'Bonjour']];
+        $original->schedule(new DateTimeImmutable('-1 day'))->markSending(4)->incrementSent()->markSent();
+        $identity = $original->getUtmId();
+        $em = $this->entityManager();
+        $em->flush();
+
+        $before = $em->getRepository(Campaign::class)->count(['audience' => $audience]);
+
+        $crawler = $client->request(Request::METHOD_GET, '/admin/newsletter/campaign/'.$original->id);
+        self::assertResponseIsSuccessful();
+        $preview = new Crawler($crawler->filter('.pw-campaign-preview iframe')->attr('srcdoc') ?? '');
+        self::assertStringContainsString('Hello Alex.', $preview->filter('body')->text());
+        $crawler = $client->click($crawler->selectLink('Duplicate as draft')->link());
+        self::assertResponseIsSuccessful();
+        self::assertSame($before, $em->getRepository(Campaign::class)->count(['audience' => $audience]));
+        $form = $crawler->selectButton('Save draft')->form();
+        $values = $form->getValues();
+        self::assertSame('Sent campaign to copy', $values['Campaign[subject]']);
+        self::assertSame('', $values['Campaign[scheduledAt]']);
+        self::assertSame('framed', $values['Campaign[emailLayout]']);
+        $form['Campaign[subject]'] = 'A new draft';
+        $client->submit($form);
+        self::assertResponseRedirects('http://localhost/admin/newsletter/campaign');
+
+        $crawler = $client->followRedirect();
+        $crawler = $client->click($crawler->selectLink('Create newsletter')->link());
+        self::assertResponseIsSuccessful();
+        self::assertSame('', $crawler->filter('#Campaign_subject')->attr('value') ?? '');
+
+        $em->clear();
+        $copy = $em->getRepository(Campaign::class)->findOneBy(['subject' => 'A new draft']);
+        self::assertInstanceOf(Campaign::class, $copy);
+        self::assertTrue($copy->isDraft());
+        self::assertNull($copy->scheduledAt);
+        self::assertSame(0, $copy->recipientCount);
+        self::assertSame('Original preview', $copy->preheader);
+        self::assertSame('Bonjour', $copy->contentFor('fr')['subject']);
+        self::assertNotSame($identity, $copy->getUtmId());
+        $savedOriginal = $em->find(Campaign::class, $original->id);
+        self::assertInstanceOf(Campaign::class, $savedOriginal);
+        self::assertSame('sent', $savedOriginal->getStatusLabel());
+        self::assertSame(1, $savedOriginal->sentCount);
+        self::assertSame('Sent campaign to copy', $savedOriginal->subject);
+    }
+
     /** The newsletter screens bring their own assets; the rest of the admin does not pay for them. */
     public function testNewsletterAssetsLoadOnlyOnNewsletterScreens(): void
     {

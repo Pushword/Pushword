@@ -77,6 +77,7 @@ newsletter:
     action:
       cancelSchedule: "Annulla la programmazione"
       create: "Crea newsletter"
+      duplicate: Duplica come bozza
       previewSegment: "Conta il pubblico"
       recipients: "Destinatari"
       review: "Verifica e invia"
@@ -102,6 +103,7 @@ newsletter:
     field:
       audience: "Pubblico"
       body: "Contenuto"
+      body.help: "Personalizza con %firstName|a tutti%, %name% o %email%. Il testo dopo | sostituisce il nome mancante."
       bounced: "Rimbalzi"
       clicks: "Clic"
       failed: "Falliti"
@@ -179,10 +181,12 @@ newsletter:
       invalidLocale: "La traduzione «%locale%» deve essere un oggetto con subject, preheader e bodyMarkdown."
   catalogue:
     actions: Azioni
+    browseBySite: Filtra per sito
     createNative: Crea in Pushword
     emptyHelp: 'Scegli uno strumento per creare una campagna. Le campagne disponibili appariranno qui.'
     emptyTitle: 'Nessuna campagna disponibile'
     filters: Filtra le campagne
+    host: Sito
     manageNative: Gestisci in Pushword
     noResultsHelp: 'Prova una ricerca diversa o reimposta i filtri per vedere le campagne disponibili.'
     noResultsTitle: 'Nessuna campagna corrispondente'
@@ -192,6 +196,7 @@ newsletter:
     source: Fonte
     timezone: Orari nel fuso %timezone%.
     unknown: Non disponibile
+    unknownHost: Sito sconosciuto
   confirm:
     body: "Grazie per l’iscrizione! Per iniziare a ricevere le nostre email, conferma il tuo indirizzo qui sotto."
     button: "Confermo l’iscrizione"

@@ -50,6 +50,14 @@
           </select>
         </div>{% endif %}
         <div>
+          <label class="form-label" for="campaign-host">{{ 'newsletter.catalogue.host'|trans }}</label>
+          <select class="form-select" id="campaign-host" name="host">
+            <option value="">{{ 'newsletter.workspace.filterAll'|trans }}</option>
+            <option value="@unknown"{% if host == '@unknown' %} selected{% endif %}>{{ 'newsletter.catalogue.unknownHost'|trans }}</option>
+            {% for value in hosts %}<option value="{{ value }}"{% if host == value %} selected{% endif %}>{{ value }}</option>{% endfor %}
+          </select>
+        </div>
+        <div>
           <label class="form-label" for="campaign-status">{{ 'newsletter.campaign.field.status'|trans }}</label>
           <select class="form-select" id="campaign-status" name="status">
             <option value="">{{ 'newsletter.workspace.filterAll'|trans }}</option>
@@ -63,7 +71,7 @@
           <div class="pw-catalogue-search-controls">
             <input class="form-control" type="search" id="campaign-query" name="q" value="{{ query }}">
             <button class="btn btn-secondary" type="submit">{{ 'newsletter.statistics.apply'|trans }}</button>
-            {% if hasFilters and items is not empty %}<a href="{{ path('admin_newsletter_campaign_catalogue') }}">{{ 'newsletter.statistics.reset'|trans }}</a>{% endif %}
+            {% if hasFilters and items is not empty %}<a href="{{ path('admin_newsletter_campaign_catalogue', {host: ''}) }}">{{ 'newsletter.statistics.reset'|trans }}</a>{% endif %}
           </div>
         </div>
       </form>
@@ -94,6 +102,7 @@
                     <span class="pw-catalogue-subject">{{ item.subject }}</span>
                   {% endif %}
                   {% if item.audience %}<span class="pw-catalogue-audience">{{ item.audience }}</span>{% endif %}
+                  <span class="pw-catalogue-audience" data-campaign-hosts>{{ 'newsletter.catalogue.host'|trans }}: {{ item.hosts is empty ? 'newsletter.catalogue.unknownHost'|trans : item.hosts|join(', ') }}</span>
                 </th>
                 {% if hasExternalSources %}<td data-label="{{ 'newsletter.catalogue.source'|trans }}">{{ item.source|capitalize }}</td>{% endif %}
                 <td data-label="{{ 'newsletter.campaign.field.status'|trans }}">{{ item.status is null ? 'newsletter.catalogue.unknown'|trans : (statusLabels[item.status] is defined ? statusLabels[item.status]|trans : item.status) }}</td>
@@ -110,7 +119,7 @@
         <h2 id="campaign-empty-title">{{ (hasFilters ? 'newsletter.catalogue.noResultsTitle' : 'newsletter.catalogue.emptyTitle')|trans }}</h2>
         <p>{{ (hasFilters ? 'newsletter.catalogue.noResultsHelp' : 'newsletter.catalogue.emptyHelp')|trans }}</p>
         {% if hasFilters %}
-          <a class="btn btn-secondary" href="{{ path('admin_newsletter_campaign_catalogue') }}">{{ 'newsletter.statistics.reset'|trans }}</a>
+          <a class="btn btn-secondary" href="{{ path('admin_newsletter_campaign_catalogue', {host: ''}) }}">{{ 'newsletter.statistics.reset'|trans }}</a>
         {% else %}
           <div class="pw-catalogue-creations">{{ _self.creations(creationActions) }}</div>
         {% endif %}

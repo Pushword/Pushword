@@ -1,5 +1,5 @@
 ---
-title: ''
+title: 'newsletter site filtering and first-name personalization'
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -34,3 +34,13 @@ belongs in the feature doc, which you link to instead.
 
 Several changes land here between two tags: append to the file, do not replace it.
 -->
+
+**Concerns:** `pushword/newsletter`
+
+## Campaign site metadata
+
+**External campaign catalogue integrations:** optionally supply `hosts: ['example.org']` on each `CampaignIndexItem`; omitted hosts display as unknown. Set `newsletter.catalogue_default_host` only to select an initial site. Reset still shows all sites. See [the contract](../extension/newsletter#multi-source-campaign-index).
+
+## First-name placeholders
+
+`%firstName%` and `%firstName|fallback%` now resolve in newsletter content. **Sites already using these strings literally:** adjust that text. To personalize, map a string into `customProperties.firstName`; missing values use the authored fallback or an empty string. No schema update is required.

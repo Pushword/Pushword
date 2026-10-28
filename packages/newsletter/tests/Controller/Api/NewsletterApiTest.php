@@ -12,6 +12,7 @@ use Pushword\Core\Repository\UserRepository;
 use Pushword\Newsletter\Entity\Audience;
 use Pushword\Newsletter\Entity\Automation;
 use Pushword\Newsletter\Entity\Campaign;
+use Pushword\Newsletter\Entity\CampaignRecipient;
 use Pushword\Newsletter\Entity\ClickEvent;
 use Pushword\Newsletter\Entity\Contact;
 use Pushword\Newsletter\Entity\ContactEvent;
@@ -69,6 +70,55 @@ final class NewsletterApiTest extends AbstractNewsletterTestCase
         $this->client->request(Request::METHOD_GET, '/api/newsletter/contact');
 
         self::assertSame(Response::HTTP_UNAUTHORIZED, $this->client->getResponse()->getStatusCode());
+    }
+
+    public function testDuplicateCreatesAnIndependentDraftFromASentCampaign(): void
+    {
+        $audience = $this->createAudience();
+        $contact = $this->createContact($audience, 'copy@example.tld');
+        $original = $this->createCampaign($audience, subject: 'Copyable campaign');
+        $original->translations = ['fr' => ['subject' => 'Une copie']];
+        $original->emailLayout = 'framed';
+        self::getContainer()->get(CampaignSender::class)->arm($original);
+        $original->incrementSent()->markSent();
+        $identity = $original->getUtmId();
+        $this->entityManager->flush();
+
+        $result = $this->request(Request::METHOD_POST, '/api/newsletter/campaign/'.$original->id.'/duplicate');
+        self::assertResponseStatusCodeSame(Response::HTTP_CREATED);
+        self::assertNotSame($original->id, $result['id']);
+        $copy = $this->entityManager->find(Campaign::class, $result['id']);
+        self::assertInstanceOf(Campaign::class, $copy);
+        self::assertTrue($copy->isDraft());
+        self::assertSame('Une copie', $copy->contentFor('fr')['subject']);
+        self::assertSame('framed', $copy->emailLayout);
+        self::assertSame($audience, $copy->audience);
+        self::assertNotSame($identity, $copy->getUtmId());
+        self::assertNull($copy->sentAt);
+        self::assertSame(0, $copy->sentCount);
+        $recipients = $this->entityManager->getRepository(CampaignRecipient::class);
+        self::assertSame(0, $recipients->count(['campaign' => $copy]));
+        self::assertSame(1, $recipients->count(['campaign' => $original, 'contact' => $contact]));
+        self::assertSame('sent', $original->getStatusLabel());
+
+        $this->request(Request::METHOD_POST, '/api/newsletter/campaign/2147483647/duplicate');
+        self::assertResponseStatusCodeSame(Response::HTTP_NOT_FOUND);
+    }
+
+    public function testDuplicateRequiresAnEditor(): void
+    {
+        $campaign = $this->createCampaign($this->createAudience());
+        $url = '/api/newsletter/campaign/'.$campaign->id.'/duplicate';
+        $this->client->request(Request::METHOD_POST, $url);
+        self::assertResponseStatusCodeSame(Response::HTTP_UNAUTHORIZED);
+
+        $user = $this->userRepository()->findOneBy(['email' => $this->userEmail]);
+        self::assertInstanceOf(User::class, $user);
+        $user->setRoles(['ROLE_USER']);
+        $this->entityManager->flush();
+        $this->request(Request::METHOD_POST, $url);
+        self::assertResponseStatusCodeSame(Response::HTTP_FORBIDDEN);
+        self::assertSame(1, $this->entityManager->getRepository(Campaign::class)->count(['audience' => $campaign->audience]));
     }
 
     public function testCreatingAnAudienceThroughTheApi(): void

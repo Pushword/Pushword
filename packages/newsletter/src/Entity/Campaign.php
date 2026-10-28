@@ -189,6 +189,23 @@ class Campaign implements IdInterface, Stringable
         $this->initTimestampableProperties();
     }
 
+    /** Copy authored settings only; delivery history and analytics identity belong to the original. */
+    public function duplicate(): self
+    {
+        $copy = new self();
+        $copy->audience = $this->audience;
+        $copy->subject = $this->subject;
+        $copy->preheader = $this->preheader;
+        $copy->bodyMarkdown = $this->bodyMarkdown;
+        $copy->translations = $this->translations;
+        $copy->segment = $this->segment;
+        $copy->emailLayout = $this->emailLayout;
+        $copy->transactional = $this->transactional;
+        $copy->rateSeconds = $this->rateSeconds;
+
+        return $copy;
+    }
+
     /**
      * What one reader is sent, resolved at send time.
      *

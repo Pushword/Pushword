@@ -77,6 +77,7 @@ newsletter:
     action:
       cancelSchedule: "Planning annuleren"
       create: "Nieuwsbrief maken"
+      duplicate: Dupliceren als concept
       previewSegment: "Doelgroep tellen"
       recipients: "Ontvangers"
       review: "Controleren en verzenden"
@@ -102,6 +103,7 @@ newsletter:
     field:
       audience: "Doelgroep"
       body: "Inhoud"
+      body.help: "Personaliseer met %firstName|allemaal%, %name% of %email%. De tekst na | wordt gebruikt als de voornaam ontbreekt."
       bounced: "Bounces"
       clicks: "Klikken"
       failed: "Mislukt"
@@ -179,10 +181,12 @@ newsletter:
       invalidLocale: "Vertaling “%locale%” moet een object zijn met subject, preheader en bodyMarkdown."
   catalogue:
     actions: Acties
+    browseBySite: Filter op website
     createNative: Maken in Pushword
     emptyHelp: 'Kies een tool om een campagne te maken. Beschikbare campagnes verschijnen hier.'
     emptyTitle: 'Geen campagnes beschikbaar'
     filters: Campagnes filteren
+    host: Website
     manageNative: Beheren in Pushword
     noResultsHelp: 'Probeer een andere zoekopdracht of stel de filters opnieuw in.'
     noResultsTitle: 'Geen overeenkomende campagnes'
@@ -192,6 +196,7 @@ newsletter:
     source: Bron
     timezone: Tijden in %timezone%.
     unknown: Niet opgegeven
+    unknownHost: Onbekende website
   confirm:
     body: "Bedankt voor je aanmelding! Bevestig hieronder je e-mailadres om onze e-mails te ontvangen."
     button: "Bevestig mijn aanmelding"

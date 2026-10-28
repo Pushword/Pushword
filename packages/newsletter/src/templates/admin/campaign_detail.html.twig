@@ -21,7 +21,7 @@
 {% endblock %}
 
 {% block page_actions %}
-  {% set secondary = ['delete', 'previewSegment', 'index'] %}
+  {% set secondary = ['delete', 'duplicate', 'previewSegment', 'index'] %}
   {% for action in entity.actions|reverse|filter(action => action.name not in secondary) %}
     {{ include(action.templatePath, {action: action, entity: entity}, with_context: false) }}
   {% endfor %}

@@ -156,6 +156,7 @@ final class EmailPreviewController extends AbstractController
     {
         $contact = new Contact($audience, 'preview@example.tld');
         $contact->name = 'Alex';
+        $contact->customProperties = ['firstName' => 'Alex'];
 
         $site = $this->sites->get($audience->mainHost);
 

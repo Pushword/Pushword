@@ -16,11 +16,13 @@ use Pushword\Newsletter\Entity\Campaign;
 use Pushword\Newsletter\Enum\CampaignStatus;
 use Pushword\Newsletter\Event\CampaignIndexItem;
 use Pushword\Newsletter\Event\CollectCampaignIndex;
+use Pushword\Newsletter\Repository\CampaignRepository;
 use Pushword\Newsletter\Tests\AbstractNewsletterTestCase;
 use Symfony\Component\DomCrawler\Crawler;
 use Symfony\Component\DomCrawler\Link;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
 #[Group('integration')]
 final class CampaignIndexTest extends AbstractNewsletterTestCase
@@ -213,7 +215,7 @@ final class CampaignIndexTest extends AbstractNewsletterTestCase
         self::assertCount(0, $crawler->filter('.pw-catalogue table'));
         self::assertSame('No matching campaigns', $crawler->filter('[data-catalogue-empty="filtered"] h2')->text());
         self::assertSame('not-found', $crawler->filter('[name="q"]')->attr('value'));
-        self::assertSame('/admin/newsletter/campaigns', $crawler->selectLink('Reset')->attr('href'));
+        self::assertSame('/admin/newsletter/campaigns?host=', $crawler->selectLink('Reset')->attr('href'));
         $crawler = $this->client->click($crawler->selectLink('Reset')->link());
         self::assertResponseIsSuccessful();
         self::assertCount(3, $crawler->filter('[data-campaign-key]'));
@@ -333,5 +335,65 @@ final class CampaignIndexTest extends AbstractNewsletterTestCase
         $this->entityManager->flush();
 
         $this->client->loginUser($this->user);
+    }
+
+    public function testSiteFilterPreservesMultiSiteIdentityAndUnknownMetadata(): void
+    {
+        $this->login();
+        $native = $this->createCampaign($this->createAudience(), subject: 'Site filter native');
+        $other = $this->createCampaign($this->createAudience(mainHost: 'other.example'), subject: 'Site filter other');
+        $nativeKey = 'pushword:'.$native->id;
+        $externalKey = 'external:'.$native->id;
+        self::getContainer()->get(EventDispatcherInterface::class)->addListener(CollectCampaignIndex::class, static function (CollectCampaignIndex $index) use ($native): void {
+            $index->add(new CampaignIndexItem('external', (string) $native->id, 'Site filter shared', actions: ['Source report' => '/whole-campaign-report'], hosts: ['localhost.dev', 'other.example']));
+            $index->add(new CampaignIndexItem('external', 'unknown', 'Site filter unknown', audience: 'localhost.dev'));
+            $index->notices['external'] = 'Cached yesterday';
+        });
+
+        foreach ([
+            'localhost.dev' => [$externalKey, $nativeKey],
+            'other.example' => [$externalKey, 'pushword:'.$other->id],
+            '@unknown' => ['external:unknown'],
+            'missing.example' => [],
+        ] as $host => $keys) {
+            $crawler = $this->client->request(Request::METHOD_GET, '/admin/newsletter/campaigns', ['host' => $host, 'q' => 'Site filter']);
+            self::assertResponseIsSuccessful();
+            self::assertSame($keys, $crawler->filter('[data-campaign-key]')->extract(['data-campaign-key']));
+            self::assertSame($host, $crawler->filter('#campaign-host option[selected]')->attr('value'));
+            self::assertStringContainsString('Cached yesterday', $crawler->filter('[role="status"]')->text());
+            if (\in_array($externalKey, $keys, true)) {
+                self::assertSame('Site: localhost.dev, other.example', $crawler->filter('[data-campaign-key="'.$externalKey.'"] [data-campaign-hosts]')->text());
+                self::assertSame('/whole-campaign-report', $crawler->selectLink('Source report')->attr('href'));
+            }
+        }
+    }
+
+    public function testDefaultSiteCanBeClearedAndSharedInTheUrl(): void
+    {
+        $this->login();
+        $native = $this->createCampaign($this->createAudience());
+        $other = $this->createCampaign($this->createAudience(mainHost: 'other.example'));
+        $index = new CampaignIndex(
+            self::getContainer()->get(CampaignRepository::class),
+            self::getContainer()->get(UrlGeneratorInterface::class),
+            self::getContainer()->get(EventDispatcherInterface::class),
+            'localhost.dev',
+        );
+        self::assertSame('admin_newsletter_campaign_catalogue', $index->route());
+        $controller = new CampaignIndexController($index, new EditorialTimezone('Europe/Paris'), 'localhost.dev');
+        $controller->setContainer(self::getContainer());
+        self::getContainer()->set(CampaignIndexController::class, $controller);
+
+        $crawler = $this->client->request(Request::METHOD_GET, '/admin/newsletter/campaigns');
+        self::assertResponseIsSuccessful();
+        self::assertSame(['pushword:'.$native->id], $crawler->filter('[data-campaign-key]')->extract(['data-campaign-key']));
+        self::assertSame('localhost.dev', $crawler->filter('#campaign-host option[selected]')->attr('value'));
+
+        $crawler = $this->client->click($crawler->selectLink('Reset')->link());
+        self::assertResponseIsSuccessful();
+        self::assertSame('', $crawler->filter('form')->form()->getValues()['host']);
+        self::assertCount(1, $crawler->filter('[data-campaign-key="pushword:'.$other->id.'"]'));
+        self::assertCount(1, $crawler->filter('[data-campaign-key="pushword:'.$native->id.'"]'));
+        self::assertStringContainsString('host=', $this->client->getRequest()->getUri());
     }
 }

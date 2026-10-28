@@ -13,6 +13,7 @@ use EasyCorp\Bundle\EasyAdminBundle\Config\Actions;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Filters;
 use EasyCorp\Bundle\EasyAdminBundle\Config\KeyValueStore;
+use EasyCorp\Bundle\EasyAdminBundle\Context\AdminContext;
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
 use EasyCorp\Bundle\EasyAdminBundle\Field\AssociationField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\BooleanField;
@@ -44,6 +45,7 @@ use Pushword\Newsletter\Service\NewsletterMailer;
 use Pushword\Newsletter\Utm\UtmTag;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Throwable;
@@ -65,12 +67,36 @@ class CampaignCrudController extends AbstractCrudController
         private readonly EmailTemplateRegistry $emailTemplates,
         private readonly MailRenderer $renderer,
         private readonly SiteRegistry $sites,
+        private readonly RequestStack $requests,
     ) {
     }
 
     public static function getEntityFqcn(): string
     {
         return Campaign::class;
+    }
+
+    #[Override]
+    public function createEntity(string $entityFqcn): Campaign
+    {
+        $id = $this->requests->getCurrentRequest()?->query->getInt('duplicate') ?? 0;
+        if (0 === $id) {
+            return new Campaign();
+        }
+
+        $this->denyAccessUnlessGranted('ROLE_EDITOR');
+        $original = $this->entityManager->find(Campaign::class, $id) ?? throw $this->createNotFoundException();
+
+        return $original->duplicate();
+    }
+
+    /** @param AdminContext<Campaign> $context */
+    #[Override]
+    protected function getRedirectResponseAfterSave(AdminContext $context, string $action): RedirectResponse
+    {
+        $context->getRequest()->query->remove('duplicate');
+
+        return parent::getRedirectResponseAfterSave($context, $action);
     }
 
     #[Override]
@@ -118,6 +144,7 @@ class CampaignCrudController extends AbstractCrudController
         $site = $this->sites->get($audience->mainHost);
         $contact = new Contact($audience, 'preview@example.tld');
         $contact->name = 'Alex';
+        $contact->customProperties = ['firstName' => 'Alex'];
         $contact->locale = $site->locale;
 
         $responseParameters->set('preview_html', $this->renderer->html(
@@ -138,6 +165,14 @@ class CampaignCrudController extends AbstractCrudController
     #[Override]
     public function configureActions(Actions $actions): Actions
     {
+        $duplicate = Action::new('duplicate', 'newsletter.campaign.action.duplicate', 'fa fa-copy')
+            ->linkToUrl(fn (Campaign $campaign): string => $this->urlGenerator->generate('admin_newsletter_campaign_new', ['duplicate' => $campaign->id]))
+            ->setCssClass('btn btn-outline-secondary');
+
+        $catalogue = Action::new('catalogue', 'newsletter.catalogue.browseBySite', 'fa fa-filter')
+            ->linkToRoute('admin_newsletter_campaign_catalogue')
+            ->createAsGlobalAction();
+
         $send = Action::new('send', 'newsletter.campaign.action.send', 'fa fa-paper-plane')
             ->linkToCrudAction('send')
             ->setTemplatePath('@pwAdmin/crud/action_post.html.twig')
@@ -181,14 +216,18 @@ class CampaignCrudController extends AbstractCrudController
                 ->add($page, $cancelSchedule)
                 ->add($page, $preview)
                 ->add($page, $recipients)
+                ->add($page, $duplicate)
                 ->add($page, $sendTest);
         }
 
         return $actions
             ->disable(Action::SAVE_AND_ADD_ANOTHER)
             ->update(Crud::PAGE_NEW, Action::SAVE_AND_RETURN, static fn (Action $action): Action => $action->setLabel('newsletter.campaign.action.saveDraft'))
-            ->update(Crud::PAGE_INDEX, Action::NEW, static fn (Action $action): Action => $action->setLabel('newsletter.campaign.action.create'))
+            ->update(Crud::PAGE_INDEX, Action::NEW, static fn (Action $action): Action => $action
+                ->setLabel('newsletter.campaign.action.create')
+                ->linkToRoute('admin_newsletter_campaign_new'))
             ->add(Crud::PAGE_INDEX, Action::DETAIL)
+            ->add(Crud::PAGE_INDEX, $catalogue)
             ->update(Crud::PAGE_INDEX, Action::DETAIL, static fn (Action $action): Action => $action
                 ->setLabel('newsletter.campaign.action.review')
                 ->setCssClass('action-detail btn btn-outline-primary'))
@@ -532,6 +571,7 @@ class CampaignCrudController extends AbstractCrudController
         if (! class_exists(EditorjsType::class)) {
             return TextareaField::new('bodyMarkdown', 'newsletter.campaign.field.body')
                 ->hideOnIndex()
+                ->setHelp('newsletter.campaign.field.body.help')
                 ->setNumOfRows(18)->setColumns('col-12');
         }
 
@@ -542,6 +582,7 @@ class CampaignCrudController extends AbstractCrudController
         // campaign has no page, so it stays empty but the key must exist.
         return Field::new('bodyMarkdown', 'newsletter.campaign.field.body')
             ->setColumns('col-12')
+            ->setHelp('newsletter.campaign.field.body.help')
             ->setFormType(EditorjsType::class)
             ->setFormTypeOptions(['required' => false, 'attr' => ['page_host' => $host, 'page_id' => '']])
             ->hideOnIndex();

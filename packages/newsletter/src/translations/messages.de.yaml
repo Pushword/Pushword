@@ -77,6 +77,7 @@ newsletter:
     action:
       cancelSchedule: "Planung aufheben"
       create: "Newsletter erstellen"
+      duplicate: Als Entwurf duplizieren
       previewSegment: "Empfänger zählen"
       recipients: "Empfänger"
       review: "Prüfen und senden"
@@ -102,6 +103,7 @@ newsletter:
     field:
       audience: "Zielgruppe"
       body: "Inhalt"
+      body.help: "Personalisieren mit %firstName|zusammen%, %name% oder %email%. Der Text nach | wird verwendet, wenn der Vorname fehlt."
       bounced: "Rückläufer"
       clicks: "Klicks"
       failed: "Fehlgeschlagen"
@@ -179,10 +181,12 @@ newsletter:
       invalidLocale: "Die Übersetzung „%locale%“ muss ein Objekt mit subject, preheader und bodyMarkdown sein."
   catalogue:
     actions: Aktionen
+    browseBySite: Nach Website filtern
     createNative: In Pushword erstellen
     emptyHelp: 'Wählen Sie ein Werkzeug, um eine Kampagne zu erstellen. Verfügbare Kampagnen erscheinen hier.'
     emptyTitle: 'Keine Kampagnen verfügbar'
     filters: Kampagnen filtern
+    host: Website
     manageNative: In Pushword verwalten
     noResultsHelp: 'Versuchen Sie eine andere Suche oder setzen Sie die Filter zurück.'
     noResultsTitle: 'Keine passenden Kampagnen'
@@ -192,6 +196,7 @@ newsletter:
     source: Quelle
     timezone: Zeiten in %timezone%.
     unknown: Nicht angegeben
+    unknownHost: Unbekannte Website
   confirm:
     body: "Vielen Dank für Ihre Anmeldung! Bitte bestätigen Sie unten Ihre E-Mail-Adresse, um unsere E-Mails zu erhalten."
     button: "Anmeldung bestätigen"

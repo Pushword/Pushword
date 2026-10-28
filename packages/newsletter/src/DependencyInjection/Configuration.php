@@ -26,6 +26,9 @@ class Configuration implements ConfigurationInterface
         $treeBuilder
             ->getRootNode()
                 ->children()
+                    ->scalarNode('catalogue_default_host')->defaultValue('')
+                        ->info('Initial site filter for the campaign catalogue. Empty shows every site; ?host= clears the default.')
+                    ->end()
                     ->booleanNode('bot_click_qualification')->defaultFalse()
                         ->info('Flag known automated user agents. All other clicks remain unclassified; no human identity is inferred.')
                     ->end()

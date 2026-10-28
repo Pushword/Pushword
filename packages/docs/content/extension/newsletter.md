@@ -454,6 +454,16 @@ the subject and the body. The **analytics name** is the campaign's slug, derived
 from the subject when empty; the send date is prefixed to it when the campaign
 goes out.
 
+Use `%firstName%` for an explicit first name, stored as a string in the contact's
+`customProperties.firstName`. Pushword never guesses it from `name`. A missing,
+blank or non-string value becomes empty; `%firstName|there%` lets the author supply
+a natural fallback in the message's language, for example `Hello %firstName|there%!`.
+This works in the subject, preheader and body, including translations and automation
+messages. The first name and its fallback are inserted as text, not Markdown or HTML;
+use this variable in prose, not link destinations. `%name%` and `%email%` retain their
+existing behavior. Live previews use Alex; test sends use Test. Map source data into
+the property through the existing contact API; no schema update is needed.
+
 Sending never blocks: recipients are frozen into rows up front and the tick
 drains them at the audience's cadence. A row already sent is never re-sent, so an
 interrupted run, a deploy or a crash cannot double-send. A contact who
@@ -470,6 +480,14 @@ Open **Review** from the campaign catalogue to see the rendered email, audience,
 schedule and delivery results. The preview starts at desktop width. **Markdown
 source** and advanced settings stay collapsed; use **Edit** to change a draft,
 or the send and schedule actions to prepare delivery. Previewing sends no mail.
+
+**More actions → Duplicate as draft** opens an unsaved copy of any campaign, including
+one already sent. Save it to create a new campaign. Content, translations, audience,
+segment, design, transactional setting and cadence are copied; schedules, automation
+provenance, recipients, counters and tracking identity are reset. The analytics name
+is derived anew from the subject. Shared audience and saved-template settings remain
+shared. The API equivalent, `POST /api/newsletter/campaign/{id}/duplicate`, immediately
+creates the draft and returns it with status 201; it requires an editor.
 
 ### Email design and live preview
 
@@ -1118,11 +1136,22 @@ the next section.
 
 ## Multi-source campaign index
 
-As soon as an application listens to `CollectCampaignIndex` (below), **Newsletter →
-Campaigns** opens a read-only catalogue at `/admin/newsletter/campaigns`; until then it
+When an application listens to `CollectCampaignIndex` (below) or configures a default
+site filter, **Newsletter → Campaigns** opens a read-only catalogue at
+`/admin/newsletter/campaigns`; otherwise it
 opens the campaign list. An overridden admin template gets the same route from
 `newsletter_campaigns_route()`. Filter by status or subject/audience text; the
 source filter and column appear only when an external source is listed.
+The native list also offers **Browse by site**, so the catalogue is available without
+an external provider. The **Site** filter uses structured `hosts` metadata, never the
+audience's display label. Native campaigns use their audience's `mainHost`; external
+items may list several hosts. An item matching one host retains all its hosts and its
+original report links: filtering does not narrow the population of its statistics.
+Missing metadata is explicitly **Unknown site** (`?host=@unknown`).
+
+Set `newsletter.catalogue_default_host: example.org` to open the catalogue with that
+site selected. Without configuration all sites are shown. The selection travels in
+`?host=example.org`; **Reset** uses `?host=` to clear even the configured default.
 Scheduled and sent dates use the editorial timezone; missing values stay unknown.
 Use **Create in Pushword** or **Manage in Pushword** for the native campaign editor,
 bulk actions and delivery controls. Existing CRUD routes remain available.
@@ -1151,6 +1180,7 @@ final class ExternalCampaignIndexListener
             subject: 'Autumn news',
             status: 'draft',
             actions: ['Open in source' => 'https://example.org/campaign/42'],
+            hosts: ['example.org', 'example.fr'],
         ));
         $index->creationActions['Create in source'] = 'https://example.org/campaign/new';
         $index->notices['external'] = 'Campaign cache last synchronized yesterday.';
@@ -1172,7 +1202,8 @@ remote campaign total. An empty search offers a filter reset; an empty catalogue
 offers the connected tools' creation links.
 
 `CampaignIndexItem` also accepts nullable `scheduledAt`/`sentAt` (`DateTimeImmutable`)
-and `audience`. Unknown status or dates are `null`. Pushword translates its own
+and `audience`, plus a list of site identities in `hosts` (empty means unknown).
+Unknown status or dates are `null`. Pushword translates its own
 statuses (`draft`, `scheduled`, `sending`, `sent`); any other status displays as given,
 so pass the label your editors should read. External statuses such as `paused` do not
 change Pushword's delivery state machine. Listeners may enrich native navigation through `$index->items['pushword:42']->actions`.

@@ -12,7 +12,10 @@ final class CampaignIndexItem
 {
     public readonly string $key;
 
-    /** @param array<string, string> $actions Labels mapped to navigation URLs; the first opens from the subject. */
+    /**
+     * @param array<string, string> $actions labels mapped to navigation URLs; the first opens from the subject
+     * @param list<string>          $hosts   site identities, independent of the audience display label; empty means unknown
+     */
     public function __construct(
         public readonly string $source,
         public readonly string $id,
@@ -22,6 +25,7 @@ final class CampaignIndexItem
         public readonly ?DateTimeImmutable $sentAt = null,
         public array $actions = [],
         public readonly ?string $audience = null,
+        public readonly array $hosts = [],
     ) {
         if (1 !== preg_match('/^[a-z][a-z0-9_-]*$/D', $source) || '' === $id) {
             throw new InvalidArgumentException('A campaign index item needs a source identifier and a non-empty ID.');
