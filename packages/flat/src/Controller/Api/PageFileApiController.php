@@ -200,7 +200,7 @@ final class PageFileApiController extends AbstractApiController
                             '200' => $canonicalResponse,
                             '400' => ['description' => 'Empty body, malformed YAML, or missing front matter'],
                             '404' => ['description' => 'Page not found'],
-                            '409' => ['description' => 'Revision mismatch — the body is the server\'s current canonical file text; overwrite the local file and re-apply', 'content' => ['text/markdown' => ['schema' => ['type' => 'string']]]],
+                            '409' => ['description' => "Revision mismatch — the body is the server's current canonical file text; overwrite the local file and re-apply", 'content' => ['text/markdown' => ['schema' => ['type' => 'string']]]],
                             '422' => ['description' => 'invalid_frontmatter or validation error (JSON)'],
                             '428' => ['description' => 'Missing If-Match header'],
                         ],

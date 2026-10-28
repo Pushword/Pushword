@@ -15,6 +15,7 @@ use Pushword\Flat\Service\DeferredExportProcessor;
 use Pushword\Flat\Service\FlatChangeDetector;
 use Pushword\Flat\Service\FlatLockManager;
 use Pushword\Flat\Service\GitAutoCommitter;
+use Pushword\Flat\Sync\SnippetSync;
 use Symfony\Component\Console\Attribute\Argument;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Attribute\Option;
@@ -378,7 +379,7 @@ final class FlatFileSyncCommand
                 ['Media', $mediaSync->getImportedCount(), $mediaSync->getSkippedCount(), $mediaSync->getDeletedCount()],
                 ['Pages', $pageSync->getImportedCount(), $pageSync->getSkippedCount(), $pageSync->getDeletedCount()],
             ];
-            if (null !== $snippetSync) {
+            if ($snippetSync instanceof SnippetSync) {
                 $importRows[] = ['Snippets', $snippetSync->getImportedCount(), $snippetSync->getSkippedCount(), $snippetSync->getDeletedCount()];
             }
 
@@ -390,7 +391,7 @@ final class FlatFileSyncCommand
                 ['Media', $mediaSync->getExportedCount(), 0],
                 ['Pages', $pageSync->getExportedCount(), $pageSync->getExportSkippedCount()],
             ];
-            if (null !== $snippetSync) {
+            if ($snippetSync instanceof SnippetSync) {
                 $exportRows[] = ['Snippets', $snippetSync->getExportedCount(), $snippetSync->getSkippedCount()];
             }
 

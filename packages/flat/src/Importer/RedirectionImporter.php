@@ -39,7 +39,7 @@ final class RedirectionImporter
         $indexPath = $dir.'/'.RedirectionExporter::INDEX_FILE;
         $reader = $this->createReader($indexPath);
 
-        if (null === $reader) {
+        if (! $reader instanceof Reader) {
             return;
         }
 
@@ -102,7 +102,7 @@ final class RedirectionImporter
         }
 
         // Create new if not found
-        if (null === $page) {
+        if (! $page instanceof Page) {
             $page = new Page();
             $page->slug = $slug;
             $page->host = $host;

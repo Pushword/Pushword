@@ -22,7 +22,7 @@ final readonly class PublishedAtConverter
      */
     public function toFlatValue(?DateTimeInterface $publishedAt): string
     {
-        if (null === $publishedAt) {
+        if (! $publishedAt instanceof DateTimeInterface) {
             return self::DRAFT_VALUE;
         }
 

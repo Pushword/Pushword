@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pushword\Flat\Controller;
 
+use Pushword\Core\Entity\User;
 use Pushword\Flat\Service\FlatApiTokenValidator;
 use Pushword\Flat\Service\FlatLockManager;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -38,7 +39,7 @@ final class FlatLockApiController extends AbstractController
     {
         $user = $this->tokenValidator->validateRequest($request);
 
-        if (null === $user) {
+        if (! $user instanceof User) {
             return $this->unauthorizedResponse();
         }
 
@@ -74,7 +75,7 @@ final class FlatLockApiController extends AbstractController
     {
         $user = $this->tokenValidator->validateRequest($request);
 
-        if (null === $user) {
+        if (! $user instanceof User) {
             return $this->unauthorizedResponse();
         }
 
@@ -108,7 +109,7 @@ final class FlatLockApiController extends AbstractController
     {
         $user = $this->tokenValidator->validateRequest($request);
 
-        if (null === $user) {
+        if (! $user instanceof User) {
             return $this->unauthorizedResponse();
         }
 

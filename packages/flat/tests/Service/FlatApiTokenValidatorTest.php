@@ -38,7 +38,7 @@ final class FlatApiTokenValidatorTest extends KernelTestCase
 
     protected function tearDown(): void
     {
-        if (null !== $this->testUser) {
+        if ($this->testUser instanceof User) {
             $this->em->remove($this->testUser);
             $this->em->flush();
             $this->testUser = null;

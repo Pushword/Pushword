@@ -118,7 +118,7 @@ final class MediaSync
                 $storageProgressBar?->advance();
             }
 
-            if (null !== $storageProgressBar) {
+            if ($storageProgressBar instanceof ProgressBar) {
                 $storageProgressBar->finish();
                 $this->output?->writeln('');
             }
@@ -139,7 +139,7 @@ final class MediaSync
             $localProgressBar?->advance();
         }
 
-        if (null !== $localProgressBar) {
+        if ($localProgressBar instanceof ProgressBar) {
             $localProgressBar->finish();
             $this->output?->writeln('');
         }
@@ -396,7 +396,7 @@ final class MediaSync
     private function hasNewerStorageFiles(int $lastSyncTime, array $mediaIndex): bool
     {
         $progressBar = null;
-        if (null !== $this->output) {
+        if ($this->output instanceof OutputInterface) {
             $this->output->writeln('Scanning remote storage for changes...');
             $progressBar = new ProgressBar($this->output);
             $progressBar->setFormat(' %current% files scanned, %message%');
@@ -572,7 +572,7 @@ final class MediaSync
 
     private function createProgressBar(int $count): ?ProgressBar
     {
-        if (null === $this->output || 0 === $count) {
+        if (! $this->output instanceof OutputInterface || 0 === $count) {
             return null;
         }
 
@@ -585,7 +585,7 @@ final class MediaSync
 
     private function measure(string $name, callable $operation): float
     {
-        if (null !== $this->stopwatch) {
+        if ($this->stopwatch instanceof Stopwatch) {
             $this->stopwatch->start($name);
             $operation();
 

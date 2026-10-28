@@ -8,6 +8,7 @@ use Pushword\Core\Site\SiteRegistry;
 use Pushword\Flat\Service\FlatChangeDetector;
 use Pushword\Flat\Service\FlatLockManager;
 use Pushword\Flat\Sync\ConflictResolver;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Session\Flash\FlashBagInterface;
 use Symfony\Component\HttpFoundation\Session\FlashBagAwareSessionInterface;
@@ -34,7 +35,7 @@ final readonly class FlatSyncNotifier
     public function notifyIfChangesDetected(?string $host = null): void
     {
         $flashBag = $this->getFlashBag();
-        if (null === $flashBag) {
+        if (! $flashBag instanceof FlashBagInterface) {
             return;
         }
 
@@ -52,7 +53,7 @@ final readonly class FlatSyncNotifier
     public function notifyIfLocked(?string $host = null): void
     {
         $flashBag = $this->getFlashBag();
-        if (null === $flashBag) {
+        if (! $flashBag instanceof FlashBagInterface) {
             return;
         }
 
@@ -78,7 +79,7 @@ final readonly class FlatSyncNotifier
     public function notifyIfUnresolvedConflicts(?string $host = null): void
     {
         $flashBag = $this->getFlashBag();
-        if (null === $flashBag) {
+        if (! $flashBag instanceof FlashBagInterface) {
             return;
         }
 
@@ -145,7 +146,7 @@ final readonly class FlatSyncNotifier
     private function getFlashBag(): ?FlashBagInterface
     {
         $request = $this->requestStack->getCurrentRequest();
-        if (null === $request) {
+        if (! $request instanceof Request) {
             return null;
         }
 

@@ -57,7 +57,7 @@ final class FlatLockApiControllerTest extends WebTestCase
     protected function tearDown(): void
     {
         // Clean up test user
-        if (null !== $this->testUser) {
+        if ($this->testUser instanceof User) {
             $this->em->remove($this->testUser);
             $this->em->flush();
             $this->testUser = null;

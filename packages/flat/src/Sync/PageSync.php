@@ -17,6 +17,7 @@ use Pushword\Flat\Exporter\RedirectionExporter;
 use Pushword\Flat\FlatFileContentDirFinder;
 use Pushword\Flat\Importer\PageImporter;
 use Pushword\Flat\Importer\RedirectionImporter;
+use Spatie\YamlFrontMatter\Document;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Stopwatch\Stopwatch;
 use Symfony\Component\Yaml\Exception\ParseException;
@@ -423,7 +424,7 @@ final class PageSync
             return true; // Trigger import where the error will be reported
         }
 
-        if (null === $document) {
+        if (! $document instanceof Document) {
             return true;
         }
 

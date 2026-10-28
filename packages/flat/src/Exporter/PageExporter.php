@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pushword\Flat\Exporter;
 
 use DateTime;
+use DateTimeInterface;
 use Exception;
 use League\Csv\Writer;
 use Psr\Log\LoggerInterface;
@@ -360,7 +361,7 @@ final class PageExporter
     {
         $publishedAt = $page->publishedAt;
 
-        return null !== $publishedAt && $publishedAt <= new DateTime();
+        return $publishedAt instanceof DateTimeInterface && $publishedAt <= new DateTime();
     }
 
     /**
@@ -450,7 +451,7 @@ final class PageExporter
         return [
             'slug' => $page->slug,
             'h1' => '' !== $h1 ? $h1 : $page->title,
-            'publishedAt' => null !== $page->publishedAt ? $this->editorialTimezone->format($page->publishedAt) : '',
+            'publishedAt' => $page->publishedAt instanceof DateTimeInterface ? $this->editorialTimezone->format($page->publishedAt) : '',
             'locale' => $page->locale,
             'parentPage' => $page->parentPage->slug ?? '',
             'tags' => trim($page->getTags()),

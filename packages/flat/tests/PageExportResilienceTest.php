@@ -126,6 +126,6 @@ final class PageExportResilienceTest extends KernelTestCase
 
         // Curly quotes are straightened *before* the dump, so they round-trip as ASCII.
         self::assertSame('Tour de l\'Albanie : "joyaux" de l\'Île', $parsed['title']);
-        self::assertSame('Les îles d\'Åland', $parsed['h1']);
+        self::assertSame("Les îles d'Åland", $parsed['h1']);
     }
 }

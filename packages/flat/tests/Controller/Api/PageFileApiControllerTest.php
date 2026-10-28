@@ -132,7 +132,7 @@ final class PageFileApiControllerTest extends WebTestCase
     {
         $this->assertByteExactRoundTrip(static function (Page $page): void {
             $page->title = 'Tour de l\'Albanie : "joyaux" de l\'Île';
-            $page->h1 = 'Les îles d\'Åland';
+            $page->h1 = "Les îles d'Åland";
             $page->mainContent = "L'apostrophe et les \"guillemets\" restent intacts.";
         });
     }

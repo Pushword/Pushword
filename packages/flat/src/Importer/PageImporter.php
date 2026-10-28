@@ -13,6 +13,7 @@ use Override;
 use Psr\Log\LoggerInterface;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Entity\Page;
+use Pushword\Core\Entity\User;
 use Pushword\Core\PropertySchema\PagePropertySchemaRegistry;
 use Pushword\Core\Repository\MediaRepository;
 use Pushword\Core\Repository\PageRepository;
@@ -174,7 +175,7 @@ final class PageImporter extends AbstractImporter
     public function import(string $filePath, DateTimeInterface $lastEditDateTime): bool
     {
         $document = $this->getDocumentFromFile($filePath);
-        if (null === $document) {
+        if (! $document instanceof Document) {
             return false;
         }
 
@@ -304,7 +305,7 @@ final class PageImporter extends AbstractImporter
                 // the page already had, rather than becoming a custom property shadowing
                 // the relation in every later export.
                 $user = $this->editorResolver->resolve($value);
-                if (null !== $user) {
+                if ($user instanceof User) {
                     $page->{$camelKey} = $user;
                 }
 
@@ -438,7 +439,7 @@ final class PageImporter extends AbstractImporter
     {
         $defaultEditor = $this->editorResolver->getDefaultEditor();
 
-        if (null === $defaultEditor) {
+        if (! $defaultEditor instanceof User) {
             return;
         }
 
@@ -448,15 +449,15 @@ final class PageImporter extends AbstractImporter
 
     private function initDateTimeProperties(Page $page, DateTimeInterface $lastEditDateTime, bool $publishedAtExplicitlySet = false): void
     {
-        if (! $publishedAtExplicitlySet && null === $page->publishedAt) {
+        if (! $publishedAtExplicitlySet && ! $page->publishedAt instanceof DateTimeInterface) {
             $page->publishedAt = $lastEditDateTime;
         }
 
-        if (null === $page->getCreatedAtNullable()) {
+        if (! $page->getCreatedAtNullable() instanceof DateTimeInterface) {
             $page->createdAt = $lastEditDateTime;
         }
 
-        if (null === $page->getUpdatedAtNullable()) {
+        if (! $page->getUpdatedAtNullable() instanceof DateTimeInterface) {
             $page->updatedAt = $lastEditDateTime;
         }
     }
@@ -519,7 +520,7 @@ final class PageImporter extends AbstractImporter
             /** @phpstan-ignore cast.useless */
             $slug = (string) $slug; // PHP coerces numeric-string array keys to int at runtime
             $page = $this->getPage($slug);
-            if (null === $page) {
+            if (! $page instanceof Page) {
                 $this->logger->warning('Page `{slug}` not found when processing deferred properties', ['slug' => $slug]);
 
                 continue;

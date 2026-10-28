@@ -63,7 +63,7 @@ final class DeferredExportProcessor
 
         $this->writePendingFlag(array_values($entityTypes), array_values($hosts));
 
-        if (null !== $this->messageBus) {
+        if ($this->messageBus instanceof MessageBusInterface) {
             $this->messageBus->dispatch(new ConsumePendingExportMessage(), [new DelayStamp($this->debounceDelay * 1000)]);
         } else {
             $this->backgroundTaskDispatcher->dispatch(

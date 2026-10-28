@@ -176,7 +176,7 @@ final class ConflictResolver
             null !== $backupFile ? ' - Backup: '.basename($backupFile) : '',
         );
 
-        if (null !== $this->output) {
+        if ($this->output instanceof OutputInterface) {
             $this->output->writeln('<comment>'.$message.'</comment>');
         }
 

@@ -7,6 +7,7 @@ namespace Pushword\Flat\Serializer;
 use DateTimeInterface;
 use Doctrine\Common\Collections\Collection;
 use Normalizer;
+use Pushword\Core\Entity\Media;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Service\EditorialTimezone;
 use Pushword\Core\Service\RevisionCalculator;
@@ -453,7 +454,7 @@ final class PageFileSerializer
         }
 
         if ('mainImage' === $property) {
-            return null !== $page->mainImage ? (string) $page->mainImage : null;
+            return $page->mainImage instanceof Media ? (string) $page->mainImage : null;
         }
 
         if ('template' === $property) {

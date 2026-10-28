@@ -10,6 +10,7 @@ use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpKernel\Event\RequestEvent;
 use Symfony\Component\HttpKernel\KernelEvents;
+use Symfony\Component\Security\Core\User\UserInterface;
 
 #[AutoconfigureTag('kernel.event_subscriber')]
 final readonly class FlatSyncNotifierSubscriber implements EventSubscriberInterface
@@ -40,7 +41,7 @@ final readonly class FlatSyncNotifierSubscriber implements EventSubscriberInterf
             return;
         }
 
-        if (null === $this->security->getUser()) {
+        if (! $this->security->getUser() instanceof UserInterface) {
             return;
         }
 

@@ -154,7 +154,7 @@ final class SnippetSync
         $fileEditTime = new DateTime()->setTimestamp((int) filemtime($path));
 
         // Skip when the database row is newer than the file (export-side wins).
-        if (null !== $snippet && $snippet->updatedAt >= $fileEditTime) {
+        if ($snippet instanceof Snippet && $snippet->updatedAt >= $fileEditTime) {
             ++$this->skippedCount;
 
             return;

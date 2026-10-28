@@ -81,7 +81,7 @@ class MediaImporter extends AbstractImporter
     {
         $reader = $this->createReader($csvPath);
 
-        if (null === $reader) {
+        if (! $reader instanceof Reader) {
             return;
         }
 
@@ -333,7 +333,7 @@ class MediaImporter extends AbstractImporter
 
     private function hasFileContentChanged(string $filePath, Media $media, ?DateTimeInterface $fileModifiedAt = null): bool
     {
-        if (null !== $fileModifiedAt && null !== $media->updatedAt && $fileModifiedAt <= $media->updatedAt) {
+        if ($fileModifiedAt instanceof DateTimeInterface && $media->updatedAt instanceof DateTimeInterface && $fileModifiedAt <= $media->updatedAt) {
             return false;
         }
 

@@ -62,19 +62,19 @@ final class FlatFileSync
             $this->stopwatch?->stop('page.sync');
         }
 
-        if (\in_array($entity, ['conversation', 'all'], true) && null !== $this->conversationSync) {
+        if (\in_array($entity, ['conversation', 'all'], true) && $this->conversationSync instanceof ConversationSyncInterface) {
             $this->stopwatch?->start('conversation.sync');
             $this->conversationSync->sync($host, $forceExport);
             $this->stopwatch?->stop('conversation.sync');
         }
 
-        if (\in_array($entity, ['user', 'all'], true) && null !== $this->userSync) {
+        if (\in_array($entity, ['user', 'all'], true) && $this->userSync instanceof UserSync) {
             $this->stopwatch?->start('user.sync');
             $this->userSync->import();
             $this->stopwatch?->stop('user.sync');
         }
 
-        if (\in_array($entity, ['snippet', 'all'], true) && null !== $this->snippetSync) {
+        if (\in_array($entity, ['snippet', 'all'], true) && $this->snippetSync instanceof SnippetSync) {
             $this->stopwatch?->start('snippet.sync');
             $this->snippetSync->sync($host, $forceExport);
             $this->stopwatch?->stop('snippet.sync');
@@ -102,19 +102,19 @@ final class FlatFileSync
             $this->stopwatch?->stop('page.sync');
         }
 
-        if (\in_array($entity, ['conversation', 'all'], true) && null !== $this->conversationSync) {
+        if (\in_array($entity, ['conversation', 'all'], true) && $this->conversationSync instanceof ConversationSyncInterface) {
             $this->stopwatch?->start('conversation.sync');
             $this->conversationSync->import($host);
             $this->stopwatch?->stop('conversation.sync');
         }
 
-        if (\in_array($entity, ['user', 'all'], true) && null !== $this->userSync) {
+        if (\in_array($entity, ['user', 'all'], true) && $this->userSync instanceof UserSync) {
             $this->stopwatch?->start('user.sync');
             $this->userSync->import();
             $this->stopwatch?->stop('user.sync');
         }
 
-        if (\in_array($entity, ['snippet', 'all'], true) && null !== $this->snippetSync) {
+        if (\in_array($entity, ['snippet', 'all'], true) && $this->snippetSync instanceof SnippetSync) {
             $this->stopwatch?->start('snippet.sync');
             $this->snippetSync->import($host);
             $this->stopwatch?->stop('snippet.sync');
@@ -142,13 +142,13 @@ final class FlatFileSync
             $this->stopwatch?->stop('page.sync');
         }
 
-        if (\in_array($entity, ['conversation', 'all'], true) && null !== $this->conversationSync) {
+        if (\in_array($entity, ['conversation', 'all'], true) && $this->conversationSync instanceof ConversationSyncInterface) {
             $this->stopwatch?->start('conversation.sync');
             $this->conversationSync->export($host, $force);
             $this->stopwatch?->stop('conversation.sync');
         }
 
-        if (\in_array($entity, ['snippet', 'all'], true) && null !== $this->snippetSync) {
+        if (\in_array($entity, ['snippet', 'all'], true) && $this->snippetSync instanceof SnippetSync) {
             $this->stopwatch?->start('snippet.sync');
             $this->snippetSync->export($host);
             $this->stopwatch?->stop('snippet.sync');
