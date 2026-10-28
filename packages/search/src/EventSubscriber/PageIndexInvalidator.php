@@ -8,6 +8,7 @@ use Doctrine\Bundle\DoctrineBundle\Attribute\AsEntityListener;
 use Doctrine\ORM\Events;
 use Pushword\Core\Cache\PageCacheSuppressor;
 use Pushword\Core\Entity\Page;
+use Pushword\Core\Site\SiteConfig;
 use Pushword\Core\Site\SiteRegistry;
 use Pushword\Search\Message\ReindexPageMessage;
 use Pushword\Search\Message\RemovePageMessage;
@@ -62,6 +63,6 @@ final readonly class PageIndexInvalidator
     {
         return $this->incremental
             && ! $this->suppressor->isSuppressed()
-            && null !== $this->siteRegistry->findByHost($page->host);
+            && $this->siteRegistry->findByHost($page->host) instanceof SiteConfig;
     }
 }
