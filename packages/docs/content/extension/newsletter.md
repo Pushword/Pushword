@@ -988,99 +988,7 @@ durable reservation. Never clear it automatically on failure. Transport
 failover/retry stays the configured transport's; use a single transport if an
 ambiguous failure must never reach a second provider.
 
-### Campaign preflight
-
-The campaign review page shows blocking errors and suggestions. The same
-`CampaignPreflight` runs for admin, API and CLI sends, scheduling, and again when
-the tick arms a due campaign. It checks audience, subject and body in every
-authored language, rendered link destinations, the marketing unsubscribe link,
-sender availability and referenced blocks. Long subjects are suggestions. URL
-checks are local syntax checks; they do not request remote pages or promise that
-a destination is live. A failed check returns the campaign to draft, preserves
-its planned date and records `sendIssues`. Correct it and explicitly choose Send
-again. Other due campaigns continue. The tick report includes `blocked`.
-
-`GET /api/newsletter/campaign/{id}/check` returns `issues` without sending. Send
-and schedule return HTTP 422 with the same issue structure when blocked. CLI
-send exits unsuccessfully with structured issues in agent mode. Each issue has
-`code`, `message` (translation key or plain text), `field`, `severity` (`error` or
-`warning`), optional `locale` and optional `block` label.
-
-Subscribe to `Pushword\Newsletter\Event\CheckCampaign` to add business checks.
-The event exposes the campaign, effective contents per locale and untracked HTML;
-append `CampaignIssue` objects to `issues`. Checks must be read-only and must not
-send mail. An exception blocks sending. No human approval is required for valid
-automatically generated campaigns. Preparation labels remain optional and never
-authorize sending. Once authorized, delivery fields are read-only in the admin;
-cancel a schedule before editing it.
-
-## Campaign sender profiles
-
-Configure the identities editors may select. Leaving `senderProfile` null uses
-the audience sender. A selected profile supplies From, Reply-To and an optional
-signature consistently in live preview, tests and delivery. It does not change
-the audience, eligibility, tracking consent, system links or unsubscribe rules.
-
-```yaml
-newsletter:
-  sender_profiles:
-    editorial:
-      label: Editorial team
-      from_email: news@example.org
-      from_name: Example editorial team
-      reply_to: editor@example.org
-      signature_markdown: '**The editorial team**'
-```
-
-`reply_to` defaults to the audience Reply-To. A null/omitted signature keeps
-the audience signature in personal layouts; other layouts add no signature by
-default. An explicit empty signature removes it. The API accepts the configured
-id in `senderProfile`, never arbitrary From fields. Removing a selected profile
-blocks a draft or scheduled campaign until another identity is selected.
-
-## Reusable email blocks
-
-**Newsletter → Reusable blocks** stores named groups of text, images, links,
-quotes and signatures. The link tool’s Button and Button outline styles are rendered as inline email styles. In the campaign block editor, insert **Reusable block**,
-select a source and search. The inserted copy can be edited as Markdown; the live
-email preview shows the result. **Save a copy to the library** creates a separate
-library entry. **Refresh from source** explicitly replaces that copy after
-confirmation. Editing or deleting a library entry never changes existing copies.
-Duplication retains the references, parameters, order and manual edits.
-
-The campaign stores a fenced `newsletter-block` JSON object with `provider`,
-`reference`, `label`, `parameters` and the authored `markdown`. `BlockMarkup::encode`
-creates it in PHP; `blocks` reads references and `expand` yields the saved content.
-HTML and plain text expand the same copy before personalization. No Twig is
-executed and no provider is silently refreshed while rendering or sending. The
-saved campaign therefore retains what was selected and edited. Nested or malformed
-blocks block sending.
-
-### Add a content provider
-
-Implement `Pushword\Newsletter\Block\BlockProviderInterface` in an autoconfigured
-service; its `pushword.newsletter.block_provider` tag is automatic. The methods are:
-
-- `type()` gives a unique stable storage key; `label()` gives its display name or translation key.
-- `search($query, BlockContext $context)` returns at most 25 `BlockContent` matches.
-- `resolve($reference, $parameters, $context)` returns the current content or null when unavailable; used only for explicit refresh.
-- `check(BlockContent $saved, $context)` returns `CampaignIssue` diagnostics for the saved selection. Check existence, eligibility and required parameters here; do not overwrite `$saved->markdown`.
-
-`BlockContext` carries the audience host, locale and planned send date.
-`BlockContent` carries the stable reference, label, email Markdown and parameters.
-Return email-safe Markdown, with simple text, images and links, instead of web
-components requiring scripts, widgets or arbitrary Twig. Apply site and locale
-visibility in search, resolve and check. Treat parameters as untrusted input.
-
-For example, a site's catalogue provider can resolve a product's stable id in
-`check()` and return `new CampaignIssue('product.unavailable', 'This product is no
-longer available.', 'bodyMarkdown')` when it is missing or unavailable at
-`$context->scheduledAt`. The issue is shown beside that block and language. The
-`library` provider deliberately permits deleted originals because its copies are
-independent. Travel selection rules and catalogue queries belong in site providers,
-not in the newsletter bundle.
-
-## Sending in an occurrence's site and language
+### Sending in an occurrence's site and language
 
 An occurrence addressed to a contact may provide `locale` and a
 `Pushword\Newsletter\Delivery\SendContext`:
@@ -1634,6 +1542,98 @@ Anything the site knows about a person — `lastBoughtProduct`, `plan`, `city` �
 lives in `customProperties` and is readable from a segment as `prop.<key>`. Write
 them from the API: a `PATCH` merges rather than replaces, and a `null` value
 removes a key.
+
+## Campaign preflight
+
+The campaign review page shows blocking errors and suggestions. The same
+`CampaignPreflight` runs for admin, API and CLI sends, scheduling, and again when
+the tick arms a due campaign. It checks audience, subject and body in every
+authored language, rendered link destinations, the marketing unsubscribe link,
+sender availability and referenced blocks. Long subjects are suggestions. URL
+checks are local syntax checks; they do not request remote pages or promise that
+a destination is live. A failed check returns the campaign to draft, preserves
+its planned date and records `sendIssues`. Correct it and explicitly choose Send
+again. Other due campaigns continue. The tick report includes `blocked`.
+
+`GET /api/newsletter/campaign/{id}/check` returns `issues` without sending. Send
+and schedule return HTTP 422 with the same issue structure when blocked. CLI
+send exits unsuccessfully with structured issues in agent mode. Each issue has
+`code`, `message` (translation key or plain text), `field`, `severity` (`error` or
+`warning`), optional `locale` and optional `block` label.
+
+Subscribe to `Pushword\Newsletter\Event\CheckCampaign` to add business checks.
+The event exposes the campaign, effective contents per locale and untracked HTML;
+append `CampaignIssue` objects to `issues`. Checks must be read-only and must not
+send mail. An exception blocks sending. No human approval is required for valid
+automatically generated campaigns. Preparation labels remain optional and never
+authorize sending. Once authorized, delivery fields are read-only in the admin;
+cancel a schedule before editing it.
+
+## Campaign sender profiles
+
+Configure the identities editors may select. Leaving `senderProfile` null uses
+the audience sender. A selected profile supplies From, Reply-To and an optional
+signature consistently in live preview, tests and delivery. It does not change
+the audience, eligibility, tracking consent, system links or unsubscribe rules.
+
+```yaml
+newsletter:
+  sender_profiles:
+    editorial:
+      label: Editorial team
+      from_email: news@example.org
+      from_name: Example editorial team
+      reply_to: editor@example.org
+      signature_markdown: '**The editorial team**'
+```
+
+`reply_to` defaults to the audience Reply-To. A null/omitted signature keeps
+the audience signature in personal layouts; other layouts add no signature by
+default. An explicit empty signature removes it. The API accepts the configured
+id in `senderProfile`, never arbitrary From fields. Removing a selected profile
+blocks a draft or scheduled campaign until another identity is selected.
+
+## Reusable email blocks
+
+**Newsletter → Reusable blocks** stores named groups of text, images, links,
+quotes and signatures. The link tool’s Button and Button outline styles are rendered as inline email styles. In the campaign block editor, insert **Reusable block**,
+select a source and search. The inserted copy can be edited as Markdown; the live
+email preview shows the result. **Save a copy to the library** creates a separate
+library entry. **Refresh from source** explicitly replaces that copy after
+confirmation. Editing or deleting a library entry never changes existing copies.
+Duplication retains the references, parameters, order and manual edits.
+
+The campaign stores a fenced `newsletter-block` JSON object with `provider`,
+`reference`, `label`, `parameters` and the authored `markdown`. `BlockMarkup::encode`
+creates it in PHP; `blocks` reads references and `expand` yields the saved content.
+HTML and plain text expand the same copy before personalization. No Twig is
+executed and no provider is silently refreshed while rendering or sending. The
+saved campaign therefore retains what was selected and edited. Nested or malformed
+blocks block sending.
+
+### Add a content provider
+
+Implement `Pushword\Newsletter\Block\BlockProviderInterface` in an autoconfigured
+service; its `pushword.newsletter.block_provider` tag is automatic. The methods are:
+
+- `type()` gives a unique stable storage key; `label()` gives its display name or translation key.
+- `search($query, BlockContext $context)` returns at most 25 `BlockContent` matches.
+- `resolve($reference, $parameters, $context)` returns the current content or null when unavailable; used only for explicit refresh.
+- `check(BlockContent $saved, $context)` returns `CampaignIssue` diagnostics for the saved selection. Check existence, eligibility and required parameters here; do not overwrite `$saved->markdown`.
+
+`BlockContext` carries the audience host, locale and planned send date.
+`BlockContent` carries the stable reference, label, email Markdown and parameters.
+Return email-safe Markdown, with simple text, images and links, instead of web
+components requiring scripts, widgets or arbitrary Twig. Apply site and locale
+visibility in search, resolve and check. Treat parameters as untrusted input.
+
+For example, a site's catalogue provider can resolve a product's stable id in
+`check()` and return `new CampaignIssue('product.unavailable', 'This product is no
+longer available.', 'bodyMarkdown')` when it is missing or unavailable at
+`$context->scheduledAt`. The issue is shown beside that block and language. The
+`library` provider deliberately permits deleted originals because its copies are
+independent. Travel selection rules and catalogue queries belong in site providers,
+not in the newsletter bundle.
 
 ## Sending
 
