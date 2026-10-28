@@ -6,9 +6,11 @@ namespace Pushword\Snippet\Twig;
 
 use Psr\Log\LoggerInterface;
 use Pushword\Core\Content\ContentPipelineFactory;
+use Pushword\Core\Entity\Page;
 use Pushword\Core\Service\EditorNotice\TwigErrorMarker;
 use Pushword\Core\Service\Markdown\MarkdownParser;
 use Pushword\Core\Site\SiteRegistry;
+use Pushword\Snippet\Component\SnippetComponentInterface;
 use Pushword\Snippet\Entity\Snippet;
 use Pushword\Snippet\Registry\SnippetRegistry;
 use Pushword\Snippet\Repository\SnippetRepository;
@@ -73,7 +75,7 @@ final readonly class SnippetExtension
 
         $snippet = $this->snippetRepository->findOneBySlugForHost($name, $this->currentHost());
 
-        return null !== $snippet ? $this->renderContent($snippet, $params) : '';
+        return $snippet instanceof Snippet ? $this->renderContent($snippet, $params) : '';
     }
 
     /**
@@ -83,7 +85,7 @@ final readonly class SnippetExtension
     {
         $component = $this->registry->getComponent($name);
         $template = $this->registry->getTemplate($name);
-        \assert(null !== $component && null !== $template);
+        \assert($component instanceof SnippetComponentInterface && null !== $template);
 
         $params = $component->prepareParams($params);
 
@@ -124,7 +126,7 @@ final readonly class SnippetExtension
             $content = TwigErrorMarker::for($twigError->getRawMessage());
         }
 
-        if (null === $page) {
+        if (! $page instanceof Page) {
             return $this->markdownParser->transform($content);
         }
 
