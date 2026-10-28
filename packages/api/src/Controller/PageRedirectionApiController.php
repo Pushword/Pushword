@@ -89,7 +89,7 @@ final class PageRedirectionApiController extends AbstractApiController
     public function item(string $host, string $slug, Request $request): JsonResponse
     {
         $page = $this->pageRepository->findOneBy(['host' => $host, 'slug' => Page::normalizeSlug($slug)]);
-        if (null === $page || null === PageRedirection::fromContent($page->mainContent)) {
+        if (null === $page || ! PageRedirection::fromContent($page->mainContent) instanceof PageRedirection) {
             return $this->notFound('Redirection not found');
         }
 
@@ -108,7 +108,7 @@ final class PageRedirectionApiController extends AbstractApiController
             $this->revisions->compute($page),
             fn (): array => $this->toArray($page) ?? [],
         );
-        if (null !== $conflict) {
+        if ($conflict instanceof JsonResponse) {
             return $conflict;
         }
 
@@ -141,7 +141,7 @@ final class PageRedirectionApiController extends AbstractApiController
     private function toArray(Page $page): ?array
     {
         $redirection = PageRedirection::fromContent($page->mainContent);
-        if (null === $redirection) {
+        if (! $redirection instanceof PageRedirection) {
             return null;
         }
 

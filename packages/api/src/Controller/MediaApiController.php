@@ -77,7 +77,7 @@ final class MediaApiController extends AbstractApiController
         }
 
         $media = $this->mediaRepository->findOneByFileNameOrHistory($filename);
-        if (null === $media) {
+        if (! $media instanceof Media) {
             return $this->notFound('Media not found');
         }
 

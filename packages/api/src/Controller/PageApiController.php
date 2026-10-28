@@ -201,7 +201,7 @@ final class PageApiController extends AbstractApiController
     public function item(string $host, string $slug, Request $request): JsonResponse
     {
         $page = $this->findPage($host, $slug);
-        if (null === $page) {
+        if (! $page instanceof Page) {
             return $this->notFound('Page not found');
         }
 
@@ -222,7 +222,7 @@ final class PageApiController extends AbstractApiController
     private function doUpdate(Page $page, Request $request): JsonResponse
     {
         $conflict = $this->checkIfMatch($request, $this->revisions->compute($page), fn (): array => $this->buildPagePayload($page));
-        if (null !== $conflict) {
+        if ($conflict instanceof JsonResponse) {
             return $conflict;
         }
 
@@ -236,7 +236,7 @@ final class PageApiController extends AbstractApiController
     private function doPatch(Page $page, Request $request): JsonResponse
     {
         $conflict = $this->checkIfMatch($request, $this->revisions->compute($page), fn (): array => $this->buildPagePayload($page));
-        if (null !== $conflict) {
+        if ($conflict instanceof JsonResponse) {
             return $conflict;
         }
 
@@ -324,7 +324,7 @@ final class PageApiController extends AbstractApiController
         $destination = null !== $internalSlug ? $this->findPage($page->host, $internalSlug) : null;
 
         // A dangling or chained target cannot own the old path (cf. RedirectFromResolver).
-        if ('hard' === $this->deleteStrategy && null !== $destination && ! $destination->hasRedirection()) {
+        if ('hard' === $this->deleteStrategy && $destination instanceof Page && ! $destination->hasRedirection()) {
             $destination->addRedirectFrom($page->slug, $code);
             $this->entityManager->remove($page);
         } else {
@@ -372,7 +372,7 @@ final class PageApiController extends AbstractApiController
      */
     private function scheduledNotice(Page $page): array
     {
-        if (null === $page->publishedAt || $page->isPublished()) {
+        if (! $page->publishedAt instanceof DateTimeInterface || $page->isPublished()) {
             return [];
         }
 

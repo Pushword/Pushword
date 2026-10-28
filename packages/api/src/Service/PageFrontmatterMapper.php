@@ -213,7 +213,7 @@ final readonly class PageFrontmatterMapper
         // Top-level keys backed by a flat converter (e.g. mainImageFormat) are
         // managed custom properties in the on-disk frontmatter shape. Route them
         // through the converter so the API accepts the same payload as the sync.
-        if (null !== $this->converterRegistry) {
+        if ($this->converterRegistry instanceof PropertyConverterRegistry) {
             foreach ($frontmatter as $key => $value) {
                 if (! $this->converterRegistry->hasConverter($key)) {
                     continue;
@@ -259,7 +259,7 @@ final readonly class PageFrontmatterMapper
                 continue;
             }
 
-            if (null !== $this->converterRegistry && $this->converterRegistry->hasConverter($key)) {
+            if ($this->converterRegistry instanceof PropertyConverterRegistry && $this->converterRegistry->hasConverter($key)) {
                 continue;
             }
 
@@ -273,7 +273,7 @@ final readonly class PageFrontmatterMapper
      */
     private function formatDate(?DateTimeInterface $date): ?string
     {
-        return null === $date ? null : $this->editorialTimezone->format($date, DateTimeInterface::ATOM);
+        return $date instanceof DateTimeInterface ? $this->editorialTimezone->format($date, DateTimeInterface::ATOM) : null;
     }
 
     private function parseDateTime(mixed $value, string $key): ?DateTimeInterface
