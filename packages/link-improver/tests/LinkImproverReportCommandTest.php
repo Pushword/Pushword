@@ -12,6 +12,7 @@ use Pushword\Core\Site\SiteRegistry;
 use Symfony\Bundle\FrameworkBundle\Console\Application;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Console\Tester\CommandTester;
+use Symfony\Component\HttpKernel\KernelInterface;
 
 #[Group('integration')]
 final class LinkImproverReportCommandTest extends KernelTestCase
@@ -56,7 +57,7 @@ final class LinkImproverReportCommandTest extends KernelTestCase
 
     private function commandTester(): CommandTester
     {
-        \assert(null !== self::$kernel);
+        \assert(self::$kernel instanceof KernelInterface);
 
         return new CommandTester(new Application(self::$kernel)->find('pw:link-improver'));
     }
