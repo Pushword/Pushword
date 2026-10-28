@@ -109,6 +109,21 @@ final class RepurposeLinksTest extends WebTestCase
         self::assertResponseRedirects('/admin/page/'.$this->page->id.'/edit');
     }
 
+    public function testEmptyCarouselRemainsLinkedWithoutACover(): void
+    {
+        $this->post->spec = [...$this->post->spec, 'slides' => []];
+        $this->em->flush();
+
+        $crawler = $this->client->request(Request::METHOD_GET, '/admin/page/'.$this->page->id.'/edit');
+
+        self::assertResponseIsSuccessful();
+        $link = $crawler->filter('.rp-page-carousels a[data-carousel-id="'.$this->post->id.'"]');
+        self::assertCount(1, $link);
+        self::assertSame('/admin/repurpose/studio/'.$this->post->id, $link->attr('href'));
+        self::assertStringContainsString($this->page->slug, $link->text());
+        self::assertCount(0, $link->filter('img'));
+    }
+
     public function testMultipleCarouselsAreFilteredByExactHostAndSlug(): void
     {
         $second = $this->persistPost($this->page, 'instagram');
