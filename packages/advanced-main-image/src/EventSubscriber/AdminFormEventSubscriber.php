@@ -13,6 +13,7 @@ use Pushword\AdvancedMainImage\PageAdvancedMainImageFormField;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Site\SiteRegistry;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 
 /**
@@ -76,7 +77,7 @@ final readonly class AdminFormEventSubscriber implements EventSubscriberInterfac
         }
 
         $request = $this->requestStack->getCurrentRequest();
-        if (null === $request) {
+        if (! $request instanceof Request) {
             return;
         }
 
