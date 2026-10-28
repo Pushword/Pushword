@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pushword\StaticGenerator\Cache;
 
 use Pushword\Core\Entity\Page;
+use Pushword\Core\Site\SiteConfig;
 use Pushword\Core\Site\SiteRegistry;
 use Pushword\Core\Utils\PathGuard;
 use Pushword\StaticGenerator\Generator\CompressionAlgorithm;
@@ -28,7 +29,7 @@ readonly class PageCacheFileManager
     public function isCacheable(Page $page): bool
     {
         $app = $this->apps->findByHost($page->host);
-        if (null === $app || ! StaticAppGenerator::isCacheMode($app)) {
+        if (! $app instanceof SiteConfig || ! StaticAppGenerator::isCacheMode($app)) {
             return false;
         }
 
@@ -67,7 +68,7 @@ readonly class PageCacheFileManager
     private function resolvePath(Page $page): ?string
     {
         $app = $this->apps->findByHost($page->host);
-        if (null === $app) {
+        if (! $app instanceof SiteConfig) {
             return null;
         }
 

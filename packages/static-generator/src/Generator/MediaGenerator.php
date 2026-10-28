@@ -137,7 +137,7 @@ class MediaGenerator extends AbstractGenerator implements IncrementalGeneratorIn
         }
 
         // Copy original media files from storage
-        if (null !== $this->mediaStorage && ! $this->mediaStorage->isLocal()) {
+        if ($this->mediaStorage instanceof MediaStorageAdapter && ! $this->mediaStorage->isLocal()) {
             $this->copyFilesFromRemoteStorage($staticMediaDir);
         } else {
             $this->copyDirectoryContents($mediaDir, $staticMediaDir, $symlink);
@@ -145,7 +145,7 @@ class MediaGenerator extends AbstractGenerator implements IncrementalGeneratorIn
 
         // Copy the image cache (thumbnails, webp versions, og/ previews, etc.)
         $mediaCacheDir = $this->params->get('pw.media_cache_dir');
-        if (null !== $this->mediaCacheStorage && ! $this->mediaCacheStorage->isLocal()) {
+        if ($this->mediaCacheStorage instanceof MediaCacheStorageAdapter && ! $this->mediaCacheStorage->isLocal()) {
             $this->copyRemoteCache($staticMediaDir);
         } elseif ($this->filesystem->exists($mediaCacheDir)) {
             $this->copyImageCache($mediaCacheDir, $staticMediaDir, $symlink);
@@ -322,7 +322,7 @@ class MediaGenerator extends AbstractGenerator implements IncrementalGeneratorIn
 
     private function copyFilesFromRemoteStorage(string $staticMediaDir): void
     {
-        if (null === $this->mediaStorage) {
+        if (! $this->mediaStorage instanceof MediaStorageAdapter) {
             return;
         }
 
@@ -358,7 +358,7 @@ class MediaGenerator extends AbstractGenerator implements IncrementalGeneratorIn
      */
     private function copyFilesInBatches(array $filesToCopy): void
     {
-        if (null === $this->mediaStorage) {
+        if (! $this->mediaStorage instanceof MediaStorageAdapter) {
             return;
         }
 
@@ -380,7 +380,7 @@ class MediaGenerator extends AbstractGenerator implements IncrementalGeneratorIn
 
     private function copyRemoteCache(string $staticMediaDir): void
     {
-        if (null === $this->mediaCacheStorage) {
+        if (! $this->mediaCacheStorage instanceof MediaCacheStorageAdapter) {
             return;
         }
 

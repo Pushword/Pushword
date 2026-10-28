@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pushword\StaticGenerator\Cache\MessageHandler;
 
 use Pushword\Core\Cache\RenderEpoch;
+use Pushword\Core\Site\SiteConfig;
 use Pushword\Core\Site\SiteRegistry;
 use Pushword\StaticGenerator\Cache\Message\HostCacheRefreshMessage;
 use Pushword\StaticGenerator\StaticAppGenerator;
@@ -28,7 +29,7 @@ final readonly class HostCacheRefreshHandler
     public function __invoke(HostCacheRefreshMessage $message): void
     {
         $app = $this->apps->findByHost($message->host);
-        if (null === $app || ! StaticAppGenerator::isCacheMode($app)) {
+        if (! $app instanceof SiteConfig || ! StaticAppGenerator::isCacheMode($app)) {
             return;
         }
 

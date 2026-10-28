@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pushword\StaticGenerator\Generator;
 
 use Override;
+use Pushword\Core\Entity\Page;
 
 class RobotsGenerator extends PageGenerator
 {
@@ -42,7 +43,7 @@ class RobotsGenerator extends PageGenerator
 
     protected function generateFeed(string $locale): void
     {
-        if (null === $this->getPageRepository()->getPage('homepage', $this->app->getMainHost())) {
+        if (! $this->getPageRepository()->getPage('homepage', $this->app->getMainHost()) instanceof Page) {
             return;
             // we can't generate main feed if no homepage exist
             // because mainFeed rely on homepage data

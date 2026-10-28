@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pushword\StaticGenerator\Cache;
 
+use DateTimeInterface;
 use Doctrine\Bundle\DoctrineBundle\Attribute\AsEntityListener;
 use Doctrine\ORM\Event\PreUpdateEventArgs;
 use Doctrine\ORM\Events;
@@ -12,6 +13,7 @@ use Pushword\Core\Cache\PageCacheSuppressor;
 use Pushword\Core\Cache\RenderEpoch;
 use Pushword\Core\Component\EntityFilter\Filter\LinkCollector;
 use Pushword\Core\Entity\Page;
+use Pushword\Core\Site\SiteConfig;
 use Pushword\Core\Site\SiteRegistry;
 use Pushword\StaticGenerator\Cache\Message\PageCacheRefreshMessage;
 use Pushword\StaticGenerator\StaticAppGenerator;
@@ -149,7 +151,7 @@ final class PageCacheInvalidator implements ResetInterface
 
         // Held pages keep their current static file; releasing the hold (set back
         // to null) is itself an update that re-enables the refresh.
-        if (null !== $page->holdPublicationAt) {
+        if ($page->holdPublicationAt instanceof DateTimeInterface) {
             return;
         }
 
@@ -160,6 +162,6 @@ final class PageCacheInvalidator implements ResetInterface
     {
         $app = $this->apps->findByHost($page->host);
 
-        return null !== $app && StaticAppGenerator::isCacheMode($app);
+        return $app instanceof SiteConfig && StaticAppGenerator::isCacheMode($app);
     }
 }

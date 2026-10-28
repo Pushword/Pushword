@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pushword\StaticGenerator\Generator;
 
+use DateTimeInterface;
 use Exception;
 use Override;
 use Psr\Log\LoggerInterface;
@@ -46,7 +47,7 @@ class PageGenerator extends AbstractGenerator
     {
         // A held page keeps its previously generated static file untouched so the
         // pending edit stays out of production until publication is released.
-        if (null !== $page->holdPublicationAt) {
+        if ($page->holdPublicationAt instanceof DateTimeInterface) {
             return;
         }
 
@@ -126,7 +127,7 @@ class PageGenerator extends AbstractGenerator
 
         $request = Request::create($liveUri);
         $renderKernel = static::getKernel();
-        if (null !== $page) {
+        if ($page instanceof Page) {
             $request->attributes->set('_pushword_page', $page);
             $stopwatch?->start('page.render');
 
@@ -192,7 +193,7 @@ class PageGenerator extends AbstractGenerator
             return;
         }
 
-        if ($isHtml && null !== $page) {
+        if ($isHtml && $page instanceof Page) {
             if (str_contains($content, '<!-- pager:')) {
                 $this->extractPager($page, $content);
             }
@@ -268,14 +269,14 @@ class PageGenerator extends AbstractGenerator
      */
     public function finishCompression(): void
     {
-        if (null !== $this->compressor) {
+        if ($this->compressor instanceof Compressor) {
             $this->compressor->waitForCompressionToFinish();
         }
     }
 
     private function setErrorFor(string $liveUri, ?Page $page = null, string $msg = ''): void
     {
-        $identifier = null !== $page && class_exists(PushwordAdminBundle::class) ?
+        $identifier = $page instanceof Page && class_exists(PushwordAdminBundle::class) ?
                      '['.$liveUri.']('.$this->router->getRouter()->generate('admin_page_edit', ['entityId' => $page->id]).')'
                      : $liveUri;
         $this->setError('An error occured when generating '.$identifier.('' !== $msg ? ' ('.$msg.')' : ''));
@@ -286,7 +287,7 @@ class PageGenerator extends AbstractGenerator
     {
         $base = $this->apps->get()->getStr('base_live_url');
         $url = $base.$liveUri;
-        $identifier = null !== $page && class_exists(PushwordAdminBundle::class) ?
+        $identifier = $page instanceof Page && class_exists(PushwordAdminBundle::class) ?
                      '['.$url.']('.$base.$this->router->getRouter()->generate('admin_page_edit', ['entityId' => $page->id]).')'
                      : $url;
         $this->logger->warning('Skipping generation for '.$identifier.('' !== $msg ? ' ('.$msg.')' : ''));

@@ -153,11 +153,11 @@ final readonly class StaticGenerationCoordinator
         $oldest = null;
         foreach ($this->siteRegistry->getHosts() as $knownHost) {
             $time = $this->stateManager->getLastGenerationTime($knownHost);
-            if (null === $time) {
+            if (! $time instanceof DateTimeImmutable) {
                 return null;
             }
 
-            if (null === $oldest || $time < $oldest) {
+            if (! $oldest instanceof DateTimeImmutable || $time < $oldest) {
                 $oldest = $time;
             }
         }

@@ -6,6 +6,7 @@ namespace Pushword\StaticGenerator\Cache;
 
 use Pushword\Core\Cache\PageCacheSuppressor;
 use Pushword\Core\Event\RenderEpochBumpedEvent;
+use Pushword\Core\Site\SiteConfig;
 use Pushword\Core\Site\SiteRegistry;
 use Pushword\StaticGenerator\Cache\Message\HostCacheRefreshMessage;
 use Pushword\StaticGenerator\StaticAppGenerator;
@@ -54,7 +55,7 @@ final class HostSweepDispatcher implements ResetInterface
 
         foreach ($renderEpochBumpedEvent->hosts as $host) {
             $app = $this->apps->findByHost($host);
-            if (null === $app) {
+            if (! $app instanceof SiteConfig) {
                 continue;
             }
 

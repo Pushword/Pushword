@@ -10,6 +10,7 @@ use Override;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Twig\MediaExtension;
 use Pushword\StaticGenerator\IncrementalGeneratorInterface;
+use Symfony\Component\Stopwatch\StopwatchEvent;
 use Throwable;
 
 class PagesGenerator extends PageGenerator implements IncrementalGeneratorInterface
@@ -86,7 +87,7 @@ class PagesGenerator extends PageGenerator implements IncrementalGeneratorInterf
                 $event = $stopwatch?->stop('page:'.$slug);
                 $stopwatch?->stop('generatePage');
 
-                if (null !== $event && $event->getDuration() > 500) {
+                if ($event instanceof StopwatchEvent && $event->getDuration() > 500) {
                     $this->staticAppGenerator->writeln(\sprintf(
                         '    <comment>⏱ %dms (slow)</comment>',
                         $event->getDuration(),

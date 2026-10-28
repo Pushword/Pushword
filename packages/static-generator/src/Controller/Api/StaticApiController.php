@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pushword\StaticGenerator\Controller\Api;
 
+use DateTimeImmutable;
 use DateTimeInterface;
 use Pushword\Api\Controller\AbstractApiController;
 use Pushword\Core\Entity\Page;
@@ -151,7 +152,7 @@ final class StaticApiController extends AbstractApiController
 
         // "completed" with nothing behind it means the scope was never generated.
         $status = $state['status'];
-        if ('completed' === $status && null === $lastGeneratedAt && '' === $state['output']) {
+        if ('completed' === $status && ! $lastGeneratedAt instanceof DateTimeImmutable && '' === $state['output']) {
             $status = 'idle';
         }
 
@@ -182,7 +183,7 @@ final class StaticApiController extends AbstractApiController
             return 'page_not_published';
         }
 
-        if (null !== $page->holdPublicationAt) {
+        if ($page->holdPublicationAt instanceof DateTimeInterface) {
             return 'publication_on_hold';
         }
 
@@ -284,7 +285,7 @@ final class StaticApiController extends AbstractApiController
                 '/api/static/{host}/{slug}' => [
                     'post' => [
                         'summary' => 'Regenerate a single page (synchronous)',
-                        'description' => 'Rebuilds one page in-process and answers with the outcome — one render, no polling. Only that page\'s file is written: sitemap, feeds, listing pages and the redirection map are rebuilt by the whole-site pass, so follow a page creation or deletion with `POST /api/static/{host}`.',
+                        'description' => "Rebuilds one page in-process and answers with the outcome — one render, no polling. Only that page's file is written: sitemap, feeds, listing pages and the redirection map are rebuilt by the whole-site pass, so follow a page creation or deletion with `POST /api/static/{host}`.",
                         'parameters' => [$hostParam, [
                             'name' => 'slug',
                             'in' => 'path',

@@ -518,7 +518,7 @@ final class StaticGeneratorTest extends KernelTestCase
 
     private function getStaticAppGenerator(): StaticAppGenerator
     {
-        if (null !== $this->staticAppGenerator) {
+        if ($this->staticAppGenerator instanceof StaticAppGenerator) {
             return $this->staticAppGenerator;
         }
 

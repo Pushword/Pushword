@@ -66,7 +66,7 @@ class ErrorPageGenerator extends AbstractGenerator
         }
 
         // Push a synthetic Request so render(controller(...)) works from CLI
-        $needsRequest = null === $this->requestStack->getCurrentRequest();
+        $needsRequest = ! $this->requestStack->getCurrentRequest() instanceof Request;
         if ($needsRequest) {
             $this->requestStack->push(Request::create('/'.$uri));
         }
