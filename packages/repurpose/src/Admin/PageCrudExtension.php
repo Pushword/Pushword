@@ -13,24 +13,28 @@ use Pushword\Admin\Crud\PageCrudExtensionInterface;
 use Pushword\Core\Entity\Page;
 use Pushword\Repurpose\Repository\SocialPostRepository;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+use Symfony\Contracts\Service\ResetInterface;
+use Twig\Attribute\AsTwigFunction;
 
 /**
- * Adds a "Repurpose" action to the page list and edit screen. It routes to
- * {@see RepurposeFromPageController}, which drafts a carousel and opens the studio
- * for a page with none, opens its only carousel, or lists multiple linked carousels.
- * Wired only when the admin bundle is installed (see config/services.php).
+ * Offers carousel creation for pages with none and shares per-request source counts
+ * with the page list and sidebar. Wired only when the admin bundle is installed.
  */
-final readonly class PageCrudExtension implements PageCrudExtensionInterface
+final class PageCrudExtension implements PageCrudExtensionInterface, ResetInterface
 {
+    /** @var array<string, array<string, int>>|null */
+    private ?array $linkedCounts = null;
+
     public function __construct(
-        private UrlGeneratorInterface $urlGenerator,
-        private SocialPostRepository $socialPosts,
+        private readonly UrlGeneratorInterface $urlGenerator,
+        private readonly SocialPostRepository $socialPosts,
     ) {
     }
 
     public function configureActions(Actions $actions): void
     {
         $repurpose = fn (): Action => Action::new('repurpose', 'repurpose.action.repurpose', 'fas fa-wand-magic-sparkles')
+            ->displayIf(fn (Page $page): bool => 0 === $this->linkedCount($page))
             ->linkToUrl(fn (Page $page): string => $this->urlGenerator->generate(
                 'admin_repurpose_from_page',
                 ['id' => (string) $page->id],
@@ -38,9 +42,20 @@ final readonly class PageCrudExtension implements PageCrudExtensionInterface
 
         $actions
             ->add(Crud::PAGE_INDEX, $repurpose())
-            ->add(Crud::PAGE_EDIT, $repurpose()->setLabel(fn (Page $page): string => $this->socialPosts->count(['host' => $page->host, 'page' => $page->slug]) > 0
-                ? 'repurposeLinkedCarousels'
-                : 'repurpose.action.repurpose'));
+            ->add(Crud::PAGE_EDIT, $repurpose());
+    }
+
+    #[AsTwigFunction('repurpose_linked_carousels_count')]
+    public function linkedCount(Page $page): int
+    {
+        $this->linkedCounts ??= $this->socialPosts->countBySourcePage();
+
+        return $this->linkedCounts[$page->host][$page->slug] ?? 0;
+    }
+
+    public function reset(): void
+    {
+        $this->linkedCounts = null;
     }
 
     public function configureFilters(Filters $filters): void

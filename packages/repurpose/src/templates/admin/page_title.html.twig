@@ -1,0 +1,10 @@
+{{ include('@pwAdmin/page/pageListTitleField.html.twig') }}
+{% set count = repurpose_linked_carousels_count(entity.instance) %}
+{% if count > 0 %}
+    <div class="mt-1">
+        <a class="rp-page-carousels-link small" href="{{ path('admin_repurpose_from_page', {id: entity.primaryKeyValue}) }}">
+            <i class="fas fa-share-nodes" aria-hidden="true"></i>
+            {{ 'repurposeLinkedCarouselsCount'|trans({'%count%': count}) }}
+        </a>
+    </div>
+{% endif %}

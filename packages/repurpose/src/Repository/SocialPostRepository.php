@@ -30,4 +30,25 @@ class SocialPostRepository extends ServiceEntityRepository
     {
         return $this->findBy(['host' => $host], ['updatedAt' => 'DESC']);
     }
+
+    /** @return array<string, array<string, int>> */
+    public function countBySourcePage(): array
+    {
+        /** @var list<array{host: string, page: string, total: int|string}> $rows */
+        $rows = $this->createQueryBuilder('post')
+            ->select('post.host AS host', 'post.page AS page', 'COUNT(post.id) AS total')
+            ->where('post.page != :empty')
+            ->andWhere('post.page NOT LIKE :standalone')
+            ->setParameter('empty', '')
+            ->setParameter('standalone', 'standalone/%')
+            ->groupBy('post.host, post.page')
+            ->getQuery()->getScalarResult();
+
+        $counts = [];
+        foreach ($rows as $row) {
+            $counts[$row['host']][$row['page']] = (int) $row['total'];
+        }
+
+        return $counts;
+    }
 }

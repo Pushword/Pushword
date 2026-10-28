@@ -48,7 +48,7 @@ repurposeHelpEffect: "S’applique à tout le carrousel. Chaque slide peut rempl
 repurposeHelpPalette: "Remplace le fond du carrousel pour cette slide. Laissez vide pour hériter."
 repurposeHelpPreview: "100 % correspond à la largeur habituelle du fil mobile du réseau choisi. Le zoom ne change que l’aperçu."
 repurposeHelpSource: "Le JSON est validé pendant la saisie. L’éditeur visuel et la source restent synchronisés lors du changement de vue."
-repurposeLinkedCarousels: Carrousels liés
+repurposeLinkedCarouselsCount: 'Carrousels liés (%count%)'
 repurposeListCarousel: Carrousel
 repurposeListClose: Fermer
 repurposeListCoverLabel: 'Couverture de %page% · %network%'
@@ -62,6 +62,9 @@ repurposeNetwork: 'Réseau'
 repurposePreviewMode: 'Visualisation'
 repurposePreviewSlides: 'Slides'
 repurposePublishingTarget: 'Destination de publication'
+repurposeSourcePage: Page source
+repurposeSourcePublication: Publication
+repurposeSourceUnpublished: Non publiée
 repurposeStatusDraft: Brouillon
 repurposeStatusPlanned: Planifié
 repurposeStatusPosted: Publié

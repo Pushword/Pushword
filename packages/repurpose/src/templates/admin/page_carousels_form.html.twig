@@ -1,0 +1,21 @@
+{% block repurpose_carousels_row %}
+    {% if label is not same as(false) %}
+        <div class="form-label">{{ label|trans }}</div>
+    {% endif %}
+    {{ block('repurpose_carousels_widget') }}
+{% endblock %}
+
+{% block repurpose_carousels_widget %}
+    {% set statusLabels = {draft: 'repurposeStatusDraft', planned: 'repurposeStatusPlanned', posted: 'repurposeStatusPosted'} %}
+    <div id="{{ id }}" class="rp-page-carousels d-flex flex-column gap-2">
+        {% for post in value %}
+            <a href="{{ path('repurpose_studio', {id: post.id}) }}" data-carousel-id="{{ post.id }}" class="d-flex align-items-center gap-2 p-2 border rounded text-decoration-none">
+                <img src="{{ path('repurpose_cover', {id: post.id}) }}" alt="" loading="lazy" width="64" height="64" class="flex-shrink-0 rounded" style="object-fit: contain">
+                <span style="min-width: 0">
+                    <strong class="d-block text-break">{{ post.spec.slides[0].title|default(post.page) }}</strong>
+                    <span class="d-block small text-muted">{{ post.network }} · {{ statusLabels[post.status]|trans }}</span>
+                </span>
+            </a>
+        {% endfor %}
+    </div>
+{% endblock %}

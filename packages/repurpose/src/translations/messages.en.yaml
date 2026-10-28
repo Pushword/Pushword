@@ -48,7 +48,7 @@ repurposeHelpEffect: "Applies to the whole deck. Each slide can override this ef
 repurposeHelpPalette: "Overrides the deck background for this slide. Leave empty to inherit."
 repurposeHelpPreview: "100% is the typical mobile feed width for the selected network. Zoom changes the preview only."
 repurposeHelpSource: "JSON is validated as you type. The visual editor and source stay in sync when you switch."
-repurposeLinkedCarousels: Linked carousels
+repurposeLinkedCarouselsCount: 'Linked carousels (%count%)'
 repurposeListCarousel: Carousel
 repurposeListClose: Close
 repurposeListCoverLabel: 'Cover of %page% · %network%'
@@ -62,6 +62,9 @@ repurposeNetwork: 'Network'
 repurposePreviewMode: 'Preview'
 repurposePreviewSlides: 'Slides'
 repurposePublishingTarget: 'Publishing target'
+repurposeSourcePage: Source page
+repurposeSourcePublication: Publication
+repurposeSourceUnpublished: Not published
 repurposeStatusDraft: Draft
 repurposeStatusPlanned: Planned
 repurposeStatusPosted: Posted

@@ -113,6 +113,16 @@
 
     aside { background: var(--panel); border: 1px solid var(--line); border-radius: 4px; padding: 1.1rem; display: flex; flex-direction: column; gap: 1rem; box-shadow: 0 1px 3px #0000000d; }
     .panel-head { display: flex; align-items: center; justify-content: space-between; gap: .5rem; }
+    .source-page { padding-bottom: 1rem; border-bottom: 1px solid var(--line); }
+    .source-page__heading { margin: 0 0 .75rem; color: var(--muted); font-size: .75rem; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; }
+    .source-page__link { display: block; }
+    .source-page__content { display: flex; align-items: start; gap: .75rem; }
+    .source-page__image { width: 5rem; height: 5rem; flex-shrink: 0; object-fit: cover; border-radius: 4px; }
+    .source-page__details { min-width: 0; }
+    .source-page__title { color: var(--text); font-size: .875rem; overflow-wrap: anywhere; }
+    .source-page__link:hover .source-page__title { text-decoration: underline; }
+    .source-page__publication, .source-page__url { margin: .25rem 0 0; color: var(--muted); font-size: .8125rem; line-height: 1.5; overflow-wrap: anywhere; }
+    .source-page__action { display: block; margin-top: .5rem; font-size: .8125rem; }
     .panel-head .live { display: inline-flex; align-items: center; gap: .4rem; font-size: .72rem; color: var(--muted-2); }
     .live::before { content: ""; width: 8px; height: 8px; border-radius: 999px; background: var(--muted); transition: background .2s, box-shadow .2s; }
     .live.ok::before { background: var(--ok); box-shadow: 0 0 0 3px #19875426; }
@@ -364,9 +374,6 @@
       <span class="badge" :class="spec.status" x-text="spec.status"></span>
     </div>
     <div class="studio-actions">
-      {% if repurpose_source_page(post) %}
-        <a class="btn" href="{{ path('admin_repurpose_source_page', {id: post.id}) }}">{{ 'repurposeEditSourcePage'|trans }}</a>
-      {% endif %}
       <div class="toggle" role="group" aria-label="Editor view">
         <button type="button" :class="view === 'visual' && 'on'" aria-pressed="true" :aria-pressed="view === 'visual'" aria-controls="rp-visual-editor" @click="setView('visual')">Visual</button>
         <button type="button" :class="view === 'source' && 'on'" aria-pressed="false" :aria-pressed="view === 'source'" aria-controls="rp-source-editor" @click="setView('source')">Source</button>
@@ -442,6 +449,32 @@
     </div>
 
     <aside>
+      {% set sourcePage = repurpose_source_page(post) %}
+      {% if sourcePage %}
+        {% set sourceTitle = sourcePage.h1|default(sourcePage.title)|default(sourcePage.slug)|striptags %}
+        <section class="rp-source-page source-page" aria-labelledby="rp-source-page-heading" data-source-page-id="{{ sourcePage.id }}">
+          <h2 class="source-page__heading" id="rp-source-page-heading">{{ 'repurposeSourcePage'|trans }}</h2>
+          <a class="source-page__link" href="{{ path('admin_repurpose_source_page', {id: post.id}) }}" aria-label="{{ 'repurposeEditSourcePage'|trans }} : {{ sourceTitle }}">
+            <div class="source-page__content">
+              {% if sourcePage.mainImage %}
+                <img class="source-page__image" src="{{ imageUrl(sourcePage.mainImage, 'xs') }}" alt="" loading="lazy" width="80" height="80">
+              {% endif %}
+              <div class="source-page__details">
+                <strong class="source-page__title">{{ sourceTitle }}</strong>
+                <p class="source-page__publication">
+                  {% if sourcePage.publishedAt %}
+                    {{ 'repurposeSourcePublication'|trans }} : <time datetime="{{ sourcePage.publishedAt|date('c') }}">{{ sourcePage.publishedAt|format_datetime('medium', 'short', timezone: editorial_timezone.timezone) }}</time>
+                  {% else %}
+                    {{ 'repurposeSourceUnpublished'|trans }}
+                  {% endif %}
+                </p>
+                <p class="source-page__url">{% if sourcePage.host %}{{ sourcePage.host }} › {% endif %}{{ sourcePage.slug }}</p>
+              </div>
+            </div>
+            <span class="source-page__action">{{ 'repurposeEditSourcePage'|trans }} →</span>
+          </a>
+        </section>
+      {% endif %}
       <div class="panel-head">
         <strong style="font-size:.8rem;">Editor</strong>
         <span class="live" :class="live.state" x-text="live.text"></span>
