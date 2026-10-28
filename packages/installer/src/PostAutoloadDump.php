@@ -66,7 +66,7 @@ class PostAutoloadDump extends PostInstall
 
     public static function getKernel(): Kernel
     {
-        if (null !== self::$kernel) {
+        if (self::$kernel instanceof Kernel) {
             return self::$kernel;
         }
 
