@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pushword\Newsletter\Admin;
 
+use DateTimeImmutable;
 use DateTimeInterface;
 use Doctrine\ORM\EntityManagerInterface;
 use EasyCorp\Bundle\EasyAdminBundle\Attribute\AdminRoute;
@@ -109,7 +110,7 @@ class CampaignCrudController extends AbstractCrudController
         }
 
         $campaign = $this->getContext()?->getEntity()->getInstance();
-        if (! $campaign instanceof Campaign || null === $campaign->audience) {
+        if (! $campaign instanceof Campaign || ! $campaign->audience instanceof Audience) {
             return $responseParameters;
         }
 
@@ -389,7 +390,7 @@ class CampaignCrudController extends AbstractCrudController
 
         if (! $campaign->isDraft()) {
             $this->addFlash('warning', 'newsletter.campaign.flash.notDraft');
-        } elseif (null === $when) {
+        } elseif (! $when instanceof DateTimeImmutable) {
             $this->addFlash('danger', 'newsletter.campaign.flash.noDate');
         } else {
             $campaign->schedule($when);

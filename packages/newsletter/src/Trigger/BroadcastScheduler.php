@@ -41,7 +41,7 @@ final readonly class BroadcastScheduler
     {
         $audience = $automation->audience;
 
-        if (null === $audience) {
+        if (! $audience instanceof Audience) {
             return [];
         }
 

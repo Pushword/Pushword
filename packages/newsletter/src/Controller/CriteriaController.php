@@ -16,6 +16,7 @@ use Pushword\Newsletter\Segment\SegmentCriteria;
 use Pushword\Newsletter\Segment\SegmentException;
 use Pushword\Newsletter\Segment\SegmentResolver;
 use Pushword\Newsletter\Trigger\TriggerOccurrence;
+use Pushword\Newsletter\Trigger\TriggerSource;
 use Pushword\Newsletter\Trigger\TriggerSourceRegistry;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -135,7 +136,7 @@ final class CriteriaController extends AbstractController
             ? $this->automationRepository->find($payload['automation'])
             : null;
 
-        if (null === $triggerSource || ! $automation instanceof Automation) {
+        if (! $triggerSource instanceof TriggerSource || ! $automation instanceof Automation) {
             return ['count' => null, 'saveFirst' => true];
         }
 

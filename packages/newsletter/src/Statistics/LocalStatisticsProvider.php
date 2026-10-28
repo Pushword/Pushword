@@ -8,6 +8,7 @@ use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
 use InvalidArgumentException;
 use Pushword\Newsletter\Entity\AutomationDelivery;
+use Pushword\Newsletter\Entity\Campaign;
 use Pushword\Newsletter\Entity\ClickEvent;
 use Pushword\Newsletter\Entity\ContactEvent;
 use Pushword\Newsletter\Entity\DeliveryEvent;
@@ -174,7 +175,7 @@ final readonly class LocalStatisticsProvider implements StatisticsProvider
 
     private function groupId(DeliveryMessage $message, ReportQuery $query): string
     {
-        if ('campaign' === $query->groupBy && null !== $message->campaign) {
+        if ('campaign' === $query->groupBy && $message->campaign instanceof Campaign) {
             return 'campaign:'.$message->campaign->id;
         }
 
@@ -196,7 +197,7 @@ final readonly class LocalStatisticsProvider implements StatisticsProvider
     private function campaignReport(array $campaign, array $messages, MessageObservations $observations, QualifyDeliveryCoverage $coverage): Report
     {
         $query = $coverage->query;
-        if ('sent' === $query->basis && $campaign['sent'] !== \count(array_filter($messages, static fn (DeliveryMessage $message): bool => null !== $message->acceptedAt && $message->acceptedAt <= $query->asOf))) {
+        if ('sent' === $query->basis && $campaign['sent'] !== \count(array_filter($messages, static fn (DeliveryMessage $message): bool => $message->acceptedAt instanceof DateTimeImmutable && $message->acceptedAt <= $query->asOf))) {
             $coverage->complete = false;
         }
 
@@ -248,7 +249,7 @@ final readonly class LocalStatisticsProvider implements StatisticsProvider
     private function metrics(array $messages, ReportQuery $query, MessageObservations $observations, bool $deliveryComplete, ?DateTimeImmutable $deliveryAsOf): array
     {
         $observed = $this->observedMessages($messages, $observations, $deliveryAsOf);
-        $trackingObserved = array_any($messages, static fn (DeliveryMessage $message): bool => $message->trackingAllowed && null !== $message->acceptedAt
+        $trackingObserved = array_any($messages, static fn (DeliveryMessage $message): bool => $message->trackingAllowed && $message->acceptedAt instanceof DateTimeImmutable
             && (null === $query->clickScope || \in_array($query->clickScope, $message->trackingScopes, true)));
         $coverage = array_fill_keys(Report::METRICS, true);
         // Native delivery notifications are explicit lower bounds, not a complete receiving-server feed.
@@ -315,7 +316,7 @@ final readonly class LocalStatisticsProvider implements StatisticsProvider
         foreach ($messages as $message) {
             $events = [];
             foreach ($observations->deliveries[$message->id ?? 0] ?? [] as $event) {
-                if (null !== $deliveryAsOf && $event->occurredAt > $deliveryAsOf) {
+                if ($deliveryAsOf instanceof DateTimeImmutable && $event->occurredAt > $deliveryAsOf) {
                     continue;
                 }
 

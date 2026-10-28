@@ -9,12 +9,14 @@ use LogicException;
 use Pushword\Core\Site\SiteRegistry;
 use Pushword\Newsletter\Delivery\SendContext;
 use Pushword\Newsletter\Entity\Audience;
+use Pushword\Newsletter\Entity\Automation;
 use Pushword\Newsletter\Entity\AutomationStep;
 use Pushword\Newsletter\Entity\Campaign;
 use Pushword\Newsletter\Entity\Contact;
 use Pushword\Newsletter\Entity\DeliveryMessage;
 use Pushword\Newsletter\Utm\UtmTag;
 use Symfony\Component\Mailer\MailerInterface;
+use Symfony\Component\Mailer\SentMessage;
 use Symfony\Component\Mailer\Transport\TransportInterface;
 use Symfony\Component\Mime\Address;
 use Symfony\Component\Mime\Email;
@@ -85,7 +87,7 @@ final readonly class NewsletterMailer
             $subject,
             $bodyMarkdown,
             null,
-            null !== $automation ? UtmTag::forStep($automation, $step) : null,
+            $automation instanceof Automation ? UtmTag::forStep($automation, $step) : null,
             $step,
             $sendContext,
             $locale,
@@ -218,7 +220,7 @@ final readonly class NewsletterMailer
 
         // Both kinds of send are synchronous: a queued command is not transport acceptance.
         $sent = $this->transport->send($email);
-        if (null === $sent) {
+        if (! $sent instanceof SentMessage) {
             throw new LogicException('The newsletter transport rejected the message.');
         }
 
@@ -261,7 +263,7 @@ final readonly class NewsletterMailer
             $this->bounceSignature->messageId($to, $sendContext->fromEmail ?? $audience->fromEmail),
         );
 
-        $replyTo = null !== $sendContext ? $sendContext->replyTo : $audience->replyTo;
+        $replyTo = $sendContext instanceof SendContext ? $sendContext->replyTo : $audience->replyTo;
         if (null !== $replyTo) {
             $email->replyTo($replyTo);
         }

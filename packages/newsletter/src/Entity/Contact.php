@@ -235,7 +235,7 @@ class Contact implements IdInterface, Taggable, Stringable, CustomPropertiesInte
 
     public function hasClickTrackingConsent(): bool
     {
-        return null !== $this->clickTrackingConsentAt;
+        return $this->clickTrackingConsentAt instanceof DateTimeImmutable;
     }
 
     /**

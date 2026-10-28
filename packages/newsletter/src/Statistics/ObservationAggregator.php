@@ -229,7 +229,7 @@ final readonly class ObservationAggregator
 
     private function observes(ReportQuery $query, ?DateTimeImmutable $sentAt, DateTimeImmutable $eventAt): bool
     {
-        if (null !== $sentAt) {
+        if ($sentAt instanceof DateTimeImmutable) {
             return $query->observes($sentAt, $eventAt);
         }
 
@@ -243,7 +243,7 @@ final readonly class ObservationAggregator
         return null === $query->windowDays || ([] !== $messages && array_all($messages, static function (ObservedMessage $message) use ($query): bool {
             $date = $message->acceptedAt ?? $message->attemptedAt;
 
-            return null !== $date && $date->modify('+'.$query->windowDays.' days') <= $query->asOf;
+            return $date instanceof DateTimeImmutable && $date->modify('+'.$query->windowDays.' days') <= $query->asOf;
         }));
     }
 }

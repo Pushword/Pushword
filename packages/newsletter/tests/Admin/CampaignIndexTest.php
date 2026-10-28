@@ -29,7 +29,7 @@ final class CampaignIndexTest extends AbstractNewsletterTestCase
 
     protected function tearDown(): void
     {
-        if (null !== $this->user) {
+        if ($this->user instanceof User) {
             $connection = $this->entityManager->getConnection();
             $connection->delete($connection->quoteIdentifier('user'), ['id' => $this->user->id]);
         }

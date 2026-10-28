@@ -6,6 +6,7 @@ namespace Pushword\Newsletter\Validator;
 
 use Pushword\Newsletter\Entity\Automation;
 use Pushword\Newsletter\Segment\SegmentException;
+use Pushword\Newsletter\Trigger\TriggerSource;
 use Pushword\Newsletter\Trigger\TriggerSourceRegistry;
 use Symfony\Component\Validator\Constraint;
 use Symfony\Component\Validator\ConstraintValidator;
@@ -39,7 +40,7 @@ final class ValidTriggerWhenValidator extends ConstraintValidator
 
         $source = $this->registry->for($value);
 
-        if (null === $source) {
+        if (! $source instanceof TriggerSource) {
             $this->context->buildViolation($constraint->unknownSource)
                 ->setParameter('{{ source }}', $value->source)
                 ->setParameter('{{ known }}', implode(', ', $this->registry->names()))

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pushword\Newsletter\Controller;
 
+use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Cache\CacheItemPoolInterface;
 use Pushword\Core\Site\SiteRegistry;
@@ -276,7 +277,7 @@ final class NewsletterController extends AbstractController
 
         // Once they are gone there is nothing left to confirm, so a second visit
         // goes through to the page keeping the other lists within reach.
-        if ($request->isMethod('GET') && ! $this->clicked($request) && null === $contact->unsubscribedAt) {
+        if ($request->isMethod('GET') && ! $this->clicked($request) && ! $contact->unsubscribedAt instanceof DateTimeImmutable) {
             return $this->page('unsubscribe.html.twig', $contact);
         }
 
@@ -392,7 +393,7 @@ final class NewsletterController extends AbstractController
         $view = $this->siteRegistry->get($audience?->mainHost)
             ->getView('/newsletter/'.$template, '@PushwordNewsletter');
 
-        if (null !== $contact) {
+        if ($contact instanceof Contact) {
             $this->localeSwitcher->setLocale($contact->locale);
         }
 

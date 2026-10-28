@@ -120,7 +120,7 @@ abstract class AbstractNewsletterTestCase extends WebTestCase
         $contact->customProperties = $customProperties;
         $contact->optIn(! $subscribed);
 
-        if (null !== $registeredAt) {
+        if ($registeredAt instanceof DateTimeImmutable) {
             // createdAt is a mutable datetime column (TimestampableTrait).
             $contact->createdAt = DateTime::createFromInterface($registeredAt);
         }

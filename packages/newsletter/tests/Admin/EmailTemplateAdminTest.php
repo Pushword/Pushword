@@ -27,7 +27,7 @@ final class EmailTemplateAdminTest extends AbstractAdminTestClass
 
     protected function tearDown(): void
     {
-        if (null !== $this->client) {
+        if ($this->client instanceof KernelBrowser) {
             $connection = $this->entityManager()->getConnection();
             foreach ($this->names as $name) {
                 $connection->executeStatement('DELETE FROM newsletter_email_template WHERE name = :name', ['name' => $name]);

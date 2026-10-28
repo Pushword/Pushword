@@ -55,7 +55,7 @@ class ClickEventRepository extends ServiceEntityRepository
      */
     public function byUrl(Campaign $campaign, ?ReportQuery $selection = null): array
     {
-        if (null !== $selection) {
+        if ($selection instanceof ReportQuery) {
             return $this->observedUrls($campaign, $selection);
         }
 

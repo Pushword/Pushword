@@ -28,6 +28,7 @@ use Pushword\Newsletter\Entity\Audience;
 use Pushword\Newsletter\Entity\Automation;
 use Pushword\Newsletter\Segment\SegmentException;
 use Pushword\Newsletter\Segment\SegmentResolver;
+use Pushword\Newsletter\Trigger\TriggerSource;
 use Pushword\Newsletter\Trigger\TriggerSourceRegistry;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
@@ -199,7 +200,7 @@ class AutomationCrudController extends AbstractCrudController
             return new RedirectResponse($this->indexUrl());
         }
 
-        if (null === $source) {
+        if (! $source instanceof TriggerSource) {
             $this->addFlash('danger', \sprintf('No trigger source is named "%s".', $automation->source));
 
             return new RedirectResponse($this->indexUrl());

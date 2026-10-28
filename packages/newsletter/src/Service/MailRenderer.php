@@ -106,7 +106,7 @@ final readonly class MailRenderer
             'audienceName' => $sendContext->audienceName ?? $audience->name,
             'siteName' => $this->siteRegistry->get($host)->name,
             'year' => new DateTimeImmutable()->format('Y'),
-            'postalAddress' => null !== $sendContext ? $sendContext->postalAddress : $audience->postalAddress,
+            'postalAddress' => $sendContext instanceof SendContext ? $sendContext->postalAddress : $audience->postalAddress,
             'wrapped' => $saved->wrapped ?? 'framed' === $layout,
             'header' => $this->markScope($this->absolutize($this->markdownParser->transform($header, $host), $host), 'navigation'),
             'footer' => $this->markScope($this->absolutize($this->markdownParser->transform($footer, $host), $host), 'footer'),
@@ -169,7 +169,7 @@ final readonly class MailRenderer
             return $this->personalize($bodyMarkdown, $contact).('' === $signature ? '' : "\n\n".$signature);
         }
 
-        $postalAddress = null !== $sendContext ? $sendContext->postalAddress : $audience->postalAddress;
+        $postalAddress = $sendContext instanceof SendContext ? $sendContext->postalAddress : $audience->postalAddress;
         $saved = $this->emailTemplates->saved($layout);
         $custom = str_starts_with($layout, 'twig:');
         $header = $custom ? '' : ($saved->headerMarkdown ?? $audience->headerMarkdown);

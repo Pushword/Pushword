@@ -232,7 +232,7 @@ abstract class AbstractCriteria
                 ['any' => $nestedAny, 'conditions' => $nested] = CriteriaGroup::unwrap($child);
                 $nestedGroup = self::group($nestedAny, $nested, $childPath);
 
-                if (null === $nestedGroup) {
+                if (! $nestedGroup instanceof Group) {
                     throw new SegmentException(\sprintf('Condition #%s is an empty group.', $childPath));
                 }
 

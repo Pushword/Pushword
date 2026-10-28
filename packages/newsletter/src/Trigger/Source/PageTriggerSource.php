@@ -9,6 +9,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\QueryBuilder;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\PropertySchema\PagePropertySchemaRegistry;
+use Pushword\Core\Query\Group;
 use Pushword\Core\Query\PageFieldRegistry;
 use Pushword\Core\Query\QueryCompiler;
 use Pushword\Core\Repository\PageRepository;
@@ -132,7 +133,7 @@ final readonly class PageTriggerSource implements TriggerSource
 
         // The three guards above are ANDed with the whole rule, never a disjunct
         // of it: an `any` widens which pages match, never past them.
-        if (null !== $rule) {
+        if ($rule instanceof Group) {
             new QueryCompiler(new PageFieldRegistry($this->entityManager, $this->schemaRegistry))->apply($queryBuilder, $rule);
         }
 

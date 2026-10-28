@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pushword\Newsletter\Admin;
 
+use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
 use EasyCorp\Bundle\EasyAdminBundle\Attribute\AdminRoute;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Action;
@@ -144,13 +145,13 @@ class ContactCrudController extends AbstractCrudController
         $unsubscribe = Action::new('unsubscribe', 'newsletter.contact.action.unsubscribe', 'fa fa-user-slash')
             ->linkToCrudAction('unsubscribe')
             ->setTemplatePath('@pwAdmin/crud/action_post.html.twig')
-            ->displayIf(static fn (Contact $contact): bool => null === $contact->unsubscribedAt && null === $contact->bouncedAt)
+            ->displayIf(static fn (Contact $contact): bool => ! $contact->unsubscribedAt instanceof DateTimeImmutable && ! $contact->bouncedAt instanceof DateTimeImmutable)
             ->setCssClass('btn btn-outline-warning');
 
         $resubscribe = Action::new('resubscribe', 'newsletter.contact.action.resubscribe', 'fa fa-rotate-left')
             ->linkToCrudAction('resubscribe')
             ->setTemplatePath('@pwAdmin/crud/action_post.html.twig')
-            ->displayIf(static fn (Contact $contact): bool => null !== $contact->unsubscribedAt && null === $contact->bouncedAt)
+            ->displayIf(static fn (Contact $contact): bool => $contact->unsubscribedAt instanceof DateTimeImmutable && ! $contact->bouncedAt instanceof DateTimeImmutable)
             ->setCssClass('btn btn-outline-success');
 
         $actions = $actions
@@ -266,7 +267,7 @@ class ContactCrudController extends AbstractCrudController
     {
         $request = $this->getContext()?->getRequest();
 
-        if (null === $request || ! $request->isMethod(Request::METHOD_POST)) {
+        if (! $request instanceof Request || ! $request->isMethod(Request::METHOD_POST)) {
             return null;
         }
 

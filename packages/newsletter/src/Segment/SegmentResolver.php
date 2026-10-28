@@ -7,6 +7,7 @@ namespace Pushword\Newsletter\Segment;
 use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\QueryBuilder;
+use Pushword\Core\Query\Group;
 use Pushword\Core\Query\QueryCompiler;
 use Pushword\Newsletter\Entity\Audience;
 use Pushword\Newsletter\Entity\Contact;
@@ -156,7 +157,7 @@ final readonly class SegmentResolver
 
         // The audience and the subscribed status are ANDed with the whole rule,
         // never a disjunct of it: an `any` widens who is reached, never past them.
-        if (null !== $rule) {
+        if ($rule instanceof Group) {
             new QueryCompiler(new ContactFieldRegistry(new DateTimeImmutable()))->apply($queryBuilder, $rule, 'c');
         }
 

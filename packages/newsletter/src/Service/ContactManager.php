@@ -9,6 +9,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use InvalidArgumentException;
 use Pushword\Core\Site\SiteRegistry;
 use Pushword\Newsletter\Entity\Audience;
+use Pushword\Newsletter\Entity\Campaign;
 use Pushword\Newsletter\Entity\CampaignRecipient;
 use Pushword\Newsletter\Entity\Contact;
 use Pushword\Newsletter\Entity\ContactEvent;
@@ -269,7 +270,7 @@ final readonly class ContactManager
     public function unsubscribe(Contact $contact, ?string $source = null, ?DeliveryMessage $message = null): void
     {
         $this->assertMessageBelongsTo($contact, $message);
-        if (null !== $contact->unsubscribedAt) {
+        if ($contact->unsubscribedAt instanceof DateTimeImmutable) {
             return;
         }
 
@@ -296,7 +297,7 @@ final readonly class ContactManager
      */
     public function resubscribe(Contact $contact, ?string $source = null, ?string $host = null, ?string $ip = null): void
     {
-        if (null === $contact->unsubscribedAt || null !== $contact->bouncedAt) {
+        if (! $contact->unsubscribedAt instanceof DateTimeImmutable || $contact->bouncedAt instanceof DateTimeImmutable) {
             return;
         }
 
@@ -310,8 +311,8 @@ final readonly class ContactManager
     public function markBounced(Contact $contact, ?string $source = null, ?DeliveryMessage $message = null): void
     {
         $this->assertMessageBelongsTo($contact, $message);
-        if (null !== $contact->bouncedAt) {
-            if (null !== $message) {
+        if ($contact->bouncedAt instanceof DateTimeImmutable) {
+            if ($message instanceof DeliveryMessage) {
                 $this->attributeToMail('bounce', $message);
                 $this->entityManager->flush();
             }
@@ -332,11 +333,11 @@ final readonly class ContactManager
     /** Attribute only when the event identifies an actual send. */
     private function attributeToMail(string $kind, ?DeliveryMessage $message): void
     {
-        if (null === $message) {
+        if (! $message instanceof DeliveryMessage) {
             return;
         }
 
-        $delivery = null !== $message->campaign
+        $delivery = $message->campaign instanceof Campaign
             ? $this->recipientRepository->findOneBy(['message' => $message])
             : $this->deliveryRepository->findOneBy(['message' => $message]);
 
@@ -370,7 +371,7 @@ final readonly class ContactManager
 
     private function assertMessageBelongsTo(Contact $contact, ?DeliveryMessage $message): void
     {
-        if (null !== $message && $message->contact !== $contact) {
+        if ($message instanceof DeliveryMessage && $message->contact !== $contact) {
             throw new InvalidArgumentException('The message belongs to another contact.');
         }
     }

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pushword\Newsletter\Content;
 
 use Pushword\Core\Component\EntityFilter\ValueObject\SplitContent;
+use Pushword\Core\Entity\Media;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Image\ImageCacheManager;
 use Pushword\Core\Site\SiteRegistry;
@@ -161,7 +162,7 @@ final readonly class PagePlaceholders
     {
         $media = $page->getMainImage();
 
-        if (null === $media) {
+        if (! $media instanceof Media) {
             return '';
         }
 

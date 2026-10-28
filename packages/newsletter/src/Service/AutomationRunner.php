@@ -8,8 +8,10 @@ use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
 use Pushword\Newsletter\Delivery\SendContext;
+use Pushword\Newsletter\Entity\Audience;
 use Pushword\Newsletter\Entity\Automation;
 use Pushword\Newsletter\Entity\AutomationDelivery;
+use Pushword\Newsletter\Entity\AutomationStep;
 use Pushword\Newsletter\Entity\DeliveryMessage;
 use Pushword\Newsletter\Entity\Enrollment;
 use Pushword\Newsletter\Entity\TriggerLog;
@@ -23,6 +25,7 @@ use Pushword\Newsletter\Segment\SegmentException;
 use Pushword\Newsletter\Segment\SegmentResolver;
 use Pushword\Newsletter\Trigger\BroadcastScheduler;
 use Pushword\Newsletter\Trigger\PlaceholderRenderer;
+use Pushword\Newsletter\Trigger\TriggerSource;
 use Pushword\Newsletter\Trigger\TriggerSourceRegistry;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Throwable;
@@ -82,7 +85,7 @@ final readonly class AutomationRunner
         // An automation with no steps is being written, not switched on. Handling
         // its occurrences would mark them done and mail nothing, so the steps
         // added an hour later would have nothing left to react to.
-        if (! $automation->enabled || null === $source || null === $automation->audience || 0 === $automation->countSteps()) {
+        if (! $automation->enabled || ! $source instanceof TriggerSource || ! $automation->audience instanceof Audience || 0 === $automation->countSteps()) {
             return $none;
         }
 
@@ -167,7 +170,7 @@ final readonly class AutomationRunner
             // subject has been announced, and re-announcing it is not a fix.
             $log = $this->logRepository->findFor($automation, $subjectId);
 
-            if (null !== $log && ! $this->campaignRepository->hasArmed($automation, $subjectId)) {
+            if ($log instanceof TriggerLog && ! $this->campaignRepository->hasArmed($automation, $subjectId)) {
                 $this->entityManager->remove($log);
             }
         }
@@ -252,7 +255,7 @@ final readonly class AutomationRunner
         }
 
         $step = $automation->getStep($enrollment->position);
-        if (null === $step) {
+        if (! $step instanceof AutomationStep) {
             $enrollment->finish();
 
             return false;
@@ -266,7 +269,7 @@ final readonly class AutomationRunner
 
         try {
             $source = $this->sources->for($automation);
-            if (null === $source) {
+            if (! $source instanceof TriggerSource) {
                 $enrollment->stop('source_unavailable');
 
                 return false;

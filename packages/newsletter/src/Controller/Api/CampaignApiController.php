@@ -95,7 +95,7 @@ final class CampaignApiController extends AbstractApiController
         $campaign->audience = $audience;
 
         $error = $this->apply($campaign, $data);
-        if (null !== $error) {
+        if ($error instanceof JsonResponse) {
             return $error;
         }
 
@@ -215,7 +215,7 @@ final class CampaignApiController extends AbstractApiController
         }
 
         $error = $this->apply($campaign, $this->decodeJson($request));
-        if (null !== $error) {
+        if ($error instanceof JsonResponse) {
             return $error;
         }
 
@@ -329,7 +329,7 @@ final class CampaignApiController extends AbstractApiController
             ],
         ];
 
-        if ($withEstimate && null !== $audience && $campaign->isDraft()) {
+        if ($withEstimate && $audience instanceof Audience && $campaign->isDraft()) {
             try {
                 $payload['estimatedRecipients'] = $this->segmentResolver->countMailable($audience, $campaign->segment);
             } catch (SegmentException) {

@@ -137,7 +137,7 @@ final class NewsletterAdminTest extends AbstractAdminTestClass
 
     protected function tearDown(): void
     {
-        if (null !== $this->client) {
+        if ($this->client instanceof KernelBrowser) {
             $connection = $this->entityManager()->getConnection();
 
             $pageIds = array_filter($this->sectionPageIds, static fn (?int $pageId): bool => null !== $pageId);
@@ -798,6 +798,7 @@ final class NewsletterAdminTest extends AbstractAdminTestClass
         $french = $this->createAudience('Newsletter');
         $french->fromName = 'Grand Angle';
         $french->mainHost = 'www.grandangle.fr';
+
         $contact = $this->phoneContact($french);
 
         $german = $this->createAudience('Newsletter');

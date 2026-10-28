@@ -19,6 +19,7 @@ use Pushword\Newsletter\Repository\TriggerLogRepository;
 use Pushword\Newsletter\Segment\SegmentCriteria;
 use Pushword\Newsletter\Segment\SegmentException;
 use Pushword\Newsletter\Segment\SegmentResolver;
+use Pushword\Newsletter\Trigger\TriggerSource;
 use Pushword\Newsletter\Trigger\TriggerSourceRegistry;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -99,7 +100,7 @@ final class AutomationApiController extends AbstractApiController
         $automation->audience = $audience;
 
         $error = $this->apply($automation, $data);
-        if (null !== $error) {
+        if ($error instanceof JsonResponse) {
             return $error;
         }
 
@@ -132,7 +133,7 @@ final class AutomationApiController extends AbstractApiController
     private function doUpdate(Automation $automation, Request $request): JsonResponse
     {
         $error = $this->apply($automation, $this->decodeJson($request));
-        if (null !== $error) {
+        if ($error instanceof JsonResponse) {
             return $error;
         }
 
@@ -191,7 +192,7 @@ final class AutomationApiController extends AbstractApiController
         // Before the criteria: which vocabulary `triggerWhen` is read in depends
         // on it, so a request changing both has to change the source first.
         if (\array_key_exists('source', $data)) {
-            if (! \is_string($data['source']) || null === $this->sources->find($data['source'])) {
+            if (! \is_string($data['source']) || ! $this->sources->find($data['source']) instanceof TriggerSource) {
                 return $this->badRequest('Unknown source; known sources: '.implode(', ', $this->sources->names()));
             }
 
@@ -207,7 +208,7 @@ final class AutomationApiController extends AbstractApiController
         }
 
         $error = $this->applyCriteria($automation, $data);
-        if (null !== $error) {
+        if ($error instanceof JsonResponse) {
             return $error;
         }
 
@@ -241,7 +242,7 @@ final class AutomationApiController extends AbstractApiController
     {
         $source = $this->sources->for($automation);
 
-        if (null === $source) {
+        if (! $source instanceof TriggerSource) {
             return $this->badRequest('Unknown source; known sources: '.implode(', ', $this->sources->names()));
         }
 

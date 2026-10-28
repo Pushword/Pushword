@@ -6,6 +6,7 @@ namespace Pushword\Newsletter\Trigger\Source;
 
 use DateTimeImmutable;
 use Doctrine\ORM\QueryBuilder;
+use Pushword\Newsletter\Entity\Audience;
 use Pushword\Newsletter\Entity\Automation;
 use Pushword\Newsletter\Entity\Contact;
 use Pushword\Newsletter\Repository\ContactRepository;
@@ -49,7 +50,7 @@ final readonly class ContactTriggerSource implements TriggerSource
     {
         $queryBuilder = $this->queryBuilder($automation, $now);
 
-        if (null === $queryBuilder) {
+        if (! $queryBuilder instanceof QueryBuilder) {
             return [];
         }
 
@@ -92,7 +93,7 @@ final readonly class ContactTriggerSource implements TriggerSource
     {
         $queryBuilder = $this->queryBuilder($automation, $now);
 
-        if (null === $queryBuilder) {
+        if (! $queryBuilder instanceof QueryBuilder) {
             return 0;
         }
 
@@ -114,7 +115,7 @@ final readonly class ContactTriggerSource implements TriggerSource
     {
         $audience = $automation->audience;
 
-        if (null === $audience) {
+        if (! $audience instanceof Audience) {
             return null;
         }
 

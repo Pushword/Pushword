@@ -68,7 +68,7 @@ final class AudienceApiController extends AbstractApiController
         $audience->slug = \is_string($data['slug'] ?? null) ? $data['slug'] : '';
 
         $error = $this->apply($audience, $data);
-        if (null !== $error) {
+        if ($error instanceof JsonResponse) {
             return $error;
         }
 
@@ -107,7 +107,7 @@ final class AudienceApiController extends AbstractApiController
     private function doUpdate(Audience $audience, Request $request): JsonResponse
     {
         $error = $this->apply($audience, $this->decodeJson($request));
-        if (null !== $error) {
+        if ($error instanceof JsonResponse) {
             return $error;
         }
 

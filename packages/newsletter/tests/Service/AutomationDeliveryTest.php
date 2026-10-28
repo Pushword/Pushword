@@ -350,7 +350,7 @@ final class AutomationDeliveryTest extends AbstractNewsletterTestCase
         $container = self::getContainer();
 
         return new AutomationRunner(
-            new TriggerSourceRegistry(new ArrayIterator(null !== $source ? [$source] : [])),
+            new TriggerSourceRegistry(new ArrayIterator($source instanceof TriggerSource ? [$source] : [])),
             $container->get(AutomationRepository::class),
             $container->get(TriggerLogRepository::class),
             $container->get(EnrollmentRepository::class),
