@@ -101,7 +101,7 @@ final class VideoBuilder
         $labels = [];
         foreach (['voice', 'music'] as $name) {
             $track = $audio?->{$name};
-            if (null === $track) {
+            if (! $track instanceof AudioTrack) {
                 continue;
             }
 
@@ -125,7 +125,7 @@ final class VideoBuilder
             return [];
         }
 
-        if (null !== $audio?->voice && null !== $audio->music && $audio->ducking) {
+        if ($audio?->voice instanceof AudioTrack && $audio->music instanceof AudioTrack && $audio->ducking) {
             $filters[] = '[voice]asplit[voiceMix][sidechain]';
             $filters[] = '[music][sidechain]sidechaincompress=threshold=0.02:ratio=8:attack=50:release=400[ducked]';
             $labels = ['[voiceMix]', '[ducked]'];

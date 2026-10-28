@@ -652,7 +652,7 @@ final readonly class SlideRenderer
 
     private function paletteColor(?Palette $palette, string $role): ?string
     {
-        if (null === $palette) {
+        if (! $palette instanceof Palette) {
             return null;
         }
 

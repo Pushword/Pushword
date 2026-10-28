@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Pushword\Repurpose\Service;
 
+use Pushword\Repurpose\Model\AudioMix;
+use Pushword\Repurpose\Model\AudioTrack;
 use Pushword\Repurpose\Model\Carousel;
 use Pushword\Repurpose\Model\Creator;
 
@@ -56,11 +58,11 @@ final readonly class MotionProjectExporter
             'fps' => 30,
             'slides' => $slides,
         ];
-        if (null !== $carousel->audio) {
+        if ($carousel->audio instanceof AudioMix) {
             $audio = ['ducking' => $carousel->audio->ducking];
             foreach (['voice', 'music'] as $name) {
                 $track = $carousel->audio->{$name};
-                if (null === $track) {
+                if (! $track instanceof AudioTrack) {
                     continue;
                 }
 

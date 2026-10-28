@@ -77,7 +77,7 @@ final class SocialPostSyncTest extends KernelTestCase
 
         // A clean slate for our key.
         $existing = $this->repository->findOneByKey(self::HOST, self::PAGE, self::NETWORK);
-        if (null !== $existing) {
+        if ($existing instanceof SocialPost) {
             $this->em->remove($existing);
             $this->em->flush();
         }

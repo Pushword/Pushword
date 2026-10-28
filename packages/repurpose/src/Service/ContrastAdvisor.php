@@ -7,6 +7,7 @@ namespace Pushword\Repurpose\Service;
 use Pushword\Repurpose\Model\Carousel;
 use Pushword\Repurpose\Model\Palette;
 use Pushword\Repurpose\Model\Slide;
+use Pushword\Repurpose\Model\SlideImage;
 
 /**
  * Flags slides whose text is likely unreadable — dark text over a photo, tone-on-
@@ -86,7 +87,7 @@ final readonly class ContrastAdvisor
         // Sample the primary image (the whole frame, or a split's first cell); the
         // text is bound to the deck margins, which fall over that cell.
         $image = $slide->firstImage();
-        if (null === $image) {
+        if (! $image instanceof SlideImage) {
             $bg = $this->color($carousel, $slide, static fn (Palette $p): ?string => $p->bg) ?? SlideRenderer::DEFAULT_BG;
 
             return [$this->hexLuminance($bg), \sprintf('background %s', $bg)];

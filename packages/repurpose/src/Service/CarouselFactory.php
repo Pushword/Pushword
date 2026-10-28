@@ -129,13 +129,13 @@ final class CarouselFactory
         if (! \is_array($list)) {
             $single = $this->image($legacy);
 
-            return null === $single ? [] : [$single];
+            return $single instanceof SlideImage ? [$single] : [];
         }
 
         $images = [];
         foreach ($list as $entry) {
             $image = $this->image($entry);
-            if (null !== $image) {
+            if ($image instanceof SlideImage) {
                 $images[] = $image;
             }
         }

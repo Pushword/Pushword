@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pushword\Repurpose\Controller;
 
 use Doctrine\ORM\EntityManagerInterface;
+use Pushword\Core\Entity\Media;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Repository\MediaRepository;
 use Pushword\Core\Site\SiteRegistry;
@@ -112,7 +113,7 @@ final class RepurposeStudioController extends AbstractController
         }
 
         $media = $this->mediaRepository->findOneByFileNameOrHistory($filename);
-        if (null === $media || ! \in_array($media->getMimeType(), ['video/mp4', 'video/webm'], true)) {
+        if (! $media instanceof Media || ! \in_array($media->getMimeType(), ['video/mp4', 'video/webm'], true)) {
             return null;
         }
 
@@ -268,7 +269,7 @@ final class RepurposeStudioController extends AbstractController
         // the same (host, page, network) key.
         $page = \is_string($spec['page'] ?? null) ? $spec['page'] : $post->page;
         $existing = $this->repository->findOneByKey($post->host, $page, $post->network);
-        if (null !== $existing && $existing->id !== $post->id) {
+        if ($existing instanceof SocialPost && $existing->id !== $post->id) {
             return new JsonResponse(['violations' => [['path' => 'page', 'message' => 'A carousel already exists for this page on this network.']]], Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 

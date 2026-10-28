@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pushword\Repurpose\Service;
 
 use Pushword\Repurpose\Model\Carousel;
+use Pushword\Repurpose\Model\Creator;
 
 /**
  * Flags a `creator` key no resolver knows: the byline silently falls back to the
@@ -42,7 +43,7 @@ final readonly class CreatorAdvisor
             'message' => \sprintf(
                 'Unknown creator "%s" — %s. Known keys: %s. Use one of them, or an inline {name, role?, avatar?} object.',
                 $carousel->creator,
-                null === $fallback ? 'no byline will be shown' : \sprintf('the brand byline "%s" will be shown instead', $fallback->name),
+                $fallback instanceof Creator ? \sprintf('the brand byline "%s" will be shown instead', $fallback->name) : 'no byline will be shown',
                 [] === $known ? '(none configured)' : implode(', ', array_keys($known)),
             ),
         ]];

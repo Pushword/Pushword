@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pushword\Repurpose\Service;
 
 use League\Flysystem\FilesystemException;
+use Pushword\Core\Entity\Media;
 use Pushword\Core\Repository\MediaRepository;
 use Pushword\Core\Service\MediaStorageAdapter;
 use Pushword\Repurpose\Model\AudioTrack;
@@ -35,7 +36,7 @@ final readonly class AudioAssetResolver
         }
 
         $media = $this->mediaRepository->findOneByFileNameOrHistory($track->media);
-        if (null === $media || (! str_starts_with($media->getMimeType() ?? '', 'audio/') && 'application/ogg' !== $media->getMimeType())) {
+        if (! $media instanceof Media || (! str_starts_with($media->getMimeType() ?? '', 'audio/') && 'application/ogg' !== $media->getMimeType())) {
             throw new AudioAssetException('Audio media is missing or unsupported: '.$track->media, $path);
         }
 
