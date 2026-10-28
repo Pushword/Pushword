@@ -8,6 +8,7 @@ use Doctrine\ORM\Event\PreUpdateEventArgs;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Image\License\MediaLicense;
 use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
+use Symfony\Component\HttpFoundation\File\File;
 
 /**
  * Keeps Media::licenseState in step with the license properties when a human writes
@@ -91,7 +92,7 @@ final readonly class MediaLicenseStateListener
     {
         $file = $media->getMediaFile();
 
-        return null !== $file && file_exists($file->getPathname());
+        return $file instanceof File && file_exists($file->getPathname());
     }
 
     /**

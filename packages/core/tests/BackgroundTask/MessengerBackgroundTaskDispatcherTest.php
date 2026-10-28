@@ -142,7 +142,7 @@ final class MessengerBackgroundTaskDispatcherTest extends TestCase
         array $transports = [],
         ?BackgroundProcessManager $manager = null,
     ): MessengerBackgroundTaskDispatcher {
-        if (null === $manager) {
+        if (! $manager instanceof BackgroundProcessManager) {
             $manager = self::createStub(BackgroundProcessManager::class);
             $manager->method('getPidFilePath')->willReturn('/tmp/test.pid');
             $manager->method('getProcessInfo')->willReturn([

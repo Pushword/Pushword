@@ -128,7 +128,7 @@ final readonly class TempestStandaloneRenderer
             }
 
             if ('#' === $attributedLink[1]) {
-                return null === $this->linkProvider ? null : '<p>'.$this->linkProvider->renderLink($parsed[2], $parsed[1], $attributes, true)."</p>\n";
+                return $this->linkProvider instanceof LinkProvider ? '<p>'.$this->linkProvider->renderLink($parsed[2], $parsed[1], $attributes, true)."</p>\n" : null;
             }
 
             if ('_blank' === ($attributes['target'] ?? null) && ! isset($attributes['rel'])) {

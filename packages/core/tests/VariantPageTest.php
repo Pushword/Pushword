@@ -33,7 +33,7 @@ final class VariantPageTest extends KernelTestCase
         $page->updatedAt = new DateTime();
         $page->mainContent = 'Content of '.$slug;
 
-        if (null !== $variantOf) {
+        if ($variantOf instanceof Page) {
             $page->variantOf = $variantOf;
         }
 

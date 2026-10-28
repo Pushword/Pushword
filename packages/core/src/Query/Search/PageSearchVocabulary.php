@@ -87,7 +87,7 @@ final readonly class PageSearchVocabulary
         $bound = new Condition('id', '<', ($currentPage->id ?? 0) + 3);
         $parentPage = $currentPage?->parentPage;
 
-        if (null === $parentPage) {
+        if (! $parentPage instanceof Page) {
             return $bound;
         }
 

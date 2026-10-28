@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pushword\Core\EventListener;
 
 use Pushword\Core\Utils\FlashBag;
+use Symfony\Component\HttpFoundation\Session\Flash\FlashBagInterface;
 
 trait MediaAlertTrait
 {
@@ -13,7 +14,7 @@ trait MediaAlertTrait
      */
     private function alert(string $type, string $message, array $parameters = []): void
     {
-        if (null !== ($flashBag = FlashBag::get($this->requestStack->getCurrentRequest()))) {
+        if (($flashBag = FlashBag::get($this->requestStack->getCurrentRequest())) instanceof FlashBagInterface) {
             $flashBag->add($type, $this->translator->trans($message, $parameters));
         }
 

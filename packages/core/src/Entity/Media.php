@@ -136,7 +136,7 @@ class Media implements IdInterface, Taggable, Stringable
             return;
         }
 
-        if (null === $this->mediaFile) {
+        if (! $this->mediaFile instanceof File) {
             return;
         }
 
@@ -190,7 +190,7 @@ class Media implements IdInterface, Taggable, Stringable
     {
         $this->mediaFile = $file;
 
-        if (null !== $file) {
+        if ($file instanceof File) {
             $this->updatedAt = new DateTime();
         }
     }
@@ -448,7 +448,7 @@ class Media implements IdInterface, Taggable, Stringable
             return $this;
         }
 
-        if (null !== $this->getMediaFile()) {
+        if ($this->getMediaFile() instanceof File) {
             return $this->setSlugForNewMedia($slug);
         }
 
@@ -464,7 +464,7 @@ class Media implements IdInterface, Taggable, Stringable
     private function setSlugForNewMedia(string $filename): self
     {
         $mediaFile = $this->getMediaFile();
-        if (null === $mediaFile) {
+        if (! $mediaFile instanceof File) {
             return $this;
         }
 
@@ -484,7 +484,7 @@ class Media implements IdInterface, Taggable, Stringable
      */
     public function nameUpload(): void
     {
-        if ('' !== $this->fileName || null === $this->mediaFile) {
+        if ('' !== $this->fileName || ! $this->mediaFile instanceof File) {
             return;
         }
 
@@ -499,7 +499,7 @@ class Media implements IdInterface, Taggable, Stringable
     public function getMediaFromFilename(string $filename = ''): string
     {
         $mediaFile = $this->getMediaFile();
-        if (null === $mediaFile) {
+        if (! $mediaFile instanceof File) {
             $filename = '' !== $filename ? $filename : $this->getFileName();
             if ('' === $filename) {
                 throw new Exception('No filename available');
@@ -566,6 +566,7 @@ class Media implements IdInterface, Taggable, Stringable
         $altSearch = array_merge($altSearch, array_values($this->getAltsParsed()));
         $altSearch = array_map(SearchNormalizer::normalize(...), $altSearch);
         $altSearch = array_unique($altSearch);
+
         $this->altSearch = implode(' ', $altSearch);
     }
 
@@ -579,7 +580,7 @@ class Media implements IdInterface, Taggable, Stringable
             return $this->alt;
         }
 
-        if ('' === $this->alt && null !== $this->getMediaFile()) {
+        if ('' === $this->alt && $this->getMediaFile() instanceof File) {
             return $this->getMediaFileName();
         }
 
@@ -708,7 +709,7 @@ class Media implements IdInterface, Taggable, Stringable
             return $this;
         }
 
-        if (($mediaFile = $this->getMediaFile()) !== null && file_exists($mediaFile->getPathname())) {
+        if (($mediaFile = $this->getMediaFile()) instanceof File && file_exists($mediaFile->getPathname())) {
             $this->hash = sha1_file($mediaFile->getPathname(), true);
 
             return $this;

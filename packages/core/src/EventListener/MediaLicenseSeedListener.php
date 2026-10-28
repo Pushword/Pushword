@@ -59,7 +59,7 @@ final readonly class MediaLicenseSeedListener
 
         // Same definition as everywhere else — which excludes SVG, the one image kind
         // ImageObjectBuilder never emits for.
-        if (null === $file || ! $media->imageData->isImage((string) $file->getMimeType())) {
+        if (! $file instanceof File || ! $media->imageData->isImage((string) $file->getMimeType())) {
             return;
         }
 

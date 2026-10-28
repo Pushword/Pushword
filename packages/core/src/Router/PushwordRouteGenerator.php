@@ -41,7 +41,7 @@ final class PushwordRouteGenerator implements ResetInterface
         $homepage = new Page();
         $homepage->slug = '';
 
-        if (null !== $page) {
+        if ($page instanceof Page) {
             if ($page->locale !== $this->apps->get()->locale) {
                 $homepage->slug = $page->locale;
             }
@@ -80,14 +80,14 @@ final class PushwordRouteGenerator implements ResetInterface
                 ]);
             }
 
-            if (null !== $page && ! $this->apps->sameHost($page->host)
+            if ($page instanceof Page && ! $this->apps->sameHost($page->host)
                 || null !== $host && ! $this->apps->sameHost($host)) {
                 // maybe we force canonical - useful for views
                 $canonical = true;
             }
         }
 
-        if ($canonical && (null !== $page || null !== $host)) {
+        if ($canonical && ($page instanceof Page || null !== $host)) {
             $baseUrl = $this->apps->get($page->host ?? $host)->getStr('baseUrl', '');
         } else {
             $baseUrl = '';
@@ -113,7 +113,7 @@ final class PushwordRouteGenerator implements ResetInterface
             return false;
         }
 
-        if (null === $host && null === $this->apps->getCurrentPage()) {
+        if (null === $host && ! $this->apps->getCurrentPage() instanceof Page) {
             return false;
         }
 

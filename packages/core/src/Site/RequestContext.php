@@ -77,7 +77,7 @@ final class RequestContext implements ResetInterface
 
     public function getLocale(): string
     {
-        if (null !== $this->currentPage && '' !== $this->currentPage->locale) {
+        if ($this->currentPage instanceof Page && '' !== $this->currentPage->locale) {
             return $this->currentPage->locale;
         }
 

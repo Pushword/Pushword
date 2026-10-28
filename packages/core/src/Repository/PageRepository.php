@@ -228,7 +228,7 @@ class PageRepository extends ServiceEntityRepository implements ObjectRepository
             }
 
             $redirection = PageRedirection::fromContent($redirectContent);
-            if (null === $redirection) {
+            if (! $redirection instanceof PageRedirection) {
                 continue;
             }
 

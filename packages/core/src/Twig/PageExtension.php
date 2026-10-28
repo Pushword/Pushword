@@ -26,6 +26,7 @@ use Pushword\Core\Repository\PageRepository;
 use Pushword\Core\Service\LinkCollectorService;
 use Pushword\Core\Site\SiteRegistry;
 use Symfony\Bundle\SecurityBundle\Security;
+use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Twig\Attribute\AsTwigFunction;
 use Twig\Environment as Twig;
@@ -62,7 +63,7 @@ final class PageExtension
     #[AsTwigFunction('breadcrumb_list_position')]
     public function getBreadcrumbListPosition(Page $page): int
     {
-        if (null !== ($parentPage = $page->parentPage)) {
+        if (($parentPage = $page->parentPage) instanceof Page) {
             return $this->getBreadcrumbListPosition($parentPage) + 1;
         }
 
@@ -167,7 +168,7 @@ final class PageExtension
     private function getPagerRouteParams(): array
     {
         $params = [];
-        if (null !== $this->apps->getCurrentPage()) {
+        if ($this->apps->getCurrentPage() instanceof Page) {
             $params['slug'] = $this->apps->getCurrentPage()->slug;
             $params['host'] = $this->apps->getCurrentPage()->host;
         }
@@ -198,7 +199,7 @@ final class PageExtension
             return is_string($host) ? [$host] : $host;
         }
 
-        if (null !== $currentPage) {
+        if ($currentPage instanceof Page) {
             return [$currentPage->host];
         }
 
@@ -356,7 +357,7 @@ final class PageExtension
             $this->pageRepo->andIndexable($queryBuilder);
         }
 
-        if (null !== $currentPage) {
+        if ($currentPage instanceof Page) {
             $queryBuilder->andWhere('p.id <> '.($currentPage->id ?? 0));
         }
 
@@ -524,7 +525,7 @@ final class PageExtension
         array|string $host = '',
         ?Page $currentPage = null,
     ): string {
-        if (null === $this->security->getToken() || ! $this->security->isGranted('ROLE_EDITOR')) {
+        if (! $this->security->getToken() instanceof TokenInterface || ! $this->security->isGranted('ROLE_EDITOR')) {
             return '';
         }
 

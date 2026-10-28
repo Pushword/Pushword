@@ -27,7 +27,7 @@ final readonly class MediaDuplicateDetector
     public function postPersist(Media $media): void
     {
         $duplicate = $this->mediaRepo->findDuplicate($media);
-        if (null === $duplicate) {
+        if (! $duplicate instanceof Media) {
             return;
         }
 

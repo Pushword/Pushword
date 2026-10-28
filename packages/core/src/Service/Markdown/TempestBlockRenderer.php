@@ -209,7 +209,7 @@ final readonly class TempestBlockRenderer
                 return '<p>'.htmlspecialchars($source, \ENT_NOQUOTES | \ENT_SUBSTITUTE)."</p>\n";
             }
 
-            if (null === $this->mediaExtension || null === $this->apps || ! str_contains($this->markdown->parse($source)->html, '<img ')) {
+            if (! $this->mediaExtension instanceof MediaExtension || ! $this->apps instanceof SiteRegistry || ! str_contains($this->markdown->parse($source)->html, '<img ')) {
                 return null;
             }
 
@@ -233,7 +233,7 @@ final readonly class TempestBlockRenderer
 
         $inlineImages = [];
         if (str_contains($source, '![')) {
-            if (null === $this->mediaExtension || null === $this->apps) {
+            if (! $this->mediaExtension instanceof MediaExtension || ! $this->apps instanceof SiteRegistry) {
                 return null;
             }
 

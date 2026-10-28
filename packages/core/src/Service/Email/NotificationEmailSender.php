@@ -177,7 +177,7 @@ final readonly class NotificationEmailSender
      */
     public function canSend(EmailEnvelope $envelope): bool
     {
-        if (null === $this->mailer) {
+        if (! $this->mailer instanceof MailerInterface) {
             $this->logger?->debug('[NotificationEmailSender] Mailer not available');
 
             return false;
@@ -268,7 +268,7 @@ final readonly class NotificationEmailSender
         array $context,
         ?string $fallback,
     ): ?string {
-        if (null === $this->twig) {
+        if (! $this->twig instanceof Environment) {
             return $fallback;
         }
 

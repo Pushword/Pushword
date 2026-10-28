@@ -56,6 +56,6 @@ final readonly class MediaConflictResolver
             return true;
         }
 
-        return null !== $this->mediaRepo->isFileNameUsed($media->getFileName(), $media->id);
+        return $this->mediaRepo->isFileNameUsed($media->getFileName(), $media->id) instanceof Media;
     }
 }

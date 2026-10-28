@@ -38,7 +38,7 @@ final class NativeWorker implements ResetInterface
             throw new RuntimeException('Native request exceeds 16 MiB');
         }
 
-        if (null === $this->process) {
+        if (! $this->process instanceof Process) {
             if (null === $this->binary || ! \function_exists('proc_open') || ! is_executable($this->binary)) {
                 throw new RuntimeException('Native executable unavailable');
             }

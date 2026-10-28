@@ -27,7 +27,7 @@ final readonly class VariantManager
     {
         $master = $variant->variantOf;
 
-        if (null === $master) {
+        if (! $master instanceof Page) {
             throw new LogicException('Only a variant can be promoted to master.');
         }
 

@@ -78,7 +78,7 @@ class Markdown implements FilterInterface
         }
 
         $native = $this->markdownParser->renderNativeMany($markdown);
-        if (null === $this->linkProvider || ! $this->linkProvider->canRenderObfuscatedMarkdownLinkNatively()) {
+        if (! $this->linkProvider instanceof LinkProvider || ! $this->linkProvider->canRenderObfuscatedMarkdownLinkNatively()) {
             foreach ($markdown as $index => $source) {
                 if (str_contains($source, '#[')) {
                     $native[$index] = null;

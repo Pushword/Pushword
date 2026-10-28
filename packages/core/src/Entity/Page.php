@@ -129,14 +129,14 @@ class Page implements IdInterface, Taggable, Stringable, Weightable, CustomPrope
 
     public function setMainImage(?Media $media): self
     {
-        if (null !== $media && null === $media->getWidth()) {
+        if ($media instanceof Media && null === $media->getWidth()) {
             throw new Exception('mainImage must be an Image. Media imported is not an image');
         }
 
         $this->mainImage = $media;
 
         // Picking a real image clears any pending "not found" marker recorded by flat import.
-        if (null !== $media && $this->hasCustomProperty('mainImageNotFound')) {
+        if ($media instanceof Media && $this->hasCustomProperty('mainImageNotFound')) {
             $this->removeCustomProperty('mainImageNotFound');
         }
 
@@ -253,7 +253,7 @@ class Page implements IdInterface, Taggable, Stringable, Weightable, CustomPrope
 
     public function isHoldPublication(): bool
     {
-        return null !== $this->holdPublicationAt;
+        return $this->holdPublicationAt instanceof DateTimeInterface;
     }
 
     public function setHoldPublication(bool $hold): self
@@ -278,7 +278,7 @@ class Page implements IdInterface, Taggable, Stringable, Weightable, CustomPrope
 
     public function isPublished(): bool
     {
-        return null !== $this->publishedAt && $this->publishedAt <= new DateTime('now');
+        return $this->publishedAt instanceof DateTimeInterface && $this->publishedAt <= new DateTime('now');
     }
 
     /**
@@ -503,7 +503,7 @@ class Page implements IdInterface, Taggable, Stringable, Weightable, CustomPrope
 
     public function hasRedirection(): bool
     {
-        return null !== $this->getRedirection();
+        return $this->getRedirection() instanceof PageRedirection;
     }
 
     public function getRedirectionUrl(): string

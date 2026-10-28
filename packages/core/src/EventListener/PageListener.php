@@ -20,6 +20,7 @@ use Pushword\Core\Service\TailwindGenerator;
 use Pushword\Core\Service\VariantManager;
 use Pushword\Core\Site\SiteRegistry;
 use Symfony\Bundle\SecurityBundle\Security;
+use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Contracts\Service\ResetInterface;
 
 #[AsEntityListener(event: Events::preRemove, entity: Page::class)]
@@ -128,7 +129,7 @@ final class PageListener implements ResetInterface
      */
     private function updatePageEditor(Page $page, bool $creating = false): void
     {
-        if (null === ($user = $this->security->getUser())) {
+        if (! ($user = $this->security->getUser()) instanceof UserInterface) {
             return;
         }
 
@@ -136,7 +137,7 @@ final class PageListener implements ResetInterface
             return;
         }
 
-        if ($creating && null === $page->createdBy) {
+        if ($creating && ! $page->createdBy instanceof User) {
             $page->createdBy = $user;
         }
 

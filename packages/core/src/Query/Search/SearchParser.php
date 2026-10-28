@@ -67,8 +67,8 @@ final readonly class SearchParser
         $children = [$this->parsePrimary($tokens, $position, $search)];
         $conjunction = null;
 
-        while (null !== ($next = $this->conjunctionAt($tokens, $position))) {
-            if (null !== $conjunction && $next !== $conjunction) {
+        while (($next = $this->conjunctionAt($tokens, $position)) instanceof Conjunction) {
+            if ($conjunction instanceof Conjunction && $next !== $conjunction) {
                 throw new SearchException(\sprintf('"%s" mixes AND and OR without saying which comes first. Group one of them: "a AND (b OR c)" or "(a AND b) OR c".', $search));
             }
 
@@ -77,7 +77,7 @@ final readonly class SearchParser
             $children[] = $this->parsePrimary($tokens, $position, $search);
         }
 
-        return null === $conjunction ? $children[0] : new Group($conjunction, $children);
+        return $conjunction instanceof Conjunction ? new Group($conjunction, $children) : $children[0];
     }
 
     /**

@@ -11,6 +11,7 @@ use Pushword\Core\Router\PushwordRouteGenerator;
 use Pushword\Core\Site\SiteConfig;
 use Pushword\Core\Site\SiteRegistry;
 use Symfony\Bundle\SecurityBundle\Security;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Twig\Attribute\AsTwigFunction;
 use Twig\Environment as Twig;
@@ -34,7 +35,7 @@ final readonly class LinkProvider
     private function currentUserIsAdmin(): bool
     {
         $request = $this->requestStack->getMainRequest();
-        if (null === $request || ! $request->hasSession()) {
+        if (! $request instanceof Request || ! $request->hasSession()) {
             return false;
         }
 

@@ -24,7 +24,7 @@ final class OAuthExtension extends AbstractExtension implements GlobalsInterface
      */
     public function getGlobals(): array
     {
-        if (null === $this->clientRegistry) {
+        if (! $this->clientRegistry instanceof ClientRegistry) {
             return ['oauth_providers' => []];
         }
 

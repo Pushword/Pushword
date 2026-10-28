@@ -279,7 +279,7 @@ class MediaExtension
     {
         // First try exact match (uses repository cache if preloaded)
         $media = $this->mediaRepository->findOneByFileNameOrHistory($fileName);
-        if (null !== $media) {
+        if ($media instanceof Media) {
             return $media;
         }
 
@@ -289,7 +289,7 @@ class MediaExtension
             $baseName = pathinfo($fileName, \PATHINFO_FILENAME);
             foreach (['jpg', 'jpeg', 'png', 'gif', 'webp'] as $ext) {
                 $media = $this->mediaRepository->findOneByFileNameOrHistory($baseName.'.'.$ext);
-                if (null !== $media) {
+                if ($media instanceof Media) {
                     return $media;
                 }
             }
@@ -316,7 +316,7 @@ class MediaExtension
         $broken = [];
         foreach (array_unique($matches[1]) as $src) {
             $normalized = $this->normalizeMediaPath($src);
-            if ($this->mayBeAnInternalImage($normalized) && null === $this->findMediaByFileName($normalized)) {
+            if ($this->mayBeAnInternalImage($normalized) && ! $this->findMediaByFileName($normalized) instanceof Media) {
                 $broken[] = $src;
             }
         }

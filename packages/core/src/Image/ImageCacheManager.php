@@ -101,7 +101,7 @@ final class ImageCacheManager
     public function isFilterFileUsable(Media|string $media, string $filterName, ?string $extension = null): bool
     {
         $key = $this->getFilterKey($media, $filterName, $extension);
-        if (null !== $this->mediaCacheStorage) {
+        if ($this->mediaCacheStorage instanceof MediaCacheStorageAdapter) {
             return $this->mediaCacheStorage->fileExists($key) && 0 < $this->mediaCacheStorage->fileSize($key);
         }
 
@@ -282,7 +282,7 @@ final class ImageCacheManager
 
     public function publishFilter(Media|string $media, string $filterName, ?string $extension = null): void
     {
-        if (null === $this->mediaCacheStorage) {
+        if (! $this->mediaCacheStorage instanceof MediaCacheStorageAdapter) {
             return;
         }
 
@@ -420,7 +420,7 @@ final class ImageCacheManager
 
     private function removeStored(string $path): void
     {
-        if (null !== $this->mediaCacheStorage && ! $this->mediaCacheStorage->isLocal()) {
+        if ($this->mediaCacheStorage instanceof MediaCacheStorageAdapter && ! $this->mediaCacheStorage->isLocal()) {
             $this->mediaCacheStorage->delete($path);
         }
     }

@@ -35,7 +35,7 @@ final class ColspanProcessor
             }
 
             if ($this->isColspanMarker($cell)) {
-                if (null !== $previousCell) {
+                if ($previousCell instanceof TableCell) {
                     ++$colspan;
                     $cell->detach();
                 }
@@ -54,7 +54,7 @@ final class ColspanProcessor
 
     private function applyColspan(?TableCell $cell, int $colspan): void
     {
-        if (null !== $cell && $colspan > 1) {
+        if ($cell instanceof TableCell && $colspan > 1) {
             $cell->data->set('attributes/colspan', (string) $colspan);
         }
     }

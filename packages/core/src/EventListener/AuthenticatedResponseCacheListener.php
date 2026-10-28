@@ -8,6 +8,7 @@ use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
 use Symfony\Component\HttpKernel\Event\ResponseEvent;
 use Symfony\Component\HttpKernel\EventListener\AbstractSessionListener;
+use Symfony\Component\Security\Core\User\UserInterface;
 
 /**
  * Keeps an authenticated response out of every cache — the browser back button,
@@ -34,7 +35,7 @@ final readonly class AuthenticatedResponseCacheListener
             return;
         }
 
-        if (null === $this->security->getUser()) {
+        if (! $this->security->getUser() instanceof UserInterface) {
             return;
         }
 

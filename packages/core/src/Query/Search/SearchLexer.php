@@ -65,7 +65,7 @@ final class SearchLexer
 
                 $conjunction = $this->conjunctionAt($search, $position);
 
-                if (null === $conjunction) {
+                if (! $conjunction instanceof Conjunction) {
                     throw new SearchException(\sprintf('Expected AND, OR or ")" at "%s".', substr($search, $position)));
                 }
 
@@ -130,7 +130,7 @@ final class SearchLexer
                     break;
                 }
 
-                if (null !== $this->conjunctionAt($search, $next)) {
+                if ($this->conjunctionAt($search, $next) instanceof Conjunction) {
                     break;
                 }
             }

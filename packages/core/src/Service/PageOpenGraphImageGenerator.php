@@ -16,6 +16,7 @@ use Imagine\Imagick\Imagine;
 use League\Flysystem\FilesystemException;
 use LogicException;
 use Psr\Log\LoggerInterface;
+use Pushword\Core\Entity\Media;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Site\SiteRegistry;
 use Symfony\Component\Filesystem\Filesystem;
@@ -88,7 +89,7 @@ class PageOpenGraphImageGenerator implements ResetInterface
 
     public function exists(): bool
     {
-        if (null !== $this->mediaCacheStorage) {
+        if ($this->mediaCacheStorage instanceof MediaCacheStorageAdapter) {
             try {
                 return $this->mediaCacheStorage->fileExists($this->getKey());
             } catch (FilesystemException) {
@@ -101,7 +102,7 @@ class PageOpenGraphImageGenerator implements ResetInterface
 
     public function generatePreviewImage(): void
     {
-        if (null !== $this->getPage()->getMainImage()) {
+        if ($this->getPage()->getMainImage() instanceof Media) {
             return;
         }
 

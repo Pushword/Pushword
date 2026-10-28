@@ -20,7 +20,7 @@ final readonly class TempestNoticeRenderer
     public function render(string $source, array $attributes = []): ?string
     {
         $lines = explode("\n", $source);
-        if (null === $this->twig || null === $this->apps || 1 !== preg_match('/^> \[!([a-z][a-z0-9_-]*)\](?: ([^\r\n]*))?$/iD', array_shift($lines), $matches)) {
+        if (! $this->twig instanceof Twig || ! $this->apps instanceof SiteRegistry || 1 !== preg_match('/^> \[!([a-z][a-z0-9_-]*)\](?: ([^\r\n]*))?$/iD', array_shift($lines), $matches)) {
             return null;
         }
 

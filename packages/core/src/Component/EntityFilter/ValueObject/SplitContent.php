@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pushword\Core\Component\EntityFilter\ValueObject;
 
 use DOMComment;
+use DOMDocument;
 use DOMElement;
 use DOMXPath;
 use Knp\Menu\ItemInterface;
@@ -46,7 +47,7 @@ final readonly class SplitContent implements Stringable
 
     public function __construct(string $mainContent, Page $page, private ?CacheItemPoolInterface $cache = null, private ?PreparedSplitContent $prepared = null)
     {
-        if (null !== $this->prepared) {
+        if ($this->prepared instanceof PreparedSplitContent) {
             $this->chapeau = $this->prepared->chapeau;
             $content = $this->prepared->body;
         } else {
@@ -74,9 +75,9 @@ final readonly class SplitContent implements Stringable
      */
     private function parseToc(string $content): array
     {
-        [$content, $tocHeadings] = null === $this->prepared
-            ? $this->fixHeadings($content)
-            : [$content, ''];
+        [$content, $tocHeadings] = $this->prepared instanceof PreparedSplitContent
+            ? [$content, '']
+            : $this->fixHeadings($content);
 
         // this is a bit crazy
         // Because if there is a wrapper, it will make shit ?!
@@ -105,7 +106,7 @@ final readonly class SplitContent implements Stringable
      */
     private function fixHeadings(string $content): array
     {
-        if (null === $this->cache) {
+        if (! $this->cache instanceof CacheItemPoolInterface) {
             return $this->doFixHeadings($content);
         }
 
@@ -146,7 +147,7 @@ final readonly class SplitContent implements Stringable
      */
     private function extractTocHeadings(DomCapturingHtml5 $html5): string
     {
-        if (null === $html5->lastDocument) {
+        if (! $html5->lastDocument instanceof DOMDocument) {
             return '';
         }
 
@@ -242,7 +243,7 @@ final readonly class SplitContent implements Stringable
      */
     public function getParagraphs(bool $withChapeau = false): array
     {
-        if (null !== $this->prepared) {
+        if ($this->prepared instanceof PreparedSplitContent) {
             return $withChapeau ? $this->prepared->paragraphsWithChapeau : $this->prepared->paragraphs;
         }
 
@@ -285,7 +286,7 @@ final readonly class SplitContent implements Stringable
             return '';
         }
 
-        if (null !== $this->prepared) {
+        if ($this->prepared instanceof PreparedSplitContent) {
             return $html ? $this->prepared->getToc() : $this->prepared->getMenu();
         }
 

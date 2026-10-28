@@ -7,6 +7,7 @@ namespace Pushword\Core\EventListener;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
 use Symfony\Component\HttpKernel\Event\ResponseEvent;
+use Symfony\Component\Security\Core\User\UserInterface;
 
 /**
  * Heals the invariant "authenticated editor ⇒ pw_auth=1 cookie present" without
@@ -61,7 +62,7 @@ final readonly class PwAuthCookieHealListener
             return;
         }
 
-        if (null === $this->security->getUser()) {
+        if (! $this->security->getUser() instanceof UserInterface) {
             return;
         }
 

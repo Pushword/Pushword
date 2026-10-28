@@ -118,7 +118,7 @@ final class MediaCacheController extends AbstractController
     private function resolveMedia(string $fileName): ?Media
     {
         $media = $this->mediaRepository->findOneByFileNameOrHistory($fileName);
-        if (null !== $media) {
+        if ($media instanceof Media) {
             return $media;
         }
 
@@ -129,7 +129,7 @@ final class MediaCacheController extends AbstractController
         $baseName = pathinfo($fileName, \PATHINFO_FILENAME);
         foreach (['jpg', 'jpeg', 'png', 'gif', 'webp'] as $ext) {
             $media = $this->mediaRepository->findOneByFileNameOrHistory($baseName.'.'.$ext);
-            if (null !== $media) {
+            if ($media instanceof Media) {
                 return $media;
             }
         }

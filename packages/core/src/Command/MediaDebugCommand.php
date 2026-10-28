@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pushword\Core\Command;
 
+use Pushword\Core\Entity\Media;
 use Pushword\Core\Repository\MediaRepository;
 use Symfony\Component\Console\Attribute\Argument;
 use Symfony\Component\Console\Attribute\AsCommand;
@@ -63,7 +64,7 @@ final readonly class MediaDebugCommand
         foreach ($searchTerms as $term) {
             $media = $this->mediaRepository->findOneByFileNameOrHistory($term);
 
-            if (null === $media) {
+            if (! $media instanceof Media) {
                 $io->error(\sprintf('No media found for "%s"', $term));
                 $hasNotFound = true;
 

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pushword\Core\Command;
 
+use DateTimeInterface;
 use Pushword\Core\BackgroundTask\BackgroundTaskDispatcherInterface;
 use Pushword\Core\Repository\PageRepository;
 use Pushword\Core\Site\SiteRegistry;
@@ -44,7 +45,7 @@ final readonly class CronCommand
         $lastTime = new LastTime($this->varDir.'/pw-cron-last-run');
         $lastRun = $lastTime->get();
 
-        if (null === $lastRun) {
+        if (! $lastRun instanceof DateTimeInterface) {
             $lastTime->set();
             $output->writeln('First run — initialized timestamp.');
 

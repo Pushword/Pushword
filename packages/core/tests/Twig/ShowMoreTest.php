@@ -136,7 +136,7 @@ final class ShowMoreTest extends KernelTestCase
     {
         self::bootKernel();
 
-        if (null !== $currentPage) {
+        if ($currentPage instanceof Page) {
             $currentPage->slug = 'a-stable-slug';
             self::getContainer()->get(SiteRegistry::class)->setCurrentPage($currentPage);
         }

@@ -16,7 +16,7 @@ trait KernelTrait
 
     public static function loadKernel(KernelInterface $kernel): void
     {
-        if (null === static::$appKernel) {
+        if (! static::$appKernel instanceof KernelInterface) {
             $kernelClass = $kernel::class;
             $env = $_ENV['APP_ENV'] ?? $_SERVER['APP_ENV'] ?? throw new Exception();
             static::$appKernel = new $kernelClass('test' === $env ? 'test' : 'prod', false);
@@ -26,7 +26,7 @@ trait KernelTrait
 
     public static function getKernel(): KernelInterface
     {
-        if (null === self::$appKernel) {
+        if (! self::$appKernel instanceof KernelInterface) {
             throw new LogicException('You must load kernel before to get It');
         }
 
@@ -35,7 +35,7 @@ trait KernelTrait
 
     public static function getDebugKernel(): KernelInterface
     {
-        if (null === static::$debugKernel) {
+        if (! static::$debugKernel instanceof KernelInterface) {
             $main = static::getKernel();
             $kernelClass = $main::class;
             static::$debugKernel = new $kernelClass($main->getEnvironment(), true);

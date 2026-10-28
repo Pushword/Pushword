@@ -89,7 +89,7 @@ final readonly class RouterTwigExtension
     public function isCurrentPage(string $uri, ?Page $currentPage): bool
     {
         return
-            null === $currentPage || $uri !== $this->router->generate($currentPage->getRealSlug())
+            ! $currentPage instanceof Page || $uri !== $this->router->generate($currentPage->getRealSlug())
             ? false
             : true;
     }

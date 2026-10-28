@@ -12,7 +12,7 @@ class FlashBag
     public static function get(?Request $currentRequest = null): ?FlashBagInterface
     {
         // @phpstan-ignore-next-line
-        return null !== $currentRequest && method_exists($currentRequest->getSession(), 'getFlashBag')
+        return $currentRequest instanceof Request && method_exists($currentRequest->getSession(), 'getFlashBag')
             ? $currentRequest->getSession()->getFlashBag()
             : null;
     }

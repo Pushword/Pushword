@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pushword\Core\Service;
 
+use Psr\Cache\CacheItemInterface;
 use Psr\Cache\CacheItemPoolInterface;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
@@ -59,7 +60,7 @@ final class ContentSplitter implements ResetInterface
 
                 try {
                     $item = $this->cache?->getItem($key);
-                    if (null !== $item && $item->isHit()) {
+                    if ($item instanceof CacheItemInterface && $item->isHit()) {
                         $value = $item->get();
                         if (null === $value || $value instanceof PreparedSplitContent) {
                             $prepared[$index] = $value;
@@ -84,7 +85,7 @@ final class ContentSplitter implements ResetInterface
 
                         try {
                             $item = $this->cache?->getItem($keys[$index]);
-                            if (null !== $item) {
+                            if ($item instanceof CacheItemInterface) {
                                 $item->set($results[$offset]);
                                 $this->cache->save($item);
                             }

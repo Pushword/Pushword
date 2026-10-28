@@ -27,7 +27,7 @@ class LastTime
     {
         $dateTime = $this->get();
 
-        return null !== $dateTime && $dateTime->add($dateInterval) >= new DateTime('now');
+        return $dateTime instanceof DateTimeInterface && $dateTime->add($dateInterval) >= new DateTime('now');
     }
 
     /**

@@ -117,7 +117,7 @@ final class RepositoryBenchmarkTest extends KernelTestCase
         $found = 0;
         for ($i = 0; $i < self::FIND_MEDIA_ITERATIONS; ++$i) {
             $media = $this->mediaRepo->findOneByFileName('perf-'.($i % self::MEDIA_COUNT).'.png');
-            if (null !== $media) {
+            if ($media instanceof Media) {
                 ++$found;
             }
         }

@@ -80,7 +80,7 @@ final readonly class HtmlLinkMultisite implements FilterInterface
             return $href;
         }
 
-        if (($currentPage = $this->apps->getCurrentPage()) === null) {
+        if (! ($currentPage = $this->apps->getCurrentPage()) instanceof Page) {
             return $href;
         }
 
@@ -98,7 +98,7 @@ final readonly class HtmlLinkMultisite implements FilterInterface
 
         $page = $this->pageRepository->getPageBySlug($slug, $currentPage->host);
 
-        if (null === $page) {
+        if (! $page instanceof Page) {
             return $href;
         }
 

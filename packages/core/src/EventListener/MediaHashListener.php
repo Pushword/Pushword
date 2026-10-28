@@ -10,6 +10,7 @@ use Pushword\Core\Service\MediaStorageAdapter;
 use function Safe\sha1_file;
 
 use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
+use Symfony\Component\HttpFoundation\File\File;
 
 #[AutoconfigureTag('doctrine.orm.entity_listener', ['entity' => '%pw.entity_media%', 'event' => 'prePersist'])]
 final readonly class MediaHashListener
@@ -23,7 +24,7 @@ final readonly class MediaHashListener
     {
         $media->initTimestampableProperties();
 
-        if (null === $media->getMediaFile() && '' !== $media->getFileName()) {
+        if (! $media->getMediaFile() instanceof File && '' !== $media->getFileName()) {
             $localPath = $this->mediaStorage->getLocalPath($media->getFileName());
 
             // A media can be persisted while its physical file is (temporarily) absent

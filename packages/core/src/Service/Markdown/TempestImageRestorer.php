@@ -18,7 +18,7 @@ final readonly class TempestImageRestorer
     public function restore(string $html, array $images): ?string
     {
         foreach ($images as $index => $image) {
-            if (null === $this->mediaExtension || null === $this->apps) {
+            if (! $this->mediaExtension instanceof MediaExtension || ! $this->apps instanceof SiteRegistry) {
                 return null;
             }
 

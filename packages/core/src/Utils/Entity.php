@@ -37,7 +37,7 @@ class Entity
     {
         $reflectionProperty = self::reflectProperty($object, $property);
 
-        return null !== $reflectionProperty
+        return $reflectionProperty instanceof ReflectionProperty
             && $reflectionProperty->isPublic()
             && ! $reflectionProperty->isPrivateSet()
             && ! $reflectionProperty->isProtectedSet()

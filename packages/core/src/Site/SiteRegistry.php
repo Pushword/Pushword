@@ -76,7 +76,7 @@ final class SiteRegistry implements ResetInterface
             return $this->findByHost($host) ?? $this->getDefault();
         }
 
-        if (null !== $this->requestContext) {
+        if ($this->requestContext instanceof RequestContext) {
             return $this->requestContext->currentSite;
         }
 
@@ -163,7 +163,7 @@ final class SiteRegistry implements ResetInterface
     public function isDefaultHost(string|array|null $host = null): bool
     {
         if (null === $host) {
-            if (null !== $this->requestContext) {
+            if ($this->requestContext instanceof RequestContext) {
                 return $this->defaultHost === $this->requestContext->getMainHost();
             }
 

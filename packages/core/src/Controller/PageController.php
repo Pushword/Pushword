@@ -72,7 +72,7 @@ final class PageController extends AbstractPushwordController
         $normalizedSlug = '' === $slug ? 'homepage' : $slug;
         $page = $this->pageResolver->findPageOr404($request, $normalizedSlug, true);
 
-        if (null === $page) {
+        if (! $page instanceof Page) {
             $redirect = $this->resolveRedirectFrom($normalizedSlug);
             if (null !== $redirect) {
                 return $this->redirect($redirect['url'], $redirect['code']);
@@ -158,7 +158,7 @@ final class PageController extends AbstractPushwordController
 
         $targetPage = $this->pageRepository->getPageBySlug(ltrim($url, '/'), $host);
 
-        return null !== $targetPage ? $this->routeGenerator->generate($targetPage) : $url;
+        return $targetPage instanceof Page ? $this->routeGenerator->generate($targetPage) : $url;
     }
 
     /** @noRector */

@@ -127,7 +127,7 @@ class EmbeddedRightsReader
 
         $xpath = $this->buildXpath($packet);
 
-        if (null === $xpath) {
+        if (! $xpath instanceof DOMXPath) {
             return new EmbeddedRights();
         }
 
@@ -215,7 +215,7 @@ class EmbeddedRightsReader
 
         $container = $this->rdfContainer($node);
 
-        if (null === $container) {
+        if (! $container instanceof DOMElement) {
             return $this->asList($node->textContent);
         }
 

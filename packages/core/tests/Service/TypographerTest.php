@@ -128,7 +128,7 @@ final class TypographerTest extends TestCase
 
         // The inch mark sends the pair to the non-numeric closing pass
         self::assertSame(
-            '<p>“The man was 5\'6&quot; and 120 lbs.”</p>',
+            "<p>“The man was 5'6&quot; and 120 lbs.”</p>",
             $this->typographer->fix("<p>&quot; The man was 5'6&quot; and 120 lbs.&quot;</p>", 'en')
         );
     }
@@ -254,7 +254,7 @@ final class TypographerTest extends TestCase
             $this->typographer->fix('<p>He said "hi" beside the 27" monitor.</p>', 'en')
         );
         self::assertSame(
-            '<p>“The man was 5\'6&quot; and 120 lbs.”</p>',
+            "<p>“The man was 5'6&quot; and 120 lbs.”</p>",
             $this->typographer->fix("<p>&quot;The man was 5'6&quot; and 120 lbs.&quot;</p>", 'en')
         );
     }
@@ -311,7 +311,7 @@ final class TypographerTest extends TestCase
     {
         $html = "<pre><code>l'a...</code></pre><p>l'b</p>";
 
-        self::assertSame('<pre><code>l\'a...</code></pre><p>l’b</p>', $this->typographer->fix($html, 'fr'));
+        self::assertSame("<pre><code>l'a...</code></pre><p>l’b</p>", $this->typographer->fix($html, 'fr'));
     }
 
     public function testMarkupBytesArePreserved(): void

@@ -10,6 +10,7 @@ use Doctrine\ORM\QueryBuilder;
 use InvalidArgumentException;
 use Pushword\Core\Query\Field\FieldCompilation;
 use Pushword\Core\Query\Field\FieldRegistry;
+use Pushword\Core\Query\Field\FieldStrategy;
 
 /**
  * Walks a {@see Group}/{@see Condition} tree onto a query builder.
@@ -74,7 +75,7 @@ final readonly class QueryCompiler
         // with an operator the strategy never meant to handle is the array form
         // reaching past the vocabulary, so it takes the raw path rather than
         // being mangled.
-        if (null !== $strategy && \in_array($condition->operator, $strategy->operators(), true)) {
+        if ($strategy instanceof FieldStrategy && \in_array($condition->operator, $strategy->operators(), true)) {
             return $strategy->compile(new FieldCompilation(
                 $queryBuilder,
                 $alias,

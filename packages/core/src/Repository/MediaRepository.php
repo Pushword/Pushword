@@ -12,6 +12,7 @@ use Doctrine\ORM\Query\Expr;
 use Doctrine\ORM\Query\Expr\Orx;
 use Doctrine\Persistence\ManagerRegistry;
 use Doctrine\Persistence\ObjectRepository;
+use Psr\Cache\CacheItemInterface;
 use Psr\Cache\CacheItemPoolInterface;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Entity\MediaUsage;
@@ -127,7 +128,7 @@ class MediaRepository extends ServiceEntityRepository implements ObjectRepositor
 
         $cache = $this->debug ? null : $this->cache;
 
-        if (null === $cache) {
+        if (! $cache instanceof CacheItemPoolInterface) {
             $this->rememberIndex($this->buildFileNameIndex(), $version);
 
             return;
@@ -236,7 +237,7 @@ class MediaRepository extends ServiceEntityRepository implements ObjectRepositor
 
     private function readVersion(): int
     {
-        if (null === $this->cache) {
+        if (! $this->cache instanceof CacheItemPoolInterface) {
             return 0;
         }
 
@@ -258,7 +259,7 @@ class MediaRepository extends ServiceEntityRepository implements ObjectRepositor
      */
     public function bumpVersion(): void
     {
-        if (null !== $this->cache) {
+        if ($this->cache instanceof CacheItemPoolInterface) {
             $item = $this->cache->getItem(self::VERSION_CACHE_KEY);
             $value = $item->isHit() ? $item->get() : null;
             $item->set((\is_int($value) ? $value : 0) + 1);
@@ -679,7 +680,7 @@ class MediaRepository extends ServiceEntityRepository implements ObjectRepositor
     {
         $cache = $this->debug ? null : $this->cache;
         $item = $cache?->getItem('pw.media.search.v'.$this->readVersion().'.'.($first ? 'one.' : 'all.').hash('sha256', $search));
-        if (! $refresh && null !== $item && $item->isHit()) {
+        if (! $refresh && $item instanceof CacheItemInterface && $item->isHit()) {
             /** @var list<int> $ids */
             $ids = $item->get();
             $results = $this->hydrateSearchIds($ids);
@@ -715,7 +716,7 @@ class MediaRepository extends ServiceEntityRepository implements ObjectRepositor
 
         /** @var list<Media> $results */
         $results = $query->getQuery()->getResult();
-        if (null !== $item) {
+        if ($item instanceof CacheItemInterface) {
             $item->set(array_map(static fn (Media $media): int => (int) $media->id, $results))->expiresAfter(self::SEARCH_CACHE_TTL);
             $cache->save($item);
         }

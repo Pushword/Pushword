@@ -134,7 +134,7 @@ final readonly class ImageCacheGenerator
         }
 
         $image = match (true) {
-            null === $originalImage => $this->imageReader->read($media),
+            ! $originalImage instanceof ImageInterface => $this->imageReader->read($media),
             $skipClone => $originalImage,
             default => 'default' === $filterName ? $originalImage : clone $originalImage,
         };

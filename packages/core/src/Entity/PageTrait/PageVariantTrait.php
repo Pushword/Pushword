@@ -21,7 +21,7 @@ trait PageVariantTrait
     #[ORM\ManyToOne(targetEntity: Page::class, inversedBy: 'variants')]
     public ?Page $variantOf = null {
         set {
-            if (null !== $value && ! $this->validateVariantOf($value)) {
+            if ($value instanceof Page && ! $this->validateVariantOf($value)) {
                 throw new LogicException("A variant's master cannot itself be a variant, and a page cannot be its own master.");
             }
 

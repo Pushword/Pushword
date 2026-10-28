@@ -15,7 +15,7 @@ trait PageParentTrait
     #[ORM\ManyToOne(targetEntity: Page::class, inversedBy: 'childrenPages')]
     public ?Page $parentPage = null {
         set {
-            if (null !== $value && ! $this->validateParentPage($value)) {
+            if ($value instanceof Page && ! $this->validateParentPage($value)) {
                 throw new LogicException("Current Page can't be it own parent page.");
             }
 
@@ -41,7 +41,7 @@ trait PageParentTrait
 
         $grandParentPage = $parentPage->parentPage;
 
-        return null !== $grandParentPage ? $this->validateParentPage($grandParentPage) : true;
+        return $grandParentPage instanceof Page ? $this->validateParentPage($grandParentPage) : true;
     }
 
     public function hasChildrenPages(): bool

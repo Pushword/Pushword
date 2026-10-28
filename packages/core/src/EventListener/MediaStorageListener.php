@@ -121,7 +121,7 @@ final class MediaStorageListener implements ResetInterface
     private function refuseToTakeAnotherMediaFile(Media $media, string $fileName): void
     {
         $holder = $this->mediaRepository->findOtherMediaNamed($fileName, $media->id);
-        if (null === $holder) {
+        if (! $holder instanceof Media) {
             return;
         }
 
@@ -160,7 +160,7 @@ final class MediaStorageListener implements ResetInterface
 
         // Rows an older version left naming one file: the file and its derivatives stay
         // with the other media, so removing the wrong row is how such a pair is repaired.
-        if (null !== $this->mediaRepository->findOtherMediaNamed($media->getFileName(), $media->id)) {
+        if ($this->mediaRepository->findOtherMediaNamed($media->getFileName(), $media->id) instanceof Media) {
             return;
         }
 

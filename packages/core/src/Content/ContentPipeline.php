@@ -6,6 +6,7 @@ namespace Pushword\Core\Content;
 
 use Exception;
 use LogicException;
+use Pushword\Core\Component\EntityFilter\Filter\FilterInterface;
 use Pushword\Core\Component\EntityFilter\FilterEvent;
 use Pushword\Core\Component\EntityFilter\FilterRegistry;
 use Pushword\Core\Component\EntityFilter\Manager;
@@ -204,7 +205,7 @@ final class ContentPipeline
 
             $filterInstance = $this->filterRegistry->getFilter($filter);
 
-            if (null === $filterInstance) {
+            if (! $filterInstance instanceof FilterInterface) {
                 throw new Exception('Filter `'.$filter.'` not found');
             }
 

@@ -7,6 +7,7 @@ namespace Pushword\Core\Utils;
 use Throwable;
 use Twig\Error\RuntimeError;
 use Twig\Error\SyntaxError;
+use Twig\Source;
 
 /**
  * Extracts error details from Twig exceptions.
@@ -20,7 +21,7 @@ final readonly class TwigErrorExtractor
     public function getErrorExcerpt(RuntimeError|SyntaxError $exception, int $context = 1): string
     {
         $sourceContext = $exception->getSourceContext();
-        if (null === $sourceContext) {
+        if (! $sourceContext instanceof Source) {
             return '';
         }
 

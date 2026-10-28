@@ -26,7 +26,7 @@ final class MarkdownInlineTest extends KernelTestCase
     {
         self::assertSame(
             'détaillés dans l\'<a href="#intro">article complet</a>.',
-            $this->getMarkdownParser()->transformInline('détaillés dans l\'[article complet](#intro).')
+            $this->getMarkdownParser()->transformInline("détaillés dans l'[article complet](#intro).")
         );
     }
 

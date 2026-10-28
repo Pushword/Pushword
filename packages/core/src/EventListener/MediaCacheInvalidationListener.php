@@ -46,7 +46,7 @@ final readonly class MediaCacheInvalidationListener
 
     private function invalidate(): void
     {
-        if (null !== $this->cache) {
+        if ($this->cache instanceof CacheItemPoolInterface) {
             $item = $this->cache->getItem(MediaRepository::VERSION_CACHE_KEY);
             $value = $item->isHit() ? $item->get() : null;
             $item->set((\is_int($value) ? $value : 0) + 1);

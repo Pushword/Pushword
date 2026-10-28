@@ -520,7 +520,7 @@ MD;
 
         // Hors du bloc : conversions (email et phone obfusqués, date remplacée)
         $emailObfuscated = substr_count($result, '<span class=nojs>contact');
-        self::assertSame(1, $emailObfuscated, 'Seul l\'email hors du code block doit être obfusqué');
+        self::assertSame(1, $emailObfuscated, "Seul l'email hors du code block doit être obfusqué");
 
         $phoneObfuscated = substr_count($result, 'data-rot');
         self::assertSame(1, $phoneObfuscated, 'Seul le téléphone hors du code block doit être obfusqué');

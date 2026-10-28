@@ -47,7 +47,7 @@ final readonly class ViteExtension
     #[AsTwigFunction('vite_js_files', needsEnvironment: false)]
     public function getEntry(string $entryName, ?string $configName = null): array
     {
-        if (null === $this->entrypointsLookupCollection) {
+        if (! $this->entrypointsLookupCollection instanceof EntrypointsLookupCollection) {
             return [];
         }
 

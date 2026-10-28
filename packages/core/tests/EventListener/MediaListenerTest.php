@@ -534,7 +534,7 @@ final class MediaListenerTest extends AbstractAdminTestClass // PantherTestCase 
 
     private function getImporter(): ExternalImageImporter
     {
-        if (null !== $this->importer) {
+        if ($this->importer instanceof ExternalImageImporter) {
             return $this->importer;
         }
 

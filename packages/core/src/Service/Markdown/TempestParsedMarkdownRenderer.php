@@ -28,7 +28,7 @@ final readonly class TempestParsedMarkdownRenderer
     public function __construct(private Markdown $markdown, private ?LinkProvider $linkProvider, private ?SiteRegistry $apps, private TempestImageRestorer $images, private Closure $renderMarkdown, private Closure $renderInline)
     {
         $this->markdownWithoutFrontMatter = new Markdown(null)->removeRules(FrontMatterRule::class);
-        $this->dateFilter = null === $apps ? null : new Date($apps);
+        $this->dateFilter = $apps instanceof SiteRegistry ? new Date($apps) : null;
     }
 
     /** @param list<array{src: string, alt: string, linked: bool}> $inlineImages */
@@ -129,7 +129,7 @@ final readonly class TempestParsedMarkdownRenderer
         }
 
         if (str_contains($source, 'date(')) {
-            if (null === $this->dateFilter) {
+            if (! $this->dateFilter instanceof Date) {
                 return null;
             }
 
@@ -220,7 +220,7 @@ final readonly class TempestParsedMarkdownRenderer
         }
 
         $contacts = [];
-        if (null !== $this->linkProvider && ! str_contains($source, '`') && ! str_contains($source, '<') && ! str_contains($source, "\u{E000}")) {
+        if ($this->linkProvider instanceof LinkProvider && ! str_contains($source, '`') && ! str_contains($source, '<') && ! str_contains($source, "\u{E000}")) {
             try {
                 $emailPattern = '(?<![A-Za-z0-9._+-])(?<email>[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,})(?=$|[ \t\n.,!?)>\/])';
                 $phonePattern = '(?<phone>(?:(?:\+|00)33|0)(?:\s|&nbsp;|\xC2\xA0)*[1-9](?:(?:[\s.-]|&nbsp;|\xC2\xA0)*\d{2}){4})(?=$|[ \t\n.,!?);>\/<])';
@@ -253,7 +253,7 @@ final readonly class TempestParsedMarkdownRenderer
         }
 
         $angleLinks = [];
-        if (null !== $this->linkProvider && str_contains($source, '](<')) {
+        if ($this->linkProvider instanceof LinkProvider && str_contains($source, '](<')) {
             $source = preg_replace_callback('/#\[([^\]\n]+)\]\(<([^<>\n]+)>\)(\{[^{}\n]*\})?/', function (array $match) use (&$angleLinks): string {
                 $label = ($this->renderMarkdown)($match[1]);
                 $attributes = isset($match[3]) ? self::linkAttributes($match[3]) : [];
@@ -328,7 +328,7 @@ final readonly class TempestParsedMarkdownRenderer
 
         $links = [];
         if (str_contains($source, '){') || str_contains($source, '#[')) {
-            if (str_contains($source, '#[') && null === $this->linkProvider) {
+            if (str_contains($source, '#[') && ! $this->linkProvider instanceof LinkProvider) {
                 return null;
             }
 
@@ -921,7 +921,7 @@ final readonly class TempestParsedMarkdownRenderer
             return false;
         }
 
-        if (null === $this->linkProvider && 1 === preg_match('/(?:\+33[ .-]?[1-9](?:[ .-]?\d{2}){4}|(?<!\d)0[1-9](?:[ .-]?\d{2}){4}(?!\d))/', $source)) {
+        if (! $this->linkProvider instanceof LinkProvider && 1 === preg_match('/(?:\+33[ .-]?[1-9](?:[ .-]?\d{2}){4}|(?<!\d)0[1-9](?:[ .-]?\d{2}){4}(?!\d))/', $source)) {
             return false;
         }
 

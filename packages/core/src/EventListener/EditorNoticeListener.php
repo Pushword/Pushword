@@ -10,6 +10,7 @@ use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
 use Symfony\Component\HttpKernel\Event\ResponseEvent;
 use Symfony\Component\HttpKernel\KernelEvents;
+use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
@@ -50,7 +51,7 @@ final readonly class EditorNoticeListener
             return;
         }
 
-        if (null === $this->security->getToken() || ! $this->security->isGranted('ROLE_EDITOR')) {
+        if (! $this->security->getToken() instanceof TokenInterface || ! $this->security->isGranted('ROLE_EDITOR')) {
             return;
         }
 
