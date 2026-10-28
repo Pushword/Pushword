@@ -15,6 +15,7 @@ use Doctrine\ORM\Mapping\Column;
 use Exception;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Entity\SharedTrait\IdInterface;
+use Pushword\Core\Entity\User;
 use Pushword\Core\EventListener\PageListener;
 use Pushword\Core\Service\RevisionCalculator;
 use Pushword\Core\Utils\Entity;
@@ -183,7 +184,7 @@ class Versionner
      */
     private function snapshotWithEditor(IdInterface $entity, string $jsonContent): string
     {
-        if (! $entity instanceof Page || null === $entity->editedBy) {
+        if (! $entity instanceof Page || ! $entity->editedBy instanceof User) {
             return $jsonContent;
         }
 
