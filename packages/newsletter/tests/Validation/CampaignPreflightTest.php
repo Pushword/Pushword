@@ -135,4 +135,34 @@ final class CampaignPreflightTest extends AbstractNewsletterTestCase
         $campaign->senderProfile = 'removed';
         self::assertContains('sender.invalid', array_column($preflight->check($campaign), 'code'));
     }
+
+    public function testSchedulingValidatesTheRequestedDateBeforeAuthorizing(): void
+    {
+        $when = new DateTimeImmutable('+1 month');
+        $provider = $this->createMock(BlockProviderInterface::class);
+        $provider->method('type')->willReturn('products');
+        $provider->expects(self::exactly(2))->method('check')->willReturnCallback(static function (BlockContent $block, BlockContext $context) use ($when): array {
+            self::assertSame($when, $context->scheduledAt);
+
+            return [new CampaignIssue('product.expired', 'Product expired.', 'bodyMarkdown')];
+        });
+        self::getContainer()->set(BlockRegistry::class, new BlockRegistry([$provider]));
+
+        foreach ([null, new DateTimeImmutable('+1 day')] as $previousDate) {
+            $campaign = $this->createCampaign($this->createAudience());
+            $campaign->scheduledAt = $previousDate;
+            $campaign->bodyMarkdown = BlockMarkup::encode('products', new BlockContent('42', 'Product', 'Saved copy'));
+
+            try {
+                self::getContainer()->get(CampaignSender::class)->schedule($campaign, $when);
+                self::fail('The requested date must be checked before authorizing delivery.');
+            } catch (CampaignValidationFailed $failure) {
+                self::assertSame(['product.expired'], array_column($failure->issues, 'code'));
+            }
+
+            self::assertTrue($campaign->isDraft());
+            self::assertSame($when, $campaign->scheduledAt);
+            self::assertSame(0, $campaign->recipientCount);
+        }
+    }
 }

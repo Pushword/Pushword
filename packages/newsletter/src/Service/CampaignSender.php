@@ -48,15 +48,19 @@ final readonly class CampaignSender
 
     public function schedule(Campaign $campaign, DateTimeImmutable $when): void
     {
-        $this->assertSendable($campaign);
+        $this->assertSendable($campaign, $when);
         $campaign->schedule($when);
         $this->entityManager->flush();
     }
 
-    private function assertSendable(Campaign $campaign): void
+    private function assertSendable(Campaign $campaign, ?DateTimeImmutable $when = null): void
     {
         if (! $campaign->isDraft() && ! $campaign->isScheduled()) {
             throw new LogicException('Only a draft or scheduled campaign can be armed.');
+        }
+
+        if ($when instanceof DateTimeImmutable) {
+            $campaign->scheduledAt = $when;
         }
 
         try {
