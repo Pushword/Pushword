@@ -8,9 +8,7 @@
           <div class="pw-quiz-profile" data-profile-key="{{ p.key }}" hidden>
             <h3 class="pw-quiz-profile-title {{ pwQuizProfileTitleClass|default('mt-0 mb-3 text-center text-[1.4rem] text-primary') }}">{{ p.title }}</h3>
             {{ quiz_profile_image(p) }}
-            {# Holds rendered Markdown; quiz.css collapses the outer margins of the
-               blocks inside. That stays CSS on purpose: a `[&>…]` arbitrary variant
-               would come out of `{{ }}` HTML-escaped and match nothing. #}
+            {# quiz.css collapses the outer margins of rendered Markdown blocks. #}
             {% if p.msg %}<div class="pw-quiz-profile-msg {{ pwQuizProfileMsgClass|default('mx-auto mt-1 max-w-2xl leading-[1.6]') }}">{{ p.msg|markdown }}</div>{% endif %}
           </div>
         {% endfor %}

@@ -25,8 +25,7 @@
 
 /* ===========================================================================
    1. Runtime state
-   Each of these reads a class the runtime put on an ancestor. Tailwind has no
-   ancestor variant, so they stay as CSS.
+   These rules follow state classes the runtime toggles on ancestors.
    =========================================================================== */
 
 /* No-JS / crawler view (default): everything is visible and the correct
@@ -143,11 +142,7 @@
   margin: 0 0 0.5rem;
   text-align: center;
 }
-/* Both message boxes hold rendered Markdown (a wrapping <p>, maybe more):
-   collapse the block's outer margins so the container's own spacing wins.
-   `.pw-quiz-profile-msg` is a template element and could carry a `[&>…]`
-   arbitrary variant instead — except Twig HTML-escapes the `&` and `>` on its
-   way into the class attribute, leaving a class that matches nothing. */
+/* Collapse rendered Markdown's outer margins so the container controls spacing. */
 .pw-quiz-band > :first-child,
 .pw-quiz-profile-msg > :first-child {
   margin-top: 0;
