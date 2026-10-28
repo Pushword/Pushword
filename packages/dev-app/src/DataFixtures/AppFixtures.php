@@ -208,7 +208,7 @@ class AppFixtures extends Fixture
         $homepageFr->locale = 'fr';
         $homepageFr->createdAt = new DateTime('2 days ago');
         $homepageFr->updatedAt = new DateTime('2 days ago');
-        $homepageFr->mainContent = 'Ceci est la page d\'accueil en français.';
+        $homepageFr->mainContent = "Ceci est la page d'accueil en français.";
 
         if ('localhost.dev' === $this->apps->getMainHost()) {
             $homepageFr->host = 'localhost.dev';
@@ -224,7 +224,7 @@ class AppFixtures extends Fixture
         $homepageFrCa->locale = 'fr-CA';
         $homepageFrCa->createdAt = new DateTime('2 days ago');
         $homepageFrCa->updatedAt = new DateTime('2 days ago');
-        $homepageFrCa->mainContent = 'Ceci est la page d\'accueil en français canadien.';
+        $homepageFrCa->mainContent = "Ceci est la page d'accueil en français canadien.";
 
         if ('localhost.dev' === $this->apps->getMainHost()) {
             $homepageFrCa->host = 'localhost.dev';
