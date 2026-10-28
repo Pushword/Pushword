@@ -12,14 +12,12 @@ export function initCampaignDesigns(root = document) {
     const customization = summary.querySelector('[data-campaign-design-edit-details]')
     const customizationLabel = customization?.querySelector('summary')
     const preheader = select.form.elements.namedItem('Campaign[preheader]')?.closest('.form-group')
-    const transactional = select.form.elements.namedItem('Campaign[transactional]')?.closest('.form-group')
 
     function update() {
       const design = designs[audience.value]
       const layout = select.value || design?.layout
       const personal = layout === 'personal'
       if (preheader) preheader.hidden = personal
-      if (transactional) transactional.hidden = personal
       if (customizationLabel) customizationLabel.textContent = personal ? summary.dataset.personalCustomize : summary.dataset.customize
       description.hidden = !design
       edit.hidden = true
@@ -203,7 +201,7 @@ export function initEmailPreview(root = document) {
     if (!form) return
     const disclosure = kind === 'automation' ? panel.closest('details') : null
     let previewFields
-    if (kind === 'campaign') previewFields = ['audience', 'emailLayout', 'subject', 'preheader', 'bodyMarkdown', 'transactional'].map((name) => `Campaign[${name}]`)
+    if (kind === 'campaign') previewFields = ['audience', 'emailLayout', 'senderProfile', 'subject', 'preheader', 'bodyMarkdown', 'transactional'].map((name) => `Campaign[${name}]`)
     if (kind === 'automation') {
       const step = `Automation[steps][${panel.dataset.previewStep}]`
       previewFields = ['Automation[audience]', 'Automation[transactional]', `${step}[subject]`, `${step}[bodyMarkdown]`]
@@ -264,6 +262,8 @@ export function initEmailPreview(root = document) {
         const result = await response.json()
         if (version !== revision) return
         frame.srcdoc = result.html
+        const sender = panel.querySelector('[data-preview-sender]')
+        if (sender) sender.textContent = result.sender || ''
         status.textContent = status.dataset.ready
         status.dataset.state = 'ready'
       } catch (error) {

@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeAll } from 'vitest'
 import { createRequire } from 'module'
-import { API } from '@editorjs/editorjs'
+import { API, BlockToolData } from '@editorjs/editorjs'
+import type { BlockTuneData } from '@editorjs/editorjs/types/block-tunes/block-tune-data'
 import { MarkdownUtils } from './tools/utils/MarkdownUtils'
 import EditorJsParseMarkdown from './EditorJsParseMarkdown'
 import EditorJsExportMarkdown from './EditorJsExportMarkdown'
@@ -23,15 +24,16 @@ beforeAll(() => {
   const require = createRequire(import.meta.url)
   const prettier = require('../Resources/public/prettier/standalone.js')
   const plugin = require('../Resources/public/prettier/markdown.js')
-  vi.spyOn(MarkdownUtils as any, 'loadPrettier').mockResolvedValue({ prettier, plugin })
+  // @ts-expect-error Stub the private browser loader with the bundled formatter.
+  vi.spyOn(MarkdownUtils, 'loadPrettier').mockResolvedValue({ prettier, plugin })
   window.pageHost = ''
 })
 
 interface FakeBlock {
   id: string
   type: string
-  data: any
-  tunes: any
+  data: BlockToolData
+  tunes: BlockTuneData
 }
 
 /** What a contenteditable hands back: the browser re-parses the HTML and drops a stray tag. */
@@ -60,6 +62,7 @@ function fakeEditor(): { editor: API; blocks: FakeBlock[] } {
   const block = (type: string): FakeBlock => ({ id: `b${nextId++}`, type, data: {}, tunes: {} })
   const tools = { list: List, table: Table, paragraph: Paragraph, image: Image, quiz: Quiz, codeBlock: CodeBlock, raw: Raw }
   const editor = {
+    saver: { save: async () => ({ blocks: structuredClone(blocks) }) },
     tools: {
       getBlockTools: () =>
         Object.entries(tools).map(([name, constructable]) => ({ name, constructable })),
@@ -82,7 +85,7 @@ function fakeEditor(): { editor: API; blocks: FakeBlock[] } {
         current = index
         return { id: inserted.id }
       },
-      update: (id: string, data: any, tunes: any) => {
+      update: (id: string, data: BlockToolData, tunes: BlockTuneData) => {
         const block = blocks.find((candidate) => candidate.id === id)!
         block.data = ['paragraph', 'list'].includes(block.type) ? reserialize(data) : data
         block.tunes = tunes ?? {}
@@ -110,6 +113,12 @@ async function roundTrip(markdown: string): Promise<string> {
 }
 
 describe('import → export', () => {
+  it('keeps an edit made before the first change event after importing', async () => {
+    const { editor, blocks } = await parse('Original text')
+    blocks[0]!.data.text = 'My first edit'
+    expect(await save(editor, blocks)).toBe('My first edit')
+  })
+
   it.each(['mark', 'small'])('keeps a leading <%s> editable after saving', async (tag) => {
     const text = `<${tag}>Format</${tag}> me`
     const markdown = await Paragraph.exportToMarkdown({ text }, {})
@@ -265,7 +274,7 @@ describe('a loose list', () => {
 
     expect(blocks.map((block) => block.type)).toEqual(['list', 'paragraph'])
     expect(blocks[0]!.data.items[0].content).toBe('Vélos')
-    expect(blocks[0]!.data.items[0].items.map((item: any) => item.content)).toEqual([
+    expect(blocks[0]!.data.items[0].items.map((item: { content: string }) => item.content)).toEqual([
       'Location de VTC : 120 €',
       'Location de VAE : 315 €',
     ])

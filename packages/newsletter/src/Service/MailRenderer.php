@@ -7,6 +7,7 @@ namespace Pushword\Newsletter\Service;
 use DateTimeImmutable;
 use Pushword\Core\Component\EntityFilter\Filter\HtmlUnpublishedLink;
 use Pushword\Core\Site\SiteRegistry;
+use Pushword\Newsletter\Block\BlockMarkup;
 use Pushword\Newsletter\Click\ClickTracker;
 use Pushword\Newsletter\Delivery\SendContext;
 use Pushword\Newsletter\Entity\Audience;
@@ -64,7 +65,12 @@ final readonly class MailRenderer
         ?string $emailLayout = null,
         ?string $messageReference = null,
     ): string {
+        $bodyMarkdown = BlockMarkup::expand($bodyMarkdown);
         $host = $sendContext->mainHost ?? $audience->mainHost;
+        if ('personal' !== ($emailLayout ?? $audience->emailLayout) && null !== $sendContext?->signatureMarkdown) {
+            $bodyMarkdown .= "\n\n".$this->designText($sendContext->signatureMarkdown, $sendContext->mainHost);
+        }
+
         $body = $this->markdownParser->transform($this->personalize($bodyMarkdown, $contact, markdown: true), $host);
         $body = $this->absolutize($body, $host);
         // The body is instrumented first; explicitly marked template roles follow below.
@@ -79,12 +85,14 @@ final readonly class MailRenderer
 
         $layout = $emailLayout ?? $audience->emailLayout;
         if ('personal' === $layout) {
-            $signature = $this->designText($audience->signatureMarkdown, $host);
+            $signature = $this->designText($sendContext->signatureMarkdown ?? $audience->signatureMarkdown, $host);
 
             $html = $this->twig->render($this->view($audience, 'personal.email.html.twig', $sendContext), [
                 'locale' => $locale ?? $contact->locale,
                 'subject' => $this->personalize($subject, $contact),
                 'body' => $body,
+                'unsubscribeUrl' => $unsubscribeUrl,
+                'postalAddress' => $sendContext instanceof SendContext ? $sendContext->postalAddress : $audience->postalAddress,
                 'signature' => $this->markScope($this->absolutize($this->markdownParser->transform($signature, $host), $host), 'footer'),
             ]);
 
@@ -162,11 +170,19 @@ final readonly class MailRenderer
      */
     public function text(Audience $audience, Contact $contact, string $bodyMarkdown, ?string $unsubscribeUrl, ?SendContext $sendContext = null, ?string $emailLayout = null): string
     {
+        $bodyMarkdown = BlockMarkup::expand($bodyMarkdown);
         $layout = $emailLayout ?? $audience->emailLayout;
         if ('personal' === $layout) {
-            $signature = $this->designText($audience->signatureMarkdown, $sendContext->mainHost ?? $audience->mainHost);
+            $signature = $this->designText($sendContext->signatureMarkdown ?? $audience->signatureMarkdown, $sendContext->mainHost ?? $audience->mainHost);
 
-            return $this->personalize($bodyMarkdown, $contact).('' === $signature ? '' : "\n\n".$signature);
+            $foot = array_filter([$unsubscribeUrl, $sendContext instanceof SendContext ? $sendContext->postalAddress : $audience->postalAddress], static fn (?string $value): bool => null !== $value && '' !== $value);
+
+            return $this->personalize($bodyMarkdown, $contact).('' === $signature ? '' : "\n\n".$signature)
+                .([] === $foot ? '' : "\n\n".implode("\n", $foot));
+        }
+
+        if (null !== $sendContext?->signatureMarkdown) {
+            $bodyMarkdown .= "\n\n".$this->designText($sendContext->signatureMarkdown, $sendContext->mainHost);
         }
 
         $postalAddress = $sendContext instanceof SendContext ? $sendContext->postalAddress : $audience->postalAddress;

@@ -342,7 +342,7 @@ final class EmailTemplateAdminTest extends AbstractAdminTestClass
         self::assertStringContainsString('Hello Alex.', $html);
         self::assertStringContainsString('<strong>Robin</strong>', $html);
         self::assertStringNotContainsString('<table', $html);
-        self::assertStringNotContainsString('#unsubscribe', $html);
+        self::assertStringContainsString('#unsubscribe', $html);
         self::assertStringNotContainsString('©', $html);
         $this->entityManager()->clear();
         $stored = $this->entityManager()->find(Audience::class, $id);
@@ -378,7 +378,7 @@ final class EmailTemplateAdminTest extends AbstractAdminTestClass
             self::assertResponseIsSuccessful();
             $html = $this->previewHtml($client);
             self::assertSame('simple' !== $layout, str_contains($html, '<strong>Robin</strong>'));
-            self::assertSame('simple' === $layout, str_contains($html, '#unsubscribe'));
+            self::assertStringContainsString('#unsubscribe', $html);
         }
 
         $crawler = $client->request(Request::METHOD_GET, $url);

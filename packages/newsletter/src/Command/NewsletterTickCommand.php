@@ -9,6 +9,7 @@ use Pushword\Core\Command\AgentOutputTrait;
 use Pushword\Newsletter\Repository\CampaignRepository;
 use Pushword\Newsletter\Service\AutomationRunner;
 use Pushword\Newsletter\Service\CampaignSender;
+use Pushword\Newsletter\Validation\CampaignValidationFailed;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Attribute\Option;
 use Symfony\Component\Console\Command\Command;
@@ -82,11 +83,12 @@ final class NewsletterTickCommand
         }
 
         $io->success(\sprintf(
-            '%d enrollment(s), %d campaign(s) scheduled by a trigger, %d cancelled, %d armed, %d broadcast mail(s), %d drip mail(s).',
+            '%d enrollment(s), %d campaign(s) scheduled by a trigger, %d cancelled, %d armed, %d blocked, %d broadcast mail(s), %d drip mail(s).',
             $report['enrolled'],
             $report['scheduled'],
             $report['cancelled'],
             $report['armed'],
+            $report['blocked'],
             $report['campaignMails'],
             $report['dripMails'],
         ));
@@ -94,7 +96,7 @@ final class NewsletterTickCommand
         return Command::SUCCESS;
     }
 
-    /** @return array{enrolled: int, scheduled: int, cancelled: int, armed: int, campaignMails: int, dripMails: int, budgetLeft: int} */
+    /** @return array{enrolled: int, scheduled: int, cancelled: int, armed: int, blocked: int, campaignMails: int, dripMails: int, budgetLeft: int} */
     private function run(int $budget): array
     {
         $now = new DateTimeImmutable();
@@ -105,9 +107,14 @@ final class NewsletterTickCommand
         $cancelled = $this->automationRunner->cancelStale();
 
         $armed = 0;
+        $blocked = 0;
         foreach ($this->campaignRepository->findDue($now) as $campaign) {
-            $this->campaignSender->arm($campaign);
-            ++$armed;
+            try {
+                $this->campaignSender->arm($campaign);
+                ++$armed;
+            } catch (CampaignValidationFailed) {
+                ++$blocked;
+            }
         }
 
         $campaignMails = 0;
@@ -126,6 +133,7 @@ final class NewsletterTickCommand
         return $triggered + [
             'cancelled' => $cancelled,
             'armed' => $armed,
+            'blocked' => $blocked,
             'campaignMails' => $campaignMails,
             'dripMails' => $dripMails,
             'budgetLeft' => $budget - $dripMails,

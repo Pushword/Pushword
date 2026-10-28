@@ -65,6 +65,28 @@ final class NewsletterApiTest extends AbstractNewsletterTestCase
         parent::tearDown();
     }
 
+    public function testPreflightReportsStructuredIssuesAndRejectsSendAndUnknownSender(): void
+    {
+        $campaign = $this->createCampaign($this->createAudience());
+        $campaign->bodyMarkdown = '[Reserve]()';
+
+        $this->entityManager->flush();
+        $url = '/api/newsletter/campaign/'.$campaign->id;
+        $report = $this->request('GET', $url.'/check');
+        self::assertResponseIsSuccessful();
+        self::assertIsArray($report['issues']);
+        self::assertIsArray($report['issues'][0]);
+        self::assertSame('link.invalid', $report['issues'][0]['code']);
+        $blocked = $this->request('POST', $url.'/send');
+        self::assertResponseStatusCodeSame(422);
+        self::assertSame($report['issues'], $blocked['issues']);
+        $this->request('PATCH', $url, ['senderProfile' => 'unapproved@example.test']);
+        self::assertResponseStatusCodeSame(400);
+        $updated = $this->request('PATCH', $url, ['senderProfile' => 'editorial']);
+        self::assertResponseIsSuccessful();
+        self::assertSame('editorial', $updated['senderProfile']);
+    }
+
     public function testAnonymousAccessIsRefused(): void
     {
         $this->client->request(Request::METHOD_GET, '/api/newsletter/contact');
@@ -1631,9 +1653,9 @@ final class NewsletterApiTest extends AbstractNewsletterTestCase
             self::assertSame('draft', $data['status']);
             self::assertSame('review', $data['editorialStage']);
             $this->request('POST', '/api/newsletter/campaign/'.$id.'/send');
-            self::assertResponseStatusCodeSame(400);
+            self::assertResponseStatusCodeSame(422);
             $this->request('POST', '/api/newsletter/campaign/'.$id.'/schedule', ['scheduledAt' => '2030-03-31T09:30:00+02:00']);
-            self::assertResponseStatusCodeSame(400);
+            self::assertResponseStatusCodeSame(422);
             $this->request('PATCH', '/api/newsletter/campaign/'.$id, ['editorialStage' => 'unknown']);
             self::assertResponseStatusCodeSame(400);
             $this->request('PATCH', '/api/newsletter/campaign/'.$id, ['scheduledAt' => 'not a date']);

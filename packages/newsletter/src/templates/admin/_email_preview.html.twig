@@ -13,6 +13,7 @@
     <p class="pw-newsletter-design-status" role="status" aria-live="polite" data-preview-status data-state="{{ preview_html|default('') ? 'ready' : 'updating' }}" data-empty="{{ 'newsletter.campaign.design.empty'|trans }}" data-updating="{{ 'newsletter.design.updating'|trans }}" data-ready="{{ 'newsletter.design.ready'|trans }}" data-failed="{{ 'newsletter.design.failed'|trans }}">{{ (preview_html|default('') ? 'newsletter.design.ready' : 'newsletter.design.updating')|trans }}</p>
     <button type="button" class="btn btn-link" data-preview-retry hidden>{{ 'newsletter.design.retry'|trans }}</button>
   </div>
+  {% if kind|default('') == 'campaign' or preview_sender is defined %}<p class="small text-muted" data-preview-sender>{{ preview_sender|default('') }}</p>{% endif %}
   <div class="pw-newsletter-design-canvas" tabindex="0" role="region" aria-label="{{ 'newsletter.design.canvas'|trans }}">
     <iframe title="{{ 'newsletter.design.preview'|trans }}" sandbox="{{ preview_sandbox|default('') }}" srcdoc="{{ preview_html|default('') }}"></iframe>
   </div>

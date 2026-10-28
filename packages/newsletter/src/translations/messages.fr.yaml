@@ -73,6 +73,22 @@ newsletter:
     status:
       active: Active
       paused: En pause
+  block:
+    content: "Contenu (Markdown)"
+    empty: "Aucun contenu correspondant."
+    failed: "Impossible de charger le contenu."
+    help: "Combinez texte, images, liens, citations ou signature. Chaque insertion crée une copie indépendante et modifiable."
+    library: "Bibliothèque"
+    name: "Nom du bloc"
+    nameRequired: "Renseignez un nom et un contenu."
+    plural: "Blocs réutilisables"
+    refresh: "Actualiser depuis la source"
+    replace: "Remplacer ce bloc par la version actuelle de sa source ? Les retouches de cette copie seront remplacées."
+    save: "Enregistrer une copie dans la bibliothèque"
+    saved: "Copie enregistrée dans la bibliothèque."
+    search: "Rechercher"
+    singular: "Bloc réutilisable"
+    source: "Source"
   calendar:
     agenda: "Agenda"
     conflict: "Cette newsletter a été modifiée. Rechargez la page avant de la déplacer à nouveau."
@@ -112,7 +128,7 @@ newsletter:
       empty: Choisissez une audience pour voir l'habillage utilisé.
       inherit: Utiliser l'habillage de l'audience
       label: Habillage de cette campagne
-      personal: "Messages transactionnels uniquement : contenu et signature de « %audience% », sans lien ni en-têtes de désinscription."
+      personal: "Contenu et signature de « %audience% ». Les messages marketing conservent leur lien de désabonnement."
       personalCustomize: "Personnaliser la signature"
       personalEdit: "Modifier la signature de l’audience (nouvel onglet)"
       personalWarning: "La modification de cette signature affecte tous les mails personnels envoyés à cette audience."
@@ -367,7 +383,7 @@ newsletter:
     mobile: Mobile
     otherTemplates: "Autres modèles"
     personal: Mail personnel
-    personalHelp: "Contenu et signature, sans désinscription. Messages transactionnels uniquement."
+    personalHelp: "Contenu et signature. Les messages marketing conservent leur lien de désabonnement."
     personalSignature: "Signature du mail personnel"
     preview: Aperçu en direct
     previewHelp: Aucun email n'est envoyé depuis cet aperçu. Le rendu peut varier selon la messagerie.
@@ -433,6 +449,24 @@ newsletter:
   resubscribed:
     body: Vous recevrez de nouveau les messages de %audience%.
     title: Réinscription effectuée
+  preflight:
+    audienceMissing: "Choisissez une audience."
+    blockUnavailable: "Ce bloc ou sa source est indisponible."
+    blocked: "L’envoi a été bloqué. Corrigez les erreurs puis choisissez à nouveau Envoyer."
+    bodyMarkdownMissing: "Rédigez le message."
+    error: "À corriger"
+    linkInvalid: "Un lien a une destination vide ou non prise en charge."
+    passed: "Aucune erreur bloquante détectée. Les contrôles seront répétés au départ de l’envoi."
+    renderFailed: "Impossible de générer le message. Vérifiez son contenu et son habillage."
+    senderInvalid: "Choisissez un profil d’expéditeur disponible."
+    subjectLong: "L’objet dépasse 80 caractères et risque d’être tronqué dans la boîte de réception."
+    subjectMissing: "Rédigez l’objet."
+    title: "Avant l’envoi"
+    unsubscribeMissing: "Le lien de désabonnement manque dans ce message marketing."
+    warning: "Conseil"
+  sender:
+    inherit: "Utiliser l’expéditeur de l’audience"
+    label: "Profil d’expéditeur"
   statistics:
     aboutActivity: "À propos de ces événements"
     aboutContacts: "À propos du décompte de la base"

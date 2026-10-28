@@ -17,6 +17,7 @@ use Pushword\Newsletter\Repository\CampaignRepository;
 use Pushword\Newsletter\Service\BounceSignature;
 use Pushword\Newsletter\Service\CampaignSender;
 use Pushword\Newsletter\Tests\AbstractNewsletterTestCase;
+use Pushword\Newsletter\Validation\CampaignValidationFailed;
 use Symfony\Bundle\FrameworkBundle\Test\MailerAssertionsTrait;
 use Symfony\Component\Mime\Email;
 use Symfony\Component\Mime\Header\IdentificationHeader;
@@ -58,10 +59,14 @@ final class CampaignSenderTest extends AbstractNewsletterTestCase
     #[DataProvider('missingSendContent')]
     public function testAnIncompleteIdeaCannotBeSentScheduledOrArmed(string $missing): void
     {
-        $campaign = $this->createCampaign($this->createAudience());
+        $audience = $this->createAudience();
+        $campaign = $this->createCampaign($audience);
         $campaign->workingTitle = 'Prepare the winter newsletter';
-        $campaign->subject = '';
-        $campaign->bodyMarkdown = '';
+        match ($missing) {
+            'audience' => $campaign->audience = null,
+            'subject' => $campaign->subject = '',
+            default => $campaign->bodyMarkdown = '',
+        };
 
         $this->entityManager->flush();
         foreach (['send', 'schedule', 'arm'] as $method) {
@@ -76,13 +81,16 @@ final class CampaignSenderTest extends AbstractNewsletterTestCase
                 }
 
                 self::fail('Incomplete ideas must not be authorized.');
-            } catch (LogicException $exception) {
-                self::assertStringContainsString('subject and a message', $exception->getMessage());
+            } catch (CampaignValidationFailed $exception) {
+                self::assertContains(('body' === $missing ? 'bodyMarkdown' : $missing).'.missing', array_column($exception->issues, 'code'));
             }
 
             self::assertSame(CampaignStatus::Draft, $campaign->status);
             self::assertSame([], $this->recipients($campaign));
         }
+
+        $campaign->audience = $audience;
+        $this->entityManager->flush();
     }
 
     /** @return iterable<string, array{string}> */

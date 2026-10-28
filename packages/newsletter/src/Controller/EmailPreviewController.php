@@ -5,12 +5,16 @@ declare(strict_types=1);
 namespace Pushword\Newsletter\Controller;
 
 use EasyCorp\Bundle\EasyAdminBundle\Attribute\AdminRoute;
+use InvalidArgumentException;
 use Pushword\Core\Site\SiteRegistry;
+use Pushword\Newsletter\Delivery\SendContext;
 use Pushword\Newsletter\Entity\Audience;
+use Pushword\Newsletter\Entity\Campaign;
 use Pushword\Newsletter\Entity\Contact;
 use Pushword\Newsletter\Repository\AudienceRepository;
 use Pushword\Newsletter\Service\EmailTemplateRegistry;
 use Pushword\Newsletter\Service\MailRenderer;
+use Pushword\Newsletter\Service\SenderProfileRegistry;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\InputBag;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -28,6 +32,7 @@ final class EmailPreviewController extends AbstractController
         private readonly MailRenderer $renderer,
         private readonly EmailTemplateRegistry $templates,
         private readonly TranslatorInterface $translator,
+        private readonly SenderProfileRegistry $senderProfiles,
     ) {
     }
 
@@ -62,7 +67,17 @@ final class EmailPreviewController extends AbstractController
 
         $design->transactional = $design->transactional || $data->getBoolean('transactional');
 
-        return $this->preview($design, $data->getString('subject'), $data->getString('bodyMarkdown'), $data->getString('preheader'));
+        $campaign = new Campaign();
+        $campaign->audience = $design;
+        $campaign->senderProfile = $data->getString('senderProfile');
+
+        try {
+            $context = $this->senderProfiles->resolve($campaign);
+        } catch (InvalidArgumentException) {
+            return $this->error('newsletter.preflight.senderInvalid');
+        }
+
+        return $this->preview($design, $data->getString('subject'), $data->getString('bodyMarkdown'), $data->getString('preheader'), $context);
     }
 
     #[Route('/admin/newsletter/template-preview', name: 'admin_newsletter_template_preview', methods: ['POST'])]
@@ -147,12 +162,12 @@ final class EmailPreviewController extends AbstractController
         }
     }
 
-    private function preview(Audience $audience, string $subject, string $body, ?string $preheader): JsonResponse
+    private function preview(Audience $audience, string $subject, string $body, ?string $preheader, ?SendContext $context = null): JsonResponse
     {
-        return $this->jsonPrivate(['html' => $this->renderPreview($audience, $subject, $body, $preheader)]);
+        return $this->jsonPrivate(['html' => $this->renderPreview($audience, $subject, $body, $preheader, $context), 'sender' => ($context->fromName ?? $audience->fromName).' <'.($context->fromEmail ?? $audience->fromEmail).'>']);
     }
 
-    private function renderPreview(Audience $audience, string $subject, string $body, ?string $preheader): string
+    private function renderPreview(Audience $audience, string $subject, string $body, ?string $preheader, ?SendContext $context = null): string
     {
         $contact = new Contact($audience, 'preview@example.tld');
         $contact->name = 'Alex';
@@ -168,6 +183,7 @@ final class EmailPreviewController extends AbstractController
             $preheader,
             $audience->transactional ? null : $site->baseUrl.'/#unsubscribe',
             null,
+            sendContext: $context,
             locale: $site->locale,
         );
     }

@@ -35,6 +35,32 @@ final class NewsletterTickCommandTest extends AbstractNewsletterTestCase
         self::assertSame(CampaignStatus::Sent, $this->reload($campaign)->status);
     }
 
+    public function testFailedPreflightReturnsToDraftAndDoesNotStopOtherCampaigns(): void
+    {
+        $audience = $this->createAudience();
+        $this->createContact($audience, 'reader@example.tld');
+        $invalid = $this->createCampaign($audience);
+        $invalid->bodyMarkdown = '[Broken]()';
+
+        $date = new DateTimeImmutable('-1 minute');
+        $invalid->schedule($date);
+        $valid = $this->createCampaign($audience);
+        $valid->schedule($date);
+
+        $this->entityManager->flush();
+
+        $report = $this->tick();
+        self::assertSame(1, $report['blocked']);
+        self::assertSame(1, $report['armed']);
+        self::assertEmailCount(1);
+        $invalid = $this->reload($invalid);
+        self::assertTrue($invalid->isDraft());
+        self::assertSame($date->getTimestamp(), $invalid->scheduledAt?->getTimestamp());
+        self::assertSame('link.invalid', $invalid->sendIssues[0]['code']);
+        self::assertSame(0, $invalid->recipientCount);
+        self::assertSame(0, $this->tick()['blocked']);
+    }
+
     public function testAFutureCampaignIsLeftAlone(): void
     {
         $audience = $this->createAudience();

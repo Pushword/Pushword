@@ -1,5 +1,5 @@
 ---
-title: 'newsletter site filtering, preparation calendar and date-aware sending; first-name personalization'
+title: 'newsletter site filtering, preparation calendar and date-aware sending; first-name personalization; newsletter preflight, sender profiles and reusable blocks'
 run: 'doctrine:schema:update --force'
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
@@ -49,3 +49,11 @@ Several changes land here between two tags: append to the file, do not replace i
 ## Newsletter preparation and sending
 
 Run `php bin/console doctrine:schema:update --force` for working titles, notes, preparation stages and optimistic versions. **Campaign integrations:** Send (admin/API/CLI) now schedules a future `scheduledAt` instead of starting immediately; clear the date for immediate sending. Cancelling keeps the date as a draft plan. Send/schedule/arming require an audience, subject and body. Update custom admin actions that offered Schedule to use Send. See [editorial planning](../extension/newsletter#editorial-planning-and-calendar).
+
+## Newsletter preflight and reusable blocks
+
+Run `php bin/console doctrine:schema:update --force` for sender profiles, persisted send issues and the reusable block library. **Campaign API clients:** handle HTTP 422 and its `issues` on send/schedule. A failed due campaign returns to draft and needs explicit Send after correction. See [preflight and extension hooks](../extension/newsletter#campaign-preflight).
+
+## Personal email consent
+
+**Sites using the personal email layout:** it now preserves marketing unsubscribe links/headers and the postal address. Use the explicit transactional flag only for service messages. Update custom `personal.email.html.twig` overrides to render `unsubscribeUrl` and `postalAddress`. Campaign delivery fields are now read-only after authorization; cancel scheduling before editing.

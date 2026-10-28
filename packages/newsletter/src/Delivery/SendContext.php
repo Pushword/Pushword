@@ -18,6 +18,7 @@ final readonly class SendContext
         public ?string $footerMarkdown = '',
         public ?string $audienceName = null,
         public ?string $systemLinkBaseUrl = null,
+        public ?string $signatureMarkdown = null,
     ) {
     }
 
@@ -38,7 +39,7 @@ final readonly class SendContext
         );
     }
 
-    /** @return array{mainHost: string, fromEmail: string, fromName: string, replyTo: ?string, postalAddress: ?string, footerMarkdown: ?string, audienceName: ?string, systemLinkBaseUrl: ?string} */
+    /** @return array{mainHost: string, fromEmail: string, fromName: string, replyTo: ?string, postalAddress: ?string, footerMarkdown: ?string, audienceName: ?string, systemLinkBaseUrl: ?string, signatureMarkdown: ?string} */
     public function toArray(): array
     {
         return [
@@ -50,10 +51,11 @@ final readonly class SendContext
             'footerMarkdown' => $this->footerMarkdown,
             'audienceName' => $this->audienceName,
             'systemLinkBaseUrl' => $this->systemLinkBaseUrl,
+            'signatureMarkdown' => $this->signatureMarkdown,
         ];
     }
 
-    /** @param array{mainHost: string, fromEmail: string, fromName: string, replyTo: ?string, postalAddress: ?string, footerMarkdown: ?string, audienceName: ?string, systemLinkBaseUrl?: ?string} $data */
+    /** @param array{mainHost: string, fromEmail: string, fromName: string, replyTo: ?string, postalAddress: ?string, footerMarkdown: ?string, audienceName: ?string, systemLinkBaseUrl?: ?string, signatureMarkdown?: ?string} $data */
     public static function fromArray(array $data): self
     {
         return new self(...$data);

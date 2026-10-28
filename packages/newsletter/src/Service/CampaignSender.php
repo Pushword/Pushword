@@ -7,11 +7,12 @@ namespace Pushword\Newsletter\Service;
 use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
 use LogicException;
-use Pushword\Newsletter\Entity\Audience;
 use Pushword\Newsletter\Entity\Campaign;
 use Pushword\Newsletter\Entity\CampaignRecipient;
 use Pushword\Newsletter\Repository\CampaignRecipientRepository;
 use Pushword\Newsletter\Segment\SegmentResolver;
+use Pushword\Newsletter\Validation\CampaignPreflight;
+use Pushword\Newsletter\Validation\CampaignValidationFailed;
 use Throwable;
 
 /**
@@ -29,6 +30,7 @@ final readonly class CampaignSender
         private CampaignRecipientRepository $recipientRepository,
         private EntityManagerInterface $entityManager,
         private NewsletterMailer $mailer,
+        private CampaignPreflight $preflight,
     ) {
     }
 
@@ -57,9 +59,17 @@ final readonly class CampaignSender
             throw new LogicException('Only a draft or scheduled campaign can be armed.');
         }
 
-        if (! $campaign->audience instanceof Audience || '' === trim($campaign->subject) || '' === trim($campaign->bodyMarkdown)) {
-            throw new LogicException('A campaign needs an audience, a subject and a message before sending.');
+        try {
+            $this->preflight->assertCanSend($campaign);
+        } catch (CampaignValidationFailed $campaignValidationFailed) {
+            $campaign->recordSendIssues($campaignValidationFailed->issues);
+            $campaign->revertToDraft();
+            $this->entityManager->flush();
+
+            throw $campaignValidationFailed;
         }
+
+        $campaign->recordSendIssues([]);
     }
 
     /**

@@ -3,6 +3,7 @@ import { API, BlockAPI } from '@editorjs/editorjs'
 import { ToolInterface } from './tools/Abstract/ToolInterface'
 import { MarkdownUtils } from './tools/utils/MarkdownUtils'
 import { BlockSources } from './BlockSources'
+import EditorJsExportMarkdown from './EditorJsExportMarkdown'
 import { GroupNesting } from './tools/Group/GroupNesting'
 import { GroupRegistry } from './tools/Group/GroupRegistry'
 import GroupStart from './tools/Group/GroupStart'
@@ -72,7 +73,7 @@ export class EditorJsParseMarkdown {
 
   constructor(editorJsInstance: API, markdown: string) {
     this.editorJsInstance = editorJsInstance
-    // @ts-ignore because
+    // @ts-expect-error Editor.js does not expose the static Markdown adapter methods.
     this.editorjsTools = editorJsInstance.tools.getBlockTools() || []
     this.markdown = markdown
   }
@@ -95,6 +96,11 @@ export class EditorJsParseMarkdown {
         sources.record(inserted[countBefore]!.id, chunk.text)
       }
     }
+
+    // Establish the imported value before an author's first edit. Some tools
+    // render form controls without firing an initial block-changed event.
+    const baseline = await this.editorJsInstance.saver.save()
+    await new EditorJsExportMarkdown(this.editorJsInstance, baseline).exportToMarkdown()
   }
 
   /**

@@ -7,8 +7,10 @@ namespace Pushword\Newsletter\Command;
 use DateTimeInterface;
 use Pushword\Core\Command\AgentOutputTrait;
 use Pushword\Newsletter\Entity\Campaign;
+use Pushword\Newsletter\Event\CampaignIssue;
 use Pushword\Newsletter\Repository\CampaignRepository;
 use Pushword\Newsletter\Service\CampaignSender;
+use Pushword\Newsletter\Validation\CampaignValidationFailed;
 use Symfony\Component\Console\Attribute\Argument;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Attribute\Option;
@@ -70,7 +72,17 @@ final class NewsletterSendCommand
             return Command::FAILURE;
         }
 
-        $recipients = $this->campaignSender->send($entity);
+        try {
+            $recipients = $this->campaignSender->send($entity);
+        } catch (CampaignValidationFailed $campaignValidationFailed) {
+            if ($this->agentMode) {
+                $this->writeAgentJson($output, ['tool' => 'pw:newsletter:send', 'result' => 'blocked', 'issues' => array_map(static fn (CampaignIssue $issue): array => $issue->toArray(), $campaignValidationFailed->issues)]);
+            } else {
+                $io->error($campaignValidationFailed->getMessage());
+            }
+
+            return Command::FAILURE;
+        }
 
         if ($this->agentMode) {
             $this->writeAgentJson($output, [

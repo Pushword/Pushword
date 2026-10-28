@@ -30,7 +30,7 @@ use Throwable;
  * RFC 8058 one-click, so unsubscribing never depends on the recipient finding
  * the link in the body — and inboxes stop treating the mail as unattributed bulk.
  *
- * Unless it uses the personal layout or is declared transactional, which drops the link and the headers
+ * Unless it is declared transactional, which drops the link and the headers
  * together: the three places the way out is offered are governed by one value,
  * the unsubscribe URL, and a null one silences all three. A mail keeping the
  * header and losing the link, or the reverse, is worse than either.
@@ -46,15 +46,11 @@ final readonly class NewsletterMailer
         private BounceSignature $bounceSignature,
         private TransportInterface $transport,
         private EntityManagerInterface $entityManager,
+        private SenderProfileRegistry $senderProfiles,
     ) {
     }
 
-    /**
-     * The body is resolved here rather than frozen when the campaign was armed:
-     * a recipient row records *who*, never *what*. Freezing the rendered text
-     * per recipient would multiply the ledger by the body size for no gain, and
-     * would make fixing a typo mid-campaign impossible.
-     */
+    /** Recipients share the campaign content and selected sender identity. */
     public function sendCampaign(Campaign $campaign, Contact $contact): DeliveryMessage
     {
         $content = $campaign->contentFor($contact->locale);
@@ -67,6 +63,7 @@ final readonly class NewsletterMailer
             $content['preheader'],
             UtmTag::forCampaign($campaign),
             $campaign,
+            $this->senderProfiles->resolve($campaign),
         );
     }
 
@@ -142,7 +139,7 @@ final readonly class NewsletterMailer
      * the way its readers will receive it — the chassis around the body is
      * translated in it too. Empty means the audience host's own language.
      */
-    public function sendTest(Audience $audience, string $subject, string $bodyMarkdown, ?string $preheader, string $address, ?UtmTag $utmTag, string $locale = '', bool $transactional = false, ?string $emailLayout = null): void
+    public function sendTest(Audience $audience, string $subject, string $bodyMarkdown, ?string $preheader, string $address, ?UtmTag $utmTag, string $locale = '', bool $transactional = false, ?string $emailLayout = null, ?SendContext $sendContext = null): void
     {
         $contact = new Contact($audience, $address);
         $contact->name = 'Test';
@@ -152,14 +149,14 @@ final readonly class NewsletterMailer
         // A test recipient has no persisted token, so the unsubscribe link would
         // 404. Point it at the site instead — the point is to read the body. A
         // transactional mail has no foot to proofread in the first place.
-        $unsubscribeUrl = $transactional || $audience->transactional || 'personal' === ($emailLayout ?? $audience->emailLayout)
+        $unsubscribeUrl = $transactional || $audience->transactional
             ? null
             : $this->linkGenerator->base($audience).'/';
 
-        $email = $this->baseEmail($audience, $contact)
+        $email = $this->baseEmail($audience, $contact, $sendContext)
             ->subject('[TEST] '.$this->renderer->subject($subject, $contact))
-            ->text($this->renderer->text($audience, $contact, $bodyMarkdown, $unsubscribeUrl, emailLayout: $emailLayout))
-            ->html($this->renderer->html($audience, $contact, $subject, $bodyMarkdown, $preheader, $unsubscribeUrl, $utmTag, emailLayout: $emailLayout));
+            ->text($this->renderer->text($audience, $contact, $bodyMarkdown, $unsubscribeUrl, sendContext: $sendContext, emailLayout: $emailLayout))
+            ->html($this->renderer->html($audience, $contact, $subject, $bodyMarkdown, $preheader, $unsubscribeUrl, $utmTag, sendContext: $sendContext, emailLayout: $emailLayout));
 
         $this->mailer->send($email);
     }
@@ -199,7 +196,7 @@ final readonly class NewsletterMailer
     private function sendMessage(Audience $audience, Contact $contact, string $subject, string $bodyMarkdown, ?string $preheader, ?UtmTag $utmTag, Campaign|AutomationStep $trackedMail, DeliveryMessage $message, ?SendContext $sendContext, ?string $locale, array $untrackedUrls): void
     {
         $emailLayout = $trackedMail instanceof Campaign ? $trackedMail->emailLayout : null;
-        $unsubscribeUrl = $this->isTransactional($audience, $trackedMail) || 'personal' === ($emailLayout ?? $audience->emailLayout)
+        $unsubscribeUrl = $this->isTransactional($audience, $trackedMail)
             ? null
             : $this->linkGenerator->unsubscribeUrl($contact, $sendContext?->mainHost, $sendContext?->systemLinkBaseUrl, $message->reference);
 

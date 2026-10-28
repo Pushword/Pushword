@@ -73,6 +73,22 @@ newsletter:
     status:
       active: Active
       paused: Paused
+  block:
+    content: "Content (Markdown)"
+    empty: "No matching content."
+    failed: "The content could not be loaded."
+    help: "Combine text, images, links, quotes or a signature. Inserting a block creates an independent editable copy."
+    library: "Library"
+    name: "Block name"
+    nameRequired: "Enter a name and content."
+    plural: "Reusable blocks"
+    refresh: "Refresh from source"
+    replace: "Replace this block with the current source? Your edits to this copy will be replaced."
+    save: "Save a copy to the library"
+    saved: "Copy saved to the library."
+    search: "Search"
+    singular: "Reusable block"
+    source: "Source"
   calendar:
     agenda: "Agenda"
     conflict: "This newsletter has changed. Reload the page before moving it again."
@@ -112,7 +128,7 @@ newsletter:
       empty: Choose an audience to see the email design in use.
       inherit: Use the audience design
       label: Design for this campaign
-      personal: "Service messages only: content and the signature from “%audience%”, with no unsubscribe link or headers."
+      personal: "Content and signature from “%audience%”. Marketing messages keep their unsubscribe link."
       personalCustomize: "Customize the signature"
       personalEdit: "Edit audience signature (new tab)"
       personalWarning: "Signature changes affect every personal email sent to this audience."
@@ -367,7 +383,7 @@ newsletter:
     mobile: Mobile
     otherTemplates: "Other templates"
     personal: Personal email
-    personalHelp: "Content and signature, without unsubscribe. Service messages only."
+    personalHelp: "Content and signature. Marketing messages keep their unsubscribe link."
     personalSignature: "Personal email signature"
     preview: Live preview
     previewHelp: This is a preview, no email is sent. Email clients may render it differently.
@@ -433,6 +449,24 @@ newsletter:
   resubscribed:
     body: You will receive mail from %audience% again.
     title: Resubscribed
+  preflight:
+    audienceMissing: "Choose an audience."
+    blockUnavailable: "This block or its source is unavailable."
+    blocked: "Sending was blocked. Correct the errors, then choose Send again."
+    bodyMarkdownMissing: "Write the message."
+    error: "Required"
+    linkInvalid: "A link has an empty or unsupported destination."
+    passed: "No blocking error found. Checks run again when sending starts."
+    renderFailed: "The message could not be rendered. Check its content and design."
+    senderInvalid: "Choose an available sender profile."
+    subjectLong: "The subject exceeds 80 characters and may be truncated in inboxes."
+    subjectMissing: "Write the subject."
+    title: "Before sending"
+    unsubscribeMissing: "The marketing message is missing its unsubscribe link."
+    warning: "Suggestion"
+  sender:
+    inherit: "Use audience sender"
+    label: "Sender profile"
   statistics:
     aboutActivity: "About these events"
     aboutContacts: "About this audience count"

@@ -10,5 +10,7 @@
     {% if signature|trim is not empty %}
         <div style="margin-top:16px;">{{ signature|raw }}</div>
     {% endif %}
+{% if unsubscribeUrl %}<p style="font-size:12px"><a href="{{ unsubscribeUrl }}">{{ 'newsletter.email.unsubscribe'|trans({}, 'messages', locale) }}</a></p>{% endif %}
+{% if postalAddress %}<p style="font-size:12px">{{ postalAddress }}</p>{% endif %}
 </body>
 </html>

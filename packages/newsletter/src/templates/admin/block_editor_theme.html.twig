@@ -1,0 +1,36 @@
+{% use '@PushwordAdminBlockEditor/editorjs_widget.html.twig' %}
+
+{% block editorjs_widget %}
+  <script src="{{ versionedAsset('/bundles/pushwordnewsletter/blocks/blocks.js') }}"></script>
+  {{ parent() }}
+{% endblock %}
+
+{% block editorjs_config %}
+  {{ parent() }}
+  editorjsConfig.readOnly = {{ disabled ? 'true' : 'false' }};
+  editorjsConfig.tools = {
+    newsletterBlock: {
+      class: window.PushwordNewsletterBlock,
+      toolbox: {title: '{{ 'newsletter.block.singular'|trans|e('js') }}'},
+      config: {
+        url: '{{ path('admin_newsletter_block_content') }}',
+        saveUrl: '{{ path('admin_newsletter_block_copy') }}',
+        token: '{{ csrf_token('newsletter_block_copy') }}',
+        labels: {{ {
+          title: 'newsletter.block.singular'|trans,
+          source: 'newsletter.block.source'|trans,
+          search: 'newsletter.block.search'|trans,
+          content: 'newsletter.block.content'|trans,
+          refresh: 'newsletter.block.refresh'|trans,
+          replace: 'newsletter.block.replace'|trans,
+          save: 'newsletter.block.save'|trans,
+          saved: 'newsletter.block.saved'|trans,
+          name: 'newsletter.block.name'|trans,
+          failed: 'newsletter.block.failed'|trans,
+          empty: 'newsletter.block.empty'|trans,
+        }|json_encode|raw }}
+      }
+    },
+    ...editorjsConfig.tools
+  };
+{% endblock %}

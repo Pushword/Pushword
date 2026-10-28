@@ -52,6 +52,25 @@ final class NewsletterSendCommandTest extends AbstractNewsletterTestCase
         self::assertEmailCount(0);
     }
 
+    public function testPreflightCannotBeBypassedThroughTheCommand(): void
+    {
+        $campaign = $this->createCampaign($this->createAudience());
+        $campaign->bodyMarkdown = '[Book]()';
+
+        $this->entityManager->flush();
+        $tester = $this->runSend(['campaign' => $campaign->id, '--format' => 'agent']);
+        self::assertSame(Command::FAILURE, $tester->getStatusCode());
+        $report = json_decode(trim($tester->getDisplay()), true, flags: \JSON_THROW_ON_ERROR);
+        self::assertIsArray($report);
+        self::assertSame('blocked', $report['result']);
+        self::assertIsArray($report['issues']);
+        self::assertIsArray($report['issues'][0]);
+        self::assertSame('link.invalid', $report['issues'][0]['code']);
+        self::assertSame(CampaignStatus::Draft, $campaign->status);
+        self::assertSame(0, $campaign->recipientCount);
+        self::assertEmailCount(0);
+    }
+
     public function testHumanOutput(): void
     {
         $audience = $this->createAudience();

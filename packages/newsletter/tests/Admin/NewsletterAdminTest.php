@@ -228,15 +228,39 @@ final class NewsletterAdminTest extends AbstractAdminTestClass
         parent::tearDown();
     }
 
+    public function testAuthorizedCampaignContentCannotBeChangedThroughTheForm(): void
+    {
+        $client = $this->loginUser();
+        $campaign = $this->campaign($this->seed(), 'Frozen subject');
+        $campaign->schedule(new DateTimeImmutable('+1 day'));
+        $this->entityManager()->flush();
+        $id = $campaign->id;
+        $url = '/admin/newsletter/campaign/'.$id.'/edit';
+        $crawler = $client->request('GET', $url);
+        self::assertResponseIsSuccessful();
+        self::assertSelectorExists('input[name="Campaign[subject]"][disabled]');
+        self::assertSelectorExists('textarea[name="Campaign[bodyMarkdown]"][disabled]');
+        $form = $crawler->selectButton('Save changes')->form();
+        $values = $form->getPhpValues();
+        self::assertIsArray($values['Campaign']);
+        $values['Campaign']['subject'] = 'Tampered after authorization';
+        $client->request('POST', $url, $values);
+        self::assertResponseRedirects();
+        $this->entityManager()->clear();
+        $stored = $this->entityManager()->find(Campaign::class, $id);
+        self::assertNotNull($stored);
+        self::assertSame('Frozen subject', $stored->subject);
+    }
+
     public function testEveryIndexRenders(): void
     {
         $client = $this->loginUser();
         $this->seed();
 
-        foreach (['audience', 'contact', 'campaign', 'campaigns', 'template', 'campaign-recipient', 'automation', 'automation-delivery'] as $section) {
+        foreach (['audience', 'contact', 'campaign', 'campaigns', 'template', 'block', 'campaign-recipient', 'automation', 'automation-delivery'] as $section) {
             $crawler = $client->request(Request::METHOD_GET, '/admin/newsletter/'.$section);
             self::assertSame(200, $client->getResponse()->getStatusCode(), $section.' index');
-            self::assertCount(7, $crawler->filter('.pw-newsletter-nav a'));
+            self::assertCount(8, $crawler->filter('.pw-newsletter-nav a'));
             $viewport = $crawler->filter('meta[name="viewport"]')->attr('content') ?? '';
             self::assertStringNotContainsString('user-scalable=no', $viewport);
             self::assertStringNotContainsString('maximum-scale=1', $viewport);

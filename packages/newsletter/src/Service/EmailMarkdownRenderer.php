@@ -9,6 +9,7 @@ use League\CommonMark\Extension\Attributes\AttributesExtension;
 use League\CommonMark\Extension\Autolink\EmailAutolinkParser;
 use League\CommonMark\Extension\CommonMark\CommonMarkCoreExtension;
 use League\CommonMark\Extension\CommonMark\Node\Inline\Image;
+use League\CommonMark\Extension\CommonMark\Node\Inline\Link;
 use League\CommonMark\Extension\Strikethrough\StrikethroughExtension;
 use League\CommonMark\Extension\Table\TableExtension;
 use League\CommonMark\Extension\TaskList\TaskListExtension;
@@ -46,6 +47,14 @@ final readonly class EmailMarkdownRenderer
         $document = $this->parser->parse($markdown);
         $base = rtrim($this->sites->get($mainHost)->baseUrl, '/');
         foreach ($document->iterator() as $node) {
+            if ($node instanceof Link) {
+                $classes = $node->data->get('attributes.class', '');
+                if (\is_string($classes) && 1 === preg_match('/(?:^|\s)link-btn(-outline)?(?:\s|$)/', $classes, $match)) {
+                    $outline = isset($match[1]);
+                    $node->data->set('attributes.style', 'display:inline-block;padding:12px 20px;border:1px solid #1c1c1c;border-radius:4px;font-weight:bold;text-decoration:none;'.($outline ? 'color:#1c1c1c;background-color:#fafafa;' : 'color:#fafafa;background-color:#1c1c1c;'));
+                }
+            }
+
             if (! $node instanceof Image) {
                 continue;
             }
