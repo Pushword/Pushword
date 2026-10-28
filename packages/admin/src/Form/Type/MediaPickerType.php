@@ -9,6 +9,7 @@ use Override;
 use Pushword\Admin\Controller\MediaCrudController;
 use Pushword\Admin\Form\ChoiceList\SelectedMediaChoiceLoader;
 use Pushword\Admin\Utils\Thumb;
+use Pushword\Core\Entity\Dimensions;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Image\ImageCacheManager;
 use Pushword\Core\Repository\MediaRepository;
@@ -184,9 +185,9 @@ final class MediaPickerType extends AbstractType
     {
         $label = $media->getAlt() ?: $media->getFileName();
         $dimensions = $media->getDimensions();
-        $meta = null === $dimensions ? '' : sprintf('%dx%d', $dimensions->width, $dimensions->height);
-        $width = null === $dimensions ? null : (string) $dimensions->width;
-        $height = null === $dimensions ? null : (string) $dimensions->height;
+        $meta = $dimensions instanceof Dimensions ? sprintf('%dx%d', $dimensions->width, $dimensions->height) : '';
+        $width = $dimensions instanceof Dimensions ? (string) $dimensions->width : null;
+        $height = $dimensions instanceof Dimensions ? (string) $dimensions->height : null;
         $ratioLabel = $media->getRatioLabel();
 
         return [

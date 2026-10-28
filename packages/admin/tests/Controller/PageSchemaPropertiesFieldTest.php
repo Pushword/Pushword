@@ -35,7 +35,7 @@ final class PageSchemaPropertiesFieldTest extends AbstractAdminTestClass
 
     protected function tearDown(): void
     {
-        if (null !== $this->page) {
+        if ($this->page instanceof Page) {
             $entityManager = $this->getEntityManager();
             $page = $entityManager->getRepository(Page::class)->findOneBy(['slug' => self::SLUG]);
             if (null !== $page) {

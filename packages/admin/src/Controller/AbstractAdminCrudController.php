@@ -72,7 +72,7 @@ abstract class AbstractAdminCrudController extends AbstractCrudController implem
         // based on filter : /admin/page?filters[host][comparison]==&filters[host][value]=localhost.dev
         $currentRequest = $this->getRequest();
 
-        if (null === $currentRequest) {
+        if (! $currentRequest instanceof Request) {
             return null;
         }
 
@@ -96,7 +96,7 @@ abstract class AbstractAdminCrudController extends AbstractCrudController implem
             return;
         }
 
-        if (null === $page || '' === $page->host) {
+        if (! $page instanceof Page || '' === $page->host) {
             return;
         }
 
@@ -110,7 +110,7 @@ abstract class AbstractAdminCrudController extends AbstractCrudController implem
 
     public function hasRequest(): bool
     {
-        return null !== $this->getRequest();
+        return $this->getRequest() instanceof Request;
     }
 
     public function getRequest(): ?Request
@@ -326,7 +326,7 @@ abstract class AbstractAdminCrudController extends AbstractCrudController implem
         $responseParameters = parent::configureResponseParameters($responseParameters);
         $context = $this->getContext();
 
-        if (null === $context || Crud::PAGE_INDEX !== $context->getCrud()?->getCurrentPage()) {
+        if (! $context instanceof AdminContext || Crud::PAGE_INDEX !== $context->getCrud()?->getCurrentPage()) {
             return $responseParameters;
         }
 
@@ -339,7 +339,7 @@ abstract class AbstractAdminCrudController extends AbstractCrudController implem
     protected function getRequestedPageSize(): int
     {
         $request = $this->requestStack->getCurrentRequest();
-        if (null === $request) {
+        if (! $request instanceof Request) {
             return $this->defaultPageSize;
         }
 

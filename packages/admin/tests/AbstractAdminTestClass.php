@@ -56,7 +56,7 @@ abstract class AbstractAdminTestClass extends PantherTestCase
 
     protected function loginUser(?KernelBrowser $client = null): KernelBrowser
     {
-        if (null !== $this->client) {
+        if ($this->client instanceof KernelBrowser) {
             return $this->client;
         }
 

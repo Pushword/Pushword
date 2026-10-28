@@ -474,7 +474,7 @@ class PageCrudController extends AbstractAdminCrudController
 
         $flashBag = FlashBag::get($this->getRequest());
 
-        if (null === $flashBag) {
+        if (! $flashBag instanceof FlashBagInterface) {
             return;
         }
 

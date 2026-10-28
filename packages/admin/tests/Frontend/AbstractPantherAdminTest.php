@@ -137,7 +137,7 @@ abstract class AbstractPantherAdminTest extends AbstractAdminTestClass
         // Safety net: ensure the Panther client is quit before PHP shuts down,
         // preventing __destruct from hitting a dead chromedriver.
         register_shutdown_function(static function (): void {
-            if (null !== self::$loggedInClient) {
+            if (self::$loggedInClient instanceof Client) {
                 try {
                     self::$loggedInClient->quit();
                 } catch (Throwable) {
@@ -154,7 +154,7 @@ abstract class AbstractPantherAdminTest extends AbstractAdminTestClass
     {
         parent::setUp();
         // Dismiss any lingering modals from previous tests
-        if (null !== self::$loggedInClient && self::$isLoggedIn) {
+        if (self::$loggedInClient instanceof Client && self::$isLoggedIn) {
             try {
                 self::$loggedInClient->executeScript(
                     'document.querySelectorAll(".modal.show").forEach(m => { bootstrap?.Modal?.getInstance(m)?.hide(); });'
@@ -171,7 +171,7 @@ abstract class AbstractPantherAdminTest extends AbstractAdminTestClass
     protected function createPantherClientWithLogin(): Client
     {
         // Reuse existing logged-in client if available
-        if (null !== self::$loggedInClient && self::$isLoggedIn) {
+        if (self::$loggedInClient instanceof Client && self::$isLoggedIn) {
             return self::$loggedInClient;
         }
 

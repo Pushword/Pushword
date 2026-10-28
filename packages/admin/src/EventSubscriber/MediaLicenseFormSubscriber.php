@@ -10,6 +10,7 @@ use Pushword\Core\Image\License\MediaLicense;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\Form\FormEvent;
 use Symfony\Component\Form\FormEvents;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 
 /**
@@ -54,7 +55,7 @@ final readonly class MediaLicenseFormSubscriber implements EventSubscriberInterf
         }
 
         $request = $this->requestStack->getCurrentRequest();
-        if (null === $request) {
+        if (! $request instanceof Request) {
             return;
         }
 

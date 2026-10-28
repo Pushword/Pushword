@@ -8,12 +8,15 @@ use EasyCorp\Bundle\EasyAdminBundle\Config\Menu\ControllerMenuItem;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Menu\RouteMenuItem;
 use EasyCorp\Bundle\EasyAdminBundle\Config\MenuItem;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Option\EA;
+use EasyCorp\Bundle\EasyAdminBundle\Contracts\Context\AdminContextInterface;
 use EasyCorp\Bundle\EasyAdminBundle\Contracts\Menu\MenuItemInterface;
 use EasyCorp\Bundle\EasyAdminBundle\Contracts\Provider\AdminContextProviderInterface;
+use EasyCorp\Bundle\EasyAdminBundle\Dto\CrudDto;
 use Pushword\Admin\Menu\AdminMenuItemsEvent;
 use Pushword\Core\Site\SiteRegistry;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 
 /**
@@ -32,8 +35,6 @@ final readonly class AdminMenu
 
     /**
      * @return iterable<int, array{weight: int, item: MenuItemInterface}>
-     *
-     * @phpstan-return iterable<int, array{weight: int, item: MenuItemInterface}>
      */
     private function collectMenuItems(): iterable
     {
@@ -123,8 +124,7 @@ final readonly class AdminMenu
      * ```
      *
      * @return iterable<int, MenuItemInterface>
-     *
-     * @phpstan-return iterable<int, MenuItemInterface>
+     * @return iterable<int, MenuItemInterface>
      */
     public function configureMenuItems(): iterable
     {
@@ -300,12 +300,12 @@ final readonly class AdminMenu
     ): bool {
         $context = $this->adminContextProvider->getContext();
 
-        if (null === $context) {
+        if (! $context instanceof AdminContextInterface) {
             return false;
         }
 
         $crud = $context->getCrud();
-        if (null === $crud || $crud->getControllerFqcn() !== $controller) {
+        if (! $crud instanceof CrudDto || $crud->getControllerFqcn() !== $controller) {
             return false;
         }
 
@@ -350,10 +350,10 @@ final readonly class AdminMenu
     private function isCheatSheetActive(): bool
     {
         $context = $this->adminContextProvider->getContext();
-        if (null !== $context) {
+        if ($context instanceof AdminContextInterface) {
             $crud = $context->getCrud();
             if (
-                null !== $crud
+                $crud instanceof CrudDto
                 && PageCheatSheetCrudController::class === $crud->getControllerFqcn()
             ) {
                 return true;
@@ -361,7 +361,7 @@ final readonly class AdminMenu
         }
 
         $request = $this->requestStack->getCurrentRequest();
-        if (null === $request) {
+        if (! $request instanceof Request) {
             return false;
         }
 

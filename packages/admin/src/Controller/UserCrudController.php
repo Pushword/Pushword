@@ -168,7 +168,7 @@ class UserCrudController extends AbstractAdminCrudController
 
     private function getAdminUrlGenerator(): AdminUrlGenerator
     {
-        if (null !== $this->adminUrlGenerator) {
+        if ($this->adminUrlGenerator instanceof AdminUrlGenerator) {
             return $this->adminUrlGenerator;
         }
 

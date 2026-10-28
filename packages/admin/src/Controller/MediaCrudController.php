@@ -194,7 +194,7 @@ class MediaCrudController extends AbstractAdminCrudController
         $responseParameters = parent::configureResponseParameters($responseParameters);
         $context = $this->getContext();
 
-        if (null === $context) {
+        if (! $context instanceof AdminContext) {
             return $responseParameters;
         }
 
@@ -379,7 +379,7 @@ class MediaCrudController extends AbstractAdminCrudController
      */
     private function resolveMediaView(?Request $request): string
     {
-        if (null === $request || ! $request->hasSession()) {
+        if (! $request instanceof Request || ! $request->hasSession()) {
             return self::VIEW_MOSAIC;
         }
 
@@ -435,7 +435,7 @@ class MediaCrudController extends AbstractAdminCrudController
     public function persistEntity(EntityManagerInterface $entityManager, object $entityInstance): void
     {
         $duplicate = null === $entityInstance->getMediaFile() ? null : $this->mediaRepo->findDuplicate($entityInstance);
-        if (null === $duplicate) {
+        if (! $duplicate instanceof Media) {
             parent::persistEntity($entityManager, $entityInstance);
 
             return;

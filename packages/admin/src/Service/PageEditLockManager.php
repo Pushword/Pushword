@@ -32,7 +32,7 @@ final readonly class PageEditLockManager
             return false;
         }
 
-        if (null === $currentUser) {
+        if (! $currentUser instanceof User) {
             return true;
         }
 

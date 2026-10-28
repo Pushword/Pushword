@@ -6,6 +6,7 @@ namespace Pushword\Admin\FormField;
 
 use Pushword\Admin\Controller\MediaCrudController;
 use Pushword\Admin\Utils\Thumb;
+use Pushword\Core\Entity\Dimensions;
 use Pushword\Core\Entity\Media;
 
 /**
@@ -19,8 +20,7 @@ abstract class AbstractMediaPickerField extends AbstractField
      * @param array<string, mixed> $filters
      *
      * @return array<string, string>
-     *
-     * @phpstan-return array<string, string>
+     * @return array<string, string>
      */
     protected function mediaPickerAttributes(string $fieldName, array $filters = [], ?Media $selected = null): array
     {
@@ -118,9 +118,9 @@ abstract class AbstractMediaPickerField extends AbstractField
     {
         $label = $media->getAlt() ?: $media->getFileName();
         $dimensions = $media->getDimensions();
-        $meta = null === $dimensions ? '' : sprintf('%dx%d', $dimensions->width, $dimensions->height);
-        $width = null === $dimensions ? null : (string) $dimensions->width;
-        $height = null === $dimensions ? null : (string) $dimensions->height;
+        $meta = $dimensions instanceof Dimensions ? sprintf('%dx%d', $dimensions->width, $dimensions->height) : '';
+        $width = $dimensions instanceof Dimensions ? (string) $dimensions->width : null;
+        $height = $dimensions instanceof Dimensions ? (string) $dimensions->height : null;
         $ratioLabel = $media->getRatioLabel();
 
         return [

@@ -11,6 +11,7 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Core\User\UserInterface;
 
 /**
  * Renders small HTML fragments that cached/static pages load client-side via
@@ -38,7 +39,7 @@ final class AdminFragmentController extends AbstractController
     )]
     public function pageButtons(int $id): Response
     {
-        if (null === $this->getUser()) {
+        if (! $this->getUser() instanceof UserInterface) {
             return $this->emptyAndClearAuthCookie(Response::HTTP_UNAUTHORIZED);
         }
 
