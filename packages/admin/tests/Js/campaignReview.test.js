@@ -15,7 +15,7 @@ beforeEach(() => {
   Object.defineProperty(email, 'readyState', { value: 'loading', configurable: true })
   Object.defineProperty(frame, 'contentDocument', { get: () => email })
   height = 1200.5
-  vi.spyOn(email.body, 'getBoundingClientRect').mockImplementation(() => ({ height }))
+  vi.spyOn(email.documentElement, 'getBoundingClientRect').mockImplementation(() => ({ height }))
   observe = vi.fn()
   vi.stubGlobal('ResizeObserver', class {
     constructor(callback) { resize = callback }
@@ -67,4 +67,15 @@ it('opens web links separately and keeps anchors within the preview', async () =
   links[1].click()
   links[2].click()
   expect(open).toHaveBeenCalledTimes(1)
+})
+
+it('includes collapsed body margins and can shrink when the email gets shorter', async () => {
+  vi.spyOn(email.body, 'getBoundingClientRect').mockReturnValue({ height: 55.6 })
+  height = 81.6
+  await import('../../../newsletter/src/Resources/public/campaign-review.js')
+  frame.dispatchEvent(new Event('load'))
+  expect(frame.style.blockSize).toBe('82px')
+  height = 40
+  resize()
+  expect(frame.style.blockSize).toBe('40px')
 })

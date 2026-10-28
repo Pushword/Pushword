@@ -16,6 +16,18 @@ use Pushword\Newsletter\Validation\CampaignPreflight;
 #[Group('integration')]
 final class EmailBlockAdminTest extends AbstractNewsletterTestCase
 {
+    public function testEmptyLibraryExplainsReuseAndOffersCreation(): void
+    {
+        $user = self::getContainer()->get(UserRepository::class)->findOneBy(['email' => 'admin@example.tld']);
+        self::assertNotNull($user);
+        $this->client->loginUser($user);
+        $crawler = $this->client->request('GET', '/admin/newsletter/block');
+        self::assertResponseIsSuccessful();
+        self::assertSame('Create your first reusable block', $crawler->filter('.pw-newsletter-empty h2')->text());
+        self::assertStringContainsString('editable copy', $crawler->filter('.pw-newsletter-empty p')->text());
+        self::assertCount(1, $crawler->filter('a[href$="/newsletter/block/new"]'));
+    }
+
     public function testLibrarySearchCopyAndDeletionPreserveTheAuthoredCampaign(): void
     {
         $user = self::getContainer()->get(UserRepository::class)->findOneBy(['email' => 'admin@example.tld']);

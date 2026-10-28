@@ -261,13 +261,14 @@ class CampaignCrudController extends AbstractCrudController
             ->setFormTypeOption('attr', ['aria-labelledby' => 'newsletter-campaign-audience-label']);
 
         yield FormField::addFieldset('newsletter.editorial.preparation')->setIcon('fa fa-calendar');
-        yield TextField::new('workingTitle', 'newsletter.editorial.workingTitle')->setRequired(false)->hideOnIndex();
+        yield TextField::new('workingTitle', 'newsletter.editorial.workingTitle')->setRequired(false)->hideOnIndex()->setColumns('col-12');
         yield TextField::new('title', 'newsletter.editorial.workingTitle')->onlyOnIndex()->setSortable(false);
         yield ChoiceField::new('editorialStage', 'newsletter.editorial.stage')
+            ->setColumns('col-12')
             ->renderAsNativeWidget()
             ->setFormTypeOption('placeholder', false)
             ->setFormTypeOption('disabled', ! $preparing);
-        yield TextareaField::new('internalNotes', 'newsletter.editorial.internalNotes')->setRequired(false)->hideOnIndex();
+        yield TextareaField::new('internalNotes', 'newsletter.editorial.internalNotes')->setRequired(false)->hideOnIndex()->setColumns('col-12')->setNumOfRows(3);
 
         if ($isForm) {
             yield FormField::addFieldset('newsletter.campaign.fieldset.design')->setIcon('fa fa-palette');

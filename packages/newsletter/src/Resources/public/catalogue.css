@@ -7,6 +7,8 @@
 }
 
 .pw-catalogue-page-actions { justify-content: flex-end; }
+.pw-catalogue-views a[aria-current='page'] { background: var(--bs-tertiary-bg); border-color: var(--color-primary); font-weight: 600; box-shadow: inset 0 -2px var(--color-primary); }
+.pw-catalogue-state { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.375rem 0.5rem; }
 .pw-catalogue-creations { gap: 0.5rem; }
 .pw-catalogue-creations .btn-primary { background: var(--color-primary); }
 .pw-catalogue-creations .btn-primary:is(:hover, :active, :focus-visible) { background: var(--link-hover-color, var(--color-primary)); }

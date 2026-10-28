@@ -49,13 +49,13 @@ if (element) {
       el.title = label
       el.setAttribute('aria-label', label)
     },
-    eventContent({ event, timeText }) {
+    eventContent({ event, timeText, view }) {
       const wrapper = document.createElement('span')
-      wrapper.className = 'pw-calendar-event'
+      wrapper.className = 'pw-calendar-event' + (view.type.startsWith('list') ? ' pw-calendar-event-agenda' : '')
       const title = document.createElement('strong')
       title.textContent = [timeText, event.title].filter(Boolean).join(' ')
       const detail = document.createElement('small')
-      detail.textContent = [event.extendedProps.audience, event.extendedProps.state, event.extendedProps.source].filter(Boolean).join(' · ')
+      detail.textContent = [event.extendedProps.state, event.extendedProps.audience, event.extendedProps.source].filter(Boolean).join(' · ')
       wrapper.append(title, detail)
       return { domNodes: [wrapper] }
     },

@@ -2,8 +2,11 @@
   --fc-classic-background: var(--bs-body-bg);
   --fc-classic-foreground: var(--bs-body-color);
   --fc-classic-border: var(--bs-border-color);
-  --fc-classic-button: var(--color-primary);
-  --fc-classic-button-border: var(--color-primary);
+  --fc-classic-button: var(--bs-body-bg);
+  --fc-classic-button-border: var(--bs-border-color);
+  --fc-classic-button-foreground: var(--bs-body-color);
+  --fc-classic-button-strong: var(--bs-tertiary-bg);
+  --fc-classic-button-strong-border: var(--color-primary);
   font-family: inherit;
   min-inline-size: 0;
 }
@@ -12,7 +15,8 @@
 .pw-calendar-event { display: block; min-inline-size: 0; padding: 0.125rem 0.25rem; overflow: hidden; }
 .pw-calendar-event :is(strong, small) { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .pw-calendar-event strong { font-weight: 600; }
-.pw-calendar-event small { font-size: 0.8em; }
+.pw-calendar-event small { font-size: 0.75rem; }
+.pw-calendar-event-agenda :is(strong, small) { white-space: normal; overflow-wrap: anywhere; line-height: 1.5; }
 .pw-calendar-undated { margin-block-start: 2rem; }
 .pw-calendar-undated h2 { font-size: 1.125rem; }
 .pw-calendar-undated ul { list-style: none; padding: 0; }

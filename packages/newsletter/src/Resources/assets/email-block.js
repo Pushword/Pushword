@@ -21,32 +21,32 @@ export class EmailBlock {
   render() {
     this.root = document.createElement('div')
     this.root.className = 'pw-newsletter-block'
-    this.root.style.cssText = 'padding:12px;border:1px solid var(--border-color);border-radius:4px'
     this.heading = document.createElement('strong')
     this.heading.textContent = this.data.label || this.config.labels.title
     this.root.append(this.heading)
     this.status = document.createElement('p')
     this.status.setAttribute('role', 'status')
-    this.status.className = 'small mt-2 mb-0'
+    this.status.className = 'pw-newsletter-block-status'
     this.root.append(this.status)
 
     this.picker = document.createElement('div')
-    this.picker.className = 'd-flex flex-wrap gap-2 my-2'
+    this.picker.className = 'pw-newsletter-block-picker'
     this.provider = this.input('select', this.config.labels.source)
     this.query = this.input('input', this.config.labels.search)
     this.query.type = 'search'
     this.query.addEventListener('keydown', (event) => {
-      if (event.key === 'Enter') { event.preventDefault(); void this.search() }
+      if (event.key === 'Enter') { event.preventDefault(); this.searchButton.click() }
     })
-    this.picker.append(this.provider, this.query, this.button(this.config.labels.search, () => this.search()))
+    this.searchButton = this.button(this.config.labels.search, () => this.search())
+    this.picker.append(this.field(this.provider, this.config.labels.source), this.field(this.query, this.config.labels.search), this.searchButton)
     this.results = document.createElement('div')
-    this.results.className = 'd-flex flex-column gap-1'
+    this.results.className = 'pw-newsletter-block-results'
     this.picker.append(this.results)
     this.root.append(this.picker)
 
     const label = document.createElement('label')
     this.contentLabel = label
-    label.className = 'd-block my-2'
+    label.className = 'pw-newsletter-block-field'
     label.textContent = this.config.labels.content
     this.content = document.createElement('textarea')
     this.content.className = 'form-control'
@@ -62,7 +62,7 @@ export class EmailBlock {
     this.root.append(label)
 
     const actions = document.createElement('div')
-    actions.className = 'd-flex flex-wrap gap-2'
+    actions.className = 'pw-newsletter-block-actions'
     this.refresh = this.button(this.config.labels.refresh, async () => {
       if (!window.confirm(this.config.labels.replace)) return
       const response = await this.request({ provider: this.data.provider, reference: this.data.reference, parameters: JSON.stringify(this.data.parameters || {}) })
@@ -74,7 +74,7 @@ export class EmailBlock {
     summary.textContent = this.config.labels.save
     save.append(summary)
     this.name = this.input('input', this.config.labels.name)
-    save.append(this.name, this.button(this.config.labels.save, () => this.saveCopy()))
+    save.append(this.field(this.name, this.config.labels.name), this.button(this.config.labels.save, () => this.saveCopy()))
     actions.append(save)
     this.root.append(actions)
     this.picker.classList.toggle('d-none', this.readOnly || Boolean(this.data.reference))
@@ -93,6 +93,18 @@ export class EmailBlock {
     return input
   }
 
+  field(input, text) {
+    const label = document.createElement('label')
+    label.className = 'pw-newsletter-block-field'
+    label.append(text, input)
+    return label
+  }
+
+  setStatus(message, error = false) {
+    this.status.textContent = message
+    this.status.classList.toggle('text-danger', error)
+  }
+
   button(label, action) {
     const button = document.createElement('button')
     button.type = 'button'
@@ -100,7 +112,7 @@ export class EmailBlock {
     button.textContent = label
     button.addEventListener('click', async () => {
       button.disabled = true
-      try { await action() } catch { this.status.textContent = this.config.labels.failed }
+      try { await action() } catch { this.setStatus(this.config.labels.failed, true) }
       finally { button.disabled = false }
     })
     return button
@@ -112,11 +124,15 @@ export class EmailBlock {
     for (const [key, value] of Object.entries(params)) url.searchParams.set(key, value)
     url.searchParams.set('audience', form?.querySelector('[name="Campaign[audience]"]')?.value || '')
     url.searchParams.set('scheduledAt', form?.querySelector('[name="Campaign[scheduledAt]"]')?.value || '')
-    const response = await fetch(url)
-    const data = await response.json()
-    if (!response.ok) { this.status.textContent = data.error || this.config.labels.failed; return null }
-    this.status.textContent = ''
-    return data
+    this.setStatus(this.config.labels.loading)
+    this.picker.setAttribute('aria-busy', 'true')
+    try {
+      const response = await fetch(url)
+      const data = await response.json()
+      if (!response.ok) { this.setStatus(data.error || this.config.labels.failed, true); return null }
+      this.setStatus('')
+      return data
+    } finally { this.picker.removeAttribute('aria-busy') }
   }
 
   async loadProviders() {
@@ -129,7 +145,7 @@ export class EmailBlock {
         option.textContent = label
         this.provider.append(option)
       }
-    } catch { this.status.textContent = this.config.labels.failed }
+    } catch { this.setStatus(this.config.labels.failed, true) }
   }
 
   async search() {
@@ -139,7 +155,7 @@ export class EmailBlock {
     for (const item of data.items) {
       this.results.append(this.button(item.label, () => this.select(item)))
     }
-    if (!data.items.length) this.status.textContent = this.config.labels.empty
+    if (!data.items.length) this.setStatus(this.config.labels.empty)
   }
 
   select(item) {
@@ -151,13 +167,15 @@ export class EmailBlock {
     this.contentLabel.classList.remove('d-none')
     this.actions.classList.remove('d-none')
     this.block.dispatchChange()
+    this.content.focus()
   }
 
   async saveCopy() {
     const body = new URLSearchParams({ _token: this.config.token, name: this.name.value, markdown: this.content.value })
+    this.setStatus(this.config.labels.loading)
     const response = await fetch(this.config.saveUrl, { method: 'POST', body })
     const data = await response.json()
-    this.status.textContent = response.ok ? this.config.labels.saved : data.error || this.config.labels.failed
+    this.setStatus(response.ok ? this.config.labels.saved : data.error || this.config.labels.failed, !response.ok)
   }
 
   save() { return { ...this.data, markdown: this.content.value } }

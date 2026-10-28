@@ -15570,17 +15570,17 @@ if (iD) {
 			].filter(Boolean).join(" · ");
 			t.title = a, t.setAttribute("aria-label", a);
 		},
-		eventContent({ event: e, timeText: t }) {
-			let n = document.createElement("span");
-			n.className = "pw-calendar-event";
-			let r = document.createElement("strong");
-			r.textContent = [t, e.title].filter(Boolean).join(" ");
-			let i = document.createElement("small");
-			return i.textContent = [
-				e.extendedProps.audience,
+		eventContent({ event: e, timeText: t, view: n }) {
+			let r = document.createElement("span");
+			r.className = "pw-calendar-event" + (n.type.startsWith("list") ? " pw-calendar-event-agenda" : "");
+			let i = document.createElement("strong");
+			i.textContent = [t, e.title].filter(Boolean).join(" ");
+			let a = document.createElement("small");
+			return a.textContent = [
 				e.extendedProps.state,
+				e.extendedProps.audience,
 				e.extendedProps.source
-			].filter(Boolean).join(" · "), n.append(r, i), { domNodes: [n] };
+			].filter(Boolean).join(" · "), r.append(i, a), { domNodes: [r] };
 		},
 		async eventDrop(n) {
 			a = !0, iD.setAttribute("aria-busy", "true");

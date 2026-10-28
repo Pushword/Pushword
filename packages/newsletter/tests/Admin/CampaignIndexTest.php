@@ -193,7 +193,8 @@ final class CampaignIndexTest extends AbstractNewsletterTestCase
         self::assertResponseStatusCodeSame(403);
     }
 
-    public function testFilteredCatalogueShowsAvailableCountsAndAnEmptyRecovery(): void
+    #[DataProvider('catalogueViews')]
+    public function testFilteredCatalogueShowsAvailableCountsAndAnEmptyRecovery(string $route): void
     {
         $this->login();
         self::getContainer()->get(EventDispatcherInterface::class)->addListener(CollectCampaignIndex::class, static function (CollectCampaignIndex $index): void {
@@ -205,25 +206,26 @@ final class CampaignIndexTest extends AbstractNewsletterTestCase
             $index->noticeLevels['missing'] = 'danger';
         });
 
-        $crawler = $this->client->request(Request::METHOD_GET, '/admin/newsletter/campaigns?source=external&status=sent');
+        $crawler = $this->client->request(Request::METHOD_GET, $route.'?source=external&status=sent');
         self::assertResponseIsSuccessful();
         self::assertSame('Displayed: 1 / 3 available', $crawler->filter('[data-campaign-results]')->text());
         self::assertCount(1, $crawler->filter('[data-campaign-key]'));
 
-        $crawler = $this->client->request(Request::METHOD_GET, '/admin/newsletter/campaigns?q=not-found');
+        $crawler = $this->client->request(Request::METHOD_GET, $route.'?q=not-found');
         self::assertResponseIsSuccessful();
         self::assertSame('Displayed: 0 / 3 available', $crawler->filter('[data-campaign-results]')->text());
         self::assertCount(0, $crawler->filter('.pw-catalogue table'));
         self::assertSame('No matching campaigns', $crawler->filter('[data-catalogue-empty="filtered"] h2')->text());
         self::assertSame('not-found', $crawler->filter('[name="q"]')->attr('value'));
-        self::assertSame('/admin/newsletter/campaigns?host=', $crawler->selectLink('Reset')->attr('href'));
+        self::assertSame($route.'?host=', $crawler->selectLink('Reset')->attr('href'));
         $crawler = $this->client->click($crawler->selectLink('Reset')->link());
         self::assertResponseIsSuccessful();
         self::assertCount(3, $crawler->filter('[data-campaign-key]'));
         self::assertSame('Displayed: 3 / 3 available', $crawler->filter('[data-campaign-results]')->text());
     }
 
-    public function testInitialEmptyCatalogueOffersBothCreationsOnceWithoutAnEmptyTable(): void
+    #[DataProvider('catalogueViews')]
+    public function testInitialEmptyCatalogueOffersBothCreationsOnceWithoutAnEmptyTable(string $route): void
     {
         $this->login();
         self::getContainer()->get(EventDispatcherInterface::class)->addListener(CollectCampaignIndex::class, static function (CollectCampaignIndex $index): void {
@@ -232,7 +234,7 @@ final class CampaignIndexTest extends AbstractNewsletterTestCase
             $index->notices['external'] = 'Not synchronized, campaigns are unavailable.';
             $index->noticeLevels['external'] = 'warning';
         });
-        $crawler = $this->client->request(Request::METHOD_GET, '/admin/newsletter/campaigns');
+        $crawler = $this->client->request(Request::METHOD_GET, $route);
         self::assertResponseIsSuccessful();
         self::assertCount(0, $crawler->filter('.pw-catalogue table'));
         $empty = $crawler->filter('[data-catalogue-empty="initial"]');
@@ -244,6 +246,13 @@ final class CampaignIndexTest extends AbstractNewsletterTestCase
         self::assertSame('https://example.tld/new', $empty->selectLink('Create in partner')->attr('href'));
         self::assertStringContainsString('campaigns are unavailable', $crawler->filter('[role="status"]')->text());
         self::assertCount(0, $crawler->filter('.pw-catalogue-filters, [data-campaign-results]'));
+    }
+
+    /** @return iterable<string, array{string}> */
+    public static function catalogueViews(): iterable
+    {
+        yield 'list' => ['/admin/newsletter/campaigns'];
+        yield 'calendar' => ['/admin/newsletter/calendar'];
     }
 
     /** @return iterable<string, array{'info'|'warning'|'danger'|null, string}> */

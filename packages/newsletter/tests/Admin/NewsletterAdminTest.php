@@ -28,6 +28,30 @@ use Symfony\Component\Mime\Email;
 #[Group('integration')]
 final class NewsletterAdminTest extends AbstractAdminTestClass
 {
+    public function testSecondaryCampaignActionsStillSaveAndContinueEditing(): void
+    {
+        $client = $this->loginUser();
+        $campaign = $this->campaign($this->seed(), 'Campaign actions');
+        $this->entityManager()->flush();
+        $id = $campaign->id;
+        $url = '/admin/newsletter/campaign/'.$id.'/edit';
+        $crawler = $client->request(Request::METHOD_GET, $url);
+        self::assertResponseIsSuccessful();
+        $secondary = $crawler->filter('.pw-newsletter-more-actions');
+        self::assertCount(1, $secondary->selectLink('Duplicate as draft'));
+        self::assertCount(1, $secondary->selectLink('Count audience'));
+        $form = $secondary->selectButton('Save and continue editing')->form();
+        $form['Campaign[workingTitle]'] = 'Updated working title';
+        $client->submit($form);
+        self::assertResponseRedirects($url);
+        $this->entityManager()->clear();
+        $stored = $this->entityManager()->find(Campaign::class, $id);
+        self::assertNotNull($stored);
+        self::assertSame('Updated working title', $stored->workingTitle);
+        self::assertTrue($stored->isDraft());
+        self::assertEmailCount(0);
+    }
+
     public function testInitialEmptyCampaignOffersOneCreateAction(): void
     {
         $client = $this->loginUser();

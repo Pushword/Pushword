@@ -24,8 +24,8 @@
 
 {% block page_actions %}
   <div class="pw-catalogue-page-actions">
-    {% if not isInitialEmpty or calendarView %}<div class="pw-catalogue-creations">{{ _self.creations(creationActions) }}</div>{% endif %}
-    <div class="btn-group" aria-label="{{ 'newsletter.calendar.views'|trans }}">
+    {% if not isInitialEmpty %}<div class="pw-catalogue-creations">{{ _self.creations(creationActions) }}</div>{% endif %}
+    <div class="btn-group pw-catalogue-views" role="group" aria-label="{{ 'newsletter.calendar.views'|trans }}">
       <a class="btn btn-secondary" href="{{ path('admin_newsletter_campaign_catalogue', viewFilters) }}"{% if not calendarView %} aria-current="page"{% endif %}>{{ 'newsletter.calendar.list'|trans }}</a>
       <a class="btn btn-secondary" href="{{ path('admin_newsletter_campaign_calendar', viewFilters) }}"{% if calendarView %} aria-current="page"{% endif %}>{{ 'newsletter.calendar.title'|trans }}</a>
     </div>
@@ -124,7 +124,10 @@
                   <span class="pw-catalogue-audience" data-campaign-hosts>{{ 'newsletter.catalogue.host'|trans }}: {{ item.hosts is empty ? 'newsletter.catalogue.unknownHost'|trans : item.hosts|join(', ') }}</span>
                 </th>
                 {% if hasExternalSources %}<td data-label="{{ 'newsletter.catalogue.source'|trans }}">{{ item.source|capitalize }}</td>{% endif %}
-                <td data-label="{{ 'newsletter.campaign.field.status'|trans }}">{% if item.editorialStage and item.status == 'draft' %}<span class="pw-catalogue-audience">{{ ('newsletter.editorial.' ~ item.editorialStage)|trans }}</span>{% endif %}{{ item.status is null ? 'newsletter.catalogue.unknown'|trans : (statusLabels[item.status] is defined ? statusLabels[item.status]|trans : item.status) }}</td>
+                <td data-label="{{ 'newsletter.campaign.field.status'|trans }}"><div class="pw-catalogue-state">
+                  <span>{{ item.status is null ? 'newsletter.catalogue.unknown'|trans : (statusLabels[item.status] is defined ? statusLabels[item.status]|trans : item.status) }}</span>
+                  {% if item.editorialStage and item.status == 'draft' and item.editorialStage != 'draft' %}<span class="badge badge-secondary">{{ ('newsletter.editorial.' ~ item.editorialStage)|trans }}</span>{% endif %}
+                </div></td>
                 <td data-label="{{ 'newsletter.campaign.field.scheduledAt'|trans }}">{{ item.scheduledAt ? item.scheduledAt|format_datetime('medium', 'short', timezone: timezone) : 'newsletter.catalogue.unknown'|trans }}</td>
                 <td data-label="{{ 'newsletter.catalogue.sentAt'|trans }}">{{ item.sentAt ? item.sentAt|format_datetime('medium', 'short', timezone: timezone) : 'newsletter.catalogue.unknown'|trans }}</td>
                 <td data-label="{{ 'newsletter.catalogue.actions'|trans }}"><div class="pw-catalogue-row-actions">{% for label, url in item.actions %}<a class="pw-catalogue-row-link" href="{{ url }}">{{ label|trans }}</a>{% endfor %}</div></td>

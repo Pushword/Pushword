@@ -39,10 +39,11 @@
   {% else %}
     {% set section = ea.crud.entityFqcn|split('\\')|last|lower %}
     {% set newAction = global_actions|filter(action => action.name in ['new', 'optIn'])|first %}
+    {% set emptyIcon = {automation: 'fa-bolt', emailblock: 'fa-cubes'}[section] ?? 'fa-envelope-open-text' %}
     <tr class="no-results">
       <td colspan="100">
         <div class="pw-empty-state pw-newsletter-empty">
-          <i class="fa {{ section == 'automation' ? 'fa-bolt' : 'fa-envelope-open-text' }} pw-empty-state__icon" aria-hidden="true"></i>
+          <i class="fa {{ emptyIcon }} pw-empty-state__icon" aria-hidden="true"></i>
           <h2>{{ ('newsletter.workspace.' ~ section ~ 'EmptyTitle')|trans }}</h2>
           <p>{{ ('newsletter.workspace.' ~ section ~ 'EmptyHint')|trans }}</p>
           {% if newAction %}

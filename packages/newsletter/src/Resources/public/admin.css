@@ -5,9 +5,12 @@ body[data-newsletter] .content {
   margin-inline: auto;
 }
 
+body[data-newsletter] :is(.content-wrapper, .main-content, .content) { min-inline-size: 0; }
+
 .pw-newsletter-nav {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  overflow-x: auto;
   gap: 0.5rem;
   margin-block: 0.5rem 2rem;
   padding-block-end: 1rem;
@@ -15,6 +18,8 @@ body[data-newsletter] .content {
 }
 
 .pw-newsletter-nav a {
+  flex: none;
+  white-space: nowrap;
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
@@ -126,6 +131,29 @@ body[data-newsletter] .content-header-title h1 {
 body[data-newsletter] .page-actions {
   flex-wrap: wrap;
   gap: 0.5rem;
+}
+
+body[data-newsletter] .content-header {
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+@media (min-width: 992px) {
+  body[data-newsletter]:not(.pw-campaign-detail) .content-header-title { flex: 1 0 15rem; }
+}
+
+.pw-newsletter-more-actions .dropdown-menu .btn {
+  display: flex;
+  inline-size: 100%;
+  justify-content: flex-start;
+  border: 0;
+  box-shadow: none;
+  white-space: nowrap;
+}
+
+.pw-newsletter-more-actions .dropdown-menu .btn:hover {
+  background: var(--bs-tertiary-bg);
 }
 
 body[data-newsletter] :is(.ea-new-form, .ea-edit-form) {
@@ -776,13 +804,9 @@ body[data-newsletter].ea-index-Audience .datagrid td[data-column='fromEmail'] a:
 
 @media (max-width: 767.98px) {
   .pw-newsletter-nav {
-    flex-wrap: wrap;
     gap: 0.25rem;
     margin-block: 0 1rem;
     padding-block-end: 0.5rem;
-  }
-  .pw-newsletter-nav a {
-    flex: 0 1 auto;
   }
   body[data-newsletter] :is(.page-actions .btn, .pw-newsletter-design .btn, .pw-criteria button) {
     min-block-size: 2.75rem;
@@ -1063,3 +1087,27 @@ body[data-newsletter] :is(.form-fieldset-body, .form-group)[hidden] {
   color: var(--bs-secondary-color);
   font-weight: normal;
 }
+
+/* Reusable content is an editable copy within the message. */
+.pw-newsletter-block {
+  padding: 1rem;
+  border-radius: var(--pw-radius-md);
+  background: var(--bs-tertiary-bg);
+  color: var(--bs-body-color);
+  overflow-wrap: anywhere;
+}
+.pw-newsletter-block > strong { display: block; font-size: var(--pw-text-md); }
+.pw-newsletter-block-status { margin-block: 0.75rem; line-height: 1.5; }
+.pw-newsletter-block-status:empty { display: none; }
+.pw-newsletter-block-field { display: block; margin-block: 1rem; font-size: var(--pw-text-sm); font-weight: 500; }
+.pw-newsletter-block-field :is(input, select, textarea) { display: block; margin-block-start: 0.375rem; font-weight: 400; }
+.pw-newsletter-block .form-control { color: var(--bs-body-color); background: var(--bs-body-bg); }
+.pw-newsletter-block-picker { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: 0.75rem; margin-block-start: 1rem; }
+.pw-newsletter-block-picker .pw-newsletter-block-field { margin: 0; min-inline-size: 0; }
+.pw-newsletter-block-picker > label:first-child { grid-column: 1 / -1; }
+.pw-newsletter-block-results { grid-column: 1 / -1; display: grid; gap: 0.5rem; }
+.pw-newsletter-block-results .btn { text-align: start; white-space: normal; justify-content: flex-start; }
+.pw-newsletter-block-actions { display: flex; flex-direction: column; align-items: flex-start; gap: 1rem; }
+.pw-newsletter-block-actions details { inline-size: 100%; }
+.pw-newsletter-block-actions summary { cursor: pointer; font-size: var(--pw-text-sm); }
+.pw-newsletter-block :is(button, input, select, textarea, summary):focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }

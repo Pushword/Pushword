@@ -79,6 +79,7 @@ newsletter:
     failed: "Impossible de charger le contenu."
     help: "Combinez texte, images, liens, citations ou signature. Chaque insertion crée une copie indépendante et modifiable."
     library: "Bibliothèque"
+    loading: "Chargement…"
     name: "Nom du bloc"
     nameRequired: "Renseignez un nom et un contenu."
     plural: "Blocs réutilisables"
@@ -678,6 +679,8 @@ newsletter:
     campaignrecipientEmptyTitle: L'envoi n'a pas encore commencé
     contactEmptyHint: Inscrivez un contact dans une audience pour commencer à construire votre liste d'abonnés.
     contactEmptyTitle: Faites connaissance avec vos abonnés
+    emailblockEmptyHint: "Enregistrez vos contenus fréquents, puis insérez une copie modifiable dans vos newsletters."
+    emailblockEmptyTitle: "Créez votre premier bloc réutilisable"
     emailtemplateEmptyHint: Nommez votre modèle, ajoutez un en-tête et un pied de page, puis sélectionnez-le dans une newsletter.
     emailtemplateEmptyTitle: Créez votre premier modèle personnalisé
     filterAll: Toutes

@@ -1,5 +1,24 @@
 {% extends '@EasyAdmin/crud/edit.html.twig' %}
 
+{% block page_actions %}
+  {% if ea.crud.entityFqcn ends with '\\Campaign' %}
+    {% set secondary = ['saveAndContinue', 'duplicate', 'previewSegment', 'recipients'] %}
+    {% for action in entity.actions|reverse|filter(action => action.name not in secondary) %}
+      {{ include(action.templatePath, {action: action, entity: entity}, with_context: false) }}
+    {% endfor %}
+    <div class="dropdown pw-newsletter-more-actions">
+      <button type="button" class="btn btn-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">{{ 'newsletter.campaign.review.moreActions'|trans }}</button>
+      <div class="dropdown-menu dropdown-menu-end">
+        {% for action in entity.actions|reverse|filter(action => action.name in secondary) %}
+          {{ include(action.templatePath, {action: action, entity: entity, isIncludedInDropdown: true}, with_context: false) }}
+        {% endfor %}
+      </div>
+    </div>
+  {% else %}
+    {{ parent() }}
+  {% endif %}
+{% endblock %}
+
 {% block main %}
   {% set editor_form %}{{ parent() }}{% endset %}
   {{ include('@PushwordNewsletter/admin/_form_workspace.html.twig') }}

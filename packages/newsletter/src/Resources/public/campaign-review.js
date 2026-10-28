@@ -2,9 +2,9 @@ const frame = document.querySelector('.pw-campaign-preview iframe')
 
 if (frame) {
   const resize = () => {
-    const body = frame.contentDocument?.body
-    if (!body) return
-    frame.style.blockSize = `${Math.ceil(body.getBoundingClientRect().height)}px`
+    const document = frame.contentDocument
+    if (!document?.body) return
+    frame.style.blockSize = `${Math.ceil(document.documentElement.getBoundingClientRect().height)}px`
   }
   const observeEmail = () => {
     const body = frame.contentDocument?.body

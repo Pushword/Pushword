@@ -79,6 +79,7 @@ newsletter:
     failed: "The content could not be loaded."
     help: "Combine text, images, links, quotes or a signature. Inserting a block creates an independent editable copy."
     library: "Library"
+    loading: "Loading…"
     name: "Block name"
     nameRequired: "Enter a name and content."
     plural: "Reusable blocks"
@@ -678,6 +679,8 @@ newsletter:
     campaignrecipientEmptyTitle: Sending has not started yet
     contactEmptyHint: Subscribe a contact to an audience to start building your mailing list.
     contactEmptyTitle: Get to know your subscribers
+    emailblockEmptyHint: "Save content you use often, then insert an editable copy into any newsletter."
+    emailblockEmptyTitle: "Create your first reusable block"
     emailtemplateEmptyHint: Name your design, add a header and footer, then choose it in a newsletter.
     emailtemplateEmptyTitle: Create your first custom template
     filterAll: All
