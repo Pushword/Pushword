@@ -73,7 +73,6 @@ export class EditorJsParseMarkdown {
 
   constructor(editorJsInstance: API, markdown: string) {
     this.editorJsInstance = editorJsInstance
-    // @ts-expect-error Editor.js does not expose the static Markdown adapter methods.
     this.editorjsTools = editorJsInstance.tools.getBlockTools() || []
     this.markdown = markdown
   }

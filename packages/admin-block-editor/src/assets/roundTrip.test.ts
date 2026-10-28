@@ -24,7 +24,6 @@ beforeAll(() => {
   const require = createRequire(import.meta.url)
   const prettier = require('../Resources/public/prettier/standalone.js')
   const plugin = require('../Resources/public/prettier/markdown.js')
-  // @ts-expect-error Stub the private browser loader with the bundled formatter.
   vi.spyOn(MarkdownUtils, 'loadPrettier').mockResolvedValue({ prettier, plugin })
   window.pageHost = ''
 })
