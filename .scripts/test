@@ -176,9 +176,8 @@ function wait_for_background_tasks {
 
 trap cleanup EXIT
 
-# Every package holding a vitest suite. Each carries its own node_modules (that is
-# where vitest lives), so it is installed and run from its own directory.
-JS_TEST_PACKAGES="js-helper admin admin-block-editor admin-monaco-editor quiz"
+# Each JS test package uses its own dependencies and runs from its own directory.
+JS_TEST_PACKAGES="js-helper admin admin-block-editor admin-monaco-editor quiz newsletter"
 
 # Install nodejs dependencies (root + each JS test package)
 [ -d "node_modules" ] || yarn

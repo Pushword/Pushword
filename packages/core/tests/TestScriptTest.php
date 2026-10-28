@@ -24,7 +24,7 @@ final class TestScriptTest extends TestCase
             $this->testRoot.'/node_modules',
             $this->testRoot.'/tmp',
         ]);
-        foreach (['js-helper', 'admin', 'admin-block-editor', 'admin-monaco-editor', 'quiz'] as $package) {
+        foreach (['js-helper', 'admin', 'admin-block-editor', 'admin-monaco-editor', 'quiz', 'newsletter'] as $package) {
             $filesystem->mkdir($this->testRoot.'/packages/'.$package.'/node_modules');
         }
 
@@ -64,7 +64,7 @@ final class TestScriptTest extends TestCase
                 if [ -n "${STUB_JS_CALLS:-}" ]; then
                     echo "$js_package" >> "$STUB_JS_CALLS"
                 fi
-                if [ "$js_package" = 'js-helper' ]; then
+                if [ "$js_package" = "${STUB_YARN_PACKAGE:-js-helper}" ]; then
                     exit "${STUB_YARN_EXIT:-0}"
                 fi
                 exit 0
@@ -129,13 +129,14 @@ final class TestScriptTest extends TestCase
     }
 
     #[DataProvider('javascriptExitCodes')]
-    public function testJavaScriptFailuresPropagateAfterEveryPackageRuns(int $yarn, int $node, int $expected): void
+    public function testJavaScriptFailuresPropagateAfterEveryPackageRuns(string $yarnPackage, int $yarn, int $node, int $expected): void
     {
         $calls = $this->testRoot.'/javascript-calls';
         $process = new Process(['bash', '-e', $this->testRoot.'/.scripts/test'], $this->testRoot, [
             'PATH' => $this->testRoot.'/bin:'.getenv('PATH'),
             'TMPDIR' => $this->testRoot.'/tmp',
             'TEST_RUN_ID' => basename($this->testRoot),
+            'STUB_YARN_PACKAGE' => $yarnPackage,
             'STUB_YARN_EXIT' => (string) $yarn,
             'STUB_NODE_EXIT' => (string) $node,
             'STUB_JS_CALLS' => $calls,
@@ -147,17 +148,18 @@ final class TestScriptTest extends TestCase
 
         self::assertSame($expected, $process->getExitCode(), $process->getOutput().$process->getErrorOutput());
         self::assertSame(
-            ['js-helper', 'admin', 'admin-block-editor', 'admin-monaco-editor', 'quiz', 'repurpose'],
+            ['js-helper', 'admin', 'admin-block-editor', 'admin-monaco-editor', 'quiz', 'newsletter', 'repurpose'],
             file($calls, \FILE_IGNORE_NEW_LINES),
         );
         self::assertStringNotContainsString('Running PHPUnit', $process->getOutput());
     }
 
-    /** @return iterable<string, array{int, int, int}> */
+    /** @return iterable<string, array{string, int, int, int}> */
     public static function javascriptExitCodes(): iterable
     {
-        yield 'first yarn suite fails, later suites pass' => [7, 0, 7];
-        yield 'repurpose Node suite fails' => [0, 5, 5];
+        yield 'first yarn suite fails, later suites pass' => ['js-helper', 7, 0, 7];
+        yield 'newsletter yarn suite fails' => ['newsletter', 6, 0, 6];
+        yield 'repurpose Node suite fails' => ['js-helper', 0, 5, 5];
     }
 
     /** @return iterable<string, array{list<string>, int, int, int, int}> */

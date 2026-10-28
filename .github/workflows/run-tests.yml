@@ -77,6 +77,11 @@ jobs:
       - name: Quiz runtime tests
         run: cd packages/quiz && yarn test
 
+      - name: Newsletter calendar and block tests
+        run: |
+          yarn --cwd packages/newsletter install --frozen-lockfile
+          yarn --cwd packages/newsletter test
+
       - name: Install FFmpeg for motion audio tests
         # A stalled package mirror otherwise holds the job until GitHub's six-hour limit.
         timeout-minutes: 5
