@@ -25,7 +25,7 @@ abstract class AbstractEventSubscriber implements EventSubscriberInterface
      */
     protected function mayUseEditorBlock(?Page $page, ?FormEvent $event = null): bool
     {
-        if (null !== $event
+        if ($event instanceof FormEvent
             && ! $event->getAdmin() instanceof PageCrudController) {
             return false;
         } // do not use event for PageRedirection for example
@@ -34,7 +34,7 @@ abstract class AbstractEventSubscriber implements EventSubscriberInterface
         //     return false;
         // }
 
-        if (null !== $page && '' !== $page->host) {
+        if ($page instanceof Page && '' !== $page->host) {
             return $this->apps->get($page->host)->getBoolean('admin_block_editor', false);
         }
 

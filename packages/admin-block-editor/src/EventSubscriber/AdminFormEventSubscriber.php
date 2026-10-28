@@ -17,6 +17,7 @@ use Pushword\Admin\Utils\FormFieldReplacer;
 use Pushword\AdminBlockEditor\FormField\PageMainContentEditorJsField;
 use Pushword\AdminBlockEditor\Service\MediaCaptionRenamer;
 use Pushword\Core\Entity\Page;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 
 /**
@@ -53,7 +54,7 @@ class AdminFormEventSubscriber extends AbstractEventSubscriber
     {
         $page = $this->getPage($event);
 
-        if (null === $page) {
+        if (! $page instanceof Page) {
             return;
         }
 
@@ -80,12 +81,12 @@ class AdminFormEventSubscriber extends AbstractEventSubscriber
     {
         $page = $this->getPage($event);
 
-        if (null === $page) {
+        if (! $page instanceof Page) {
             return;
         }
 
         $request = $this->requestStack->getCurrentRequest();
-        if (null === $request) {
+        if (! $request instanceof Request) {
             return;
         }
 
@@ -113,7 +114,7 @@ class AdminFormEventSubscriber extends AbstractEventSubscriber
     {
         $page = $this->getPage($formEvent);
 
-        if (null === $page) {
+        if (! $page instanceof Page) {
             return;
         }
 

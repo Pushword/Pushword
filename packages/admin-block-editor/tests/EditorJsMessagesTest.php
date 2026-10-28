@@ -179,7 +179,7 @@ final class EditorJsMessagesTest extends TestCase
 
         // StateBlock passes each tool's incompleteMessage to api.i18n.t() verbatim.
         self::assertSame(
-            'Ajoutez d\'abord l\'URL de la vidéo, sa miniature et son texte alternatif.',
+            "Ajoutez d'abord l'URL de la vidéo, sa miniature et son texte alternatif.",
             $messages['tools']['embed']['Add the video URL, its thumbnail and its alternative text first.'],
         );
         self::assertSame("Indiquez d'abord quelles pages lister.", $messages['tools']['pages_list']['Say which pages to list first.']);
