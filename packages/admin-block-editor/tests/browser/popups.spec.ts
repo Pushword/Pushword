@@ -42,6 +42,46 @@ async function selectText(page: Page): Promise<void> {
   ).toBeVisible()
 }
 
+test('the URL preview opens a new tab without changing the edited link', async ({
+  editorPage: page,
+}) => {
+  const url = 'https://example.com/plans?products=choice%2Ctravel&sort=popularity'
+  await page.context().route(url, route => route.fulfill({ body: 'Destination preview' }))
+  await render(page, [
+    { type: 'paragraph', data: { text: `<a href="${url}">Get a quote</a>` } },
+  ])
+  const paragraph = page.locator('.ce-paragraph').first()
+  await paragraph.focus()
+  await paragraph.locator('a').evaluate(el => {
+    const range = document.createRange()
+    range.selectNodeContents(el)
+    const selection = window.getSelection()!
+    selection.removeAllRanges()
+    selection.addRange(range)
+  })
+  await paragraph.dispatchEvent('mouseup')
+  const options = page.locator('.link-options-wrapper')
+  await expect(options).toBeVisible()
+  await options.locator('select').first().focus()
+  const preview = options.locator('.link-suggestions__preview a')
+  await expect(preview).toHaveText(url)
+  await expect(preview).toHaveAttribute('href', url)
+  await expect(preview).toHaveAttribute('target', '_blank')
+  const editorUrl = page.url()
+
+  for (const activate of [() => preview.click(), () => preview.press('Enter')]) {
+    const popupPromise = page.waitForEvent('popup')
+    await activate()
+    const popup = await popupPromise
+    await expect(popup).toHaveURL(url)
+    expect(await popup.evaluate(() => window.opener)).toBeNull()
+    await popup.close()
+    await expect(page).toHaveURL(editorUrl)
+    await expect(page.locator('.ce-paragraph a')).toHaveAttribute('href', url)
+    await expect(page.locator('.ce-paragraph a')).not.toHaveAttribute('target')
+  }
+})
+
 for (const form of ['page', 'snippet']) {
   test(`${form} link options escape the fieldset and remain clickable over settings`, async ({
     editorPage: page,

@@ -33,6 +33,10 @@ export function setupEditorPopovers(labels: Record<string, string> = {}): void {
     (event) => {
       if (event.isComposing || event.ctrlKey || event.metaKey || event.altKey) return
       const control = event.target instanceof HTMLElement ? event.target : null
+      if (event.key === 'Enter' && control?.matches('.link-suggestions__preview a')) {
+        event.stopPropagation()
+        return
+      }
       if (!control?.closest('.ce-settings .ce-popover-item-html')) return
       if (
         control instanceof HTMLButtonElement &&

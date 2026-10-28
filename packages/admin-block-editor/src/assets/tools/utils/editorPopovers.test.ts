@@ -106,4 +106,23 @@ describe('popover accessibility', () => {
     await flushObserver()
     expect(document.querySelectorAll('input')).toHaveLength(1)
   })
+
+  it('lets a focused URL preview open before the document flipper handles Enter', () => {
+    document.body.innerHTML =
+      '<div class="link-suggestions__preview"><a href="https://example.com" target="_blank">Destination</a></div>'
+    const flipper = vi.fn()
+    document.addEventListener('keydown', flipper, true)
+    try {
+      const enter = new KeyboardEvent('keydown', {
+        key: 'Enter',
+        bubbles: true,
+        cancelable: true,
+      })
+      document.querySelector('a')!.dispatchEvent(enter)
+      expect(enter.defaultPrevented).toBe(false)
+      expect(flipper).not.toHaveBeenCalled()
+    } finally {
+      document.removeEventListener('keydown', flipper, true)
+    }
+  })
 })

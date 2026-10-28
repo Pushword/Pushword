@@ -80,7 +80,38 @@ describe('page link suggestions', () => {
     expect(container.querySelector('.link-suggestions__preview')!.textContent).toBe(
       'A mountain walk/blog/article-with-a-long-path',
     )
+    expect(
+      container.querySelector('.link-suggestions__preview a')!.getAttribute('href'),
+    ).toBe('/blog/article-with-a-long-path')
+    expect(container.querySelector('[role="option"] a')).toBeNull()
   })
+
+  it('previews the complete external URL as a link opening in a new tab', async () => {
+    const { input, container, search } = setup()
+    const url = 'https://example.com/plans?products=choice%2Ctravel&sort=popularity'
+    await search(url)
+    input.dispatchEvent(new Event('blur'))
+
+    const link = container.querySelector<HTMLAnchorElement>(
+      '.link-suggestions__preview a',
+    )!
+    expect(link.textContent).toBe(url)
+    expect(link.getAttribute('href')).toBe(url)
+    expect(link.target).toBe('_blank')
+    expect(link.rel).toBe('noopener noreferrer')
+  })
+
+  it.each(['javascript:alert(1)', 'data:text/html,test', 'https://[invalid'])(
+    'keeps an unsafe or malformed preview as text: %s',
+    async (url) => {
+      const { input, container, search } = setup()
+      await search(url)
+      input.dispatchEvent(new Event('blur'))
+      const preview = container.querySelector('.link-suggestions__preview')!
+      expect(preview.textContent).toBe(url)
+      expect(preview.querySelector('a')).toBeNull()
+    },
+  )
 
   it('moves keyboard focus without changing the URL until Enter confirms the choice', async () => {
     const { search, container, input, key } = setup()

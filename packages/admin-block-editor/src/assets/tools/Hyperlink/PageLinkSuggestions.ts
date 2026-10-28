@@ -1,3 +1,5 @@
+import { isSafeLinkUrl } from './safeLinkUrl'
+
 export interface PageLink {
   uri: string
   title: string
@@ -46,15 +48,22 @@ export default class PageLinkSuggestions {
     this.close()
   }
 
-  private renderPage(page: PageLink): HTMLElement {
+  private renderPage(page: PageLink, linkUrl = false): HTMLElement {
     const row = document.createElement('span')
     row.className = 'link-suggestions__page'
     const title = document.createElement('span')
     title.className = 'link-suggestions__title'
     title.textContent = page.title
-    const path = document.createElement('span')
+    const path = document.createElement(
+      linkUrl && isSafeLinkUrl(page.uri) ? 'a' : 'span',
+    )
     path.className = 'link-suggestions__path'
     path.textContent = page.uri
+    if (path instanceof HTMLAnchorElement) {
+      path.href = page.uri
+      path.target = '_blank'
+      path.rel = 'noopener noreferrer'
+    }
     if (page.title) row.append(title)
     row.append(path)
     return row
@@ -157,7 +166,7 @@ export default class PageLinkSuggestions {
     this.input.removeAttribute('aria-activedescendant')
     const uri = this.input.value.trim()
     const page = this.pages.find((page) => page.uri === uri)
-    this.preview.replaceChildren(this.renderPage(page ?? { uri, title: '' }))
+    this.preview.replaceChildren(this.renderPage(page ?? { uri, title: '' }, true))
     this.preview.hidden = !uri
   }
 }
