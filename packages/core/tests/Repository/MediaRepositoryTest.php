@@ -357,7 +357,7 @@ final class MediaRepositoryTest extends KernelTestCase
         self::assertTrue($cache->hasItem(MediaRepository::INDEX_CACHE_KEY_PREFIX.$version));
 
         // Second repo: fresh in-process state, warm cache pool.
-        // Reads the index back from cache.app and still resolves filenames.
+        // Reads the index back from the shared pool and still resolves filenames.
         $repoB = new MediaRepository($registry, $cache, debug: false);
         $media = $repoB->findOneByFileName('1.jpg');
         self::assertNotNull($media);
@@ -397,6 +397,39 @@ final class MediaRepositoryTest extends KernelTestCase
             $repo->findOneByFileName('written-elsewhere.jpg'),
             'onClear must re-check the version, so a write from another process is picked up',
         );
+    }
+
+    public function testWarmIndexRechecksVersionWithoutClearingTheEntityManager(): void
+    {
+        self::bootKernel();
+        $registry = self::getContainer()->get(ManagerRegistry::class);
+        $cache = new ArrayAdapter();
+        $repo = new MediaRepository($registry, $cache, debug: false);
+        $media = $repo->findOneByFileName('1.jpg');
+        self::assertNotNull($media);
+        $id = $media->id;
+        self::assertIsInt($id);
+        self::assertSame($id, $repo->getFileNameToIdMap()['1.jpg']);
+        self::assertNull($repo->findOneByFileNameOrHistory('not-in-history.jpg'));
+
+        $index = $cache->getItem(MediaRepository::INDEX_CACHE_KEY_PREFIX.'1');
+        $index->set([
+            'external-rename.jpg' => [
+                'id' => $id,
+                'fileName' => 'external-rename.jpg',
+                'fileNameHistory' => ['1.jpg', 'external-history.jpg'],
+            ],
+        ]);
+        $cache->save($index);
+        $cache->save($cache->getItem(MediaRepository::VERSION_CACHE_KEY)->set(1));
+
+        self::assertSame($id, $repo->findOneByFileName('external-rename.jpg')?->id);
+        self::assertSame($id, $repo->findOneByFileNameOrHistory('external-history.jpg')?->id);
+        self::assertSame([
+            '1.jpg' => $id,
+            'external-history.jpg' => $id,
+            'external-rename.jpg' => $id,
+        ], $repo->getFileNameToIdMap());
     }
 
     public function testHistoricalLookupKeepsFirstMatchAndRebuildsAfterVersionChange(): void
@@ -502,7 +535,7 @@ final class MediaRepositoryTest extends KernelTestCase
     {
         self::bootKernel();
         $em = self::getContainer()->get('doctrine.orm.default_entity_manager');
-        $cache = self::getContainer()->get('cache.app');
+        $cache = self::getContainer()->get('cache.pushword_media');
         $repo = $em->getRepository(Media::class);
 
         // Read version before any write.

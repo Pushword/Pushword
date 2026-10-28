@@ -15,7 +15,7 @@ framework:
         routing:
             'Pushword\StaticGenerator\Cache\Message\HostCacheRefreshMessage': host_sweep
     cache:
-        # Per-worker cache pools (cache.app persists the MediaRepository
+        # Per-worker cache pools (cache.pushword_media persists the MediaRepository
         # filename index across requests). The default directory sits in the
         # shared container-cache dir, where an index persisted by one paratest
         # worker — or a previous run — against its own database poisons lookups

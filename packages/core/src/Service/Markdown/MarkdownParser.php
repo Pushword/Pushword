@@ -38,7 +38,7 @@ class MarkdownParser implements ResetInterface
      * Bump when the renderer configuration changes in a way that
      * alters output, to invalidate previously cached fragments.
      */
-    private const int CACHE_VERSION = 32;
+    private const int CACHE_VERSION = 33;
 
     private const int NATIVE_CACHE_VERSION = 3;
 
@@ -65,7 +65,7 @@ class MarkdownParser implements ResetInterface
         private readonly Twig $twig,
         #[Autowire(service: 'cache.pushword_markdown')]
         private readonly ?CacheItemPoolInterface $cache = null,
-        #[Autowire(service: 'cache.app')]
+        #[Autowire(service: 'cache.pushword_media')]
         private readonly ?CacheItemPoolInterface $versionCache = null,
         #[Autowire(param: 'pw.native_markdown_renderer')]
         ?string $nativeBinary = null,
@@ -368,7 +368,7 @@ class MarkdownParser implements ResetInterface
     /**
      * Version token mixing the parser's own version with the media version, so
      * cached fragments are invalidated whenever a media changes (image rendering
-     * depends on the media table). The media version is read from cache.app — the
+     * depends on the media table). The media version is read from cache.pushword_media — the
      * counter the media lifecycle listener bumps on every write — never via a DB
      * query, so this stays safe to call mid-render while another result set is
      * being iterated (e.g. during pw:static).

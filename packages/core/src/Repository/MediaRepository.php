@@ -12,6 +12,7 @@ use Doctrine\ORM\Query\Expr;
 use Doctrine\ORM\Query\Expr\Orx;
 use Doctrine\Persistence\ManagerRegistry;
 use Doctrine\Persistence\ObjectRepository;
+use Psr\Cache\CacheItemInterface;
 use Psr\Cache\CacheItemPoolInterface;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Entity\MediaUsage;
@@ -47,7 +48,7 @@ class MediaRepository extends ServiceEntityRepository implements ObjectRepositor
     /**
      * Lightweight filename index. Scalar rows only — enough to resolve a
      * filename to a Media id without hydrating the full entity. Built via a
-     * single DQL array-hydration query, then optionally persisted to cache.app
+     * single DQL array-hydration query, then optionally persisted to cache.pushword_media
      * across requests and invalidated by bumping a version counter on writes.
      *
      * @var array<string, array{id: int, fileName: string, fileNameHistory: list<string>}>|null
@@ -90,7 +91,7 @@ class MediaRepository extends ServiceEntityRepository implements ObjectRepositor
 
     public function __construct(
         ManagerRegistry $registry,
-        #[Autowire(service: 'cache.app')]
+        #[Autowire(service: 'cache.pushword_media')]
         private readonly ?CacheItemPoolInterface $cache = null,
         #[Autowire(param: 'kernel.debug')]
         private readonly bool $debug = false,
@@ -103,16 +104,13 @@ class MediaRepository extends ServiceEntityRepository implements ObjectRepositor
      * No Media entity hydration. Kept for the lifetime of the repo instance and
      * revalidated against a per-table version counter, so an EntityManager
      * clear() costs a version read instead of a rebuild. Also persisted across
-     * requests via cache.app under that same counter (unless kernel.debug is
+     * requests via cache.pushword_media under that same counter (unless kernel.debug is
      * true or no cache pool is available, in which case the index lives for the
      * repo instance only).
      */
     public function warmupFileNameIndexLight(): void
     {
-        if ($this->warmedLight) {
-            return;
-        }
-
+        // Even a warm repository must observe writes made by another process.
         $version = $this->readVersion();
 
         // Scalar rows only, so EntityManager::clear() cannot make them stale.
@@ -127,7 +125,7 @@ class MediaRepository extends ServiceEntityRepository implements ObjectRepositor
 
         $cache = $this->debug ? null : $this->cache;
 
-        if (null === $cache) {
+        if (! $cache instanceof CacheItemPoolInterface) {
             $this->rememberIndex($this->buildFileNameIndex(), $version);
 
             return;
@@ -236,7 +234,7 @@ class MediaRepository extends ServiceEntityRepository implements ObjectRepositor
 
     private function readVersion(): int
     {
-        if (null === $this->cache) {
+        if (! $this->cache instanceof CacheItemPoolInterface) {
             return 0;
         }
 
@@ -258,7 +256,7 @@ class MediaRepository extends ServiceEntityRepository implements ObjectRepositor
      */
     public function bumpVersion(): void
     {
-        if (null !== $this->cache) {
+        if ($this->cache instanceof CacheItemPoolInterface) {
             $item = $this->cache->getItem(self::VERSION_CACHE_KEY);
             $value = $item->isHit() ? $item->get() : null;
             $item->set((\is_int($value) ? $value : 0) + 1);
@@ -357,7 +355,7 @@ class MediaRepository extends ServiceEntityRepository implements ObjectRepositor
     }
 
     /**
-     * Resolve an id taken from the filename index. A persisted index (cache.app,
+     * Resolve an id taken from the filename index. A persisted index (cache.pushword_media,
      * reused across requests in worker mode) can point at an id that no longer
      * exists if media changed out of band without bumping the version counter —
      * a bulk import bypassing the lifecycle listener, a DB restore. Rather than
@@ -679,7 +677,7 @@ class MediaRepository extends ServiceEntityRepository implements ObjectRepositor
     {
         $cache = $this->debug ? null : $this->cache;
         $item = $cache?->getItem('pw.media.search.v'.$this->readVersion().'.'.($first ? 'one.' : 'all.').hash('sha256', $search));
-        if (! $refresh && null !== $item && $item->isHit()) {
+        if (! $refresh && $item instanceof CacheItemInterface && $item->isHit()) {
             /** @var list<int> $ids */
             $ids = $item->get();
             $results = $this->hydrateSearchIds($ids);
@@ -715,7 +713,7 @@ class MediaRepository extends ServiceEntityRepository implements ObjectRepositor
 
         /** @var list<Media> $results */
         $results = $query->getQuery()->getResult();
-        if (null !== $item) {
+        if ($item instanceof CacheItemInterface) {
             $item->set(array_map(static fn (Media $media): int => (int) $media->id, $results))->expiresAfter(self::SEARCH_CACHE_TTL);
             $cache->save($item);
         }
