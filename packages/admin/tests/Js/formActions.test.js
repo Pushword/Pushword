@@ -5,7 +5,8 @@ import { prioritizeSaveActions } from '../../src/Resources/assets/admin.formActi
 describe('prioritizeSaveActions', () => {
   it('puts saving before utility actions without replacing buttons or moving dropdown entries', () => {
     document.body.innerHTML = `<header class="content-header"><div class="page-actions">
-      <a id="history">History</a><button class="action-saveAndContinue">Save and stay</button>
+      <a id="history">History</a><button class="action-saveAndAddAnother">Create another</button>
+      <button class="action-saveAndContinue">Save and stay</button>
       <button class="action-saveAndReturn">Save</button><div id="more"><a class="action-saveAndReturn">Nested</a></div>
     </div></header>`
     const actions = document.querySelector('.page-actions')
@@ -19,6 +20,7 @@ describe('prioritizeSaveActions', () => {
     expect([...actions.children].map((el) => el.textContent)).toEqual([
       'Save',
       'Save and stay',
+      'Create another',
       'History',
       'Nested',
     ])

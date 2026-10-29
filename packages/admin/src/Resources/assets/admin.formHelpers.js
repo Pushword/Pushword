@@ -4,6 +4,19 @@
 
 import { focusEditorJs } from './admin.domUtils'
 
+/** Keep visible password guidance connected to the field, alongside validation errors. */
+export function describePasswordHelp() {
+  document.querySelectorAll('input[type="password"][id]').forEach((input) => {
+    const help = input.closest('.form-widget')?.querySelector(':scope > .form-help')
+    if (!help) return
+
+    help.id ||= `${input.id}_help`
+    const descriptions = new Set((input.getAttribute('aria-describedby') || '').split(/\s+/).filter(Boolean))
+    descriptions.add(help.id)
+    input.setAttribute('aria-describedby', [...descriptions].join(' '))
+  })
+}
+
 /**
  * Affiche la largeur en pixels d'un champ (title, desc, etc.)
  * @param {string} toMeasure - Le nom du champ à mesurer (défaut: 'title')

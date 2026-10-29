@@ -69,6 +69,17 @@
   font-weight: 600;
 }
 
+.ea-index-User .datagrid td[data-column='email'] a {
+  color: var(--bs-secondary-color);
+  overflow-wrap: anywhere;
+}
+
+.ea-index-User .datagrid td[data-column='email'] a:hover,
+.ea-index-User .datagrid td[data-column='email'] a:focus-visible {
+  color: var(--color-primary);
+  text-decoration: underline;
+}
+
 .ea-index-Page .datagrid td[data-column='updatedAt'],
 .ea-index-User .datagrid td[data-column='createdAt'],
 .ea-index-VersionLog .datagrid td[data-column='createdAt'] {
@@ -189,6 +200,35 @@
 }
 
 @media (max-width: 767.98px) {
+  .ea-index-User table.datagrid:not(.datagrid-empty) tr:not(.empty-row) td[data-column] {
+    padding: 0.25rem 1rem;
+    box-shadow: none;
+    white-space: normal;
+  }
+
+  .ea-index-User .datagrid td[data-column]::before {
+    display: block;
+    position: static;
+    inline-size: auto;
+    padding: 0;
+    overflow: visible;
+    font-size: var(--pw-text-sm);
+    font-weight: 400;
+    white-space: normal;
+  }
+
+  .ea-index-User .datagrid :is(td[data-column='username'], td[data-column='email'])::before {
+    display: none;
+  }
+
+  .ea-index-User table.datagrid:not(.datagrid-empty) tr:not(.empty-row) :is(td[data-column='username'], td[data-column='roles'], td[data-column='createdAt']) {
+    padding-block-start: 0.75rem;
+  }
+
+  .ea-index-User .datagrid td[data-column='username'] .pw-list-title {
+    font-size: var(--pw-text-md);
+  }
+
   table.datagrid:not(.datagrid-empty) {
     table-layout: fixed;
   }

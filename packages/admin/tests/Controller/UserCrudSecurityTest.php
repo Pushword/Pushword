@@ -17,6 +17,22 @@ use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 #[Group('integration')]
 final class UserCrudSecurityTest extends AbstractAdminTestClass
 {
+    public function testUserFormsLinkBackToTheUserList(): void
+    {
+        $client = $this->loginUser();
+        $user = self::getContainer()->get(UserRepository::class)->findOneBy(['email' => 'admin@example.tld']);
+        self::assertInstanceOf(User::class, $user);
+
+        foreach (['/admin/user/new', $this->generateAdminUrl('admin_user_edit', ['id' => $user->id])] as $url) {
+            $crawler = $client->request(Request::METHOD_GET, $url);
+            self::assertResponseIsSuccessful();
+            self::assertCount(1, $crawler->selectLink('Back to users'));
+            $client->click($crawler->selectLink('Back to users')->link());
+            self::assertResponseIsSuccessful();
+            self::assertRouteSame('admin_user_index');
+        }
+    }
+
     /** @return iterable<string, array{?string}> */
     public static function apiTokenStates(): iterable
     {

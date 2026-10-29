@@ -276,6 +276,12 @@ body.ea-new .content-header {
 }
 
 @media (max-width: 575.98px) {
+  .ea-new-User .page-actions .pw-user-back,
+  .ea-edit-User .page-actions .pw-user-back {
+    grid-column: 1 / -1;
+    justify-self: start;
+  }
+
   .ea-edit .content-header,
   .ea-new .content-header {
     display: flex;

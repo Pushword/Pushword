@@ -37,7 +37,7 @@ import { inlinePopup } from './admin.inlinePopup'
 import { textareaAutoSize, textareaWithoutNewLine } from './admin.textareaHelper'
 import { memorizeOpenPanel } from './admin.memorizeOpenPanel'
 import { revealInvalidField } from './admin.revealInvalidField'
-import { showTitlePixelWidth } from './admin.formHelpers'
+import { describePasswordHelp, showTitlePixelWidth } from './admin.formHelpers'
 import { prioritizeSaveActions } from './admin.formActions'
 import { initApiTokenFields } from './admin.apiToken'
 
@@ -93,6 +93,7 @@ window.addEventListener('load', function () {
 
   // Form helpers
   prioritizeSaveActions()
+  describePasswordHelp()
   initApiTokenFields()
   showTitlePixelWidth()
   showTitlePixelWidth('desc', 150)

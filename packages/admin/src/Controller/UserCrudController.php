@@ -53,6 +53,13 @@ class UserCrudController extends AbstractAdminCrudController
     #[Override]
     public function configureActions(Actions $actions): Actions
     {
+        foreach ([Crud::PAGE_NEW, Crud::PAGE_EDIT] as $pageName) {
+            $actions->add($pageName, Action::new(Action::INDEX, 'adminUserBackToList', 'fa fa-arrow-left')
+                ->linkToCrudAction(Action::INDEX)
+                ->asTextLink()
+                ->addCssClass('pw-user-back'));
+        }
+
         // The switch listener strips the parameter and redirects to the same URL, so the
         // impersonated editor lands on the dashboard rather than on this super-admin list.
         $impersonate = Action::new('impersonate', 'adminUserImpersonate', 'fa fa-user-secret')

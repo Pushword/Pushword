@@ -257,6 +257,7 @@ adminUserApiTokenRegenerate: "Régénérer"
 adminUserApiTokenRegenerateConfirm: "Régénérer le token ? L’ancien token ne fonctionnera plus."
 adminUserApiTokenRevoke: Révoquer
 adminUserApiTokenRevokeConfirm: Révoquer le token API ?
+adminUserBackToList: "Retour aux utilisateurs"
 adminUserCityLabel: Ville
 adminUserCreatedAtLabel: "Date d'enregistrement"
 adminUserDateOfBirthLabel: 'Date de naissance'
