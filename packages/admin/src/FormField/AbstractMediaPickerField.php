@@ -20,7 +20,6 @@ abstract class AbstractMediaPickerField extends AbstractField
      * @param array<string, mixed> $filters
      *
      * @return array<string, string>
-     * @return array<string, string>
      */
     protected function mediaPickerAttributes(string $fieldName, array $filters = [], ?Media $selected = null): array
     {

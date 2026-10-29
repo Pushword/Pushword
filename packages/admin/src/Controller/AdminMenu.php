@@ -124,7 +124,6 @@ final readonly class AdminMenu
      * ```
      *
      * @return iterable<int, MenuItemInterface>
-     * @return iterable<int, MenuItemInterface>
      */
     public function configureMenuItems(): iterable
     {
