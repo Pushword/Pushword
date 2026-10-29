@@ -1,5 +1,5 @@
 ---
-title: 'newsletter custom designs use configured Twig templates'
+title: ''
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -34,10 +34,3 @@ belongs in the feature doc, which you link to instead.
 
 Several changes land here between two tags: append to the file, do not replace it.
 -->
-
-**Concerns:** `pushword/newsletter`
-
-## Newsletter templates
-
-The database-backed template catalogue and `saved:` layouts have been removed.
-**Sites using saved templates:** before upgrading, recreate those designs as Twig files, register them under `newsletter.email_templates`, and select them for the affected audiences and campaigns. See [email design configuration](/extension/newsletter#preconfigured-twig-designs).
