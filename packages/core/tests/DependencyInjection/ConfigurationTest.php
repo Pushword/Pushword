@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pushword\Core\Tests\DependencyInjection;
 
+use DateTimeZone;
 use PHPUnit\Framework\TestCase;
 use Pushword\Core\DependencyInjection\Configuration;
 use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
@@ -33,11 +34,19 @@ final class ConfigurationTest extends TestCase
     {
         self::assertNull($this->process([])['editorial_timezone']);
         self::assertSame('Europe/Paris', $this->process([['editorial_timezone' => 'Europe/Paris']])['editorial_timezone']);
-        // A backward-compatible alias, renamed Europe/Kyiv by tzdata, still reads.
-        self::assertSame('Europe/Kiev', $this->process([['editorial_timezone' => 'Europe/Kiev']])['editorial_timezone']);
 
         $this->expectException(InvalidConfigurationException::class);
         $this->process([['editorial_timezone' => 'Paris']]);
+    }
+
+    public function testEditorialTimezoneAcceptsAvailableLegacyIdentifiers(): void
+    {
+        // Legacy aliases vary with the timezone database shipped by PHP.
+        $aliases = array_values(array_diff(DateTimeZone::listIdentifiers(DateTimeZone::ALL_WITH_BC), DateTimeZone::listIdentifiers()));
+        self::assertNotEmpty($aliases);
+        $alias = $aliases[0];
+
+        self::assertSame($alias, $this->process([['editorial_timezone' => $alias]])['editorial_timezone']);
     }
 
     /**
