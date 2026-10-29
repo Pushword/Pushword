@@ -87,6 +87,16 @@ The admin's services were audited for cross-request state too:
 that captures the request, user or host at construction, or caches per-request data,
 must be made lazy or `ResetInterface`.
 
+## Missing media and slow admin pings
+
+Core returns an empty `text/plain` 404 for missing or malformed URLs under the
+configured `public_media_dir`. It bypasses the site's error-page renderer for
+these requests; other errors and page 404s keep their usual handling. This limits
+the cost of broken image links without explaining where those URLs originated.
+
+For pings that take seconds despite a fast SQL query, see
+[diagnosing slow edit-lock pings](/extension/admin#diagnosing-slow-edit-lock-pings).
+
 ## Running benchmarks
 
 The `benchmark` group is opt-in (excluded from `composer test` and CI). It covers static

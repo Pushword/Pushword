@@ -48,6 +48,38 @@ last two buttons open the editor fullscreen and the [markdown cheatsheet](/edito
 The same editor, toolbar included, backs the markdown mode of
 [admin-block-editor](/extension/admin-block-editor).
 
+### Diagnosing slow edit-lock pings
+
+The editor posts to `/admin/page/{pageId}/lock/ping` every three seconds. Edit locks
+are JSON files under `var/page-locks/`; they are separate from PHP session locks.
+A ping with one fast SQL query can still spend seconds waiting for its session.
+
+Core releases started admin sessions before the controller runs. The ping also
+releases any session reopened since then. Neither release prevents a wait during
+authentication at `kernel.request`, and later session access (CSRF, flashes or
+security token storage) can acquire the session lock again.
+
+To diagnose this with native file sessions on a local development server:
+
+1. Record an authenticated ping's elapsed time, SQL count and SQL time.
+2. Locate that session's file using the configured handler/save path and session
+   cookie. Hold its lock for two seconds in another process, then repeat the ping
+   while the lock is held. Repeat with a second authenticated session in parallel.
+   The server needs at least two PHP workers to distinguish session contention
+   from a queue caused by a single worker.
+3. Inspect the Symfony profiler timeline. A wait in the firewall before
+   `kernel.controller_arguments`, affecting only the held session, identifies
+   session contention. If both sessions wait, investigate worker capacity and
+   shared resources instead.
+4. Repeat alongside the actual slow admin request. Identify where it retains or
+   reopens the session before changing session handling.
+
+In a local reproduction, three pings behind a two-second native session lock took
+2.014–2.018 seconds; the other session took 25–30 ms. Each had one SQL query below
+0.03 ms, and the held session spent about 1.99 seconds in the firewall. This proves
+that session contention can produce this symptom; it does not identify which
+request retains the session on another installation.
+
 ### Parent page
 
 In the settings panel, search by page title, slug, path or a URL on a configured
