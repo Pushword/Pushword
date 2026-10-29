@@ -17,7 +17,7 @@ raw: 1
     Finally, a CMS that gets out of your way.
   </h1>
   <p class="text-xl leading-relaxed text-stone-600 dark:text-stone-300 max-w-2xl mb-10">
-    Modern PHP, with <span class="text-stone-900 dark:text-stone-100 font-medium">optional Rust acceleration.</span> Flat-file flexibility. Ready for the AI era.
+    Modern PHP, with <span class="text-stone-900 dark:text-stone-100 font-medium">optional Rust acceleration.</span> Many sites and languages from one install. Ready for the AI era.
   </p>
   <div class="flex flex-wrap gap-3 items-center">
     <a href="/installation" class="inline-flex items-center px-5 py-2.5 bg-stone-900 text-stone-50 text-sm font-medium rounded-md hover:bg-stone-700 dark:bg-stone-100 dark:text-stone-900 dark:hover:bg-stone-300">
@@ -181,8 +181,8 @@ Your content here...</pre>
         <dd class="text-stone-600 dark:text-stone-300 text-[15px]">Every page carries a revision; writes send <code class="font-mono text-[oklch(45%_0.13_35)] dark:text-[oklch(70%_0.13_35)]">If-Match</code>. An agent and a human can't clobber each other — a stale write returns <code class="font-mono text-[oklch(45%_0.13_35)] dark:text-[oklch(70%_0.13_35)]">409</code> with the fresh page to rebase on.</dd>
       </div>
       <div>
-        <dt class="text-lg font-semibold mb-2 text-stone-900 dark:text-stone-100">Nothing ships by accident</dt>
-        <dd class="text-stone-600 dark:text-stone-300 text-[15px]">Edits stage as drafts while the live site keeps serving. <code class="font-mono text-[oklch(45%_0.13_35)] dark:text-[oklch(70%_0.13_35)]">ROLE_EDITOR</code> gates every token, and the Version extension diffs each revision before you publish.</dd>
+        <dt class="text-lg font-semibold mb-2 text-stone-900 dark:text-stone-100">Publish when ready</dt>
+        <dd class="text-stone-600 dark:text-stone-300 text-[15px]">New pages can start as drafts, and a publication hold keeps a cached page live while edits stage behind it. <code class="font-mono text-[oklch(45%_0.13_35)] dark:text-[oklch(70%_0.13_35)]">ROLE_EDITOR</code> gates every token, and the Version extension diffs each revision.</dd>
       </div>
     </dl>
 
@@ -200,11 +200,16 @@ Your content here...</pre>
 <div>
 <h3 class="text-xs font-semibold tracking-widest uppercase text-stone-500 mb-3">In production today</h3>
 <p class="text-stone-600 dark:text-stone-300 text-[15px] mb-6">
-Real brand sites are edited entirely through this API. Marketing teams open Claude Code, type what they want in plain French or English, and every save syncs to production with optimistic locking — always staged as a draft until a human publishes.
+Real brand sites are edited entirely through this API. Marketing teams open Claude Code, type what they want in plain French or English, and every save syncs to production with optimistic locking. Work that needs review waits as a draft or behind a publication hold until someone publishes it.
 </p>
-<a href="/extension/api" class="inline-flex items-center px-5 py-2.5 bg-stone-900 text-stone-50 text-sm font-medium rounded-md hover:bg-stone-700 dark:bg-stone-100 dark:text-stone-900 dark:hover:bg-stone-300">
-Read the API reference
+<div class="flex flex-wrap gap-3 items-center">
+<a href="/ai-agents" class="inline-flex items-center px-5 py-2.5 bg-stone-900 text-stone-50 text-sm font-medium rounded-md hover:bg-stone-700 dark:bg-stone-100 dark:text-stone-900 dark:hover:bg-stone-300">
+Pushword for AI agents
 </a>
+<a href="/extension/api" class="inline-flex items-center px-5 py-2.5 text-sm font-medium text-stone-900 border border-stone-300 rounded-md hover:border-stone-500 dark:text-stone-100 dark:border-stone-700 dark:hover:border-stone-500">
+API reference
+</a>
+</div>
 </div>
 </div>
   </div>
