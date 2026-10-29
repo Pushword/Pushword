@@ -16,6 +16,7 @@ use Rector\Privatization\Rector\ClassConst\PrivatizeFinalClassConstantRector;
 use Rector\Privatization\Rector\ClassMethod\PrivatizeFinalClassMethodRector;
 use Rector\Privatization\Rector\Property\PrivatizeFinalClassPropertyRector;
 use Rector\Symfony\CodeQuality\Rector\Class_\ControllerMethodInjectionToConstructorRector;
+use Rector\Symfony\CodeQuality\Rector\Class_\EventSubscriberToAttributeRector;
 use Rector\TypeDeclaration\Rector\StmtsAwareInterface\DeclareStrictTypesRector;
 
 $paths = [
@@ -82,6 +83,8 @@ return RectorConfig::configure()
         PreferPHPUnitThisCallRector::class,
         AssertFuncCallToPHPUnitAssertRector::class,
         StringCastAssertStringContainsStringRector::class,
+        // Subscriber tags registered explicitly still require EventSubscriberInterface.
+        EventSubscriberToAttributeRector::class,
         // @see https://github.com/rectorphp/rector/issues/9519
         ControllerMethodInjectionToConstructorRector::class => [
             '*CrudController.php',

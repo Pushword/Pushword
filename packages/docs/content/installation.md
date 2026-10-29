@@ -166,3 +166,32 @@ Update dependencies with:
 ```shell
 composer update
 ```
+
+### Test Symfony 8.2 in a development project
+
+Pushword's Symfony constraints allow both 8.1 and 8.2. Stable versions are preferred,
+and `composer install` uses the versions already recorded in the project's lock file.
+
+A development project using Symfony Flex can explicitly select Symfony 8.2 before
+its stable release. Remove compiled caches before switching versions so they cannot
+reference classes from the previous version:
+
+```shell
+composer config minimum-stability dev
+composer config prefer-stable true
+composer config extra.symfony.require '8.2.*'
+rm -rf var/cache
+composer update 'symfony/*' --with-all-dependencies
+```
+
+These settings belong to the project's root `composer.json`. `APP_ENV=dev` does not
+select a Symfony version. Keep the preview configuration and its `composer.lock`
+on the project's development branch.
+
+To select Symfony 8.1 again:
+
+```shell
+composer config extra.symfony.require '8.1.*'
+rm -rf var/cache
+composer update 'symfony/*' --with-all-dependencies
+```

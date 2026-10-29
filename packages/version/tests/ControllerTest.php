@@ -11,7 +11,6 @@ use Pushword\Core\Entity\Page;
 use Pushword\Core\Service\RevisionCalculator;
 use Pushword\Snippet\Entity\Snippet;
 use Pushword\Version\Versionner;
-use Symfony\Bundle\FrameworkBundle\Routing\Router;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Serializer\Encoder\JsonEncoder;
@@ -57,7 +56,6 @@ final class ControllerTest extends AbstractAdminTestClass
         $page->title .= ' (version test)';
         $em->flush();
 
-        /** @var Router $router */
         $router = self::getContainer()->get('router');
 
         $pageVersions = $versionner->getVersions('page', $pageId);
@@ -117,7 +115,6 @@ final class ControllerTest extends AbstractAdminTestClass
         $versions = $versionner->getVersions('page', $id);
         sort($versions);
 
-        /** @var Router $router */
         $router = self::getContainer()->get('router');
 
         // The shortcut redirects to the compare view against the previous distinct
@@ -135,6 +132,7 @@ final class ControllerTest extends AbstractAdminTestClass
         self::assertStringContainsString('Review changes', (string) $client->getResponse()->getContent(), 'the page list renders the version review action');
 
         $versionner->reset('page', $id);
+        $em = self::getContainer()->get('doctrine.orm.default_entity_manager');
         $em->remove($em->getRepository(Page::class)->find($id) ?? $page);
         $em->flush();
     }
@@ -158,7 +156,6 @@ final class ControllerTest extends AbstractAdminTestClass
         $versionner = self::getContainer()->get(Versionner::class);
         $versionner->reset('page', $id); // wipe history so there is nothing to compare against
 
-        /** @var Router $router */
         $router = self::getContainer()->get('router');
 
         $reviewUrl = $router->generate('admin_version_review', ['type' => 'page', 'id' => $id]);
@@ -166,6 +163,7 @@ final class ControllerTest extends AbstractAdminTestClass
         self::assertSame(302, $client->getResponse()->getStatusCode(), (string) $client->getResponse()->getContent());
         self::assertStringContainsString('/version/page/'.$id.'/list', (string) $client->getResponse()->headers->get('Location'));
 
+        $em = self::getContainer()->get('doctrine.orm.default_entity_manager');
         $em->remove($em->getRepository(Page::class)->find($id) ?? $page);
         $em->flush();
     }
@@ -185,7 +183,6 @@ final class ControllerTest extends AbstractAdminTestClass
         $em->persist($snippet);
         $em->flush();
 
-        /** @var Router $router */
         $router = self::getContainer()->get('router');
 
         /** @var string $storageDir */
@@ -235,6 +232,7 @@ final class ControllerTest extends AbstractAdminTestClass
         self::assertSame(302, $client->getResponse()->getStatusCode(), (string) $client->getResponse()->getContent());
 
         $versionner->reset('snippet', (int) $snippet->id);
+        $em = self::getContainer()->get('doctrine.orm.default_entity_manager');
         $em->remove($em->getRepository(Snippet::class)->find($snippet->id) ?? $snippet);
         $em->flush();
     }
@@ -254,7 +252,6 @@ final class ControllerTest extends AbstractAdminTestClass
         $em->persist($snippet);
         $em->flush();
 
-        /** @var Router $router */
         $router = self::getContainer()->get('router');
 
         $saveUrl = $router->generate('admin_version_save_compare', ['type' => 'snippet', 'id' => $snippet->id]);
@@ -266,7 +263,9 @@ final class ControllerTest extends AbstractAdminTestClass
         ]);
         self::assertSame(302, $client->getResponse()->getStatusCode(), (string) $client->getResponse()->getContent());
 
+        $em = self::getContainer()->get('doctrine.orm.default_entity_manager');
         $em->clear();
+
         $updated = $em->getRepository(Snippet::class)->find($snippet->id);
         self::assertNotNull($updated);
         self::assertSame('after content', $updated->content);
@@ -295,7 +294,6 @@ final class ControllerTest extends AbstractAdminTestClass
         $em->persist($snippet);
         $em->flush();
 
-        /** @var Router $router */
         $router = self::getContainer()->get('router');
 
         // The version snapshot exposes the existing custom property as YAML.
@@ -317,7 +315,9 @@ final class ControllerTest extends AbstractAdminTestClass
         ]);
         self::assertSame(302, $client->getResponse()->getStatusCode(), (string) $client->getResponse()->getContent());
 
+        $em = self::getContainer()->get('doctrine.orm.default_entity_manager');
         $em->clear();
+
         $updated = $em->getRepository(Snippet::class)->find($snippet->id);
         self::assertNotNull($updated);
         self::assertSame('baz', $updated->getCustomProperty('foo'), 'edited custom property is updated');

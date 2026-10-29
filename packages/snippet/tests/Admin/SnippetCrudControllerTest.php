@@ -94,6 +94,7 @@ final class SnippetCrudControllerTest extends AbstractAdminTestClass
         self::assertStringContainsString($allHosts, $html);
 
         // The request cycle detaches $global; re-fetch before cleanup.
+        $em = self::getContainer()->get('doctrine.orm.default_entity_manager');
         $em->remove($em->getRepository(Snippet::class)->find($global->id) ?? $global);
         $em->flush();
     }

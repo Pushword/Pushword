@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use Pushword\Core\Tests\Media\Policy\MediaPolicyFixture;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
+use Symfony\Component\Mailer\EventListener\MessageLoggerListener;
 
 return static function (ContainerConfigurator $container): void {
     // Override per-app flat_content_dir for pushword.piedweb.com so tests
@@ -13,4 +14,10 @@ return static function (ContainerConfigurator $container): void {
     // The removal half of an app's media rules; the validation half is mapped in
     // packages/test/framework.yaml.
     $container->services()->set(MediaPolicyFixture::class)->autoconfigure();
+
+    // Keep mail assertions scoped to the current request. Symfony 8.2 otherwise
+    // retains earlier requests through the kernel.test_state tag.
+    $container->services()->set('mailer.message_logger_listener', MessageLoggerListener::class)
+        ->tag('kernel.event_subscriber')
+        ->tag('kernel.reset', ['method' => 'reset']);
 };

@@ -42,6 +42,7 @@ final class QuizResultCrudControllerTest extends AbstractAdminTestClass
         // uuid, so a deleted row would be recreated on the next flat import.
         self::assertStringNotContainsString('action-delete', $html);
 
+        $entityManager = self::getContainer()->get('doctrine.orm.default_entity_manager');
         $entityManager->remove($entityManager->getRepository(QuizResult::class)->find($result->id) ?? $result);
         $entityManager->flush();
     }

@@ -357,6 +357,7 @@ final class ControllerTest extends AbstractAdminTestClass
         self::assertSame(Response::HTTP_NOT_FOUND, $client->getResponse()->getStatusCode());
 
         // Re-fetch to avoid detached entity issue
+        $em = self::getContainer()->get('doctrine.orm.default_entity_manager');
         $mediaToRemove = $em->getRepository(Media::class)->findOneBy(['fileName' => 'test-resolve.jpg']);
         if (null !== $mediaToRemove) {
             $em->remove($mediaToRemove);
