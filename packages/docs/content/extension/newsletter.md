@@ -521,28 +521,21 @@ or **Send** to authorize delivery. Previewing sends no mail.
 one already sent. Save it to create a new campaign. Content, translations, audience,
 segment, design, working title, internal notes, transactional setting and cadence are
 copied; schedules, automation provenance, recipients, counters and tracking identity
-are reset. The analytics name is derived anew from the subject. Audience and template settings remain
-shared. The API equivalent, `POST /api/newsletter/campaign/{id}/duplicate`, immediately
+are reset. The analytics name is derived anew from the subject; audience settings
+and configured Twig designs remain shared. `POST /api/newsletter/campaign/{id}/duplicate` immediately
 creates the draft and returns it with status 201; it requires an editor.
 
 ### Email design and live preview
 
-Custom email designs are Twig templates registered under `newsletter.email_templates`.
-Select and preview them in campaign or audience design settings.
-See [Preconfigured Twig designs](#preconfigured-twig-designs).
+In **Choose the audience and design**, select an audience, then inherit its design
+or choose a built-in layout or [configured Twig preset](#preconfigured-twig-designs).
+The effective design updates when the audience changes. A campaign's choice applies
+to real and test sends without changing the audience or its automations.
 
-The campaign form starts with **Choose the audience and design**. Select the
-audience, then choose **Design for this campaign**: inherit the audience's design,
-use a standard layout, or select a configured Twig preset. The effective
-design is shown below the choice and updates when the audience changes. The
-campaign's choice applies to real and test sends without changing the audience
-or its automations.
-
-Campaign creation and editing show a live email preview beside the form. It
-uses the unsaved audience, design, sender profile, subject, preview text, body and transactional
-setting, with Alex as the sample recipient. Selecting an audience starts the
-preview. Narrow screens have a **Write newsletter / Live preview** switch that
-preserves the form's edits.
+The live preview uses the sending renderer with the unsaved audience, design,
+sender profile, subject, preview text, body and transactional setting, and Alex as
+the sample recipient. Selecting an audience starts it. On narrow screens,
+**Write newsletter / Live preview** switches views while preserving edits.
 Returning from audience settings in another tab refreshes the design choices
 and the inherited audience layout without discarding the campaign draft.
 
@@ -569,16 +562,15 @@ that section without changing the shared layout.
 
 New audiences start with `**%siteName%**` as the header and
 `© %year% %siteName%` as the footer. These values resolve against the sender's
-site and the current year in both HTML and plain text. Existing saved designs
-are preserved. **Restore site name and copyright** applies these defaults to
-the editable fields; clearing either field deliberately removes that part.
+site and the current year in HTML and plain text. Existing audience headers and
+footers are preserved. **Restore site name and copyright** applies these defaults;
+clearing either field removes that part.
 
-Design and campaign composition previews use the sending renderer and update
-while typing. **Mobile 375** is selected by default; **Desktop 600** is also
-available. Previewing never saves, creates contacts or sends mail. In the
-audience design editor, narrow screens have a **Design settings / Live preview**
-switch and a horizontally scrollable preview at its rendering width. Sample content changes
-only the preview; **Save email design** applies the design settings. Unsaved
+Previews update while typing; **Mobile 375** is the default and **Desktop 600** is
+also available. Previewing never saves, creates contacts or sends mail. On narrow
+screens, the audience editor offers a **Design settings / Live preview** switch
+and a horizontally scrollable preview. Sample content changes only the preview;
+**Save email design** applies the settings. Unsaved
 design edits are indicated separately from preview freshness, and leaving the
 page warns before discarding them. A failed preview keeps the last rendering and
 offers **Try again**. Email clients may render the same HTML differently.
@@ -607,10 +599,9 @@ newsletter:
       template: 'newsletter/letter.html.twig'
 ```
 
-Both entries appear alongside the three built-in layouts in **Email design** and
-**Design for this campaign**. Both forms provide a live preview of the selected
-design. Each entry needs its own ID and label; adding a
-file to `templates/newsletter/` alone does not add a choice. Clear the Symfony
+Registered presets appear alongside the three built-in layouts in **Email design**
+and **Design for this campaign**, with live preview. Each needs its own ID and label;
+adding a file to `templates/newsletter/` alone does not add a choice. Clear the Symfony
 cache after changing configuration.
 The editable header and footer are hidden while a preset is selected; their
 values are retained when switching back to a built-in layout.
