@@ -19,6 +19,7 @@ use Pushword\StaticGenerator\Event\StaticPostGenerateEvent;
 use Pushword\StaticGenerator\Event\StaticPreGenerateEvent;
 use Pushword\StaticGenerator\Generator\CompressionAlgorithm;
 use Pushword\StaticGenerator\Generator\GeneratorInterface;
+use Pushword\StaticGenerator\Generator\PageGenerator;
 use Pushword\StaticGenerator\Generator\PagesGenerator;
 use Pushword\StaticGenerator\Generator\RedirectionManager;
 use RuntimeException;
@@ -236,7 +237,7 @@ final class StaticAppGenerator implements PageCacheGeneratorInterface
             $filesystem->remove($tempDir);
             $filesystem->mkdir($tempDir);
 
-            $currentSlugs = $this->runGenerators($app);
+            $currentSlugs = $this->runGenerators($app, $originalStaticDir);
 
             // Restore original staticDir before atomic swap
             $app->setCustomProperty('static_dir', $originalStaticDir);
@@ -406,7 +407,7 @@ final class StaticAppGenerator implements PageCacheGeneratorInterface
     }
 
     /** @return string[] the published slugs of the host — the witness list for pruning */
-    private function runGenerators(SiteConfig $app): array
+    private function runGenerators(SiteConfig $app, ?string $previousStaticDir = null): array
     {
         $slugs = $this->pageRepository->findPublishedSlugs($app->getMainHost());
         $workerCount = WorkerCountResolver::resolve($this->workers, \count($slugs), (int) $app->getStr('static_max_workers', '0'));
@@ -421,12 +422,16 @@ final class StaticAppGenerator implements PageCacheGeneratorInterface
             }
 
             if (PagesGenerator::class === $generator && $workerCount > 1) {
-                $this->generatePagesInParallel($app, $slugs, $workerCount);
+                $this->generatePagesInParallel($app, $slugs, $workerCount, $previousStaticDir);
 
                 continue;
             }
 
             $generatorInstance = $this->getGenerator($generator);
+            if ($generatorInstance instanceof PageGenerator) {
+                $generatorInstance->setPreviousStaticDir($previousStaticDir);
+            }
+
             if ($generatorInstance instanceof IncrementalGeneratorInterface) {
                 $generatorInstance->setIncremental($this->incremental);
             }
@@ -471,7 +476,7 @@ final class StaticAppGenerator implements PageCacheGeneratorInterface
     /**
      * @param string[] $slugs
      */
-    private function generatePagesInParallel(SiteConfig $app, array $slugs, int $workerCount): void
+    private function generatePagesInParallel(SiteConfig $app, array $slugs, int $workerCount, ?string $previousStaticDir = null): void
     {
         $host = $app->getMainHost();
 
@@ -525,6 +530,10 @@ final class StaticAppGenerator implements PageCacheGeneratorInterface
 
             if ($this->incremental) {
                 $cmd[] = '--incremental';
+            }
+
+            if (null !== $previousStaticDir) {
+                $cmd[] = '--previous-static-dir='.$previousStaticDir;
             }
 
             $process = new Process($cmd, $this->projectDir);

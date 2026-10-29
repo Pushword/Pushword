@@ -14,6 +14,7 @@ use Pushword\Core\Utils\PathGuard;
 
 use function Safe\preg_match;
 
+use Symfony\Component\Filesystem\Path;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Contracts\Service\Attribute\Required;
@@ -21,6 +22,8 @@ use Throwable;
 
 class PageGenerator extends AbstractGenerator
 {
+    private ?string $previousStaticDir = null;
+
     /** @var array<int, true>|null */
     private ?array $parentPageIdsWithChildren = null;
 
@@ -32,6 +35,11 @@ class PageGenerator extends AbstractGenerator
 
     #[Required]
     public HtmlMinification $htmlMinification;
+
+    public function setPreviousStaticDir(?string $directory): void
+    {
+        $this->previousStaticDir = null === $directory ? null : Path::canonicalize($directory);
+    }
 
     #[Override]
     public function generate(?string $host = null): void
@@ -234,9 +242,12 @@ class PageGenerator extends AbstractGenerator
 
         $compressor = $this->compressor ??= new Compressor();
 
-        foreach ($compressor->availableCompressors as $compressorName) {
-            $compressor->compress($filePath, $compressorName);
+        $previousFilePath = null;
+        if (null !== $this->previousStaticDir && $this->previousStaticDir !== Path::canonicalize($this->getStaticDir())) {
+            $previousFilePath = PathGuard::joinUnder($this->previousStaticDir, Path::makeRelative($filePath, $this->getStaticDir()));
         }
+
+        $compressor->compressFile($filePath, $previousFilePath);
     }
 
     private int $minificationSkippedReported = 0;

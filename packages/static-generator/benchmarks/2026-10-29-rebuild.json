@@ -1,0 +1,391 @@
+{
+  "date": "2026-10-29",
+  "baseline_commit": "2de16b50a2c787f223a18bb201dbd82ae52f65e0",
+  "scope": "Reuse unchanged compressed files during full atomic static rebuilds",
+  "environment": {
+    "php": "8.5.12",
+    "cpu": "AMD Ryzen AI 9 HX 370",
+    "cpu_affinity": [
+      2,
+      3,
+      4,
+      5
+    ],
+    "workers": 4,
+    "mode": "prod, debug disabled; PHP rendering and minification; existing compression settings unchanged"
+  },
+  "method": [
+    "Independent private copies of the installed Altimood and Pied Vert sites, with SQLite backups, null mail transport and private caches/media. Only this change is backported onto their installed dependencies; site code/content remains fixed.",
+    "Every measured build starts with a reflink copy of the same previous complete export. Seeding is outside the timed interval. Both control and candidate execute full builds without --incremental and still render every eligible page.",
+    "Control autoloads the saved original StaticAppGenerator, StaticWorkerCommand and PageGenerator; candidate passes the previous output directory to sequential generators and workers. Compressor settings and binaries are identical.",
+    "Two measurements per backend/site, using control/candidate/candidate/control order. Each uses fresh temporary output and an atomic swap; outputs are retained outside the serving path after completion.",
+    "Counters inserted only into the private benchmark Compressor count each copied compressed file and each compress invocation. They do not appear in the committed implementation.",
+    "Every regular exported file is hashed and every symlink target compared; no content normalization is needed because the private static path used during generation is constant across modes.",
+    "All gzip, Brotli and Zstandard files from the second optimized export are decompressed and individually compared against their corresponding uncompressed files. Zstandard is decoded in ordered batches and split at measured original-file lengths.",
+    "Full rebuilds require an existing export for reuse. Cold builds, changed rendered bytes, and missing/empty compressed files use the existing compressors. Incremental rendering policy is unchanged.",
+    "This is not a whole-page render cache: Twig, links, dates, publication rules and content dependencies still execute before comparing output bytes.",
+    "Shared workstation with background activity and no frequency or thermal isolation. These are local full-rebuild observations, not visitor latency measurements."
+  ],
+  "implementation_sha256": {
+    "src/Generator/Compressor.php": "672c75e713a0c840fdd9e9c23c3e75eb8b86569892c33ac46b07176986e51589",
+    "src/Generator/PageGenerator.php": "fcd6a257146f30629a38263b39450891bc46c3dcb0b7afb254ccca6ce4234352",
+    "src/StaticAppGenerator.php": "b88f5241a46641e1bf8856295d19beee8b5341fa34e055daee00bb18a1185156",
+    "src/StaticWorkerCommand.php": "f11697d48cd22f384edb7ac1842ef98da39f8dd23a8a28f3d0aa74080f70a750"
+  },
+  "sites": {
+    "altimood": {
+      "hosts": 17,
+      "published_pages": 1459,
+      "database_sha256": "4399ff2cc28265ce61e54768ba9f485eb4b33f6672a9fb44540ce0f7dae9aecd",
+      "app_lock_sha256": "a870077f465cb8eb07777c91ed890a02c12b503cc1660e43ba3a4d1832f464c5",
+      "baseline_samples": [
+        {
+          "site": "altimood",
+          "mode": "control-final-reuse-simplified-1",
+          "seconds": 50.402615309,
+          "code": 0,
+          "signal": null
+        },
+        {
+          "site": "altimood",
+          "mode": "control-final-reuse-simplified-2",
+          "seconds": 49.04040364600001,
+          "code": 0,
+          "signal": null
+        }
+      ],
+      "optimized_samples": [
+        {
+          "site": "altimood",
+          "mode": "final-reuse-simplified-1",
+          "seconds": 24.11011982400001,
+          "code": 0,
+          "signal": null
+        },
+        {
+          "site": "altimood",
+          "mode": "final-reuse-simplified-2",
+          "seconds": 23.153887375000007,
+          "code": 0,
+          "signal": null
+        }
+      ],
+      "baseline_median_seconds": 49.72150947750001,
+      "optimized_median_seconds": 23.63200359950001,
+      "elapsed_reduction_percent": 52.47126676595776,
+      "speedup": 2.1039904326416057,
+      "compression_outcomes": [
+        {
+          "mode": "control-final-reuse-simplified-1",
+          "processes": 69,
+          "reused": 0,
+          "compressed": 4335
+        },
+        {
+          "mode": "final-reuse-simplified-1",
+          "processes": 69,
+          "reused": 4335,
+          "compressed": 0
+        },
+        {
+          "mode": "final-reuse-simplified-2",
+          "processes": 69,
+          "reused": 4335,
+          "compressed": 0
+        },
+        {
+          "mode": "control-final-reuse-simplified-2",
+          "processes": 69,
+          "reused": 0,
+          "compressed": 4335
+        }
+      ],
+      "generation_events": [
+        {
+          "mode": "control-final-reuse-simplified-1",
+          "page_generation_events": 1459,
+          "held_events": 0,
+          "runtime_issue_lines": 0
+        },
+        {
+          "mode": "final-reuse-simplified-1",
+          "page_generation_events": 1459,
+          "held_events": 0,
+          "runtime_issue_lines": 0
+        },
+        {
+          "mode": "final-reuse-simplified-2",
+          "page_generation_events": 1459,
+          "held_events": 0,
+          "runtime_issue_lines": 0
+        },
+        {
+          "mode": "control-final-reuse-simplified-2",
+          "page_generation_events": 1459,
+          "held_events": 0,
+          "runtime_issue_lines": 0
+        }
+      ],
+      "complete_export_comparisons": [
+        {
+          "left_mode": "control-final-reuse-simplified-1",
+          "right_mode": "final-reuse-simplified-1",
+          "kind": "exact",
+          "left_entries": 33286,
+          "right_entries": 33286,
+          "equal": 33286,
+          "different": 0,
+          "missing": 0,
+          "extra": 0,
+          "ignored_left": 0,
+          "ignored_right": 0,
+          "examples": [],
+          "brotli_files": 0,
+          "brotli_left_bytes": 0,
+          "brotli_right_bytes": 0,
+          "brotli_left_roundtrip_equal": 0,
+          "brotli_right_roundtrip_equal": 0,
+          "roundtrip_errors": []
+        },
+        {
+          "left_mode": "control-final-reuse-simplified-2",
+          "right_mode": "final-reuse-simplified-2",
+          "kind": "exact",
+          "left_entries": 33286,
+          "right_entries": 33286,
+          "equal": 33286,
+          "different": 0,
+          "missing": 0,
+          "extra": 0,
+          "ignored_left": 0,
+          "ignored_right": 0,
+          "examples": [],
+          "brotli_files": 0,
+          "brotli_left_bytes": 0,
+          "brotli_right_bytes": 0,
+          "brotli_left_roundtrip_equal": 0,
+          "brotli_right_roundtrip_equal": 0,
+          "roundtrip_errors": []
+        }
+      ],
+      "roundtrips_and_sizes": {
+        "formats": {
+          ".gz": {
+            "files": 1598,
+            "equal": 1598,
+            "different": 0
+          },
+          ".br": {
+            "files": 1598,
+            "equal": 1598,
+            "different": 0
+          },
+          ".zst": {
+            "files": 1445,
+            "equal": 1445,
+            "different": 0
+          }
+        },
+        "regular_bytes": 649110453,
+        "errors": [],
+        "control_regular_bytes": 649110453
+      }
+    },
+    "piedvert": {
+      "hosts": 2,
+      "published_pages": 228,
+      "database_sha256": "81a0010b2925ddefe6683fc5f5ba2723256e9997a702934f74e1de6fca962f5a",
+      "app_lock_sha256": "737257bc13c825c2ffa5f27841de4841079152d2cbfd1efe6663a911e45db931",
+      "baseline_samples": [
+        {
+          "site": "piedvert",
+          "mode": "control-final-reuse-simplified-1",
+          "seconds": 4.9200706540000025,
+          "code": 0,
+          "signal": null
+        },
+        {
+          "site": "piedvert",
+          "mode": "control-final-reuse-simplified-2",
+          "seconds": 4.79713372100002,
+          "code": 0,
+          "signal": null
+        }
+      ],
+      "optimized_samples": [
+        {
+          "site": "piedvert",
+          "mode": "final-reuse-simplified-1",
+          "seconds": 2.741934772000008,
+          "code": 0,
+          "signal": null
+        },
+        {
+          "site": "piedvert",
+          "mode": "final-reuse-simplified-2",
+          "seconds": 2.837001231000002,
+          "code": 0,
+          "signal": null
+        }
+      ],
+      "baseline_median_seconds": 4.858602187500011,
+      "optimized_median_seconds": 2.789468001500005,
+      "elapsed_reduction_percent": 42.58702618879521,
+      "speedup": 1.741766596672682,
+      "compression_outcomes": [
+        {
+          "mode": "control-final-reuse-simplified-1",
+          "processes": 9,
+          "reused": 0,
+          "compressed": 723
+        },
+        {
+          "mode": "final-reuse-simplified-1",
+          "processes": 9,
+          "reused": 723,
+          "compressed": 0
+        },
+        {
+          "mode": "final-reuse-simplified-2",
+          "processes": 9,
+          "reused": 723,
+          "compressed": 0
+        },
+        {
+          "mode": "control-final-reuse-simplified-2",
+          "processes": 9,
+          "reused": 0,
+          "compressed": 723
+        }
+      ],
+      "generation_events": [
+        {
+          "mode": "control-final-reuse-simplified-1",
+          "page_generation_events": 227,
+          "held_events": 1,
+          "runtime_issue_lines": 0
+        },
+        {
+          "mode": "final-reuse-simplified-1",
+          "page_generation_events": 227,
+          "held_events": 1,
+          "runtime_issue_lines": 0
+        },
+        {
+          "mode": "final-reuse-simplified-2",
+          "page_generation_events": 227,
+          "held_events": 1,
+          "runtime_issue_lines": 0
+        },
+        {
+          "mode": "control-final-reuse-simplified-2",
+          "page_generation_events": 227,
+          "held_events": 1,
+          "runtime_issue_lines": 0
+        }
+      ],
+      "complete_export_comparisons": [
+        {
+          "left_mode": "control-final-reuse-simplified-1",
+          "right_mode": "final-reuse-simplified-1",
+          "kind": "exact",
+          "left_entries": 2772,
+          "right_entries": 2772,
+          "equal": 2772,
+          "different": 0,
+          "missing": 0,
+          "extra": 0,
+          "ignored_left": 0,
+          "ignored_right": 0,
+          "examples": [],
+          "brotli_files": 0,
+          "brotli_left_bytes": 0,
+          "brotli_right_bytes": 0,
+          "brotli_left_roundtrip_equal": 0,
+          "brotli_right_roundtrip_equal": 0,
+          "roundtrip_errors": []
+        },
+        {
+          "left_mode": "control-final-reuse-simplified-2",
+          "right_mode": "final-reuse-simplified-2",
+          "kind": "exact",
+          "left_entries": 2772,
+          "right_entries": 2772,
+          "equal": 2772,
+          "different": 0,
+          "missing": 0,
+          "extra": 0,
+          "ignored_left": 0,
+          "ignored_right": 0,
+          "examples": [],
+          "brotli_files": 0,
+          "brotli_left_bytes": 0,
+          "brotli_right_bytes": 0,
+          "brotli_left_roundtrip_equal": 0,
+          "brotli_right_roundtrip_equal": 0,
+          "roundtrip_errors": []
+        }
+      ],
+      "roundtrips_and_sizes": {
+        "formats": {
+          ".gz": {
+            "files": 241,
+            "equal": 241,
+            "different": 0
+          },
+          ".br": {
+            "files": 241,
+            "equal": 241,
+            "different": 0
+          },
+          ".zst": {
+            "files": 241,
+            "equal": 241,
+            "different": 0
+          }
+        },
+        "regular_bytes": 99445667,
+        "errors": [],
+        "control_regular_bytes": 99445667
+      }
+    }
+  },
+  "verification": {
+    "command": "composer test-filter Pushword.StaticGenerator",
+    "tests": {
+      "tool": "phpunit",
+      "result": "passed",
+      "tests": 239,
+      "passed": 239,
+      "assertions": 884,
+      "duration_ms": 36651
+    },
+    "phpstan": {
+      "tool": "phpstan",
+      "result": "passed",
+      "errors": 0
+    },
+    "rector": "passed, zero errors; PHP/Twig formatting and cache clear completed",
+    "guard_on_copy": {
+      "command": "composer test-filter \"CompressorReuseGuardTest --configuration=/tmp/pushword-compression-reuse-20261029/guards/guard.xml\"",
+      "baseline": "A private Compressor copy exposes the same compressFile API but always compresses instead of reusing.",
+      "result": "failed",
+      "tests": 1,
+      "failed": 1,
+      "test": "Pushword\\StaticGenerator\\Tests\\Generator\\CompressorReuseGuardTest::testIdenticalRenderedBytesReuseThePreviousCompressedFile with data set \"HTML\"",
+      "reason": "The previously generated valid gzip bytes are replaced instead of copied."
+    },
+    "new_coverage": [
+      "Unchanged HTML and empty input preserve the previous valid compressed bytes.",
+      "First build, changed rendered bytes, missing previous output, missing/empty compressed files and the same-path case compress normally.",
+      "Unavailable algorithms are not copied; a missing format is recompressed while another available format is reused.",
+      "Sequential and parallel full builds reuse the previous gzip, then a real page edit changes the HTML and produces gzip decoding to the new body."
+    ]
+  },
+  "reproduce": [
+    "On a frozen site, retain a complete previous export, then measure repeated php bin/console pw:static --workers=4 --format=text in prod.",
+    "Compare with the parent implementation using the same previous tree, dependencies, affinity and compression tools. Do not time copying the seed export.",
+    "Compare every regular file and symlink target; decompress each generated sidecar against its original.",
+    "The private site databases, media and rendered content are deliberately not committed."
+  ]
+}

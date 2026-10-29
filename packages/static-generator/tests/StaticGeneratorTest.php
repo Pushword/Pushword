@@ -239,6 +239,62 @@ final class StaticGeneratorTest extends KernelTestCase
         }
     }
 
+    #[DataProvider('fullBuildWorkerCounts')]
+    public function testFullBuildReusesCompressedFilesOnlyForIdenticalRenderedPages(int $workers): void
+    {
+        self::bootKernel();
+        $this->overrideStaticDir();
+        $tester = new CommandTester(new Application(self::$kernel)->find('pw:static')); // @phpstan-ignore-line
+        $arguments = ['host' => 'localhost.dev', '--workers' => $workers, '--format' => 'text'];
+        self::assertSame(0, $tester->execute($arguments), $tester->getDisplay());
+
+        $index = $this->getStaticDir().'/index.html';
+        $originalHtml = file_get_contents($index);
+        self::assertNotFalse($originalHtml);
+        $previousGzip = gzencode($originalHtml, 0);
+        self::assertNotFalse($previousGzip);
+        self::assertNotSame(CompressionAlgorithm::Gzip->nativeCompress($originalHtml), $previousGzip);
+        file_put_contents($index.'.gz', $previousGzip);
+
+        $tester = $this->rebootStaticCommandTester();
+        self::assertSame(0, $tester->execute($arguments), $tester->getDisplay());
+        self::assertSame($originalHtml, file_get_contents($index));
+        self::assertSame($previousGzip, file_get_contents($index.'.gz'), 'A full atomic rebuild must reuse the previous matching sidecar.');
+        self::assertDirectoryDoesNotExist($this->getStaticDir().'~');
+
+        $em = self::getContainer()->get(EntityManagerInterface::class);
+        $page = $em->getRepository(Page::class)->findOneBy(['host' => 'localhost.dev', 'slug' => 'homepage']);
+        self::assertNotNull($page);
+        $originalContent = $page->mainContent;
+
+        try {
+            $page->mainContent .= "\n\nFresh content after the compression reuse test.";
+            $em->flush();
+            $tester = $this->rebootStaticCommandTester();
+            self::assertSame(0, $tester->execute($arguments), $tester->getDisplay());
+            $changedHtml = file_get_contents($index);
+            self::assertNotFalse($changedHtml);
+            self::assertStringContainsString('Fresh content after the compression reuse test.', $changedHtml);
+            $changedGzip = file_get_contents($index.'.gz');
+            self::assertNotFalse($changedGzip);
+            self::assertNotSame($previousGzip, $changedGzip);
+            self::assertSame($changedHtml, gzdecode($changedGzip));
+        } finally {
+            $em = self::getContainer()->get(EntityManagerInterface::class);
+            $page = $em->getRepository(Page::class)->findOneBy(['host' => 'localhost.dev', 'slug' => 'homepage']);
+            self::assertNotNull($page);
+            $page->mainContent = $originalContent;
+            $em->flush();
+        }
+    }
+
+    /** @return iterable<string, array{int}> */
+    public static function fullBuildWorkerCounts(): iterable
+    {
+        yield 'sequential' => [1];
+        yield 'parallel' => [2];
+    }
+
     public function testIncrementalGeneration(): void
     {
         self::bootKernel();

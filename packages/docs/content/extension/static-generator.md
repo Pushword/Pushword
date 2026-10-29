@@ -104,6 +104,14 @@ it leaves out, with its date in the
 agent JSON carries them under `scheduled`. A [scheduled command](/background-tasks#scheduled-commands)
 on `publish` regenerates them once the date passes.
 
+### Full rebuilds
+
+Full builds still render every page into a temporary directory before the atomic
+swap. When the resulting bytes match the previous export, its non-empty gzip,
+Brotli and Zstandard files are copied instead of compressed again. Changed pages
+and missing compressed files are compressed normally. This applies to sequential
+and parallel builds and keeps the existing compression quality and output bytes.
+
 ### Incremental generation
 
 `--incremental` skips a page when neither its `updatedAt` nor the host's

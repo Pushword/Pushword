@@ -5,6 +5,9 @@ declare(strict_types=1);
 namespace Pushword\StaticGenerator\Generator;
 
 use Exception;
+
+use function Safe\copy;
+
 use Symfony\Component\Process\Process;
 
 class Compressor
@@ -66,6 +69,28 @@ class Compressor
     private function isAlgorithmAvailable(CompressionAlgorithm $algorithm): bool
     {
         return \in_array($algorithm, $this->availableCompressors, true);
+    }
+
+    public function compressFile(string $filePath, ?string $previousFilePath = null): void
+    {
+        if ([] === $this->availableCompressors) {
+            return;
+        }
+
+        // The old release only supplies compressed bytes after a fresh render matches it.
+        $unchanged = null !== $previousFilePath
+            && $previousFilePath !== $filePath
+            && is_file($previousFilePath)
+            && file_get_contents($previousFilePath) === file_get_contents($filePath);
+
+        foreach ($this->availableCompressors as $algorithm) {
+            $extension = $algorithm->getExtension();
+            if ($unchanged && is_file($previousFilePath.$extension) && filesize($previousFilePath.$extension) > 0) {
+                copy($previousFilePath.$extension, $filePath.$extension);
+            } else {
+                $this->compress($filePath, $algorithm);
+            }
+        }
     }
 
     public function compress(string $filePath, CompressionAlgorithm $algorithm): void

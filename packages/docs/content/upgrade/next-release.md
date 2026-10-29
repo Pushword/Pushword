@@ -1,5 +1,5 @@
 ---
-title: 'native accelerators avoid unused analysis and preserve control-character serialization; page corpus checks use a covering index'
+title: 'native accelerators avoid unused analysis and preserve control-character serialization; page corpus checks use a covering index; full static rebuilds reuse unchanged compressed files'
 run: 'doctrine:schema:update --force'
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
@@ -49,3 +49,9 @@ PHP remains the default; no configuration change is required.
 
 Corpus freshness checks now use a covering index without loading parent or image rows.
 Run `php bin/console doctrine:schema:update --force` in every installed application to create `idx_page_corpus_state`.
+
+## Unchanged compressed files
+
+Full static rebuilds reuse existing compressed files when the newly rendered bytes are identical.
+Pages still render on every full build; changed pages and missing compressed files are compressed normally.
+No action or configuration change is required.

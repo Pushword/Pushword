@@ -37,6 +37,8 @@ final readonly class StaticWorkerCommand
         string $redirectionsFile = '',
         #[Option(description: 'Override static output directory', name: 'static-dir')]
         string $staticDir = '',
+        #[Option(description: 'Previous full export directory for unchanged compressed files', name: 'previous-static-dir')]
+        string $previousStaticDir = '',
     ): int {
         if (in_array('', [$slugs, $stateFile, $redirectionsFile], true)) {
             $output->writeln('<error>Missing required options: --slugs, --state-file, --redirections-file</error>');
@@ -57,6 +59,7 @@ final readonly class StaticWorkerCommand
             $pagesGenerator->setStaticDirOverride($staticDir);
         }
 
+        $pagesGenerator->setPreviousStaticDir('' !== $previousStaticDir ? $previousStaticDir : null);
         $pagesGenerator->generateSlugs($slugList, $stateFile, $redirectionsFile, $host);
 
         // The parent sees only this process's exit code and stderr: an error kept
