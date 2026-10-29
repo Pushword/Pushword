@@ -11,49 +11,53 @@
 {% endblock %}
 
 {% block campaign_results %}
-  {% if items is empty %}
+  {% if items is empty and hasFilters %}
     {{ parent() }}
-  {% else %}
-    {% set events = [] %}
-    {% for item in items %}
-      {% set date = item.sentAt ?? item.scheduledAt %}
-      {% if date %}
-        {% set editable = item.source == 'pushword' and item.status == 'draft' and item.version is not null %}
-        {% set state = item.status == 'draft' and item.editorialStage ? ('newsletter.editorial.' ~ item.editorialStage)|trans : (statusLabels[item.status ?? ''] is defined ? statusLabels[item.status]|trans : item.status) %}
-        {% set events = events|merge([{
-          id: item.key,
-          title: item.subject,
-          start: date|date('c'),
-          allDay: false,
-          url: editable ? path('admin_newsletter_campaign_edit', {entityId: item.id}) : (item.actions|first ?: null),
-          editable: editable,
-          durationEditable: false,
-          extendedProps: {
-            source: item.source,
-            audience: item.audience,
-            state: state,
-            version: item.version,
-            moveUrl: editable ? path('admin_newsletter_campaign_calendar_date', {id: item.id}) : null,
-          },
-        }]) %}
-      {% endif %}
-    {% endfor %}
-    <p class="pw-calendar-help">{{ 'newsletter.calendar.help'|trans }}</p>
-    <div class="pw-calendar-feedback" role="status" aria-live="polite" data-calendar-feedback hidden></div>
-    <div data-newsletter-calendar
-      data-events="{{ events|json_encode }}"
-      data-timezone="{{ timezone }}"
-      data-locale="{{ app.request.locale }}"
-      data-token="{{ csrf_token('newsletter_calendar') }}"
-      data-saved="{{ 'newsletter.calendar.saved'|trans }}"
-      data-error="{{ 'newsletter.calendar.error'|trans }}"
-      data-conflict="{{ 'newsletter.calendar.conflict'|trans }}"
-      data-empty="{{ 'newsletter.calendar.empty'|trans }}"
-      data-year="{{ 'newsletter.calendar.year'|trans }}"
-      data-month="{{ 'newsletter.calendar.month'|trans }}"
-      data-week="{{ 'newsletter.calendar.week'|trans }}"
-      data-agenda="{{ 'newsletter.calendar.agenda'|trans }}"></div>
-    <noscript><p>{{ 'newsletter.calendar.javascript'|trans }} <a href="{{ path('admin_newsletter_campaign_catalogue', viewFilters) }}">{{ 'newsletter.calendar.list'|trans }}</a></p></noscript>
+  {% endif %}
+  {% set events = [] %}
+  {% for item in items %}
+    {% set date = item.sentAt ?? item.scheduledAt %}
+    {% if date %}
+      {% set editable = item.source == 'pushword' and item.status == 'draft' and item.version is not null %}
+      {% set state = item.status == 'draft' and item.editorialStage ? ('newsletter.editorial.' ~ item.editorialStage)|trans : (statusLabels[item.status ?? ''] is defined ? statusLabels[item.status]|trans : item.status) %}
+      {% set events = events|merge([{
+        id: item.key,
+        title: item.subject,
+        start: date|date('c'),
+        allDay: false,
+        url: editable ? path('admin_newsletter_campaign_edit', {entityId: item.id}) : (item.actions|first ?: null),
+        editable: editable,
+        durationEditable: false,
+        extendedProps: {
+          source: item.source,
+          audience: item.audience,
+          state: state,
+          version: item.version,
+          moveUrl: editable ? path('admin_newsletter_campaign_calendar_date', {id: item.id}) : null,
+        },
+      }]) %}
+    {% endif %}
+  {% endfor %}
+  <p class="pw-calendar-create-help">{{ 'newsletter.calendar.createHelp'|trans }}</p>
+  <div class="pw-calendar-feedback" role="status" aria-live="polite" data-calendar-feedback hidden></div>
+  <div data-newsletter-calendar
+    data-events="{{ events|json_encode }}"
+    data-create-url="{{ path('admin_newsletter_campaign_new') }}"
+    data-create-hint="{{ 'newsletter.calendar.createHint'|trans }}"
+    data-timezone="{{ timezone }}"
+    data-locale="{{ app.request.locale }}"
+    data-token="{{ csrf_token('newsletter_calendar') }}"
+    data-saved="{{ 'newsletter.calendar.saved'|trans }}"
+    data-error="{{ 'newsletter.calendar.error'|trans }}"
+    data-conflict="{{ 'newsletter.calendar.conflict'|trans }}"
+    data-empty="{{ 'newsletter.calendar.empty'|trans }}"
+    data-year="{{ 'newsletter.calendar.year'|trans }}"
+    data-month="{{ 'newsletter.calendar.month'|trans }}"
+    data-week="{{ 'newsletter.calendar.week'|trans }}"
+    data-agenda="{{ 'newsletter.calendar.agenda'|trans }}"></div>
+  <noscript><p>{{ 'newsletter.calendar.javascript'|trans }} <a href="{{ path('admin_newsletter_campaign_catalogue', viewFilters) }}">{{ 'newsletter.calendar.list'|trans }}</a></p></noscript>
+  <p class="pw-calendar-help">{{ 'newsletter.calendar.help'|trans }}</p>
+  {% if items is not empty %}
     {% set undated = items|filter(item => item.scheduledAt is null and item.sentAt is null) %}
     <section class="pw-calendar-undated" aria-labelledby="calendar-undated">
       <h2 id="calendar-undated">{{ 'newsletter.calendar.undated'|trans }} <span class="text-muted">({{ undated|length }})</span></h2>

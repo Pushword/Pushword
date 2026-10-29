@@ -93,6 +93,8 @@ newsletter:
   calendar:
     agenda: "Agenda"
     conflict: "Deze nieuwsbrief is gewijzigd. Herlaad de pagina voordat je deze verplaatst."
+    createHelp: "Klik op een dag of tijdstip om een concept te maken."
+    createHint: "Maak een nieuwsbrief voor %date%"
     empty: "Geen nieuwsbrieven in deze periode."
     error: "De datum kon niet worden opgeslagen. De vorige datum is hersteld."
     help: "Versleep een concept of open het om de datum in het formulier te wijzigen. Alleen Verzenden geeft toestemming. Geplande, verzonden en externe nieuwsbrieven zijn hier alleen-lezen."

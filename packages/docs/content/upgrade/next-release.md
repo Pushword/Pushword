@@ -1,5 +1,5 @@
 ---
-title: 'missing media URLs return empty 404 responses'
+title: 'missing media URLs return empty 404 responses; newsletter dates use the editorial timezone'
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -35,8 +35,12 @@ belongs in the feature doc, which you link to instead.
 Several changes land here between two tags: append to the file, do not replace it.
 -->
 
-**Concerns:** `pushword/core`
+**Concerns:** `pushword/core`, `pushword/newsletter`
 
 ## Missing media responses
 
 Missing or malformed URLs under `public_media_dir` now return an empty `text/plain` 404 instead of rendering the site's error page. The configured directory is respected; no configuration change is required.
+
+## Newsletter dates
+
+The newsletter scheduling form now displays and reads dates in `pushword.editorial_timezone`, matching the calendar. Existing saved dates keep the same instant; no configuration change is required.

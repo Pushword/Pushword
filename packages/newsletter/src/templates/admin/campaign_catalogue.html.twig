@@ -24,7 +24,7 @@
 
 {% block page_actions %}
   <div class="pw-catalogue-page-actions">
-    {% if not isInitialEmpty %}<div class="pw-catalogue-creations">{{ _self.creations(creationActions) }}</div>{% endif %}
+    {% if not isInitialEmpty or calendarView %}<div class="pw-catalogue-creations">{{ _self.creations(creationActions) }}</div>{% endif %}
     <div class="btn-group pw-catalogue-views" role="group" aria-label="{{ 'newsletter.calendar.views'|trans }}">
       <a class="btn btn-secondary" href="{{ path('admin_newsletter_campaign_catalogue', viewFilters) }}"{% if not calendarView %} aria-current="page"{% endif %}>{{ 'newsletter.calendar.list'|trans }}</a>
       <a class="btn btn-secondary" href="{{ path('admin_newsletter_campaign_calendar', viewFilters) }}"{% if calendarView %} aria-current="page"{% endif %}>{{ 'newsletter.calendar.title'|trans }}</a>

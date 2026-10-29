@@ -93,6 +93,8 @@ newsletter:
   calendar:
     agenda: "Agenda"
     conflict: "This newsletter has changed. Reload the page before moving it again."
+    createHelp: "Click a day or time slot to create a draft."
+    createHint: "Create a newsletter for %date%"
     empty: "No newsletters in this period."
     error: "The date could not be saved. The previous date has been restored."
     help: "Drag a draft to change its date, or open it to edit the date with the form. Only Send authorizes delivery. Scheduled, sent and external newsletters are read-only here."

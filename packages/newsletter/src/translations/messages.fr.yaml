@@ -93,6 +93,8 @@ newsletter:
   calendar:
     agenda: "Agenda"
     conflict: "Cette newsletter a été modifiée. Rechargez la page avant de la déplacer à nouveau."
+    createHelp: "Cliquez sur un jour ou un créneau pour créer un brouillon."
+    createHint: "Créer une newsletter pour le %date%"
     empty: "Aucune newsletter sur cette période."
     error: "La date n’a pas pu être enregistrée. La date précédente a été rétablie."
     help: "Déplacez un brouillon pour changer sa date, ou ouvrez-le pour modifier la date dans le formulaire. Seul Envoyer autorise l’envoi. Les newsletters programmées, envoyées et externes sont en lecture seule ici."

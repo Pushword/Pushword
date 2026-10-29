@@ -25,12 +25,17 @@ if (element) {
     event.color = colorFor(event.extendedProps.audience)
   }
   let saving = false
+  const createDraft = (date) => {
+    const url = new URL(config.createUrl, window.location.href)
+    url.searchParams.set('scheduledAt', date)
+    window.location.assign(url.href)
+  }
   const calendar = new Calendar(element, {
     plugins: [classicTheme],
     locales: [fr, de, it, nl],
     locale: config.locale.replace('_', '-'),
     timeZone: config.timezone,
-    initialView: window.matchMedia('(max-width: 767px)').matches ? 'listMonth' : 'dayGridMonth',
+    initialView: 'dayGridMonth',
     monthText: config.month,
     weekTextLong: config.week,
     yearText: config.year,
@@ -42,6 +47,11 @@ if (element) {
     dayMaxEvents: 3,
     nowIndicator: true,
     noEventsContent: config.empty,
+    dayCellClass: 'pw-calendar-day',
+    navLinks: true,
+    navLinkHint: (dateText) => config.createHint.replace('%date%', dateText),
+    navLinkDayClick: (date) => createDraft(calendar.formatIso(date, true)),
+    dateClick: ({ dateStr }) => createDraft(dateStr),
     events,
     eventDidMount({ event, el }) {
       const { audience, source, state } = event.extendedProps

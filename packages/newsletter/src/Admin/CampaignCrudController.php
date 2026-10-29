@@ -29,6 +29,7 @@ use EasyCorp\Bundle\EasyAdminBundle\Router\AdminUrlGenerator;
 use LogicException;
 use Override;
 use Pushword\AdminBlockEditor\Form\EditorjsType;
+use Pushword\Core\Service\EditorialTimezone;
 use Pushword\Core\Site\SiteRegistry;
 use Pushword\Newsletter\Controller\CriteriaController;
 use Pushword\Newsletter\Entity\Audience;
@@ -50,6 +51,7 @@ use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Throwable;
 
@@ -73,6 +75,7 @@ class CampaignCrudController extends AbstractCrudController
         private readonly RequestStack $requests,
         private readonly CampaignPreflight $preflight,
         private readonly SenderProfileRegistry $senderProfiles,
+        private readonly EditorialTimezone $timezone,
     ) {
     }
 
@@ -84,9 +87,21 @@ class CampaignCrudController extends AbstractCrudController
     #[Override]
     public function createEntity(string $entityFqcn): Campaign
     {
-        $id = $this->requests->getCurrentRequest()?->query->getInt('duplicate') ?? 0;
+        $request = $this->requests->getCurrentRequest();
+        $id = $request?->query->getInt('duplicate') ?? 0;
         if (0 === $id) {
-            return new Campaign();
+            $campaign = new Campaign();
+            $value = $request?->query->getString('scheduledAt') ?? '';
+            if ('' !== $value) {
+                $date = DateTimeImmutable::createFromFormat(10 === \strlen($value) ? '!Y-m-d' : DateTimeInterface::ATOM, $value, $this->timezone->timezone);
+                if (false === $date || false !== DateTimeImmutable::getLastErrors()) {
+                    throw new BadRequestHttpException('Invalid calendar date.');
+                }
+
+                $campaign->scheduledAt = DateTimeImmutable::createFromMutable($this->timezone->parse($date->format(DateTimeInterface::ATOM)));
+            }
+
+            return $campaign;
         }
 
         $this->denyAccessUnlessGranted('ROLE_EDITOR');
@@ -100,6 +115,7 @@ class CampaignCrudController extends AbstractCrudController
     protected function getRedirectResponseAfterSave(AdminContext $context, string $action): RedirectResponse
     {
         $context->getRequest()->query->remove('duplicate');
+        $context->getRequest()->query->remove('scheduledAt');
 
         return parent::getRedirectResponseAfterSave($context, $action);
     }
@@ -328,6 +344,8 @@ class CampaignCrudController extends AbstractCrudController
             ->setHelp('newsletter.campaign.fieldset.scheduleHelp')
             ->setFormTypeOption('context_help', true);
         yield DateTimeField::new('scheduledAt', 'newsletter.campaign.field.scheduledAt')->hideOnIndex()
+            ->setTimezone($this->timezone->timezone->getName())
+            ->setFormTypeOption('view_timezone', $this->timezone->timezone->getName())
             ->setFormTypeOption('disabled', ! $preparing)
             ->setHelp('newsletter.campaign.field.scheduledAt.help')
             ->setFormTypeOption('context_help', 'newsletterHelpSchedule');

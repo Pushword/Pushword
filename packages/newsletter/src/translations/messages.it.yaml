@@ -93,6 +93,8 @@ newsletter:
   calendar:
     agenda: "Agenda"
     conflict: "Questa newsletter è stata modificata. Ricarica la pagina prima di spostarla."
+    createHelp: "Fai clic su un giorno o una fascia oraria per creare una bozza."
+    createHint: "Crea una newsletter per il %date%"
     empty: "Nessuna newsletter in questo periodo."
     error: "Impossibile salvare la data. La data precedente è stata ripristinata."
     help: "Trascina una bozza o aprila per modificare la data nel modulo. Solo Invia autorizza l’invio. Le newsletter programmate, inviate ed esterne sono in sola lettura qui."

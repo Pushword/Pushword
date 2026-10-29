@@ -15538,7 +15538,10 @@ if (iD) {
 		return r[t % r.length];
 	};
 	for (let e of n) e.color = i(e.extendedProps.audience);
-	let a = !1, o = new iT(iD, {
+	let a = !1, o = (t) => {
+		let n = new URL(e.createUrl, window.location.href);
+		n.searchParams.set("scheduledAt", t), window.location.assign(n.href);
+	}, s = new iT(iD, {
 		plugins: [OT],
 		locales: [
 			PT,
@@ -15548,7 +15551,7 @@ if (iD) {
 		],
 		locale: e.locale.replace("_", "-"),
 		timeZone: e.timezone,
-		initialView: window.matchMedia("(max-width: 767px)").matches ? "listMonth" : "dayGridMonth",
+		initialView: "dayGridMonth",
 		monthText: e.month,
 		weekTextLong: e.week,
 		yearText: e.year,
@@ -15560,6 +15563,11 @@ if (iD) {
 		dayMaxEvents: 3,
 		nowIndicator: !0,
 		noEventsContent: e.empty,
+		dayCellClass: "pw-calendar-day",
+		navLinks: !0,
+		navLinkHint: (t) => e.createHint.replace("%date%", t),
+		navLinkDayClick: (e) => o(s.formatIso(e, !0)),
+		dateClick: ({ dateStr: e }) => o(e),
 		events: n,
 		eventDidMount({ event: e, el: t }) {
 			let { audience: n, source: r, state: i } = e.extendedProps, a = [
@@ -15592,16 +15600,16 @@ if (iD) {
 				a = !1, iD.removeAttribute("aria-busy"), t.hidden = !1;
 			}
 		}
-	}), s = () => {
+	}), c = () => {
 		let e = iD.clientWidth < 650;
-		o.setOption("headerToolbar", e ? {
+		s.setOption("headerToolbar", e ? {
 			start: "prev,next today",
 			end: "title"
 		} : {
 			start: "prev,next today",
 			center: "title",
 			end: "dayGridMonth,timeGridWeek,multiMonthYear,listMonth"
-		}), o.setOption("footerToolbar", e ? { start: "dayGridMonth,timeGridWeek,multiMonthYear,listMonth" } : !1);
+		}), s.setOption("footerToolbar", e ? { start: "dayGridMonth,timeGridWeek,multiMonthYear,listMonth" } : !1);
 	};
-	o.setOption("windowResize", s), s(), o.render();
+	s.setOption("windowResize", c), c(), s.render();
 }

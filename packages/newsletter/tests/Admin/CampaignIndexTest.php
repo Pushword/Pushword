@@ -237,13 +237,20 @@ final class CampaignIndexTest extends AbstractNewsletterTestCase
         $crawler = $this->client->request(Request::METHOD_GET, $route);
         self::assertResponseIsSuccessful();
         self::assertCount(0, $crawler->filter('.pw-catalogue table'));
-        $empty = $crawler->filter('[data-catalogue-empty="initial"]');
-        self::assertSame('No campaigns available', $empty->filter('h2')->text());
-        self::assertCount(1, $empty->selectLink('Create in Pushword'));
-        self::assertCount(1, $empty->selectLink('Create in partner'));
+        $isCalendar = '/admin/newsletter/calendar' === $route;
+        $creations = $crawler->filter($isCalendar ? '.pw-catalogue-page-actions' : '[data-catalogue-empty="initial"]');
+        if ($isCalendar) {
+            self::assertCount(1, $crawler->filter('[data-newsletter-calendar][data-create-url="/admin/newsletter/campaign/new"]'));
+            self::assertCount(0, $crawler->filter('[data-catalogue-empty], .pw-calendar-undated'));
+        } else {
+            self::assertSame('No campaigns available', $creations->filter('h2')->text());
+        }
+
+        self::assertCount(1, $creations->selectLink('Create in Pushword'));
+        self::assertCount(1, $creations->selectLink('Create in partner'));
         self::assertCount(1, $crawler->selectLink('Create in Pushword'));
         self::assertCount(1, $crawler->selectLink('Create in partner'));
-        self::assertSame('https://example.tld/new', $empty->selectLink('Create in partner')->attr('href'));
+        self::assertSame('https://example.tld/new', $creations->selectLink('Create in partner')->attr('href'));
         self::assertStringContainsString('campaigns are unavailable', $crawler->filter('[role="status"]')->text());
         self::assertCount(0, $crawler->filter('.pw-catalogue-filters, [data-campaign-results]'));
     }
@@ -444,6 +451,64 @@ final class CampaignIndexTest extends AbstractNewsletterTestCase
         $events = json_decode($crawler->filter('[data-newsletter-calendar]')->attr('data-events') ?? '', true, flags: \JSON_THROW_ON_ERROR);
         self::assertIsArray($events);
         self::assertCount(1, $events);
+    }
+
+    /** @return iterable<string, array{string, string, string}> */
+    public static function calendarCreationDates(): iterable
+    {
+        yield 'day before spring transition' => ['2030-03-31', '2030-03-31T00:00', '2030-03-31T00:00:00+01:00'];
+        yield 'time after spring transition' => ['2030-03-31T09:30:00+02:00', '2030-03-31T09:30', '2030-03-31T09:30:00+02:00'];
+        yield 'instant on the next editorial day' => ['2030-03-31T22:30:00+00:00', '2030-04-01T00:30', '2030-04-01T00:30:00+02:00'];
+    }
+
+    #[DataProvider('calendarCreationDates')]
+    public function testCalendarSelectionOpensAnUnsavedDraftAndSavingKeepsItsDate(string $selection, string $fieldValue, string $instant): void
+    {
+        self::getContainer()->set(EditorialTimezone::class, new EditorialTimezone('Europe/Paris'));
+        $this->login();
+        $repository = $this->entityManager->getRepository(Campaign::class);
+        $before = $repository->count([]);
+        $crawler = $this->client->request('GET', '/admin/newsletter/campaign/new?'.http_build_query(['scheduledAt' => $selection]));
+        self::assertResponseIsSuccessful();
+        self::assertSame($fieldValue, $crawler->filter('#Campaign_scheduledAt')->attr('value'));
+        self::assertSame($before, $repository->count([]));
+        $form = $crawler->selectButton('Save draft')->form();
+        $form['Campaign[workingTitle]'] = 'Calendar creation';
+        $this->client->submit($form);
+        self::assertResponseRedirects();
+        $this->entityManager->clear();
+        $campaign = $repository->findOneBy(['workingTitle' => 'Calendar creation']);
+        self::assertInstanceOf(Campaign::class, $campaign);
+
+        try {
+            self::assertTrue($campaign->isDraft());
+            self::assertSame(new DateTimeImmutable($instant)->getTimestamp(), $campaign->scheduledAt?->getTimestamp());
+            self::assertSame(0, $campaign->recipientCount);
+            self::assertEmailCount(0);
+            $crawler = $this->client->followRedirect();
+            $crawler = $this->client->click($crawler->selectLink('Create newsletter')->link());
+            self::assertSame('', $crawler->filter('#Campaign_scheduledAt')->attr('value') ?? '');
+        } finally {
+            $this->entityManager->getConnection()->delete('newsletter_campaign', ['id' => $campaign->id]);
+        }
+    }
+
+    /** @return iterable<string, array{string}> */
+    public static function invalidCalendarCreationDates(): iterable
+    {
+        yield 'malformed' => ['not-a-date'];
+        yield 'impossible day' => ['2030-02-30'];
+        yield 'impossible time' => ['2030-03-31T25:30:00+02:00'];
+    }
+
+    #[DataProvider('invalidCalendarCreationDates')]
+    public function testCalendarCreationRejectsInvalidDates(string $selection): void
+    {
+        $this->login();
+        $before = $this->entityManager->getRepository(Campaign::class)->count([]);
+        $this->client->request('GET', '/admin/newsletter/campaign/new?'.http_build_query(['scheduledAt' => $selection]));
+        self::assertResponseStatusCodeSame(400);
+        self::assertSame($before, $this->entityManager->getRepository(Campaign::class)->count([]));
     }
 
     public function testCalendarMovePreservesDraftAndRejectsStaleOrUnauthorizedRequests(): void

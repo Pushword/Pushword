@@ -10,7 +10,10 @@
   font-family: inherit;
   min-inline-size: 0;
 }
-.pw-calendar-help { max-inline-size: 75ch; color: var(--bs-secondary-color); }
+.pw-calendar-create-help { max-inline-size: 75ch; font-weight: 500; }
+.pw-calendar-help { max-inline-size: 75ch; margin-block-start: 1rem; color: var(--bs-secondary-color); }
+.pw-calendar-day { cursor: pointer; }
+.pw-calendar-day:hover { background: var(--bs-tertiary-bg); }
 .pw-calendar-feedback { margin-block: 1rem; }
 .pw-calendar-event { display: block; min-inline-size: 0; padding: 0.125rem 0.25rem; overflow: hidden; }
 .pw-calendar-event :is(strong, small) { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

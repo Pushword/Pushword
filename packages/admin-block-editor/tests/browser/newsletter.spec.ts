@@ -12,6 +12,43 @@ async function openCampaign(page: Page): Promise<void> {
   await expect(page.locator('.pw-newsletter-design-canvas')).toBeVisible()
 }
 
+for (const interaction of ['mouse', 'keyboard', 'mobile'] as const) {
+  test(`calendar creates a dated draft with ${interaction}`, async ({ page }) => {
+    const errors: string[] = []
+    page.on('pageerror', error => errors.push(error.message))
+    await page.setViewportSize({ width: interaction === 'mobile' ? 390 : 1440, height: 1000 })
+    await page.goto('/admin/newsletter/calendar?q=calendar-create-no-match')
+    const day = page.locator('.pw-calendar-day[data-date]').nth(10)
+    await expect(day).toBeVisible()
+    const date = await day.getAttribute('data-date')
+    if (interaction === 'keyboard') {
+      const link = day.getByRole('link')
+      await link.focus()
+      await page.keyboard.press('Enter')
+    } else {
+      await day.click({ position: { x: 10, y: 40 } })
+    }
+    await page.waitForURL('**/admin/newsletter/campaign/new?scheduledAt=*')
+    await expect(page.locator('#Campaign_scheduledAt')).toHaveValue(`${date}T00:00`)
+    await expect(page.getByRole('button', { name: 'Save draft', exact: true })).toBeVisible()
+    expect(errors).toEqual([])
+  })
+}
+
+test('calendar time slots prefill the selected day and time', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 1000 })
+  await page.goto('/admin/newsletter/calendar?q=calendar-create-no-match')
+  await page.getByRole('tab', { name: 'Week view', exact: true }).click()
+  const date = await page.locator('[role="columnheader"][data-date]').nth(3).getAttribute('data-date')
+  const slot = page.locator('[data-time="09:30:00"]')
+  await slot.scrollIntoViewIfNeeded()
+  const bounds = await slot.boundingBox()
+  expect(bounds).not.toBeNull()
+  await page.mouse.click(bounds!.x + bounds!.width / 2, bounds!.y + bounds!.height / 2)
+  await page.waitForURL('**/admin/newsletter/campaign/new?scheduledAt=*')
+  await expect(page.locator('#Campaign_scheduledAt')).toHaveValue(`${date}T09:30`)
+})
+
 for (const kind of ['campaign', 'automation'] as const) {
   test(`${kind} preview loads an image from the media library`, async ({
     page,

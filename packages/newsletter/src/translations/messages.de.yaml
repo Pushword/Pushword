@@ -93,6 +93,8 @@ newsletter:
   calendar:
     agenda: "Agenda"
     conflict: "Dieser Newsletter wurde geändert. Laden Sie die Seite vor dem Verschieben neu."
+    createHelp: "Klicken Sie auf einen Tag oder ein Zeitfenster, um einen Entwurf zu erstellen."
+    createHint: "Newsletter für %date% erstellen"
     empty: "Keine Newsletter in diesem Zeitraum."
     error: "Das Datum konnte nicht gespeichert werden. Das vorherige Datum wurde wiederhergestellt."
     help: "Verschieben Sie einen Entwurf oder öffnen Sie ihn, um das Datum im Formular zu ändern. Nur Senden gibt den Versand frei. Geplante, versendete und externe Newsletter sind hier schreibgeschützt."
