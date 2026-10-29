@@ -25,6 +25,24 @@ final class AudienceStringTest extends TestCase
             'www.grandangle.fr',
             'Grand Angle · Newsletter (www.grandangle.fr)',
         ];
+        yield 'host already included in subscription name' => [
+            'Newsletter (www.grandangle.fr)',
+            'Grand Angle',
+            'www.grandangle.fr',
+            'Grand Angle · Newsletter (www.grandangle.fr)',
+        ];
+        yield 'host already included with default sender name' => [
+            'Newsletter (www.grandangle.fr)',
+            '',
+            'www.grandangle.fr',
+            'Newsletter (www.grandangle.fr)',
+        ];
+        yield 'another host in subscription name' => [
+            'Newsletter (grandangle.de)',
+            'Grand Angle',
+            'www.grandangle.fr',
+            'Grand Angle · Newsletter (grandangle.de) (www.grandangle.fr)',
+        ];
         yield 'duplicate sender name and empty host' => [
             'Newsletter',
             'Newsletter',

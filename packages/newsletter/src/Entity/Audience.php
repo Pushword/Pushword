@@ -217,7 +217,11 @@ class Audience implements IdInterface, Stringable
             $label = $this->fromName.' · '.$label;
         }
 
-        return '' === $this->mainHost ? $label : $label.' ('.$this->mainHost.')';
+        if ('' === $this->mainHost || str_ends_with($label, ' ('.$this->mainHost.')')) {
+            return $label;
+        }
+
+        return $label.' ('.$this->mainHost.')';
     }
 
     /**
