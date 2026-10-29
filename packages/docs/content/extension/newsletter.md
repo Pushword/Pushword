@@ -481,6 +481,9 @@ asks which language to send.
 Both share site, audience, source, delivery status, preparation stage and search
 filters. Undated newsletters remain visible below the calendar.
 
+Click an empty date or time slot to open an unsaved draft with that date filled in.
+Saving creates the draft; opening the form sends nothing and writes no campaign.
+
 Save an idea with a **working title**, optional audience, date and internal notes.
 The subject serves as its title when no working title is given. Working titles and
 notes never enter the email, preview or tracking identity. Preparation labels
@@ -498,8 +501,9 @@ a scheduled send returns it to Draft and retains its date as a plan. `sentAt` re
 actual delivery.
 
 Drag a native authored draft to change its date, or open its edit form for keyboard
-entry. The editorial timezone controls the display; a month-cell drop retains the
-original wall-clock time across daylight-saving changes. CSRF, editor permissions and
+entry. `pushword.editorial_timezone` controls the calendar and scheduling form;
+a month-cell drop retains the original wall-clock time across daylight-saving changes.
+CSRF, editor permissions and
 an optimistic version check protect calendar writes; stale moves fail with a reload
 message. Scheduled campaigns must first be cancelled before changing their date.
 Sending/sent campaigns and generated broadcasts cannot be moved. External items retain
