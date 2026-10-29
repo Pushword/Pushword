@@ -5,14 +5,9 @@ publishedAt: '2026-10-29 07:00'
 toc: true
 ---
 
-Many CMSs add AI inside the admin: a button that drafts a field with a model the vendor
-picked. Pushword takes the other route. It ships no model and calls no AI service. It
-makes the site readable and writable for the coding agent you already use (Claude Code,
-Codex, Cursor, Gemini CLI…), and it turns an agent's mistakes into loud errors rather than
-silent damage.
-
-This page gathers what that means in practice: what an agent can discover on its own, the
-ways it can edit a site, what stops a bad edit, and what an agent token can still do.
+Pushword lets coding agents edit Markdown files or a live site through its API. It
+ships no model and calls no AI service. This guide covers discovery, editing,
+validation and token permissions.
 
 ## At a glance
 
@@ -32,9 +27,8 @@ ways it can edit a site, what stops a bad edit, and what an agent token can stil
 
 ### Markdown files in Git
 
-For developers, and for sites whose content lives in a repository. With the
-[Flat](/extension/flat) extension, each page is a Markdown file with YAML front matter. The
-agent edits files with the tools it already has, and you review the result as a diff.
+With the [Flat](/extension/flat) extension, each page is a Markdown file with YAML
+front matter. The agent edits files, and you review the diff before importing:
 
 ```shell
 php bin/console pw:flat:lock example.com --reason="Agent: rewrite pricing pages"
@@ -52,8 +46,8 @@ a page still changes on both sides, the most recent version wins and the other i
 
 ### The live site, through the API
 
-For editors working on a production instance, with no local install. The agent reads the
-spec, fetches a page, and sends only what changed:
+Without a local install, the agent reads the API spec, fetches a page and sends only
+what changed:
 
 ```shell
 curl https://example.com/api/docs | jq '.paths | keys'
@@ -74,16 +68,14 @@ uploads and image metadata.
 
 ### Local files, live site
 
-Editors who use Claude Code can combine the two. They download a Markdown snapshot of the
-live site (`/api/content/snapshot.tar.gz`) and the agent edits the files. After each save,
-a Claude Code hook runs the sync client served by the instance (`/api/editor/sync.js`): it
-sends the file with the `revision:` stamped in its front matter as `If-Match`, then writes
-back the canonical text the server returns. On a conflict it writes the server's current
-version instead, and the agent applies its change again on fresh text.
+Claude Code users can download a Markdown snapshot (`/api/content/snapshot.tar.gz`)
+and edit it locally. After each save, a hook runs the instance's sync client
+(`/api/editor/sync.js`). It sends the file's `revision:` as `If-Match` and writes back
+the server's canonical text. On conflict, it writes the server's current version so
+the agent can reapply its edit.
 
-The editor gets the agent's file tools and the live site's checks. Their machine needs no
-PHP, database or copy of the application, only Node, which Claude Code already requires.
-Details: [raw `.md` file intake](/extension/api#raw-markdown).
+This requires Node, with no local PHP or database. See
+[raw `.md` file intake](/extension/api#raw-markdown) for setup.
 
 ## What stops a bad edit
 
@@ -104,7 +96,7 @@ Details: [raw `.md` file intake](/extension/api#raw-markdown).
 
 ### When an edit goes live
 
-An agent's write is not a draft by default. When the public sees it depends on the page:
+Writes follow the page’s publication state:
 
 | Page state                                                                                                                               | The public sees the change…                                                 |
 | ---------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
@@ -119,8 +111,7 @@ can publish a draft or release a hold.
 
 ## What an agent token can do
 
-An API token carries its user's rights, and those rights are broad. Before handing one to
-an agent:
+An API token carries its user's rights:
 
 - **`ROLE_EDITOR` is a trusted code author.** Editorial Markdown accepts raw HTML and
   unsandboxed Twig, so an editor, human or agent, can inject scripts and call exposed Twig
