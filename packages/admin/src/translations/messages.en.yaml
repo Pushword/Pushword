@@ -275,6 +275,7 @@ adminUserLastnameLabel: Name
 adminUserLocaleLabel: "Interface language"
 adminUserPasswordHelp: "Leave blank to keep the current password."
 adminUserPasswordLabel: Password
+adminUserPasswordNewHelp: "Leave blank to sign in with an email link."
 adminUserPhoneLabel: Phone
 adminUserRoleAdmin: Administrator
 adminUserRoleEditor: Editor

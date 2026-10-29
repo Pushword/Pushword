@@ -12,6 +12,7 @@ use Pushword\Core\Entity\User;
 use Pushword\Core\Repository\UserRepository;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
 #[Group('integration')]
 final class UserCrudSecurityTest extends AbstractAdminTestClass
@@ -63,8 +64,58 @@ final class UserCrudSecurityTest extends AbstractAdminTestClass
         $crawler = $client->request(Request::METHOD_GET, '/admin/user/new');
         self::assertResponseIsSuccessful();
         self::assertCount(4, $crawler->filter('input[type="checkbox"][name="User[roles][]"]'));
-        self::assertSelectorExists('#User_plainPassword[required]');
+        self::assertSelectorNotExists('#User_plainPassword[required]');
+        self::assertStringContainsString('Leave blank to sign in with an email link.', $crawler->filter('#User_plainPassword')->ancestors()->filter('.form-group')->text());
         self::assertStringNotContainsString('Leave blank to keep the current password.', $crawler->filter('form[name="User"]')->text());
+    }
+
+    /** @return iterable<string, array{string}> */
+    public static function newUserPasswords(): iterable
+    {
+        yield 'without password' => [''];
+        yield 'with password' => ['newUserPassword123'];
+    }
+
+    #[DataProvider('newUserPasswords')]
+    public function testCreatingUserWithAnOptionalPassword(string $password): void
+    {
+        $client = $this->loginUser();
+        $email = 'new-admin-user-'.uniqid().'@example.tld';
+        $crawler = $client->request(Request::METHOD_GET, '/admin/user/new');
+        self::assertResponseIsSuccessful();
+        $form = $crawler->selectButton('Create')->form();
+        $form['User[email]'] = $email;
+        $form['User[plainPassword]'] = $password;
+
+        $client->submit($form);
+
+        self::assertResponseRedirects();
+        $entityManager = self::getContainer()->get(EntityManagerInterface::class);
+        $entityManager->clear();
+
+        $user = self::getContainer()->get(UserRepository::class)->findOneBy(['email' => $email]);
+        self::assertInstanceOf(User::class, $user);
+        if ('' === $password) {
+            self::assertNull($user->getPassword());
+        } else {
+            self::assertTrue(self::getContainer()->get(UserPasswordHasherInterface::class)->isPasswordValid($user, $password));
+        }
+    }
+
+    public function testCreatingUserStillRejectsAShortPassword(): void
+    {
+        $client = $this->loginUser();
+        $email = 'short-password-'.uniqid().'@example.tld';
+        $crawler = $client->request(Request::METHOD_GET, '/admin/user/new');
+        $form = $crawler->selectButton('Create')->form();
+        $form['User[email]'] = $email;
+        $form['User[plainPassword]'] = 'short';
+
+        $crawler = $client->submit($form);
+
+        self::assertResponseStatusCodeSame(Response::HTTP_UNPROCESSABLE_ENTITY);
+        self::assertStringContainsString('The password is too short (7 characters min.).', $crawler->filter('form[name="User"]')->text());
+        self::assertNull(self::getContainer()->get(UserRepository::class)->findOneBy(['email' => $email]));
     }
 
     public function testEditorCannotOpenUserAdministration(): void

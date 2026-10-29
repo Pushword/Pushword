@@ -276,6 +276,7 @@ adminUserLastnameLabel: Nom
 adminUserLocaleLabel: "Langue de l’interface"
 adminUserPasswordHelp: "Laissez vide pour conserver le mot de passe actuel."
 adminUserPasswordLabel: 'Mot de passe'
+adminUserPasswordNewHelp: "Laissez vide pour se connecter par un lien reçu par e-mail."
 adminUserPhoneLabel: Téléphone
 adminUserRoleAdmin: Administrateur
 adminUserRoleEditor: "Éditeur"

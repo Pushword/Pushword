@@ -18,9 +18,9 @@ class UserPasswordField extends AbstractField
         $isNew = null === $this->admin->getSubject()->id;
 
         return $this->buildEasyAdminField('plainPassword', PasswordType::class, [
-            'required' => $isNew,
+            'required' => false,
             'label' => 'adminUserPasswordLabel',
-            'help' => $isNew ? null : 'adminUserPasswordHelp',
+            'help' => $isNew ? 'adminUserPasswordNewHelp' : 'adminUserPasswordHelp',
             'attr' => ['autocomplete' => 'new-password'],
         ]);
     }
