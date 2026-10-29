@@ -150,7 +150,8 @@
   },
   "extra": {
     "branch-alias": {
-      "dev-main": "1.0.x-dev"
+      "dev-main": "1.0.x-dev",
+      "dev-test/symfony-8.2": "1.0.x-dev"
     },
     "public-dir": "packages/dev-app/public"
   },

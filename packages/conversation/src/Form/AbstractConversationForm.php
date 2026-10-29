@@ -10,7 +10,6 @@ use Pushword\Conversation\Entity\Message;
 use Pushword\Conversation\Repository\MessageRepository;
 use Pushword\Core\Site\SiteConfig;
 use Pushword\Core\Site\SiteRegistry;
-use Symfony\Bundle\FrameworkBundle\Routing\Router;
 use Symfony\Component\Form\Extension\Core\Type\FormType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\Form\FormFactory;
@@ -62,7 +61,7 @@ abstract class AbstractConversationForm implements ConversationFormInterface
         protected TokenStorageInterface $security,
         protected FormFactory $formFactory,
         protected Twig $twig,
-        protected Router $router,
+        protected UrlGeneratorInterface $router,
         protected TranslatorInterface $translator,
         protected SiteRegistry $apps,
         protected MessageRepository $messageRepo,

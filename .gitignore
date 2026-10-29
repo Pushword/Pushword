@@ -45,6 +45,7 @@ Draft.md
 **/dev-app/.env.local.php
 **/dev-app/content
 **/dev-app/config/reference.php
+**/dev-app/config/schema.json
 **/dev-app/static/
 **/dev-app/admin-block-editor.test
 **/dev-app/localhost.dev
