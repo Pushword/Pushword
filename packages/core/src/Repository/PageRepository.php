@@ -444,7 +444,8 @@ class PageRepository extends ServiceEntityRepository implements ObjectRepository
      */
     public function getPublishedCorpusState(string $host): array
     {
-        $queryBuilder = $this->buildPublishedPageQuery('p');
+        // The scalar aggregate never reads the parent or image fetched by lists.
+        $queryBuilder = $this->buildPublishedPageQuery('p')->resetDQLPart('join');
         $this->andHost($queryBuilder, $host);
 
         /** @var array{pages: int|string, lastEditAt: string|null} $state */

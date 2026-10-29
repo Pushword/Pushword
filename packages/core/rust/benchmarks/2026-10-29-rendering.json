@@ -1,0 +1,456 @@
+{
+  "date": "2026-10-29",
+  "baseline_core_commit": "b67c0428990d2ccf197cac2f26da10f0536206a5",
+  "catalogue_commit": "4d1d9691c793c74324dbdaf5423751adb2f46d0b",
+  "scope": "SQL corpus freshness and catalogue hydration after the native accelerator fixes",
+  "environment": {
+    "php": "8.5.12",
+    "rust": "1.98.0",
+    "cpu": "AMD Ryzen AI 9 HX 370",
+    "sqlite": "3.51.2",
+    "full_build_workers": 4,
+    "full_build_cpu_affinity": [
+      2,
+      3,
+      4,
+      5
+    ]
+  },
+  "method": [
+    "Frozen private GrandAngle catalogue from 2026-10-22; warmed production container and persistent Markdown pool; fresh static output per run. No production configuration or data changed.",
+    "The baseline already includes the previous native analyzer/minifier fixes. Both modes use PHP Markdown, the same native analyzer/minifier binaries and four workers pinned to CPUs 2-5.",
+    "The isolated benchmark fixes the per-page PRNG seed, as in the previous report. Only private static-root paths in .Caddyfile are normalized for comparison. All other file bytes and symlink targets are checked.",
+    "Baseline autoloads saved unmodified PageRepository, TaxonomyProductCountService and TaxonomyProductTwigExtension sources; optimized mode uses the unjoined aggregate, the covering index and filtered catalogue hydration. Neither mode memoizes corpus fingerprints.",
+    "Two successful default-quality builds per mode. The final optimized repeat also includes the extended-page inheritance guard. The frozen catalogue has no extended pages; a functional fixture tests that behavior separately.",
+    "Full-build times are observations on a shared workstation, not a production SLA or statistically isolated causal estimate.",
+    "Raw SQLite timings execute the two SQL shapes on separate copies of the same database: seven alternating repetitions of 200 queries per mode, checking every returned tuple against the baseline.",
+    "Compression quality experiments are private benchmark-only changes. The shipped default remains Brotli quality 11.",
+    "Rejected trials are excluded from successful-build statistics: request-local memoization was stale after same-request unpublication; an index without ID second changed implicit row order; an output that ran out of temporary storage was incomplete; one repeat accidentally copied unrelated newer Product API accesses into the older frozen model, emitted warnings and is excluded."
+  ],
+  "inputs": {
+    "rendered_corpus_sha256": "366675de8afe3ff6d08c802229bb025267bd2b1fcb294d6623157425351af710",
+    "database_before_sha256": "bc9a37a5d8ec31602eb52295d3065826a5770352ebd3130694f7e3a2e0642b1e",
+    "database_after_sha256": "ab9cbc7931b1c78ea720fb2a6ba05e4fcdc35befdc22e5fcc2e294d67e384308",
+    "database_before_bytes": 154066944,
+    "database_after_bytes": 155111424,
+    "database_rows": 10513,
+    "extended_page_rows": 0,
+    "scheduled_full_build_pages": 1265,
+    "frozen_app_lock_sha256": "cf27735ad695cbf6664698311feebc8ef1b0d0983fb3ca5217add738bede5e9c"
+  },
+  "source_sha256": {
+    "repository_before": "85d9a1ef3d09fa607ee48630862fd233ccc3b1196349674f42e11aba6ec03ce8",
+    "repository_after": "7c30d863a96294aa06003392363610aae28cbbb6b22594d7cb536f8d7550cbe9",
+    "catalogue_before": "14927290a74161d2ca5ec242e47be23880d94c68cfa40d1d5b6ff8a0f7d7f8ae",
+    "catalogue_after_benchmark": "c92eeec63a2fdb2ff1cc8b01049ab4b35fd22d5c71bfa8dfc333120bda9ed4f8",
+    "catalogue_after_current_app": "1c5506f741c453ec3cd781af2630346f7fd32c99cc2e8b8402a63f0a6d10090c",
+    "analyzer_binary": "f30103bf71c72802c503dcaf061e387d381c46941201eb65b08528b2d289a03b",
+    "minifier_binary": "2e71a9d4c35ac0c2e31f53c60c7dec6394e4a78e50be71139871b87bde75cc2f"
+  },
+  "diagnosis": {
+    "profile_pages": 32,
+    "profile_sql_queries": 1660,
+    "corpus_fingerprint_queries": 504,
+    "corpus_sql_seconds": 2.533010678,
+    "host_catalogue_calls": 26,
+    "host_catalogue_inclusive_seconds": 3.065573531,
+    "note": "Instrumented inclusive timings identify hot paths; overlapping timings must not be added."
+  },
+  "sql": {
+    "queries": {
+      "before": "SELECT COUNT(p.id), MAX(p.updated_at) FROM page p LEFT JOIN page parent ON p.parent_page_id=parent.id LEFT JOIN media image ON p.main_image_id=image.id WHERE p.slug <> ? AND p.published_at IS NOT NULL AND p.published_at <= ? AND p.host IN (?)",
+      "after": "SELECT COUNT(p.id), MAX(p.updated_at) FROM page p WHERE p.slug <> ? AND p.published_at IS NOT NULL AND p.published_at <= ? AND p.host IN (?)"
+    },
+    "parameters": [
+      "pushword-cheatsheet",
+      "2026-10-29 23:59:59",
+      "www.grandangle.fr"
+    ],
+    "index_ddl": "CREATE INDEX idx_page_corpus_state ON page(host, id, published_at, slug, updated_at)",
+    "samples": [
+      {
+        "repeat": 0,
+        "mode": "before",
+        "queries": 200,
+        "equal": 200,
+        "ms": 826.73248
+      },
+      {
+        "repeat": 0,
+        "mode": "after",
+        "queries": 200,
+        "equal": 200,
+        "ms": 36.047364
+      },
+      {
+        "repeat": 1,
+        "mode": "after",
+        "queries": 200,
+        "equal": 200,
+        "ms": 34.875154
+      },
+      {
+        "repeat": 1,
+        "mode": "before",
+        "queries": 200,
+        "equal": 200,
+        "ms": 853.504289
+      },
+      {
+        "repeat": 2,
+        "mode": "before",
+        "queries": 200,
+        "equal": 200,
+        "ms": 840.383355
+      },
+      {
+        "repeat": 2,
+        "mode": "after",
+        "queries": 200,
+        "equal": 200,
+        "ms": 34.349286
+      },
+      {
+        "repeat": 3,
+        "mode": "after",
+        "queries": 200,
+        "equal": 200,
+        "ms": 33.773673
+      },
+      {
+        "repeat": 3,
+        "mode": "before",
+        "queries": 200,
+        "equal": 200,
+        "ms": 893.865274
+      },
+      {
+        "repeat": 4,
+        "mode": "before",
+        "queries": 200,
+        "equal": 200,
+        "ms": 848.974175
+      },
+      {
+        "repeat": 4,
+        "mode": "after",
+        "queries": 200,
+        "equal": 200,
+        "ms": 34.657894
+      },
+      {
+        "repeat": 5,
+        "mode": "after",
+        "queries": 200,
+        "equal": 200,
+        "ms": 33.707675
+      },
+      {
+        "repeat": 5,
+        "mode": "before",
+        "queries": 200,
+        "equal": 200,
+        "ms": 892.906307
+      },
+      {
+        "repeat": 6,
+        "mode": "before",
+        "queries": 200,
+        "equal": 200,
+        "ms": 942.367342
+      },
+      {
+        "repeat": 6,
+        "mode": "after",
+        "queries": 200,
+        "equal": 200,
+        "ms": 39.734384
+      }
+    ],
+    "plans": {
+      "before": [
+        {
+          "id": 6,
+          "parent": 0,
+          "unused": 62,
+          "detail": "SEARCH p USING INDEX idx_page_host (host=?)"
+        },
+        {
+          "id": 19,
+          "parent": 0,
+          "unused": 45,
+          "detail": "SEARCH parent USING INTEGER PRIMARY KEY (rowid=?) LEFT-JOIN"
+        },
+        {
+          "id": 24,
+          "parent": 0,
+          "unused": 45,
+          "detail": "SEARCH image USING INTEGER PRIMARY KEY (rowid=?) LEFT-JOIN"
+        }
+      ],
+      "after": [
+        {
+          "id": 3,
+          "parent": 0,
+          "unused": 55,
+          "detail": "SEARCH p USING COVERING INDEX idx_page_corpus_state (host=?)"
+        }
+      ]
+    },
+    "before_median_ms_per_200_queries": 853.504289,
+    "after_median_ms_per_200_queries": 34.657894,
+    "speedup": 24.626547966243997
+  },
+  "full_build": {
+    "baseline_samples": [
+      {
+        "mode": "before-index-1",
+        "wall_seconds": 245.98920334899998,
+        "code": 0,
+        "signal": null
+      },
+      {
+        "mode": "before-index-2",
+        "wall_seconds": 227.30279400500004,
+        "code": 0,
+        "signal": null
+      }
+    ],
+    "optimized_samples": [
+      {
+        "mode": "after-ordered-1",
+        "wall_seconds": 187.88262532700003,
+        "code": 0,
+        "signal": null
+      },
+      {
+        "mode": "after-final-clean",
+        "wall_seconds": 185.29965526200002,
+        "code": 0,
+        "signal": null
+      }
+    ],
+    "baseline_median_seconds": 236.64599867700002,
+    "optimized_median_seconds": 186.5911402945,
+    "elapsed_reduction_percent": 21.151787337346995,
+    "parity": {
+      "left": "/tmp/pushword-render-perf-20261029/output-before-index-2/www.grandangle.fr",
+      "right": "/tmp/pushword-render-perf-20261029/output-after-final-clean/www.grandangle.fr",
+      "left_files": 11262,
+      "right_files": 11262,
+      "equal": 11262,
+      "missing": [],
+      "extra": [],
+      "different": []
+    },
+    "parity_samples": [
+      {
+        "left": "/tmp/pushword-render-perf-20261029/output-before-index-1/www.grandangle.fr",
+        "right": "/tmp/pushword-render-perf-20261029/output-after-ordered-1/www.grandangle.fr",
+        "left_files": 11262,
+        "right_files": 11262,
+        "equal": 11262,
+        "missing": [],
+        "extra": [],
+        "different": []
+      },
+      {
+        "left": "/tmp/pushword-render-perf-20261029/output-before-index-2/www.grandangle.fr",
+        "right": "/tmp/pushword-render-perf-20261029/output-after-final-clean/www.grandangle.fr",
+        "left_files": 11262,
+        "right_files": 11262,
+        "equal": 11262,
+        "missing": [],
+        "extra": [],
+        "different": []
+      }
+    ]
+  },
+  "compression_experiment": {
+    "applied_to_repository": false,
+    "sample": {
+      "input_bytes": 21953192,
+      "input_sha256": "f183a6f42c8c5872fabbb12dc8604fbce5e15d72ecc182e4dfbce56bd9000607",
+      "samples": [
+        {
+          "repeat": 0,
+          "quality": 9,
+          "documents": 63,
+          "roundtrip_equal": 63,
+          "bytes": 2681071,
+          "compress_seconds": 1.003750728
+        },
+        {
+          "repeat": 0,
+          "quality": 10,
+          "documents": 63,
+          "roundtrip_equal": 63,
+          "bytes": 2516462,
+          "compress_seconds": 7.206739294
+        },
+        {
+          "repeat": 0,
+          "quality": 11,
+          "documents": 63,
+          "roundtrip_equal": 63,
+          "bytes": 2470643,
+          "compress_seconds": 23.004936453
+        },
+        {
+          "repeat": 1,
+          "quality": 10,
+          "documents": 63,
+          "roundtrip_equal": 63,
+          "bytes": 2516462,
+          "compress_seconds": 6.629025632
+        },
+        {
+          "repeat": 1,
+          "quality": 11,
+          "documents": 63,
+          "roundtrip_equal": 63,
+          "bytes": 2470643,
+          "compress_seconds": 22.280624031
+        },
+        {
+          "repeat": 1,
+          "quality": 9,
+          "documents": 63,
+          "roundtrip_equal": 63,
+          "bytes": 2681071,
+          "compress_seconds": 1.087436722
+        },
+        {
+          "repeat": 2,
+          "quality": 9,
+          "documents": 63,
+          "roundtrip_equal": 63,
+          "bytes": 2681071,
+          "compress_seconds": 1.046648846
+        },
+        {
+          "repeat": 2,
+          "quality": 10,
+          "documents": 63,
+          "roundtrip_equal": 63,
+          "bytes": 2516462,
+          "compress_seconds": 6.571229211
+        },
+        {
+          "repeat": 2,
+          "quality": 11,
+          "documents": 63,
+          "roundtrip_equal": 63,
+          "bytes": 2470643,
+          "compress_seconds": 22.126214011
+        }
+      ],
+      "quality_11": {
+        "median_seconds": 22.280624031,
+        "bytes": 2470643
+      },
+      "quality_10": {
+        "median_seconds": 6.629025632,
+        "bytes": 2516462
+      },
+      "quality_9": {
+        "median_seconds": 1.046648846,
+        "bytes": 2681071
+      }
+    },
+    "full_build_samples": [
+      {
+        "mode": "after-ordered-br10",
+        "wall_seconds": 123.43607906899997,
+        "code": 0,
+        "signal": null
+      }
+    ],
+    "full_site_parity": {
+      "left_files": 11262,
+      "right_files": 11262,
+      "non_brotli_equal": 9181,
+      "brotli_files": 2081,
+      "brotli_baseline_bytes": 81355257,
+      "brotli_candidate_bytes": 82255855,
+      "baseline_roundtrip_equal": 2081,
+      "candidate_roundtrip_equal": 2081,
+      "missing": [],
+      "extra": [],
+      "different": [],
+      "brotli_growth_percent": 1.106994229026892
+    }
+  },
+  "verification": {
+    "core_targeted_tests": 75,
+    "core_targeted_passed": 75,
+    "core_targeted_assertions": 358,
+    "corpus_sqlite_tests": 4,
+    "corpus_mariadb_tests": 4,
+    "catalogue_and_publication_targeted_tests": 18,
+    "catalogue_and_publication_targeted_assertions": 74,
+    "guards_proven_on_copies": [
+      "Unoptimized aggregate fails the no-JOIN assertion.",
+      "Unfiltered catalogue fails the unrelated-page hydration assertion.",
+      "Filtering only own productCode fails the inherited-product count (12 instead of 13).",
+      "Index without ID second fails the physical index column-order assertion."
+    ],
+    "code_full_suites": {
+      "bundle": {
+        "tests": 4775,
+        "passed": 4775,
+        "assertions": 24259
+      },
+      "grandangle": {
+        "tests": 10538,
+        "passed": 10538,
+        "assertions": 186840
+      },
+      "further_treks": {
+        "tests": 5468,
+        "passed": 5468,
+        "assertions": 28900
+      }
+    },
+    "static_analysis": "PHPStan and Rector pass; Code ./check passes for bundle, GA, FT and perf/deploy contracts.",
+    "successful_benchmark_log_issues": [
+      {
+        "mode": "before-index-1",
+        "warnings": 0,
+        "notices": 0,
+        "deprecations": 0
+      },
+      {
+        "mode": "before-index-2",
+        "warnings": 0,
+        "notices": 0,
+        "deprecations": 0
+      },
+      {
+        "mode": "after-ordered-1",
+        "warnings": 0,
+        "notices": 0,
+        "deprecations": 0
+      },
+      {
+        "mode": "after-final-clean",
+        "warnings": 0,
+        "notices": 0,
+        "deprecations": 0
+      },
+      {
+        "mode": "after-ordered-br10",
+        "warnings": 0,
+        "notices": 0,
+        "deprecations": 0
+      }
+    ]
+  },
+  "reproduce": [
+    "Apply the schema update in each upgraded application: php bin/console doctrine:schema:update --force.",
+    "Use independent database copies with/without the index and the SQL/parameters recorded above; alternate seven repetitions of 200 individually verified results.",
+    "On a frozen downstream app, compare old/new source autoloads with APP_ENV=prod APP_DEBUG=0 and taskset -c 2-5 php -d opcache.enable_cli=1 bin/console pw:static www.grandangle.fr --workers=4 --format=text. Use fresh STATIC_BASE_DIR per run and retain raw exit status.",
+    "Hash every exported regular file, compare symlink targets, normalize only .Caddyfile static-root paths. For compression experiments, compare every non-Brotli file and decompress every .br against its original.",
+    "The catalogue and database are private and deliberately not committed; their hashes identify this run, but local fixture tests remain independently runnable."
+  ]
+}

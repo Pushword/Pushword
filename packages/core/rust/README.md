@@ -199,6 +199,14 @@ component gains from full static builds. The latter include Twig, SQL, asset
 copying and compression; a faster aggregate is not evidence of a faster site.
 The private downstream snapshots are deliberately not committed.
 
+The [follow-up rendering measurements](benchmarks/2026-10-29-rendering.json)
+identify repeated SQL corpus checks and catalogue hydration as the next hot paths.
+Removing unused aggregate joins and adding a covering index accelerates the
+measured SQLite query about 25 times without delaying publication changes.
+The index keeps ID second to retain the observed host scan order. Complete
+exports are compared independently; the report also separates the unchanged
+Brotli default from an experimental quality-10 compression tradeoff.
+
 ## Complete split benchmark
 
 ```sh

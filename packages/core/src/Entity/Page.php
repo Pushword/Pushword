@@ -53,6 +53,8 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\Table(name: 'page')]
 #[ORM\UniqueConstraint(name: 'unique_slug_host', columns: ['slug', 'host'])]
 #[ORM\Index(name: 'idx_page_host', columns: ['host'])]
+// Keep ID after host to preserve the existing host-index scan order for unsorted lists.
+#[ORM\Index(name: 'idx_page_corpus_state', columns: ['host', 'id', 'published_at', 'slug', 'updated_at'])]
 #[ORM\Index(name: 'idx_page_updated_at_id', columns: ['updated_at', 'id'])]
 class Page implements IdInterface, Taggable, Stringable, Weightable, CustomPropertiesInterface
 {
