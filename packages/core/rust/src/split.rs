@@ -48,6 +48,7 @@ pub enum DeclineReason {
 
 #[derive(Default)]
 struct Walker {
+    toc: bool,
     html: String,
     slots: Vec<(usize, usize)>,
     headings: Vec<Heading>,
@@ -82,7 +83,11 @@ fn paragraph_text(element: ElementRef<'_>) -> String {
 }
 
 fn paragraphs(html: &str) -> Vec<String> {
-    Html::parse_fragment(&legacy_entities(html))
+    paragraphs_in(&Html::parse_fragment(&legacy_entities(html)))
+}
+
+fn paragraphs_in(document: &Html) -> Vec<String> {
+    document
         .root_element()
         .children()
         .filter_map(ElementRef::wrap)
@@ -262,8 +267,10 @@ impl Walker {
                     if text.contains("&amp;nbsp") {
                         return Err(DeclineReason::ParseError);
                     }
-                    self.html.push_str(text);
-                } else {
+                    if self.toc {
+                        self.html.push_str(text);
+                    }
+                } else if self.toc {
                     self.html.push_str(&escape(text, false));
                 }
             }
@@ -277,9 +284,11 @@ impl Walker {
                 ) {
                     self.cutoff = true;
                 }
-                self.html.push_str("<!--");
-                self.html.push_str(comment);
-                self.html.push_str("-->");
+                if self.toc {
+                    self.html.push_str("<!--");
+                    self.html.push_str(comment);
+                    self.html.push_str("-->");
+                }
             }
             Node::Element(_) => {
                 let element = ElementRef::wrap(node).ok_or(DeclineReason::ParseError)?;
@@ -296,16 +305,25 @@ impl Walker {
                 }) {
                     return Err(DeclineReason::UnsupportedAttribute);
                 }
-                self.html.push('<');
-                self.html.push_str(tag);
-                let mut slot = None;
-                for (name, value) in element.value().attrs() {
+                for (_, value) in element.value().attrs() {
                     if value.contains("<h") {
                         return Err(DeclineReason::AmbiguousHeading);
                     }
                     if value.contains(BREAK_MARKER) {
                         return Err(DeclineReason::AmbiguousBreak);
                     }
+                }
+                if !self.toc {
+                    for child in node.children() {
+                        self.visit(child, depth + 1)?;
+                    }
+                    return Ok(());
+                }
+
+                self.html.push('<');
+                self.html.push_str(tag);
+                let mut slot = None;
+                for (name, value) in element.value().attrs() {
                     if name == "xmlns"
                         && matches!(
                             value,
@@ -380,7 +398,10 @@ pub fn diagnose(document: &Document) -> Result<Analysis, DeclineReason> {
     };
     let source_body = &document.html[body_start..];
     let parsed = Html::parse_fragment(&legacy_entities(source_body));
-    let mut walker = Walker::default();
+    let mut walker = Walker {
+        toc: document.toc,
+        ..Walker::default()
+    };
     for node in parsed.root_element().children() {
         walker.visit(node, 0)?;
     }
@@ -422,8 +443,16 @@ pub fn diagnose(document: &Document) -> Result<Analysis, DeclineReason> {
     let main = content
         .split_once(BREAK_MARKER)
         .map_or(content.as_str(), |(first, _)| first);
-    let paragraph_values = paragraphs(main);
-    let paragraphs_with_chapeau = paragraphs(&format!("{chapeau}{intro}{main}"));
+    let paragraph_values = if !document.toc && main == source_body {
+        paragraphs_in(&parsed)
+    } else {
+        paragraphs(main)
+    };
+    let paragraphs_with_chapeau = if chapeau.is_empty() && intro.is_empty() {
+        paragraph_values.clone()
+    } else {
+        paragraphs(&format!("{chapeau}{intro}{main}"))
+    };
     let mut segments = Vec::new();
     let mut previous = 0;
     if document.toc {

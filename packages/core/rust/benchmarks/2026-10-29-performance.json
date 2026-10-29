@@ -1,0 +1,515 @@
+{
+  "date": "2026-10-29",
+  "baseline_commit": "274d7310158627fe303d905445a54e2c3fdf0e5e",
+  "environment": {
+    "php": "8.5.12",
+    "rust": "1.98.0",
+    "cpu": "AMD Ryzen AI 9 HX 370",
+    "component_affinity": [
+      6
+    ],
+    "full_build_affinity": [
+      2,
+      3,
+      4,
+      5
+    ],
+    "full_build_workers": 4
+  },
+  "method": [
+    "Frozen, private GrandAngle snapshot from 2026-10-22, not current production traffic. No production configuration was changed.",
+    "The rendered corpus has 10512 documents, all without TOC. Its original collection excluded one page on an unconfigured host.",
+    "Component split timings use every twentieth document (526 cases), five interleaved repetitions per backend, a reused worker and an independent ArrayAdapter for each warm backend. Every output digest matches PHP.",
+    "Render accesses body, content parts and TOC; aggregate also accesses both paragraph views. These workloads must not be conflated.",
+    "Full-page minification uses 63 evenly spaced exported HTML files (22265560 bytes) with whitespace inserted between tags. Three interleaved samples; every digest matches PHP.",
+    "Article minification wraps each rendered corpus body in a complete HTML document. Each pass counts byte-equal and differing outputs directly.",
+    "Complete builds use the same isolated application/vendor/catalogue, warmed container, fresh output directories and a fixed per-page PRNG seed in the benchmark copy. HTML, feeds, JSON, assets and compressed sidecars are included.",
+    "Full-build comparison hashes every regular file and compares symlink targets; only the private static root in .Caddyfile is normalized.",
+    "The 32-page profile records inclusive method time: nested values overlap and must not be added. It is diagnostic, not a benchmark speedup estimate.",
+    "Shared workstation with other workloads, no CPU-frequency or thermal isolation. Full-build variations exceed the expected saving from these components; no reliable whole-site speedup is established."
+  ],
+  "input_sha256": "366675de8afe3ff6d08c802229bb025267bd2b1fcb294d6623157425351af710",
+  "sample_sha256": "5fd577ebc2c7076954a6758c0a2323178660ef91f81a4a617535f5c650b84130",
+  "binaries": {
+    "analyzer_before": "93fcc951a682a0f878d6c4a617c465cde1735448c0c697e3b0f67d5a8b0f2121",
+    "analyzer_after": "f30103bf71c72802c503dcaf061e387d381c46941201eb65b08528b2d289a03b",
+    "minifier_before": "e2ec62eacd18a43c5f5d42a8b9ef56d32cd81f8a721fad8e443f06cf82195c97",
+    "minifier_after": "2e71a9d4c35ac0c2e31f53c60c7dec6394e4a78e50be71139871b87bde75cc2f"
+  },
+  "diagnosis": [
+    "The old adapter eagerly parsed and cached HTML plus both paragraph views even when only body strings were consumed. On the 526-case uncached render workload this was about 66 times PHP cost.",
+    "Single-page, no-TOC rendering now defers native analysis until paragraph access, memoizes it and keeps the original TOC scope. Explicit splitMany batches remain eager.",
+    "Rust paragraph extraction reuses the already parsed DOM when inputs match, avoids parsing identical paragraph views twice, and retains validation without serializing unused headings.",
+    "The minifier previously copied the whole document for every protected block. Independent blocks now use node placeholders and one restoration pass. Overlapping, nested and colliding replacements retain the sequential algorithm.",
+    "XML-invalid controls explain the nine historical minifier mismatches. Ordinary text/attributes now follow libxml while raw script/style text retains controls.",
+    "In the 32-page profile, page rendering consumes about 79 percent of saveAsStatic time. There are 2915 cached Markdown calls taking about 0.05 seconds, no paragraph requests, and negligible native reset time. Accelerating Markdown or IPC cannot remove this measured template-rendering cost."
+  ],
+  "split_components": {
+    "documents": 526,
+    "measurements": [
+      {
+        "access": "render",
+        "cache": "none",
+        "backends": {
+          "php": {
+            "samples_ms": [
+              7.863586,
+              7.455211,
+              7.666203,
+              7.023415,
+              7.075101
+            ],
+            "median_ms": 7.455211
+          },
+          "before": {
+            "samples_ms": [
+              492.979431,
+              511.76091,
+              503.662198,
+              472.763176,
+              480.135194
+            ],
+            "median_ms": 492.979431
+          },
+          "after": {
+            "samples_ms": [
+              8.177666,
+              7.501148,
+              7.140758,
+              7.186215,
+              7.006685
+            ],
+            "median_ms": 7.186215
+          }
+        }
+      },
+      {
+        "access": "render",
+        "cache": "warm",
+        "backends": {
+          "php": {
+            "samples_ms": [
+              7.104585,
+              7.259271,
+              7.270289,
+              7.528725,
+              7.479187
+            ],
+            "median_ms": 7.270289
+          },
+          "before": {
+            "samples_ms": [
+              8.253712,
+              8.348606,
+              9.604861,
+              9.401339,
+              9.517003
+            ],
+            "median_ms": 9.401339
+          },
+          "after": {
+            "samples_ms": [
+              7.072839,
+              7.059149,
+              7.564577,
+              7.457842,
+              7.628957
+            ],
+            "median_ms": 7.457842
+          }
+        }
+      },
+      {
+        "access": "aggregate",
+        "cache": "none",
+        "backends": {
+          "php": {
+            "samples_ms": [
+              1374.918753,
+              1338.768046,
+              1381.388473,
+              1307.492713,
+              1242.607361
+            ],
+            "median_ms": 1338.768046
+          },
+          "before": {
+            "samples_ms": [
+              697.338777,
+              759.151062,
+              712.349334,
+              732.311276,
+              688.717005
+            ],
+            "median_ms": 712.349334
+          },
+          "after": {
+            "samples_ms": [
+              543.812401,
+              542.57317,
+              533.0214,
+              520.880109,
+              546.53118
+            ],
+            "median_ms": 542.57317
+          }
+        }
+      },
+      {
+        "access": "aggregate",
+        "cache": "warm",
+        "backends": {
+          "php": {
+            "samples_ms": [
+              1869.9436,
+              2414.430865,
+              1674.094434,
+              2102.107155,
+              2138.409473
+            ],
+            "median_ms": 2102.107155
+          },
+          "before": {
+            "samples_ms": [
+              220.914933,
+              342.284902,
+              260.834836,
+              301.704802,
+              376.656136
+            ],
+            "median_ms": 301.704802
+          },
+          "after": {
+            "samples_ms": [
+              241.800359,
+              275.861016,
+              227.21362,
+              338.728004,
+              327.094673
+            ],
+            "median_ms": 275.861016
+          }
+        }
+      }
+    ]
+  },
+  "whole_corpus_split": {
+    "render": {
+      "access": "render",
+      "input_sha256": "366675de8afe3ff6d08c802229bb025267bd2b1fcb294d6623157425351af710",
+      "binary_sha256": "f30103bf71c72802c503dcaf061e387d381c46941201eb65b08528b2d289a03b",
+      "toc": {
+        "php": {
+          "documents": 0,
+          "sum_ms": 0,
+          "p50_ms": null,
+          "p95_ms": null
+        },
+        "rust": {
+          "documents": 0,
+          "sum_ms": 0,
+          "p50_ms": null,
+          "p95_ms": null
+        }
+      },
+      "no_toc": {
+        "php": {
+          "documents": 10512,
+          "sum_ms": 160.59989200000015,
+          "p50_ms": 0.013785,
+          "p95_ms": 0.028824
+        },
+        "rust": {
+          "documents": 10512,
+          "sum_ms": 164.5047050000003,
+          "p50_ms": 0.014186,
+          "p95_ms": 0.029185
+        }
+      }
+    },
+    "aggregate": {
+      "access": "aggregate",
+      "input_sha256": "366675de8afe3ff6d08c802229bb025267bd2b1fcb294d6623157425351af710",
+      "binary_sha256": "f30103bf71c72802c503dcaf061e387d381c46941201eb65b08528b2d289a03b",
+      "toc": {
+        "php": {
+          "documents": 0,
+          "sum_ms": 0,
+          "p50_ms": null,
+          "p95_ms": null
+        },
+        "rust": {
+          "documents": 0,
+          "sum_ms": 0,
+          "p50_ms": null,
+          "p95_ms": null
+        }
+      },
+      "no_toc": {
+        "php": {
+          "documents": 10512,
+          "sum_ms": 28478.215560000015,
+          "p50_ms": 2.417469,
+          "p95_ms": 6.086828
+        },
+        "rust": {
+          "documents": 10512,
+          "sum_ms": 11312.593591999968,
+          "p50_ms": 0.74128,
+          "p95_ms": 3.286396
+        }
+      }
+    },
+    "parity": {
+      "pages": 10512,
+      "accepted": 8999,
+      "declined": 1513,
+      "equal": 8999,
+      "mismatches": [],
+      "exceptions": []
+    }
+  },
+  "minifier_articles": [
+    {
+      "binary_sha256": "410e28826e1762f5b91a3ce3960e59a61a630af51287a4b2405be70389afc2fd",
+      "documents": 10512,
+      "equal": 10512,
+      "different": 0,
+      "php_ns": 24418072212,
+      "rust_ns": 6812849399
+    },
+    {
+      "binary_sha256": "2e71a9d4c35ac0c2e31f53c60c7dec6394e4a78e50be71139871b87bde75cc2f",
+      "documents": 10512,
+      "equal": 10512,
+      "different": 0,
+      "php_ns": 34412172921,
+      "rust_ns": 9771137406
+    }
+  ],
+  "minifier_full_pages": {
+    "documents": 63,
+    "bytes": 22265560,
+    "measurements": {
+      "php": {
+        "samples_ms": [
+          2027.2501880000002,
+          1555.8568080000002,
+          1529.4616109999997
+        ],
+        "median_ms": 1555.8568080000002
+      },
+      "old": {
+        "samples_ms": [
+          1052.6161309999995,
+          1123.715585,
+          988.4827259999997
+        ],
+        "median_ms": 1052.6161309999995
+      },
+      "rust": {
+        "samples_ms": [
+          895.5163039999996,
+          865.4307220000001,
+          912.1862780000005
+        ],
+        "median_ms": 895.5163039999996
+      }
+    }
+  },
+  "full_builds": [
+    {
+      "mode": "php",
+      "wall_seconds": 247.656064092,
+      "code": 0,
+      "signal": null
+    },
+    {
+      "mode": "optimized",
+      "wall_seconds": 254.212598869,
+      "code": 0,
+      "signal": null
+    },
+    {
+      "mode": "optimized-2",
+      "wall_seconds": 241.270963984,
+      "code": 0,
+      "signal": null
+    },
+    {
+      "mode": "php-2",
+      "wall_seconds": 276.79475797500004,
+      "code": 0,
+      "signal": null
+    }
+  ],
+  "file_comparisons": [
+    {
+      "left_files": 11262,
+      "right_files": 11262,
+      "equal": 11262,
+      "missing": [],
+      "extra": [],
+      "different": []
+    },
+    {
+      "left_files": 11262,
+      "right_files": 11262,
+      "equal": 11262,
+      "missing": [],
+      "extra": [],
+      "different": []
+    },
+    {
+      "left_files": 11262,
+      "right_files": 11262,
+      "equal": 11262,
+      "missing": [],
+      "extra": [],
+      "different": []
+    }
+  ],
+  "profile_32_pages": {
+    "php": {
+      "Pushword\\Core\\Service\\Markdown\\MarkdownParser::transform": {
+        "calls": 2915,
+        "seconds": 0.054920172
+      },
+      "Twig\\Environment::render": {
+        "calls": 1622,
+        "seconds": 17.537820795
+      },
+      "Pushword\\Core\\Content\\ContentPipeline::getMainContent": {
+        "calls": 32,
+        "seconds": 3.497386404
+      },
+      "Pushword\\Core\\Component\\EntityFilter\\ValueObject\\SplitContent::__construct": {
+        "calls": 32,
+        "seconds": 0.002007218
+      },
+      "Pushword\\Core\\Service\\ContentSplitter::splitMany": {
+        "calls": 32,
+        "seconds": 0.003110028
+      },
+      "Pushword\\Core\\Service\\ContentSplitter::split": {
+        "calls": 32,
+        "seconds": 0.003255547
+      },
+      "Pushword\\StaticGenerator\\Generator\\StaticPageRenderer::render": {
+        "calls": 35,
+        "seconds": 15.873545135
+      },
+      "Pushword\\StaticGenerator\\Generator\\HtmlMinification::compressMany": {
+        "calls": 32,
+        "seconds": 1.124370188
+      },
+      "Pushword\\StaticGenerator\\Generator\\Compressor::throttleIfNeeded": {
+        "calls": 70,
+        "seconds": 2.338100019
+      },
+      "Pushword\\StaticGenerator\\Generator\\Compressor::compress": {
+        "calls": 105,
+        "seconds": 2.684695365
+      },
+      "Pushword\\StaticGenerator\\Generator\\PageGenerator::generateCompressedSidecars": {
+        "calls": 35,
+        "seconds": 2.695039924
+      },
+      "Pushword\\StaticGenerator\\Generator\\PageGenerator::saveAsStatic": {
+        "calls": 35,
+        "seconds": 20.138142719
+      },
+      "Pushword\\Core\\Service\\NativeWorker::reset": {
+        "calls": 34,
+        "seconds": 4.1084e-05
+      },
+      "Pushword\\StaticGenerator\\Generator\\Compressor::waitForCompressionToFinish": {
+        "calls": 1,
+        "seconds": 0.245212599
+      }
+    },
+    "optimized": {
+      "Pushword\\Core\\Service\\Markdown\\MarkdownParser::transform": {
+        "calls": 2915,
+        "seconds": 0.046740517
+      },
+      "Twig\\Environment::render": {
+        "calls": 1622,
+        "seconds": 14.141560462
+      },
+      "Pushword\\Core\\Content\\ContentPipeline::getMainContent": {
+        "calls": 32,
+        "seconds": 2.90763283
+      },
+      "Pushword\\Core\\Component\\EntityFilter\\ValueObject\\SplitContent::__construct": {
+        "calls": 32,
+        "seconds": 0.001958813
+      },
+      "Pushword\\Core\\Service\\ContentSplitter::split": {
+        "calls": 32,
+        "seconds": 0.003060687
+      },
+      "Pushword\\StaticGenerator\\Generator\\StaticPageRenderer::render": {
+        "calls": 35,
+        "seconds": 12.752971721
+      },
+      "Pushword\\Core\\Service\\NativeWorker::request": {
+        "calls": 32,
+        "seconds": 0.505883448
+      },
+      "Pushword\\StaticGenerator\\Generator\\HtmlMinification::compressMany": {
+        "calls": 32,
+        "seconds": 0.516114652
+      },
+      "Pushword\\StaticGenerator\\Generator\\Compressor::throttleIfNeeded": {
+        "calls": 70,
+        "seconds": 2.220852607
+      },
+      "Pushword\\StaticGenerator\\Generator\\Compressor::compress": {
+        "calls": 105,
+        "seconds": 2.505671032
+      },
+      "Pushword\\StaticGenerator\\Generator\\PageGenerator::generateCompressedSidecars": {
+        "calls": 35,
+        "seconds": 2.511185203
+      },
+      "Pushword\\StaticGenerator\\Generator\\PageGenerator::saveAsStatic": {
+        "calls": 35,
+        "seconds": 16.141590077
+      },
+      "Pushword\\Core\\Service\\NativeWorker::reset": {
+        "calls": 34,
+        "seconds": 3.5799e-05
+      },
+      "Pushword\\StaticGenerator\\Generator\\Compressor::waitForCompressionToFinish": {
+        "calls": 1,
+        "seconds": 0.235318677
+      }
+    }
+  },
+  "validation": {
+    "php_targeted": {
+      "tests": 55,
+      "passed": 55,
+      "assertions": 210
+    },
+    "native_core": {
+      "tests": 24,
+      "passed": 24,
+      "assertions": 4766
+    },
+    "native_static_generator": {
+      "tests": 6,
+      "passed": 6,
+      "assertions": 766
+    },
+    "rust": "Both crates passed debug/release tests, Clippy with denied warnings, rustfmt and rustdoc with denied warnings.",
+    "php_only_hosting": "Both native suites exercise fallback with proc_open disabled.",
+    "regression_guards": "The deferred-analysis test fails on the old PHP adapter at the unexpected-worker-call assertion; the control-character differential test fails against the old minifier binary. Both were checked on copies, never by reverting the shared tree.",
+    "quality_gates": "PHPStan and Rector passed; Rector used an isolated temporary directory to avoid another checkout’s cached PHPStan stubs."
+  },
+  "full_build_medians_seconds": {
+    "php": 262.2254110335,
+    "optimized": 247.74178142649998
+  }
+}

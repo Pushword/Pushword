@@ -53,6 +53,30 @@ final class ContentSplitterTest extends TestCase
         }
     }
 
+    public function testPlainRenderingDefersAnalysisUntilParagraphsAreRequested(): void
+    {
+        $payload = $this->payload();
+        $payload['chapeau'] = '<p>Lede.</p>';
+        $payload['segments'] = ['<p>Text.</p><!--break--><p>Extra.</p>'];
+        $payload['paragraphs_with_chapeau'] = ['Lede.', 'Prepared.'];
+        $binary = $this->worker($payload);
+        $this->splitter = new ContentSplitter($binary);
+        $html = '<p>Lede.</p><!--break--><p>Text.</p><!--break--><p>Extra.</p>';
+        $page = new Page();
+        $expected = new SplitContent($html, $page);
+        $split = $this->splitter->split($html, $page);
+        self::assertSame((string) $expected, (string) $split);
+        self::assertSame($expected->getChapeau(), $split->getChapeau());
+        self::assertSame($expected->getContentParts(), $split->getContentParts());
+        self::assertSame('', $split->getToc());
+        self::assertFileDoesNotExist($binary.'.calls');
+
+        self::assertSame(['Lede.', 'Prepared.'], $split->getParagraphs(true));
+        self::assertSame(['Prepared.'], $split->getParagraphs());
+        self::assertSame('Prepared.', $split->getFirstParagraph());
+        self::assertSame("call\n", file_get_contents($binary.'.calls'));
+    }
+
     #[DataProvider('invalidPayloads')]
     public function testInvalidAnalysisFallsBackUntilReset(mixed $payload): void
     {

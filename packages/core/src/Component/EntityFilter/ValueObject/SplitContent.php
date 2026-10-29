@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pushword\Core\Component\EntityFilter\ValueObject;
 
+use Closure;
 use DOMComment;
 use DOMDocument;
 use DOMElement;
@@ -45,8 +46,14 @@ final readonly class SplitContent implements Stringable
     /** @var string[] */
     private array $contentParts;
 
-    public function __construct(string $mainContent, Page $page, private ?CacheItemPoolInterface $cache = null, private ?PreparedSplitContent $prepared = null)
-    {
+    /** @param ?Closure(bool): list<string> $paragraphProvider */
+    public function __construct(
+        string $mainContent,
+        Page $page,
+        private ?CacheItemPoolInterface $cache = null,
+        private ?PreparedSplitContent $prepared = null,
+        private ?Closure $paragraphProvider = null,
+    ) {
         if ($this->prepared instanceof PreparedSplitContent) {
             $this->chapeau = $this->prepared->chapeau;
             $content = $this->prepared->body;
@@ -243,6 +250,10 @@ final readonly class SplitContent implements Stringable
      */
     public function getParagraphs(bool $withChapeau = false): array
     {
+        if ($this->paragraphProvider instanceof Closure) {
+            return ($this->paragraphProvider)($withChapeau);
+        }
+
         if ($this->prepared instanceof PreparedSplitContent) {
             return $withChapeau ? $this->prepared->paragraphsWithChapeau : $this->prepared->paragraphs;
         }

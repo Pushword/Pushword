@@ -39,6 +39,22 @@ final class ContentSplitter implements ResetInterface
 
     public function split(string $html, Page $page): SplitContent
     {
+        if (null === $page->getCustomProperty('toc') && null === $page->getCustomProperty('tocTitle')
+            && null !== $this->binary && '' !== $this->binary && ! $this->failed) {
+            // Rendering plain content only needs string splits. Defer HTML analysis
+            // until a caller actually asks for paragraphs, retaining native caching.
+            $paragraphs = function (bool $withChapeau) use ($html): array {
+                static $split = null;
+                if (! $split instanceof SplitContent) {
+                    $split = $this->splitMany([['html' => $html, 'page' => new Page()]])[0];
+                }
+
+                return $split->getParagraphs($withChapeau);
+            };
+
+            return new SplitContent($html, $page, $this->cache, paragraphProvider: $paragraphs);
+        }
+
         return $this->splitMany([['html' => $html, 'page' => $page]])[0];
     }
 

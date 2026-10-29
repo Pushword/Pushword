@@ -22,6 +22,23 @@ does not require a combined executable or a generic operation registry; core
 content analysis and static minification remain independently configurable.
 The older `PoC/` is a frozen research history, not required for any command here.
 
+## Downstream performance investigation (2026-10-29)
+
+Protected elements are substituted during serialization and restored in one
+pass, avoiding a whole-document copy for every script or code block. Repeated
+blocks retain PHP's first-placeholder behavior. Nested protected markup,
+literal protected tags in script/style text and placeholder collisions use the
+existing sequential replacement rules. XML-invalid controls are removed from
+ordinary text and attributes as in libxml, while script/style text keeps them.
+
+All 10,512 downstream article documents matched PHP byte for byte, including
+nine control-character cases previously differing. One measured pass took
+24.4 seconds in PHP and 6.8 seconds in Rust. Separate component comparisons
+and full static build measurements are recorded in
+[`core/rust/benchmarks/2026-10-29-performance.json`](../../core/rust/benchmarks/2026-10-29-performance.json).
+These are shared-workstation observations, not a whole-site speedup claim.
+The native backend remains opt-in; no production configuration was changed.
+
 ## Automated Rust checks
 
 `make test` runs debug **and release** tests, Clippy on all targets with warnings

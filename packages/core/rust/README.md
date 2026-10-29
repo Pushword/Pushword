@@ -176,6 +176,29 @@ private page text, so keep it outside the repository. `check-downstream.php`
 fails on any native decline, exception or field mismatch. Regenerate the
 snapshot when the site data or rendering pipeline changes.
 
+### Measure the accessors the site actually uses
+
+`time-downstream.php` defaults to the aggregate (body, parts, TOC and both
+paragraph views). Pass `render` as its last argument to measure only body,
+parts and TOC:
+
+```sh
+taskset -c 2 php packages/core/rust/benchmarks/time-downstream.php /tmp/pushword-downstream.ndjson /opt/pushword/bin/pushword-content-analyzer render
+```
+
+On a 526-page sample of a downstream corpus of 10,512 pages without a TOC,
+eager native analysis made body-only access roughly 66 times slower than PHP. `split()` now defers
+native work until paragraphs are requested, memoizes that result for both
+paragraph views, and retains the page's original TOC scope. `splitMany()` still
+explicitly prepares a batch. Rust also reuses an already parsed paragraph DOM
+and avoids serializing headings when no TOC is requested. Eligibility and
+fallback rules are unchanged.
+
+The [2026-10-29 measurements](benchmarks/2026-10-29-performance.json) distinguish
+component gains from full static builds. The latter include Twig, SQL, asset
+copying and compression; a faster aggregate is not evidence of a faster site.
+The private downstream snapshots are deliberately not committed.
+
 ## Complete split benchmark
 
 ```sh

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pushword\StaticGenerator\Tests\Generator;
 
 use PHPUnit\Framework\TestCase;
+use Pushword\Core\Service\NativeWorker;
 use Pushword\StaticGenerator\Generator\HtmlMinification;
 use Pushword\StaticGenerator\Generator\HtmlMinifier;
 use Symfony\Component\Process\Process;
@@ -51,6 +52,47 @@ final class NativeHtmlMinificationTest extends TestCase
             self::assertFalse($process->isSuccessful());
             self::assertSame('', $process->getOutput());
             self::assertNotSame('', $process->getErrorOutput());
+        }
+    }
+
+    public function testControlCharactersMatchPhpInTextAttributesAndProtectedElements(): void
+    {
+        $documents = [];
+        foreach (range(0, 31) as $code) {
+            $text = 'a'.\chr($code).'é';
+            $documents[] = '<!DOCTYPE html><html><head><style>'.$text.'</style></head><body>'
+                .'<p title="'.$text.'"><a href="/'.$text.'">'.$text.'</a></p>'
+                .'<pre>'.$text.'</pre><code>'.$text.'</code><textarea>'.$text.'</textarea>'
+                .'<script>'.$text.'</script></body></html>';
+        }
+
+        $worker = new NativeWorker($this->binary());
+
+        try {
+            self::assertSame(array_map(HtmlMinifier::compress(...), $documents), $worker->request('minify_html', $documents));
+        } finally {
+            $worker->reset();
+        }
+    }
+
+    public function testProtectedReplacementsPreserveOrderedPhpSemantics(): void
+    {
+        $bodies = [
+            '<pre>  a\n b </pre><pre>  a\n b </pre><code> c </code><script> d </script><textarea> e </textarea>',
+            '<pre><code> nested\n code </code></pre><code> nested\n code </code>',
+            '<script>const s = "<code> a </code>";\n  run(s);</script><code> a </code>',
+            '<style>.x:after { content: "<code> a </code>"; }</style><code> a </code>',
+            '<pre><code-placeholder-0></code-placeholder-0></pre><code> b </code>',
+            '<pre-placeholder-0></pre-placeholder-0><pre> c </pre>',
+            '<code></code><code></code><textarea>\n x </textarea>',
+        ];
+        $documents = array_map(static fn (string $body): string => '<!DOCTYPE html><html><body>'.str_replace('\\n', "\n", $body).'</body></html>', $bodies);
+        $worker = new NativeWorker($this->binary());
+
+        try {
+            self::assertSame(array_map(HtmlMinifier::compress(...), $documents), $worker->request('minify_html', $documents));
+        } finally {
+            $worker->reset();
         }
     }
 

@@ -81,6 +81,18 @@ final class NativeContentSplitterTest extends KernelTestCase
         $splitter->reset();
     }
 
+    public function testDeferredParagraphsKeepTheOriginalTocScope(): void
+    {
+        $page = new Page();
+        $html = '<p>Intro.</p><h2>Title</h2><p>Body.</p>';
+        $splitter = new ContentSplitter(self::BINARY);
+        $split = $splitter->split($html, $page);
+        $page->setCustomProperty('toc', true);
+        self::assertSame(['Intro.', 'Body.'], $split->getParagraphs());
+        self::assertSame($html, $split->getBody());
+        $splitter->reset();
+    }
+
     public function testPushwordMarkdownCorpusAfterRendering(): void
     {
         $json = file_get_contents(__DIR__.'/markdown.json');

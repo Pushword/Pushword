@@ -1,12 +1,16 @@
 //! Port of Pushword's HtmlMinifier rules; HTML parsing uses html5ever via scraper.
-use ego_tree::NodeRef;
+use ego_tree::{NodeId, NodeRef};
 use regex::Regex;
 use scraper::{ElementRef, Html, Node, Selector};
-use std::{borrow::Cow, sync::LazyLock};
+use std::{borrow::Cow, collections::HashMap, sync::LazyLock};
 
 static COMMENTS: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"(?s)<!--(.*?)-->").unwrap());
 static NEWLINES: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"[ \t]*\n[ \t\r\n\x0c]*").unwrap());
 static HORIZONTAL: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"[ \t]{2,}").unwrap());
+// libxml drops XML-invalid controls from ordinary text and attributes, but
+// retains them in raw-text elements such as script and style.
+static INVALID_XML: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"[\x01-\x08\x0b\x0c\x0e-\x1f]").unwrap());
 const BLOCK: &str = "address|article|aside|base|blockquote|body|canvas|dd|details|dialog|div|dl|dt|fieldset|figcaption|figure|footer|form|h[1-6]|head|header|hgroup|hr|html|li|link|main|map|meta|nav|ol|p|picture|section|source|style|summary|table|tbody|td|tfoot|th|thead|title|tr|ul|video";
 static BEFORE_BLOCK: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(&format!(r"[ \t]+(</?(?:{BLOCK})(?-u:\b))")).unwrap());
@@ -18,6 +22,10 @@ static PROTECTED: LazyLock<Vec<(&str, Selector)>> = LazyLock::new(|| {
         .map(|tag| (tag, Selector::parse(tag).unwrap()))
         .collect()
 });
+static STYLE: LazyLock<Selector> = LazyLock::new(|| Selector::parse("style").unwrap());
+static PLACEHOLDER: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(r"<(?:pre|code|script|textarea)-placeholder-[0-9]+></(?:pre|code|script|textarea)-placeholder-[0-9]+>").unwrap()
+});
 
 fn escape_text(text: &str) -> String {
     let mut output = String::with_capacity(text.len());
@@ -25,7 +33,9 @@ fn escape_text(text: &str) -> String {
     output
 }
 
-fn append_escaped_text(mut text: &str, output: &mut String) {
+fn append_escaped_text(text: &str, output: &mut String) {
+    let normalized = INVALID_XML.replace_all(text, "");
+    let mut text = normalized.as_ref();
     while let Some(index) = text.find(['&', '<', '>']) {
         output.push_str(&text[..index]);
         output.push_str(match text.as_bytes()[index] {
@@ -60,7 +70,11 @@ fn escape_uri(value: &str) -> String {
 }
 
 // DOMDocument::saveHTML uses HTML4 boolean/void tables, even after an HTML5 parse.
-fn serialize(element: ElementRef<'_>, output: &mut String) {
+fn serialize(element: ElementRef<'_>, output: &mut String, placeholders: &HashMap<NodeId, String>) {
+    if let Some(placeholder) = placeholders.get(&element.id()) {
+        output.push_str(placeholder);
+        return;
+    }
     let tag = element.value().name();
     output.push('<');
     output.push_str(tag);
@@ -117,7 +131,12 @@ fn serialize(element: ElementRef<'_>, output: &mut String) {
         output.push(quote);
     }
     output.push('>');
-    append_children(*element, matches!(tag, "script" | "style"), output);
+    append_children(
+        *element,
+        matches!(tag, "script" | "style"),
+        output,
+        placeholders,
+    );
     if !matches!(
         tag,
         "area"
@@ -140,11 +159,16 @@ fn serialize(element: ElementRef<'_>, output: &mut String) {
     }
 }
 
-fn append_children(parent: NodeRef<'_, Node>, raw_text: bool, output: &mut String) {
+fn append_children(
+    parent: NodeRef<'_, Node>,
+    raw_text: bool,
+    output: &mut String,
+    placeholders: &HashMap<NodeId, String>,
+) {
     for child in parent.children() {
         match child.value() {
-            Node::Element(_) => serialize(ElementRef::wrap(child).unwrap(), output),
-            Node::Fragment => append_children(child, raw_text, output),
+            Node::Element(_) => serialize(ElementRef::wrap(child).unwrap(), output, placeholders),
+            Node::Fragment => append_children(child, raw_text, output, placeholders),
             Node::Text(text) => {
                 if raw_text {
                     output.push_str(text);
@@ -164,8 +188,64 @@ fn append_children(parent: NodeRef<'_, Node>, raw_text: bool, output: &mut Strin
 
 fn outer_html(element: ElementRef<'_>) -> String {
     let mut output = String::new();
-    serialize(element, &mut output);
+    serialize(element, &mut output, &HashMap::new());
     output
+}
+
+fn has_protected_markup(html: &str) -> bool {
+    ["<pre", "<code", "<script", "<textarea"]
+        .iter()
+        .any(|tag| html.contains(tag))
+}
+
+fn minify_protected(document: &Html, capacity: usize) -> Option<String> {
+    let mut placeholders = HashMap::new();
+    let mut originals = HashMap::new();
+    let mut restorations = HashMap::new();
+    for (tag, selector) in PROTECTED.iter() {
+        for (index, node) in document.select(selector).enumerate() {
+            let original = outer_html(node);
+            let start = original.find('>').unwrap() + 1;
+            let end = original.rfind("</").unwrap();
+            // Nested markup, literal tags in raw text and placeholder collisions
+            // need PHP's sequential replacement rules rather than node substitution.
+            if has_protected_markup(&original[start..end]) || original.contains("-placeholder-") {
+                return None;
+            }
+            let placeholder = originals.entry(original.clone()).or_insert_with(|| {
+                format!("<{tag}-placeholder-{index}></{tag}-placeholder-{index}>")
+            });
+            placeholders.insert(node.id(), placeholder.clone());
+            restorations.insert(placeholder.clone(), original);
+        }
+    }
+    if document
+        .select(&STYLE)
+        .any(|node| has_protected_markup(&node.text().collect::<String>()))
+    {
+        return None;
+    }
+    let mut output = String::with_capacity(capacity);
+    output.push_str("<!DOCTYPE html>");
+    serialize(document.root_element(), &mut output, &placeholders);
+    output = collapse_whitespace(output);
+    Some(
+        PLACEHOLDER
+            .replace_all(&output, |captures: &regex::Captures<'_>| {
+                restorations
+                    .get(&captures[0])
+                    .cloned()
+                    .unwrap_or_else(|| captures[0].to_owned())
+            })
+            .into_owned(),
+    )
+}
+
+fn collapse_whitespace(mut output: String) -> String {
+    output = replace_whitespace(&NEWLINES, output, " ");
+    output = replace_whitespace(&HORIZONTAL, output, " ");
+    output = replace_whitespace(&BEFORE_BLOCK, output, "$1");
+    replace_whitespace(&AFTER_BLOCK, output, "$1")
 }
 
 pub fn minify(html: &str) -> String {
@@ -175,9 +255,12 @@ pub fn minify(html: &str) -> String {
     }
 
     let document = Html::parse_document(&stripped);
+    if let Some(output) = minify_protected(&document, stripped.len()) {
+        return output;
+    }
     let mut output = String::with_capacity(stripped.len());
     output.push_str("<!DOCTYPE html>");
-    serialize(document.root_element(), &mut output);
+    serialize(document.root_element(), &mut output, &HashMap::new());
     let mut protected = Vec::new();
     // Keep PHP's replacement order, including nested tags and repeated markup.
     for (tag, selector) in PROTECTED.iter() {
@@ -189,10 +272,7 @@ pub fn minify(html: &str) -> String {
         }
     }
 
-    output = replace_whitespace(&NEWLINES, output, " ");
-    output = replace_whitespace(&HORIZONTAL, output, " ");
-    output = replace_whitespace(&BEFORE_BLOCK, output, "$1");
-    output = replace_whitespace(&AFTER_BLOCK, output, "$1");
+    output = collapse_whitespace(output);
     for (placeholder, original) in protected {
         output = output.replace(&placeholder, &original);
     }
@@ -209,7 +289,8 @@ mod tests {
 
         #[test]
         fn streaming_escape_matches_the_original_replacements(text in ".{0,2048}") {
-            let expected = text.replace('&', "&amp;").replace('<', "&lt;").replace('>', "&gt;");
+            let normalized: String = text.chars().filter(|ch| !matches!(ch, '\u{1}'..='\u{8}' | '\u{b}' | '\u{c}' | '\u{e}'..='\u{1f}')).collect();
+            let expected = normalized.replace('&', "&amp;").replace('<', "&lt;").replace('>', "&gt;");
             prop_assert_eq!(escape_text(&text), expected);
         }
     }

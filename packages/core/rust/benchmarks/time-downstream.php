@@ -9,19 +9,25 @@ use Pushword\Core\Service\ContentSplitter;
 
 require __DIR__.'/../../../../vendor/autoload.php';
 
-if (count($argv) < 2 || count($argv) > 3) {
-    throw new InvalidArgumentException('Usage: time-downstream.php <rendered.ndjson> [analyzer-binary]');
+if (count($argv) < 2 || count($argv) > 4) {
+    throw new InvalidArgumentException('Usage: time-downstream.php <rendered.ndjson> [analyzer-binary] [aggregate|render]');
 }
 
 $source = $argv[1];
 $binary = $argv[2] ?? __DIR__.'/../target/release/pushword-content-analyzer';
+$access = $argv[3] ?? 'aggregate';
+if (! in_array($access, ['aggregate', 'render'], true)) {
+    throw new InvalidArgumentException('Access must be aggregate or render.');
+}
 
 /**
  * @return array<int, ItemInterface|string|string[]>
  */
-function result(SplitContent $split): array
+function result(SplitContent $split, string $access): array
 {
-    return [$split->getBody(true), $split->getContentParts(), $split->getToc(), $split->getParagraphs(), $split->getParagraphs(true)];
+    $result = [$split->getBody(true), $split->getContentParts(), $split->getToc()];
+
+    return 'render' === $access ? $result : [...$result, $split->getParagraphs(), $split->getParagraphs(true)];
 }
 
 $native = new ContentSplitter($binary);
@@ -37,8 +43,8 @@ while (false !== $line = fgets($stream)) {
 
     $category = $case['toc'] ? 'toc' : 'no_toc';
     $operations = [
-        'php' => static fn (): array => result(new SplitContent($case['html'], $page)),
-        'rust' => static fn (): array => result($native->split($case['html'], $page)),
+        'php' => static fn (): array => result(new SplitContent($case['html'], $page), $access),
+        'rust' => static fn (): array => result($native->split($case['html'], $page), $access),
     ];
     if ($index++ % 2) {
         $operations = array_reverse($operations, true);
@@ -59,7 +65,7 @@ while (false !== $line = fgets($stream)) {
 fclose($stream);
 $native->reset();
 
-$report = [];
+$report = ['access' => $access, 'input_sha256' => hash_file('sha256', $source), 'binary_sha256' => hash_file('sha256', $binary)];
 foreach ($samples as $category => $modes) {
     $report[$category] = [];
     foreach ($modes as $name => $values) {
