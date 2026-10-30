@@ -390,6 +390,7 @@ name = "pushword-html-minifier"
 version = "0.1.0"
 dependencies = [
  "ego-tree",
+ "html5ever",
  "proptest",
  "regex",
  "scraper",

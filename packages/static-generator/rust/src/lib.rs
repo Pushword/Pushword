@@ -1,8 +1,9 @@
 //! Port of Pushword's HtmlMinifier rules; HTML parsing uses html5ever via scraper.
 //! Runtime-dependent control serialization belongs to the PHP adapter.
 use ego_tree::{NodeId, NodeRef};
+use html5ever::{ParseOpts, parse_document, tendril::TendrilSink, tree_builder::TreeBuilderOpts};
 use regex::Regex;
-use scraper::{ElementRef, Html, Node, Selector};
+use scraper::{ElementRef, Html, HtmlTreeSink, Node, Selector};
 use std::{borrow::Cow, collections::HashMap, sync::LazyLock};
 
 static COMMENTS: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"(?s)<!--(.*?)-->").unwrap());
@@ -94,8 +95,18 @@ fn serialize(
         .filter(|(name, _)| name.ns.as_ref() == xmlns)
         .chain(attrs.iter().filter(|(name, _)| name.ns.as_ref() != xmlns));
     for (name, value) in ordered {
+        // DOMDocument rejects Alpine's @event shorthand attribute names.
+        if name.local.contains('@') {
+            continue;
+        }
         output.push(' ');
-        if let Some(prefix) = name.prefix.as_ref().filter(|prefix| !prefix.is_empty()) {
+        // The HTML5 serializer drops XML prefixes on foreign lang/space attributes.
+        if let Some(prefix) = name.prefix.as_ref().filter(|prefix| {
+            !prefix.is_empty()
+                && !(html5
+                    && prefix.as_ref() == "xml"
+                    && matches!(name.local.as_ref(), "lang" | "space"))
+        }) {
             output.push_str(prefix);
             output.push(':');
         }
@@ -286,7 +297,17 @@ fn minify_document(html: &str, html5: bool) -> String {
         return stripped.into_owned();
     }
 
-    let document = Html::parse_document(&stripped);
+    let document = parse_document(
+        HtmlTreeSink::new(Html::new_document()),
+        ParseOpts {
+            tree_builder: TreeBuilderOpts {
+                scripting_enabled: false,
+                ..Default::default()
+            },
+            ..Default::default()
+        },
+    )
+    .one(stripped.as_ref());
     if let Some(output) = minify_protected(&document, stripped.len(), html5) {
         return output;
     }

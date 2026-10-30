@@ -1,5 +1,5 @@
 {
-  "method": "Three alternating before/after/warm-cache phases over the full captured Altimood HTML corpus. Same current PHP adapter for both binaries; no full-build claim. New service per phase, fixed CPU 16; output hashes included in component timings. Cache seeded once outside the timed warm phases.",
+  "method": "Three alternating before/after/PHP/warm-cache phases over the full captured Altimood HTML corpus. Same current PHP adapter for both binaries; no full-build claim. New service per phase, fixed CPU 16; output hashes included in component timings. Cache seeded once outside the timed warm phases.",
   "php": "8.5.12",
   "libxml": "2.12.10",
   "cpu_affinity": [
@@ -9,70 +9,93 @@
   "control_documents": 0,
   "ordinary_documents": 1203,
   "before_binary_sha256": "2e71a9d4c35ac0c2e31f53c60c7dec6394e4a78e50be71139871b87bde75cc2f",
-  "after_binary_sha256": "241f17b10215d4420f038998e95a73042a7cb5af025193b81df6b7ad215fffed",
+  "after_binary_sha256": "ea8c893205c59b97bccd027af54d05d5c378bab6273d6e0ab6ebaa8e8c9c3f17",
   "source_sha256": {
-    "packages/static-generator/rust/src/lib.rs": "c283cbf4ea73ee17317d4fa045e1bea817a41b8ec326bbc0916103661560a1c5",
+    "packages/static-generator/rust/src/lib.rs": "1d86dbe17d25eb97f92acd7cb21e5a7e8557ea3cdfa3ff7f0ff4d3f5e67d9e4b",
     "packages/static-generator/src/Generator/HtmlMinification.php": "b3784c4595e5d091dbe93b2d93498535eadbf642cce590ebd79ef6298366f0be",
-    "packages/static-generator/rust/src/main.rs": "4f5fd5b60784da4378aeb19e0437ca793cd13b6481d8fdc9654b7520b29be2ef"
+    "packages/static-generator/rust/src/main.rs": "4f5fd5b60784da4378aeb19e0437ca793cd13b6481d8fdc9654b7520b29be2ef",
+    "packages/static-generator/rust/Cargo.toml": "7d13e754c234cd4bdbbd2ecda7deab3bda84484630cf5130d06eae6eebc2692b",
+    "packages/static-generator/rust/Cargo.lock": "55e121b1c07e58c05570d3108302b787a3aa39767e7b09b09656c2e0ee8c26a5"
   },
   "samples": [
     {
       "mode": "before-1",
-      "seconds": 4.369495561,
+      "seconds": 4.639535894,
       "count": 1203
     },
     {
       "mode": "after-1",
-      "seconds": 3.976900715,
+      "seconds": 4.123473907,
+      "count": 1203,
+      "equal": 1203,
+      "different": 0
+    },
+    {
+      "mode": "php-1",
+      "seconds": 6.992347242,
       "count": 1203,
       "equal": 1203,
       "different": 0
     },
     {
       "mode": "warm-1",
-      "seconds": 0.111874757,
+      "seconds": 0.112282777,
       "count": 1203,
       "equal": 1203,
       "different": 0
     },
     {
       "mode": "before-2",
-      "seconds": 4.347960853,
+      "seconds": 4.448509655,
       "count": 1203,
       "equal": 1203,
       "different": 0
     },
     {
       "mode": "after-2",
-      "seconds": 3.958348855,
+      "seconds": 4.2149538,
+      "count": 1203,
+      "equal": 1203,
+      "different": 0
+    },
+    {
+      "mode": "php-2",
+      "seconds": 7.03239426,
       "count": 1203,
       "equal": 1203,
       "different": 0
     },
     {
       "mode": "warm-2",
-      "seconds": 0.109488087,
+      "seconds": 0.111675087,
       "count": 1203,
       "equal": 1203,
       "different": 0
     },
     {
       "mode": "before-3",
-      "seconds": 4.319855541,
+      "seconds": 4.443861629,
       "count": 1203,
       "equal": 1203,
       "different": 0
     },
     {
       "mode": "after-3",
-      "seconds": 3.977963382,
+      "seconds": 4.184986201,
+      "count": 1203,
+      "equal": 1203,
+      "different": 0
+    },
+    {
+      "mode": "php-3",
+      "seconds": 6.996185331,
       "count": 1203,
       "equal": 1203,
       "different": 0
     },
     {
       "mode": "warm-3",
-      "seconds": 0.110042889,
+      "seconds": 0.11086573,
       "count": 1203,
       "equal": 1203,
       "different": 0
@@ -80,24 +103,26 @@
   ],
   "cache_seed": {
     "mode": "cache-seed",
-    "seconds": 4.427308273,
+    "seconds": 4.288028029,
     "count": 1203,
     "equal": 1203,
     "different": 0
   },
-  "before_median_seconds": 4.347960853,
-  "after_median_seconds": 3.976900715,
-  "warm_median_seconds": 0.110042889,
-  "serialization_reduction_percent": 8.534118648836875,
-  "warm_cache_speedup": 36.13955205229117,
+  "before_median_seconds": 4.448509655,
+  "after_median_seconds": 4.184986201,
+  "warm_median_seconds": 0.111675087,
+  "php_median_seconds": 6.996185331,
+  "native_vs_php_speedup": 1.6717343845311283,
+  "serialization_reduction_percent": 5.923859324522462,
+  "warm_cache_speedup": 37.47466255387829,
   "fallback_warnings": 0,
   "before_rust_revision": "33f77e748d92a07e528c4340d2b0aaf063ba4d49",
-  "implementation": "Select legacy or HTML5 serialization using a PHP parity probe. Match runtime-specific attribute quoting, URI escaping and void tags; retain per-document PHP control serialization. Avoid redundant escaping allocations. Include loaded libxml and HTML5 parser versions in cache keys; invalidate previous results with cache epoch 3.",
+  "implementation": "Select legacy or HTML5 serialization using a PHP parity probe, matching attribute quoting, URI escaping, void tags and SVG/MathML XML attributes. Parse noscript with scripting disabled, matching PHP, and omit rejected Alpine @event attribute names. Avoid redundant escaping allocations; preserve PHP control serialization and runtime-specific cache keys.",
   "full_build_reference": "2026-10-30-minification-cache.json retains the earlier full-build samples and implementation hashes. Those builds use PHP minification; its steady-state algorithm is unchanged by this native compatibility follow-up.",
   "validation": {
     "native_suite": "make -C packages/static-generator/rust test: debug/release unit and property tests, Clippy, fmt, rustdoc, real-worker PHP comparisons and proc_open-disabled hosting passed.",
-    "native_php_tests": 8,
-    "native_php_assertions": 934,
+    "native_php_tests": 9,
+    "native_php_assertions": 988,
     "targeted_php_tests": 257,
     "targeted_php_assertions": 966,
     "static_analysis": "composer stan: 0 errors",
@@ -106,28 +131,15 @@
       "environment": "Ubuntu 26.04 container, network disabled during comparisons",
       "php": "8.5.4",
       "libxml": "2.15.2",
+      "dom_crawler": "8.1.10",
+      "masterminds_html5": "2.12.0",
       "control_documents_equal": 448,
       "control_documents_different": 0,
-      "corpus_documents_equal": 286,
+      "corpus_documents_equal": 303,
       "corpus_documents_different": 0,
-      "fallback_warnings": 0,
-      "dependency_runs": [
-        {
-          "dom_crawler": "8.1.5",
-          "control_equal": 448,
-          "corpus_equal": 286,
-          "fallback_warnings": 0
-        },
-        {
-          "dom_crawler": "8.1.10",
-          "masterminds_html5": "2.12.0",
-          "control_equal": 448,
-          "corpus_equal": 286,
-          "fallback_warnings": 0
-        }
-      ]
+      "fallback_warnings": 0
     },
-    "integration_coverage": "Both protocol operations, protected markup, partial and fully cached batches after reset, malformed frames, ordinary markup and control references are covered by the native suite. The earlier CI failure reproduced the missing serialization-profile support.",
+    "integration_coverage": "Both serialization profiles, protected markup, cache reset and mixed hits/misses, malformed frames, controls, SVG/MathML XML attributes, noscript and Alpine event aliases are covered by native comparisons. No new package version is introduced: html5ever was already locked transitively.",
     "database_fixture_guard": {
       "scope": "Four existing SQLite file restoration hooks; skip file operations for MariaDB/PostgreSQL URLs.",
       "before": "On original copies: 4 SQLite checks pass; 8 server-database checks raise warnings converted to exceptions.",
@@ -139,6 +151,93 @@
       "passed": 259,
       "assertions": 980,
       "php_warnings_or_notices": 0,
+      "result": "passed"
+    },
+    "real_site_corpora": [
+      {
+        "site": "Altimood",
+        "input": "Captured rendered HTML before minification",
+        "ndjson_sha256": "7b309312571c9ac4f3acdb1f6472e299a45b43aab042c104cdc21e9da72f7698",
+        "runtime_results": [
+          {
+            "profile": "legacy",
+            "php": "8.5.12",
+            "loaded_libxml": "21210",
+            "equal": 1203,
+            "different": 0,
+            "fallback_warnings": 0
+          },
+          {
+            "profile": "modern",
+            "php": "8.5.4",
+            "loaded_libxml": "21502",
+            "equal": 1203,
+            "different": 0,
+            "fallback_warnings": 0
+          }
+        ]
+      },
+      {
+        "site": "Pied Vert",
+        "input": "Captured rendered HTML before minification",
+        "ndjson_sha256": "1ac65f94d7f9946ce39372acc99dd3bca13c589ec491f7f5ec18e3b9591b2578",
+        "runtime_results": [
+          {
+            "profile": "legacy",
+            "php": "8.5.12",
+            "loaded_libxml": "21210",
+            "equal": 215,
+            "different": 0,
+            "fallback_warnings": 0
+          },
+          {
+            "profile": "modern",
+            "php": "8.5.4",
+            "loaded_libxml": "21502",
+            "equal": 215,
+            "different": 0,
+            "fallback_warnings": 0
+          }
+        ]
+      },
+      {
+        "site": "GrandAngle FR",
+        "input": "Already exported HTML; compare a second minification pass",
+        "ndjson_sha256": "9e0a1579f0e5c10fdfab2295b7bb07f914f2d42ea716e6c4f0ea4bbaabdf3c69",
+        "runtime_results": [
+          {
+            "profile": "legacy",
+            "php": "8.5.12",
+            "loaded_libxml": "21210",
+            "equal": 1258,
+            "different": 0,
+            "fallback_warnings": 0
+          },
+          {
+            "profile": "modern",
+            "php": "8.5.4",
+            "loaded_libxml": "21502",
+            "equal": 1258,
+            "different": 0,
+            "fallback_warnings": 0
+          }
+        ]
+      }
+    ],
+    "regression_guards": {
+      "before_revision": "6c4b73e11c6884ab91f5e36be30fe1e8e91b723e",
+      "before_binary_sha256": "241f17b10215d4420f038998e95a73042a7cb5af025193b81df6b7ad215fffed",
+      "method": "Copy the two new protocol regressions and run them against the previous binary, without changing the shared tree.",
+      "before_tests": 2,
+      "before_failed": 2,
+      "before_passed": 0,
+      "after": "Both regressions pass within the nine-test native suite."
+    },
+    "release_note": {
+      "command": "composer test-filter ReleaseUpgradeNoteTest",
+      "tests": 9,
+      "passed": 9,
+      "assertions": 53,
       "result": "passed"
     }
   }

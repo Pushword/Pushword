@@ -121,6 +121,8 @@ them along with Markdown fragments.
 PHP handles control-character edge cases, including numeric HTML references,
 to preserve the installed libxml version's serialization. The native worker selects
 legacy or HTML5 serialization from PHP's output, including attribute quoting and void tags.
+It also matches PHP's handling of `<noscript>`, XML attributes on SVG/MathML,
+and Alpine `@event` attribute names.
 
 ### Incremental generation
 

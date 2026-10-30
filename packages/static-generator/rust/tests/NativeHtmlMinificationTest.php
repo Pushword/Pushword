@@ -126,18 +126,25 @@ final class NativeHtmlMinificationTest extends TestCase
         }
     }
 
-    public function testProtocolSupportsLegacyAndHtml5AttributeQuoting(): void
+    public function testProtocolSupportsLegacyAndHtml5Serialization(): void
     {
-        $input = '<!DOCTYPE html><html><body><p title="&quot;">x</p><pre title="&quot;"> y </pre></body></html>';
-        $legacy = <<<'HTML'
+        $input = [
+            '<!DOCTYPE html><html><body><p title="&quot;">x</p><pre title="&quot;"> y </pre></body></html>',
+            '<!DOCTYPE html><html><body><svg xml:lang="fr" xml:space="preserve" xml:base="/x"><use xlink:href="#x"></use></svg></body></html>',
+        ];
+        $legacyParagraph = <<<'HTML'
             <!DOCTYPE html><html><head></head><body><p title='"'>x</p><pre title='"'> y </pre></body></html>
             HTML;
-        $html5 = '<!DOCTYPE html><html><head></head><body><p title="&quot;">x</p><pre title="&quot;"> y </pre></body></html>';
+        $legacy = [$legacyParagraph, '<!DOCTYPE html><html><head></head><body><svg xml:lang="fr" xml:space="preserve" xml:base="/x"><use xlink:href="#x"></use></svg></body></html>'];
+        $html5 = [
+            '<!DOCTYPE html><html><head></head><body><p title="&quot;">x</p><pre title="&quot;"> y </pre></body></html>',
+            '<!DOCTYPE html><html><head></head><body><svg lang="fr" space="preserve" xml:base="/x"><use xlink:href="#x"></use></svg></body></html>',
+        ];
         $worker = new NativeWorker($this->binary());
 
         try {
-            self::assertSame([$legacy], $worker->request('minify_html', [$input]));
-            self::assertSame([$html5], $worker->request('minify_html5', [$input]));
+            self::assertSame($legacy, $worker->request('minify_html', $input));
+            self::assertSame($html5, $worker->request('minify_html5', $input));
         } finally {
             $worker->reset();
         }
@@ -148,6 +155,23 @@ final class NativeHtmlMinificationTest extends TestCase
         $process = new Process([$this->binary()], input: '{"version":1,"id":42,"operation":"minify_html","documents":[]}'."\n");
         $process->mustRun();
         self::assertSame(['version' => 1, 'id' => 42, 'documents' => []], json_decode($process->getOutput(), true, flags: \JSON_THROW_ON_ERROR));
+    }
+
+    public function testNoscriptAndAlpineAliasesMatchBothSerializationProfiles(): void
+    {
+        $documents = [
+            '<!DOCTYPE html><html><body><div @click="open = true" @keydown.escape.window="open = false" x-on:click="open = true" :class="active"><noscript><style>p { color: red; }</style><p>fallback é</p></noscript></div></body></html>',
+            '<!DOCTYPE html><html><head><noscript><style>p { color: red; }</style></noscript></head><body><p>text</p></body></html>',
+        ];
+        $expected = array_map(HtmlMinifier::compress(...), $documents);
+        $worker = new NativeWorker($this->binary());
+
+        try {
+            self::assertSame($expected, $worker->request('minify_html', $documents));
+            self::assertSame($expected, $worker->request('minify_html5', $documents));
+        } finally {
+            $worker->reset();
+        }
     }
 
     private function binary(): string

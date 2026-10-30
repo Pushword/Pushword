@@ -284,5 +284,22 @@
   "<!DOCTYPE html><html><body><input readonly=\"yes\"></body></html>",
   "<!DOCTYPE html><html><body><input required=\"yes\"></body></html>",
   "<!DOCTYPE html><html><body><input reversed=\"yes\"></body></html>",
-  "<!DOCTYPE html><html><body><input selected=\"yes\"></body></html>"
+  "<!DOCTYPE html><html><body><input selected=\"yes\"></body></html>",
+  "<!DOCTYPE html><html><body><svg xml:space=\"preserve\"></svg></body></html>",
+  "<!DOCTYPE html><html><body><svg xml:lang=\"fr\"></svg></body></html>",
+  "<!DOCTYPE html><html><body><svg xml:base=\"/a é\"></svg></body></html>",
+  "<!DOCTYPE html><html><body><svg xlink:href=\"/a é\"></svg></body></html>",
+  "<!DOCTYPE html><html><body><math xml:space=\"preserve\"></math></body></html>",
+  "<!DOCTYPE html><html><body><math xml:lang=\"fr\"></math></body></html>",
+  "<!DOCTYPE html><html><body><math xml:base=\"/a é\"></math></body></html>",
+  "<!DOCTYPE html><html><body><math xlink:href=\"/a é\"></math></body></html>",
+  "<!DOCTYPE html><html><body><p xml:space=\"preserve\"></p></body></html>",
+  "<!DOCTYPE html><html><body><p xml:lang=\"fr\"></p></body></html>",
+  "<!DOCTYPE html><html><body><p xml:base=\"/a é\"></p></body></html>",
+  "<!DOCTYPE html><html><body><p xlink:href=\"/a é\"></p></body></html>",
+  "<!DOCTYPE html><html><body><svg xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" xml:space=\"preserve\"><use xlink:href=\"#x\"/></svg></body></html>",
+  "<!DOCTYPE html><html><body><div @click=\"open = true\" @keydown.escape.window=\"open = false\" x-on:click=\"open = true\" :class=\"active\"><noscript><style>p { color: red; }</style><p>fallback é</p></noscript></div></body></html>",
+  "<!DOCTYPE html><html><head><noscript><style>p { color: red; }</style></noscript></head><body><p>text</p></body></html>",
+  "<!DOCTYPE html><html><body><noscript><img src=\"x\"><pre>  code\n next </pre><p>A &amp; B</p></noscript></body></html>",
+  "<div @click=\"open = true\"><noscript><b>fragment</b></noscript></div>"
 ]

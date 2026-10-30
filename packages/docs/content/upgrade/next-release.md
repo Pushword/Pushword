@@ -44,6 +44,8 @@ Content analysis is deferred on pages without a TOC; HTML minification selects t
 **Only sites using the optional Rust binaries are affected.**
 Rebuild and redeploy `pushword-content-analyzer` and `pushword-html-minifier` with their package's `rust/Makefile`.
 Control-character edge cases use PHP serialization to match the installed libxml version.
+Native minification also matches PHP for `<noscript>`, SVG/MathML XML attributes,
+and Alpine `@event` attribute names.
 PHP remains the default; no configuration change is required.
 
 ## Published page corpus index

@@ -8,6 +8,7 @@ description = "Optional HTML minification worker for Pushword static-generator"
 
 [dependencies]
 ego-tree = "0.11"
+html5ever = "0.39"
 regex = "1.13"
 scraper = { version = "0.27", features = ["deterministic"] }
 serde = { version = "1", features = ["derive"] }
