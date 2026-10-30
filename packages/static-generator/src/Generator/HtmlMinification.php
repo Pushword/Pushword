@@ -18,12 +18,12 @@ use Throwable;
 final class HtmlMinification implements ResetInterface
 {
     /** Bump whenever PHP minification, native fallback or SVG serialization changes output. */
-    private const int CACHE_VERSION = 3;
+    private const int CACHE_VERSION = 4;
 
     // Numeric references may omit their semicolon; reject digit prefixes of valid references.
     private const string PHP_SERIALIZATION_REQUIRED = '/[\x00-\x08\x0b\x0c\x0e-\x1f]|&#(?:0*(?:[0-9]|[12][0-9]|3[01])(?![0-9])|x0*(?:[0-9a-f]|1[0-9a-f])(?![0-9a-f]))/i';
 
-    private const string PARITY_PROBE = '<!DOCTYPE html><html><body><a href="/?x=&quot;[\\]^`{|}">x</a></body></html>';
+    private const string PARITY_PROBE = '<!DOCTYPE html><html><body><a href="/?x=&quot;[\\]^`{|}">x</a><svg xml:space="preserve" xml:lang="fr"></svg></body></html>';
 
     private readonly NativeWorker $worker;
 
@@ -157,7 +157,11 @@ final class HtmlMinification implements ResetInterface
             try {
                 if (! $this->parityChecked) {
                     $expected = HtmlMinifier::compress(self::PARITY_PROBE);
-                    $this->operation = str_contains($expected, 'href="') ? 'minify_html5' : 'minify_html';
+                    $this->operation = match (true) {
+                        ! str_contains($expected, 'href="') => 'minify_html',
+                        str_contains($expected, 'xml:space=') => 'minify_html5_with_xml_prefixes',
+                        default => 'minify_html5',
+                    };
                     $result = $this->compressNative([self::PARITY_PROBE, ...$documents]);
                     if (array_shift($result) !== $expected) {
                         throw new RuntimeException('Native HTML serialization differs from PHP');

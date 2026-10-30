@@ -6,6 +6,13 @@ use regex::Regex;
 use scraper::{ElementRef, Html, HtmlTreeSink, Node, Selector};
 use std::{borrow::Cow, collections::HashMap, sync::LazyLock};
 
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum Serialization {
+    Legacy,
+    Html5,
+    Html5WithXmlPrefixes,
+}
+
 static COMMENTS: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"(?s)<!--(.*?)-->").unwrap());
 static NEWLINES: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"[ \t]*\n[ \t\r\n\x0c]*").unwrap());
 static HORIZONTAL: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"[ \t]{2,}").unwrap());
@@ -78,7 +85,7 @@ fn serialize(
     element: ElementRef<'_>,
     output: &mut String,
     placeholders: &HashMap<NodeId, String>,
-    html5: bool,
+    profile: Serialization,
 ) {
     if let Some(placeholder) = placeholders.get(&element.id()) {
         output.push_str(placeholder);
@@ -100,10 +107,10 @@ fn serialize(
             continue;
         }
         output.push(' ');
-        // The HTML5 serializer drops XML prefixes on foreign lang/space attributes.
+        // Some HTML5 serializers drop XML prefixes on foreign lang/space attributes.
         if let Some(prefix) = name.prefix.as_ref().filter(|prefix| {
             !prefix.is_empty()
-                && !(html5
+                && !(profile == Serialization::Html5
                     && prefix.as_ref() == "xml"
                     && matches!(name.local.as_ref(), "lang" | "space"))
         }) {
@@ -132,7 +139,7 @@ fn serialize(
         let uri = name.prefix.is_none()
             && (matches!(name.local.as_ref(), "href" | "src" | "action")
                 || (tag == "a" && name.local.as_ref() == "name"));
-        let mut escaped = if html5 && uri {
+        let mut escaped = if profile != Serialization::Legacy && uri {
             escape_uri(value, true)
         } else {
             let escaped = escape_text(value);
@@ -143,11 +150,12 @@ fn serialize(
             }
         };
         let has_double_quote = escaped.contains('"');
-        let quote = if !html5 && has_double_quote && !escaped.contains('\'') {
-            '\''
-        } else {
-            '"'
-        };
+        let quote =
+            if profile == Serialization::Legacy && has_double_quote && !escaped.contains('\'') {
+                '\''
+            } else {
+                '"'
+            };
         output.push('=');
         output.push(quote);
         if quote == '"' && has_double_quote {
@@ -162,9 +170,9 @@ fn serialize(
         matches!(tag, "script" | "style"),
         output,
         placeholders,
-        html5,
+        profile,
     );
-    if !(html5 && matches!(tag, "embed" | "source" | "track" | "wbr"))
+    if !(profile != Serialization::Legacy && matches!(tag, "embed" | "source" | "track" | "wbr"))
         && !matches!(
             tag,
             "area"
@@ -193,7 +201,7 @@ fn append_children(
     raw_text: bool,
     output: &mut String,
     placeholders: &HashMap<NodeId, String>,
-    html5: bool,
+    profile: Serialization,
 ) {
     for child in parent.children() {
         match child.value() {
@@ -201,9 +209,9 @@ fn append_children(
                 ElementRef::wrap(child).unwrap(),
                 output,
                 placeholders,
-                html5,
+                profile,
             ),
-            Node::Fragment => append_children(child, raw_text, output, placeholders, html5),
+            Node::Fragment => append_children(child, raw_text, output, placeholders, profile),
             Node::Text(text) => {
                 if raw_text {
                     output.push_str(text);
@@ -221,9 +229,9 @@ fn append_children(
     }
 }
 
-fn outer_html(element: ElementRef<'_>, html5: bool) -> String {
+fn outer_html(element: ElementRef<'_>, profile: Serialization) -> String {
     let mut output = String::new();
-    serialize(element, &mut output, &HashMap::new(), html5);
+    serialize(element, &mut output, &HashMap::new(), profile);
     output
 }
 
@@ -233,13 +241,13 @@ fn has_protected_markup(html: &str) -> bool {
         .any(|tag| html.contains(tag))
 }
 
-fn minify_protected(document: &Html, capacity: usize, html5: bool) -> Option<String> {
+fn minify_protected(document: &Html, capacity: usize, profile: Serialization) -> Option<String> {
     let mut placeholders = HashMap::new();
     let mut originals = HashMap::new();
     let mut restorations = HashMap::new();
     for (tag, selector) in PROTECTED.iter() {
         for (index, node) in document.select(selector).enumerate() {
-            let original = outer_html(node, html5);
+            let original = outer_html(node, profile);
             let start = original.find('>').unwrap() + 1;
             let end = original.rfind("</").unwrap();
             // Nested markup, literal tags in raw text and placeholder collisions
@@ -262,7 +270,7 @@ fn minify_protected(document: &Html, capacity: usize, html5: bool) -> Option<Str
     }
     let mut output = String::with_capacity(capacity);
     output.push_str("<!DOCTYPE html>");
-    serialize(document.root_element(), &mut output, &placeholders, html5);
+    serialize(document.root_element(), &mut output, &placeholders, profile);
     output = collapse_whitespace(output);
     Some(
         PLACEHOLDER
@@ -284,14 +292,18 @@ fn collapse_whitespace(mut output: String) -> String {
 }
 
 pub fn minify(html: &str) -> String {
-    minify_document(html, false)
+    minify_document(html, Serialization::Legacy)
 }
 
 pub fn minify_html5(html: &str) -> String {
-    minify_document(html, true)
+    minify_document(html, Serialization::Html5)
 }
 
-fn minify_document(html: &str, html5: bool) -> String {
+pub fn minify_html5_with_xml_prefixes(html: &str) -> String {
+    minify_document(html, Serialization::Html5WithXmlPrefixes)
+}
+
+fn minify_document(html: &str, profile: Serialization) -> String {
     let stripped = COMMENTS.replace_all(html, "");
     if !stripped.starts_with("<!DOCTYPE html>") {
         return stripped.into_owned();
@@ -308,18 +320,23 @@ fn minify_document(html: &str, html5: bool) -> String {
         },
     )
     .one(stripped.as_ref());
-    if let Some(output) = minify_protected(&document, stripped.len(), html5) {
+    if let Some(output) = minify_protected(&document, stripped.len(), profile) {
         return output;
     }
     let mut output = String::with_capacity(stripped.len());
     output.push_str("<!DOCTYPE html>");
-    serialize(document.root_element(), &mut output, &HashMap::new(), html5);
+    serialize(
+        document.root_element(),
+        &mut output,
+        &HashMap::new(),
+        profile,
+    );
     let mut protected = Vec::new();
     // Keep PHP's replacement order, including nested tags and repeated markup.
     for (tag, selector) in PROTECTED.iter() {
         for (index, node) in document.select(selector).enumerate() {
             let placeholder = format!("<{tag}-placeholder-{index}></{tag}-placeholder-{index}>");
-            let original = outer_html(node, html5);
+            let original = outer_html(node, profile);
             output = output.replace(&original, &placeholder);
             protected.push((placeholder, original));
         }

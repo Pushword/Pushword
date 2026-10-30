@@ -106,7 +106,7 @@ final class NativeHtmlMinificationTest extends TestCase
     public function testCachedSerializationProfileSurvivesResetAndMixedBatches(): void
     {
         $documents = [
-            '<!DOCTYPE html><html><body><p title="&quot;">first</p></body></html>',
+            '<!DOCTYPE html><html><body><p title="&quot;">first</p><svg xml:space="preserve" xml:lang="fr"></svg></body></html>',
             '<!DOCTYPE html><html><body><pre title="&quot;">next</pre><source src="x"></body></html>',
             '<!DOCTYPE html><html><body><a href="/&#13;">control reference</a></body></html>',
         ];
@@ -145,6 +145,7 @@ final class NativeHtmlMinificationTest extends TestCase
         try {
             self::assertSame($legacy, $worker->request('minify_html', $input));
             self::assertSame($html5, $worker->request('minify_html5', $input));
+            self::assertSame([$html5[0], $legacy[1]], $worker->request('minify_html5_with_xml_prefixes', $input));
         } finally {
             $worker->reset();
         }
@@ -169,6 +170,7 @@ final class NativeHtmlMinificationTest extends TestCase
         try {
             self::assertSame($expected, $worker->request('minify_html', $documents));
             self::assertSame($expected, $worker->request('minify_html5', $documents));
+            self::assertSame($expected, $worker->request('minify_html5_with_xml_prefixes', $documents));
         } finally {
             $worker->reset();
         }

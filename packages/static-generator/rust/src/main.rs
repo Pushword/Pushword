@@ -1,4 +1,4 @@
-use pushword_html_minifier::{minify, minify_html5};
+use pushword_html_minifier::{minify, minify_html5, minify_html5_with_xml_prefixes};
 use serde::{Deserialize, Serialize};
 use std::io::{self, BufRead, Read, Write};
 use std::process::ExitCode;
@@ -45,6 +45,7 @@ fn run() -> Result<(), Box<dyn std::error::Error>> {
         let minifier = match request.operation.as_str() {
             "minify_html" => minify,
             "minify_html5" => minify_html5,
+            "minify_html5_with_xml_prefixes" => minify_html5_with_xml_prefixes,
             _ => return Err("unsupported operation".into()),
         };
         let documents = request
