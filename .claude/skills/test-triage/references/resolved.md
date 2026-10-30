@@ -268,3 +268,18 @@ Width Measurement"`. The test now waits for the H1 to take focus before typing.
 
 The same race exists for a real editor who clicks into another field before that timer
 fires. `TagsField` was left as is.
+
+## Fixture media lost after Flat sync tests
+
+`MediaDeletionSyncTest` and `MediaEdgeCasesTest` rolled back their database changes
+after destructive imports, but media deletion also removes files. A later
+`CleanMissingMediaCommandTest` then deleted the restored rows and cleared page image
+associations. Newsletter rendering, page-update notifications and repurpose previews
+failed depending on which classes shared a worker.
+
+The deterministic sequence is
+`MediaDeletionSyncTest::testMediaDeletedFromDbWhenRemovedFromCsv` →
+`CleanMissingMediaCommandTest::testRemovesMediaWhoseFileIsGone` →
+`MailRendererTest::testDesignImagesUseTheAudienceHostAndPersonalSignaturesUseTheSendContextHost`.
+Both Flat classes must restore their incoming media files and CSV after rollback;
+restoring only the database cannot isolate a filesystem-changing test.

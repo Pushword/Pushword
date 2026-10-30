@@ -22,6 +22,10 @@ final class MediaEdgeCasesTest extends KernelTestCase
 {
     private EntityManager $em;
 
+    private string $mediaDir;
+
+    private string $mediaBackupDir;
+
     /** @var string[] */
     private array $tempFiles = [];
 
@@ -38,6 +42,16 @@ final class MediaEdgeCasesTest extends KernelTestCase
         // media syncs below delete shared fixture media globally, which would
         // otherwise poison sibling tests sharing this parallel worker's database.
         $this->em->getConnection()->beginTransaction();
+
+        /** @var string $mediaDir */
+        $mediaDir = self::getContainer()->getParameter('pw.media_dir');
+        $this->mediaDir = $mediaDir;
+        $this->mediaBackupDir = sys_get_temp_dir().'/pushword-media-sync-'.bin2hex(random_bytes(8));
+        $filesystem = new Filesystem();
+        $filesystem->mirror($this->mediaDir, $this->mediaBackupDir.'/media');
+        if (is_file($this->getMediaCsvPath())) {
+            $filesystem->copy($this->getMediaCsvPath(), $this->mediaBackupDir.'/media.csv');
+        }
     }
 
     protected function tearDown(): void
@@ -50,6 +64,22 @@ final class MediaEdgeCasesTest extends KernelTestCase
             @unlink($file);
         }
 
+        // Database rollback cannot undo media files deleted by the sync listener.
+        $filesystem = new Filesystem();
+        $filesystem->mirror($this->mediaBackupDir.'/media', $this->mediaDir, options: ['override' => true, 'delete' => true]);
+        if (is_file($this->mediaBackupDir.'/media.csv')) {
+            $filesystem->copy($this->mediaBackupDir.'/media.csv', $this->getMediaCsvPath(), true);
+            self::assertFileEquals($this->mediaBackupDir.'/media.csv', $this->getMediaCsvPath());
+        } else {
+            $filesystem->remove($this->getMediaCsvPath());
+            self::assertFileDoesNotExist($this->getMediaCsvPath());
+        }
+
+        foreach (['1.jpg', '2.jpg', 'piedweb-logo.png'] as $fileName) {
+            self::assertFileEquals($this->mediaBackupDir.'/media/'.$fileName, $this->mediaDir.'/'.$fileName, 'Fixture media must survive destructive syncs.');
+        }
+
+        $filesystem->remove($this->mediaBackupDir);
         parent::tearDown();
     }
 
