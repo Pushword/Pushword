@@ -155,6 +155,26 @@ final class HtmlMinificationTest extends TestCase
         self::assertSame(HtmlMinifier::compress($this->html()), new HtmlMinification(cache: $cache)->compress($this->html()));
     }
 
+    public function testLossyMinificationIsNotCachedAndRemainsReported(): void
+    {
+        $storage = new ArrayAdapter();
+        $cache = $this->createMock(CacheItemPoolInterface::class);
+        $cache->method('getItem')->willReturnCallback($storage->getItem(...));
+        $cache->expects(self::never())->method('save');
+        $this->minifier = new HtmlMinification(cache: $cache);
+        $skipped = HtmlMinifier::$skippedOnBrokenLibxml;
+        $html = "<p>\xff</p>";
+
+        try {
+            self::assertSame($html, $this->minifier->compress($html.'<!-- removed -->'));
+            $this->minifier->reset();
+            self::assertSame($html, $this->minifier->compress($html.'<!-- removed -->'));
+            self::assertSame($skipped + 2, HtmlMinifier::$skippedOnBrokenLibxml);
+        } finally {
+            HtmlMinifier::$skippedOnBrokenLibxml = $skipped;
+        }
+    }
+
     public function testReplacingTheNativeBinaryInvalidatesCachedOutput(): void
     {
         $cache = new ArrayAdapter();
