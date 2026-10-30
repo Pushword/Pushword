@@ -1,5 +1,5 @@
 ---
-title: 'native accelerators avoid unused analysis and preserve control-character serialization; page corpus checks use a covering index; full static rebuilds reuse unchanged compressed files'
+title: 'native accelerators avoid unused analysis and preserve control-character serialization; page corpus checks use a covering index; full static rebuilds reuse unchanged compressed files and HTML minification'
 run: 'doctrine:schema:update --force'
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
@@ -54,4 +54,10 @@ Run `php bin/console doctrine:schema:update --force` in every installed applicat
 
 Full static rebuilds reuse existing compressed files when the newly rendered bytes are identical.
 Pages still render on every full build; changed pages and missing compressed files are compressed normally.
+No action or configuration change is required.
+
+## Cached HTML minification
+
+Static builds reuse minified HTML when the freshly rendered input and minifier identity are unchanged.
+The cache survives `cache:clear` and shares `cache.pushword_markdown` with Markdown fragments.
 No action or configuration change is required.

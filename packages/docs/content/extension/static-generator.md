@@ -112,6 +112,13 @@ Brotli and Zstandard files are copied instead of compressed again. Changed pages
 and missing compressed files are compressed normally. This applies to sequential
 and parallel builds and keeps the existing compression quality and output bytes.
 
+HTML minification is cached by the freshly rendered HTML and minifier identity,
+including the native binary's contents when enabled. The page is still rendered,
+so a content or template change cannot reuse stale HTML. Minified documents share
+the persistent `cache.pushword_markdown` pool and its 30-day lifetime and cleanup;
+`cache:clear` preserves them, and `cache:pool:clear cache.pushword_markdown` removes
+them along with Markdown fragments.
+
 ### Incremental generation
 
 `--incremental` skips a page when neither its `updatedAt` nor the host's

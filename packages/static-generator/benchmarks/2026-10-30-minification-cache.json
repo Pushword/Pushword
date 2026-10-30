@@ -1,0 +1,1087 @@
+{
+  "date": "2026-10-30",
+  "baseline_revision": "3ff52a52fbf50d783bc23211c42eccf99c419344",
+  "optimization": "Cache minified HTML by freshly rendered input, backend identity, PHP/libxml/DomCrawler versions and minifier cache version.",
+  "method": {
+    "environment": "Private local snapshots and private SQLite databases.",
+    "runtime": {
+      "php": "8.5.12",
+      "libxml": "2.12.10"
+    },
+    "rendering": "Full rebuilds, PHP rendering and minification, four workers pinned to homogeneous primary CPUs 0-3. Parent CLI opcache enabled, child CLI opcache unchanged.",
+    "snapshots": "Installed site versions are retained; relevant static-generator and corpus-index improvements were backported identically into each private control and candidate. This compares the optimization on the captured site workloads, not an upgrade of every dependency.",
+    "baseline": "Already includes unchanged compressed-export reuse. HTML rendering still runs in both modes.",
+    "compression": "Existing gzip/Brotli/Zstandard settings unchanged. Each timed build starts from the same previous export, copied outside timing.",
+    "cache": "Persistent minification pools were populated during preliminary builds outside the final sequence. Three warm candidate builds alternate with three uncached controls per site. Altimood/Pied Vert retain exploratory cold-cache samples for reference; these used an earlier affinity and do not enter the final medians.",
+    "command": "php -d opcache.enable_cli=1 bin/console pw:static --workers=4 --format=text (GrandAngle: www.grandangle.fr; other sites: all hosts).",
+    "timing": "Wall-clock medians. Shared workstation; raw samples include scheduling/load outliers. CPU user/system times from /usr/bin/time retained.",
+    "parity": "Every export entry counted and compared by SHA-256 or exact symlink target, including compressed sidecars. No output paths ignored or normalized."
+  },
+  "downstream_revision": "41950d0eceb909c49f6fc289254150dbc29c7395",
+  "source_sha256": {
+    "packages/static-generator/src/Generator/HtmlMinification.php": "e46f3f3608963d2d0b68c65bb56ba2effc7295c1f77bf329989f8df2fe0d2bae"
+  },
+  "sites": {
+    "altimood": {
+      "installed_packages": {
+        "pushword/core": "1.0.47",
+        "pushword/static-generator": "1.0.47",
+        "symfony/dom-crawler": "8.1.5"
+      },
+      "control_samples": [
+        {
+          "site": "altimood",
+          "mode": "primary-control-1",
+          "seconds": 31.153675682,
+          "cpu_affinity": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "code": 0,
+          "signal": null,
+          "user_seconds": 79.98,
+          "system_seconds": 12.7,
+          "peak_rss_kib": 161008
+        },
+        {
+          "site": "altimood",
+          "mode": "primary-control-2",
+          "seconds": 32.835285588999994,
+          "cpu_affinity": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "code": 0,
+          "signal": null,
+          "user_seconds": 84.22,
+          "system_seconds": 13.6,
+          "peak_rss_kib": 161172
+        },
+        {
+          "site": "altimood",
+          "mode": "primary-control-3",
+          "seconds": 29.40520438499999,
+          "cpu_affinity": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "code": 0,
+          "signal": null,
+          "user_seconds": 75.86,
+          "system_seconds": 12.08,
+          "peak_rss_kib": 160732
+        }
+      ],
+      "control_median_seconds": 31.153675682,
+      "candidate_samples": [
+        {
+          "site": "altimood",
+          "mode": "primary-final-1",
+          "seconds": 28.083081783999994,
+          "cpu_affinity": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "code": 0,
+          "signal": null,
+          "user_seconds": 68.86,
+          "system_seconds": 12.19,
+          "peak_rss_kib": 158044
+        },
+        {
+          "site": "altimood",
+          "mode": "primary-final-2",
+          "seconds": 28.000221526999987,
+          "cpu_affinity": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "code": 0,
+          "signal": null,
+          "user_seconds": 68.44,
+          "system_seconds": 12.19,
+          "peak_rss_kib": 157028
+        },
+        {
+          "site": "altimood",
+          "mode": "primary-final-3",
+          "seconds": 25.50111349000002,
+          "cpu_affinity": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "code": 0,
+          "signal": null,
+          "user_seconds": 61.51,
+          "system_seconds": 10.86,
+          "peak_rss_kib": 158348
+        }
+      ],
+      "candidate_median_seconds": 28.000221526999987,
+      "exploratory_cold_cache_sample": {
+        "site": "altimood",
+        "mode": "final-cold",
+        "seconds": 23.910842959999997,
+        "code": 0,
+        "signal": null
+      },
+      "reduction_percent": 10.122253910545842,
+      "speedup": 1.1126224716457764,
+      "paired_reduction_percent": [
+        9.856281259851906,
+        14.72520788313101,
+        13.276870461038193
+      ],
+      "cache_outcomes": [
+        {
+          "mode": "primary-final-1",
+          "processes": 69,
+          "minification_hits": 1220
+        },
+        {
+          "mode": "primary-final-2",
+          "processes": 69,
+          "minification_hits": 1220
+        },
+        {
+          "mode": "primary-final-3",
+          "processes": 69,
+          "minification_hits": 1220
+        }
+      ],
+      "export_comparisons": [
+        {
+          "mode": "primary-control-1",
+          "control_entries": 33286,
+          "candidate_entries": 33286,
+          "equal": 33286,
+          "different": 0,
+          "missing": 0,
+          "extra": 0,
+          "examples": []
+        },
+        {
+          "mode": "primary-control-2",
+          "control_entries": 33286,
+          "candidate_entries": 33286,
+          "equal": 33286,
+          "different": 0,
+          "missing": 0,
+          "extra": 0,
+          "examples": []
+        },
+        {
+          "mode": "primary-control-3",
+          "control_entries": 33286,
+          "candidate_entries": 33286,
+          "equal": 33286,
+          "different": 0,
+          "missing": 0,
+          "extra": 0,
+          "examples": []
+        },
+        {
+          "mode": "primary-final-1",
+          "control_entries": 33286,
+          "candidate_entries": 33286,
+          "equal": 33286,
+          "different": 0,
+          "missing": 0,
+          "extra": 0,
+          "examples": []
+        },
+        {
+          "mode": "primary-final-2",
+          "control_entries": 33286,
+          "candidate_entries": 33286,
+          "equal": 33286,
+          "different": 0,
+          "missing": 0,
+          "extra": 0,
+          "examples": []
+        },
+        {
+          "mode": "primary-final-3",
+          "control_entries": 33286,
+          "candidate_entries": 33286,
+          "equal": 33286,
+          "different": 0,
+          "missing": 0,
+          "extra": 0,
+          "examples": []
+        }
+      ],
+      "runtime_log_checks": [
+        {
+          "mode": "primary-control-1",
+          "flagged_lines": 0
+        },
+        {
+          "mode": "primary-control-2",
+          "flagged_lines": 0
+        },
+        {
+          "mode": "primary-control-3",
+          "flagged_lines": 0
+        },
+        {
+          "mode": "primary-final-1",
+          "flagged_lines": 0
+        },
+        {
+          "mode": "primary-final-2",
+          "flagged_lines": 0
+        },
+        {
+          "mode": "primary-final-3",
+          "flagged_lines": 0
+        }
+      ]
+    },
+    "piedvert": {
+      "installed_packages": {
+        "pushword/core": "1.0.83",
+        "pushword/static-generator": "1.0.83",
+        "symfony/dom-crawler": "8.1.5"
+      },
+      "control_samples": [
+        {
+          "site": "piedvert",
+          "mode": "primary-control-1",
+          "seconds": 3.337802485000022,
+          "cpu_affinity": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "code": 0,
+          "signal": null,
+          "user_seconds": 7.64,
+          "system_seconds": 1.23,
+          "peak_rss_kib": 124608
+        },
+        {
+          "site": "piedvert",
+          "mode": "primary-control-2",
+          "seconds": 3.3044484229999944,
+          "cpu_affinity": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "code": 0,
+          "signal": null,
+          "user_seconds": 7.88,
+          "system_seconds": 1.06,
+          "peak_rss_kib": 124088
+        },
+        {
+          "site": "piedvert",
+          "mode": "primary-control-3",
+          "seconds": 3.1855285440000007,
+          "cpu_affinity": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "code": 0,
+          "signal": null,
+          "user_seconds": 8.05,
+          "system_seconds": 1.03,
+          "peak_rss_kib": 123660
+        }
+      ],
+      "control_median_seconds": 3.3044484229999944,
+      "candidate_samples": [
+        {
+          "site": "piedvert",
+          "mode": "primary-final-1",
+          "seconds": 2.764660042000003,
+          "cpu_affinity": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "code": 0,
+          "signal": null,
+          "user_seconds": 6.5,
+          "system_seconds": 0.91,
+          "peak_rss_kib": 119940
+        },
+        {
+          "site": "piedvert",
+          "mode": "primary-final-2",
+          "seconds": 3.0329489549999997,
+          "cpu_affinity": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "code": 0,
+          "signal": null,
+          "user_seconds": 7.0,
+          "system_seconds": 0.97,
+          "peak_rss_kib": 120320
+        },
+        {
+          "site": "piedvert",
+          "mode": "primary-final-3",
+          "seconds": 3.1555568450000138,
+          "cpu_affinity": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "code": 0,
+          "signal": null,
+          "user_seconds": 7.22,
+          "system_seconds": 1.07,
+          "peak_rss_kib": 119760
+        }
+      ],
+      "candidate_median_seconds": 3.0329489549999997,
+      "exploratory_cold_cache_sample": {
+        "site": "piedvert",
+        "mode": "final-cold",
+        "seconds": 2.9874779770000024,
+        "code": 0,
+        "signal": null
+      },
+      "reduction_percent": 8.216181136624002,
+      "speedup": 1.0895166625051211,
+      "paired_reduction_percent": [
+        17.171251012476098,
+        8.216181136624002,
+        0.9408705207316181
+      ],
+      "cache_outcomes": [
+        {
+          "mode": "primary-final-1",
+          "processes": 9,
+          "minification_hits": 217
+        },
+        {
+          "mode": "primary-final-2",
+          "processes": 9,
+          "minification_hits": 217
+        },
+        {
+          "mode": "primary-final-3",
+          "processes": 9,
+          "minification_hits": 217
+        }
+      ],
+      "export_comparisons": [
+        {
+          "mode": "primary-control-1",
+          "control_entries": 2772,
+          "candidate_entries": 2772,
+          "equal": 2772,
+          "different": 0,
+          "missing": 0,
+          "extra": 0,
+          "examples": []
+        },
+        {
+          "mode": "primary-control-2",
+          "control_entries": 2772,
+          "candidate_entries": 2772,
+          "equal": 2772,
+          "different": 0,
+          "missing": 0,
+          "extra": 0,
+          "examples": []
+        },
+        {
+          "mode": "primary-control-3",
+          "control_entries": 2772,
+          "candidate_entries": 2772,
+          "equal": 2772,
+          "different": 0,
+          "missing": 0,
+          "extra": 0,
+          "examples": []
+        },
+        {
+          "mode": "primary-final-1",
+          "control_entries": 2772,
+          "candidate_entries": 2772,
+          "equal": 2772,
+          "different": 0,
+          "missing": 0,
+          "extra": 0,
+          "examples": []
+        },
+        {
+          "mode": "primary-final-2",
+          "control_entries": 2772,
+          "candidate_entries": 2772,
+          "equal": 2772,
+          "different": 0,
+          "missing": 0,
+          "extra": 0,
+          "examples": []
+        },
+        {
+          "mode": "primary-final-3",
+          "control_entries": 2772,
+          "candidate_entries": 2772,
+          "equal": 2772,
+          "different": 0,
+          "missing": 0,
+          "extra": 0,
+          "examples": []
+        }
+      ],
+      "runtime_log_checks": [
+        {
+          "mode": "primary-control-1",
+          "flagged_lines": 0
+        },
+        {
+          "mode": "primary-control-2",
+          "flagged_lines": 0
+        },
+        {
+          "mode": "primary-control-3",
+          "flagged_lines": 0
+        },
+        {
+          "mode": "primary-final-1",
+          "flagged_lines": 0
+        },
+        {
+          "mode": "primary-final-2",
+          "flagged_lines": 0
+        },
+        {
+          "mode": "primary-final-3",
+          "flagged_lines": 0
+        }
+      ]
+    },
+    "grandangle": {
+      "installed_packages": {
+        "pushword/core": "1.0.71",
+        "pushword/static-generator": "1.0.71",
+        "symfony/dom-crawler": "8.1.5"
+      },
+      "control_samples": [
+        {
+          "site": "grandangle",
+          "mode": "primary-control-1",
+          "seconds": 276.387035963,
+          "cpu_affinity": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "code": 0,
+          "signal": null,
+          "user_seconds": 699.26,
+          "system_seconds": 65.68,
+          "peak_rss_kib": 551680
+        },
+        {
+          "site": "grandangle",
+          "mode": "primary-control-2",
+          "seconds": 124.86809363400005,
+          "cpu_affinity": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "code": 0,
+          "signal": null,
+          "user_seconds": 431.53,
+          "system_seconds": 35.7,
+          "peak_rss_kib": 551828
+        },
+        {
+          "site": "grandangle",
+          "mode": "primary-control-3",
+          "seconds": 194.20309300699992,
+          "cpu_affinity": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "code": 0,
+          "signal": null,
+          "user_seconds": 609.9,
+          "system_seconds": 51.09,
+          "peak_rss_kib": 550368
+        }
+      ],
+      "control_median_seconds": 194.20309300699992,
+      "candidate_samples": [
+        {
+          "site": "grandangle",
+          "mode": "primary-final-1",
+          "seconds": 134.78391488199995,
+          "cpu_affinity": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "code": 0,
+          "signal": null,
+          "user_seconds": 446.79,
+          "system_seconds": 39.73,
+          "peak_rss_kib": 538080
+        },
+        {
+          "site": "grandangle",
+          "mode": "primary-final-2",
+          "seconds": 132.25652844399994,
+          "cpu_affinity": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "code": 0,
+          "signal": null,
+          "user_seconds": 451.59,
+          "system_seconds": 38.78,
+          "peak_rss_kib": 537900
+        },
+        {
+          "site": "grandangle",
+          "mode": "primary-final-3",
+          "seconds": 107.23171444500005,
+          "cpu_affinity": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "code": 0,
+          "signal": null,
+          "user_seconds": 371.39,
+          "system_seconds": 31.1,
+          "peak_rss_kib": 537820
+        }
+      ],
+      "candidate_median_seconds": 132.25652844399994,
+      "reduction_percent": 31.897825932549463,
+      "speedup": 1.4683819036519576,
+      "paired_reduction_percent": [
+        51.2336335123752,
+        -5.91699175904461,
+        44.783724715890614
+      ],
+      "timing_limit": "Controls varied widely and one paired build was slower with the cache. The observed median is retained transparently, but is not a robust claim of a repeatable full-build speedup on this shared workstation.",
+      "cache_outcomes": [
+        {
+          "mode": "primary-final-1",
+          "processes": 5,
+          "minification_hits": 1258
+        },
+        {
+          "mode": "primary-final-2",
+          "processes": 5,
+          "minification_hits": 1258
+        },
+        {
+          "mode": "primary-final-3",
+          "processes": 5,
+          "minification_hits": 1258
+        }
+      ],
+      "export_comparisons": [
+        {
+          "left_mode": "stable2-warmup",
+          "mode": "primary-control-1",
+          "control_entries": 11262,
+          "candidate_entries": 11262,
+          "equal": 11262,
+          "different": 0,
+          "missing": 0,
+          "extra": 0,
+          "examples": []
+        },
+        {
+          "left_mode": "primary-control-1",
+          "mode": "primary-final-1",
+          "control_entries": 11262,
+          "candidate_entries": 11262,
+          "equal": 11262,
+          "different": 0,
+          "missing": 0,
+          "extra": 0,
+          "examples": []
+        },
+        {
+          "left_mode": "primary-control-1",
+          "mode": "primary-control-2",
+          "control_entries": 11262,
+          "candidate_entries": 11262,
+          "equal": 11262,
+          "different": 0,
+          "missing": 0,
+          "extra": 0,
+          "examples": []
+        },
+        {
+          "left_mode": "primary-control-2",
+          "mode": "primary-final-2",
+          "control_entries": 11262,
+          "candidate_entries": 11262,
+          "equal": 11262,
+          "different": 0,
+          "missing": 0,
+          "extra": 0,
+          "examples": []
+        },
+        {
+          "left_mode": "primary-control-1",
+          "mode": "primary-control-3",
+          "control_entries": 11262,
+          "candidate_entries": 11262,
+          "equal": 11262,
+          "different": 0,
+          "missing": 0,
+          "extra": 0,
+          "examples": []
+        },
+        {
+          "left_mode": "primary-control-3",
+          "mode": "primary-final-3",
+          "control_entries": 11262,
+          "candidate_entries": 11262,
+          "equal": 11262,
+          "different": 0,
+          "missing": 0,
+          "extra": 0,
+          "examples": []
+        }
+      ],
+      "runtime_log_checks": [
+        {
+          "mode": "primary-control-1",
+          "flagged_lines": 0
+        },
+        {
+          "mode": "primary-control-2",
+          "flagged_lines": 0
+        },
+        {
+          "mode": "primary-control-3",
+          "flagged_lines": 0
+        },
+        {
+          "mode": "primary-final-1",
+          "flagged_lines": 0
+        },
+        {
+          "mode": "primary-final-2",
+          "flagged_lines": 0
+        },
+        {
+          "mode": "primary-final-3",
+          "flagged_lines": 0
+        }
+      ],
+      "recommendations": "Both stable control and candidate builds use page-local deterministic recommendation selection in the shared GA/FT bundle; no artificial global random seed is used."
+    }
+  },
+  "rejected_experiments": {
+    "altimood": {
+      "filtered_media_preloading_samples": [
+        {
+          "site": "altimood",
+          "mode": "final-batch-1",
+          "seconds": 22.074748357000004,
+          "code": 0,
+          "signal": null
+        },
+        {
+          "site": "altimood",
+          "mode": "final-batch-2",
+          "seconds": 21.556869850999995,
+          "code": 0,
+          "signal": null
+        }
+      ],
+      "decision": "No repeatable improvement over minification caching alone; not retained.",
+      "typography_samples": [
+        {
+          "site": "altimood",
+          "mode": "typo-1",
+          "seconds": 23.083641275999994,
+          "code": 0,
+          "signal": null
+        },
+        {
+          "site": "altimood",
+          "mode": "typo-2",
+          "seconds": 27.612696301999996,
+          "code": 0,
+          "signal": null
+        }
+      ],
+      "typography_decision": "No stable full-build improvement demonstrated; not retained.",
+      "php_minifier_single_pass": {
+        "site": "altimood",
+        "samples": [
+          {
+            "mode": "control",
+            "seconds": 9.810763667
+          },
+          {
+            "mode": "candidate",
+            "seconds": 13.417406096
+          },
+          {
+            "mode": "candidate",
+            "seconds": 12.541879075
+          },
+          {
+            "mode": "control",
+            "seconds": 14.482177292
+          },
+          {
+            "mode": "control",
+            "seconds": 18.571136128
+          },
+          {
+            "mode": "candidate",
+            "seconds": 17.975849018
+          }
+        ],
+        "equal": 1203,
+        "different": 0
+      }
+    },
+    "piedvert": {
+      "filtered_media_preloading_samples": [
+        {
+          "site": "piedvert",
+          "mode": "final-batch-1",
+          "seconds": 2.9244404669999784,
+          "code": 0,
+          "signal": null
+        },
+        {
+          "site": "piedvert",
+          "mode": "final-batch-2",
+          "seconds": 2.8228423410000105,
+          "code": 0,
+          "signal": null
+        }
+      ],
+      "decision": "No repeatable improvement over minification caching alone; not retained.",
+      "typography_samples": [
+        {
+          "site": "piedvert",
+          "mode": "typo-1",
+          "seconds": 2.905262258999981,
+          "code": 0,
+          "signal": null
+        }
+      ],
+      "typography_decision": "No stable full-build improvement demonstrated; not retained.",
+      "php_minifier_single_pass": {
+        "site": "piedvert",
+        "samples": [
+          {
+            "mode": "control",
+            "seconds": 0.663270743
+          },
+          {
+            "mode": "candidate",
+            "seconds": 0.802979587
+          },
+          {
+            "mode": "candidate",
+            "seconds": 0.746642272
+          },
+          {
+            "mode": "control",
+            "seconds": 0.619381435
+          },
+          {
+            "mode": "control",
+            "seconds": 0.672789441
+          },
+          {
+            "mode": "candidate",
+            "seconds": 0.778357042
+          }
+        ],
+        "equal": 215,
+        "different": 0
+      }
+    }
+  },
+  "discarded_trials": {
+    "render_entropy": {
+      "reason": "Unseeded server-side recommendation and expert shuffles changed GrandAngle HTML. Production static selections were made deterministic before final trials.",
+      "export_comparisons": [
+        {
+          "left_mode": "warmup",
+          "mode": "control-1",
+          "control_entries": 11262,
+          "candidate_entries": 11262,
+          "equal": 7870,
+          "different": 3392,
+          "missing": 0,
+          "extra": 0,
+          "examples": [
+            "www.grandangle.fr/2-semaines.html",
+            "www.grandangle.fr/2-semaines.html.br",
+            "www.grandangle.fr/2-semaines.html.gz",
+            "www.grandangle.fr/2-semaines.html.zst",
+            "www.grandangle.fr/accessible-en-train.html",
+            "www.grandangle.fr/accessible-en-train.html.br",
+            "www.grandangle.fr/accessible-en-train.html.gz",
+            "www.grandangle.fr/accessible-en-train.html.zst"
+          ]
+        },
+        {
+          "left_mode": "control-1",
+          "mode": "final-1",
+          "control_entries": 11262,
+          "candidate_entries": 11262,
+          "equal": 7898,
+          "different": 3364,
+          "missing": 0,
+          "extra": 0,
+          "examples": [
+            "www.grandangle.fr/2-semaines.html",
+            "www.grandangle.fr/2-semaines.html.br",
+            "www.grandangle.fr/2-semaines.html.gz",
+            "www.grandangle.fr/2-semaines.html.zst",
+            "www.grandangle.fr/accessible-en-train.html",
+            "www.grandangle.fr/accessible-en-train.html.br",
+            "www.grandangle.fr/accessible-en-train.html.gz",
+            "www.grandangle.fr/accessible-en-train.html.zst"
+          ]
+        },
+        {
+          "left_mode": "control-1",
+          "mode": "control-2",
+          "control_entries": 11262,
+          "candidate_entries": 11262,
+          "equal": 7886,
+          "different": 3376,
+          "missing": 0,
+          "extra": 0,
+          "examples": [
+            "www.grandangle.fr/2-semaines.html",
+            "www.grandangle.fr/2-semaines.html.br",
+            "www.grandangle.fr/2-semaines.html.gz",
+            "www.grandangle.fr/2-semaines.html.zst",
+            "www.grandangle.fr/accessible-en-train.html",
+            "www.grandangle.fr/accessible-en-train.html.br",
+            "www.grandangle.fr/accessible-en-train.html.gz",
+            "www.grandangle.fr/accessible-en-train.html.zst"
+          ]
+        },
+        {
+          "left_mode": "control-2",
+          "mode": "final-2",
+          "control_entries": 11262,
+          "candidate_entries": 11262,
+          "equal": 7882,
+          "different": 3380,
+          "missing": 0,
+          "extra": 0,
+          "examples": [
+            "www.grandangle.fr/2-semaines.html",
+            "www.grandangle.fr/2-semaines.html.br",
+            "www.grandangle.fr/2-semaines.html.gz",
+            "www.grandangle.fr/2-semaines.html.zst",
+            "www.grandangle.fr/activite/hiver.html",
+            "www.grandangle.fr/activite/hiver.html.br",
+            "www.grandangle.fr/activite/hiver.html.gz",
+            "www.grandangle.fr/activite/hiver.html.zst"
+          ]
+        }
+      ]
+    },
+    "timing": {
+      "reason": "Earlier trials mixed heterogeneous cores or overlapped with test suites. They are excluded from the final medians.",
+      "modes_by_site": {
+        "altimood": [
+          "control-1",
+          "all-cold-1",
+          "all-warm-1",
+          "control-2",
+          "minify-1",
+          "media-1",
+          "typo-1",
+          "control-3",
+          "minify-2",
+          "media-2",
+          "typo-2",
+          "control-v2-1",
+          "final-cold",
+          "final-1",
+          "control-v2-2",
+          "final-batch-1",
+          "final-2",
+          "control-v2-3",
+          "final-batch-2",
+          "final-3",
+          "uniform-control-1",
+          "uniform-final-1",
+          "uniform-control-2"
+        ],
+        "piedvert": [
+          "control-1",
+          "all-cold-1",
+          "all-warm-1",
+          "control-2",
+          "minify-1",
+          "control-3",
+          "minify-2",
+          "media-1",
+          "typo-1",
+          "control-v2-1",
+          "final-cold",
+          "final-1",
+          "control-v2-2",
+          "final-batch-1",
+          "final-2",
+          "control-v2-3",
+          "final-batch-2",
+          "final-3"
+        ],
+        "grandangle": [
+          "warmup",
+          "control-1",
+          "final-1",
+          "control-2",
+          "final-2",
+          "stable-warmup",
+          "stable-control-1",
+          "stable2-warmup",
+          "stable2-control-1",
+          "stable2-final-1",
+          "stable2-control-2",
+          "stable2-final-2"
+        ]
+      }
+    }
+  },
+  "downstream_performance_revision": "3e369aa4ee729eb9beb14f938122c3672b23bc84",
+  "downstream_source_sha256": {
+    "travel-booking-bundle/src/Taxonomy/TaxonomyProductService.php": "46bb2f019c84d19f216a11a61cf84bae6995f82e682f9012be8c66625e7ba209",
+    "travel-booking-bundle/src/Review/ExpertResolverService.php": "5245891ca895e84a7df40202c3d34ea0a403bae751affd03dc68641313ff5790",
+    "travel-booking-bundle/src/Team/TeamMateRepo.php": "0a293e320f0a2fc1dd66a225ea51bfb4d78eadebf5a04fdb701d61d4ad822b76"
+  },
+  "native_component_cache": {
+    "method": "Actual Rust minifier over the complete captured Altimood HTML corpus; component timings include input/output hashing; new service for every phase, one persistent filesystem pool.",
+    "binary_sha256": "2e71a9d4c35ac0c2e31f53c60c7dec6394e4a78e50be71139871b87bde75cc2f",
+    "input_sha256": "2faa7036bc1ccc1cb1220c91272cd3f9a94367ee1de26c0813e197d5d5d1d694",
+    "samples": [
+      {
+        "mode": "control",
+        "seconds": 6.602490154,
+        "count": 1203
+      },
+      {
+        "mode": "warm-1",
+        "seconds": 0.150238337,
+        "count": 1203,
+        "equal": 1203,
+        "different": 0
+      },
+      {
+        "mode": "control-2",
+        "seconds": 6.791223956,
+        "count": 1203,
+        "equal": 1203,
+        "different": 0
+      },
+      {
+        "mode": "warm-2",
+        "seconds": 0.132707989,
+        "count": 1203,
+        "equal": 1203,
+        "different": 0
+      },
+      {
+        "mode": "control-3",
+        "seconds": 6.656604903,
+        "count": 1203,
+        "equal": 1203,
+        "different": 0
+      },
+      {
+        "mode": "warm-3",
+        "seconds": 0.135378196,
+        "count": 1203,
+        "equal": 1203,
+        "different": 0
+      }
+    ],
+    "fallback_warnings": 0,
+    "cpu_affinity": [
+      16
+    ],
+    "control_median_seconds": 6.656604903,
+    "warm_median_seconds": 0.135378196,
+    "speedup": 49.17043585807569
+  },
+  "validation": {
+    "tests": "composer test-filter Pushword.StaticGenerator",
+    "tests_passed": 246,
+    "guard": "On an isolated copy without caching, the new PHP cache regression test fails: CacheItemPoolInterface::save expected 3 calls, observed 0.",
+    "strict_minification_tests": {
+      "tests": 24,
+      "assertions": 85,
+      "deprecations": "max[self]=0&max[direct]=0"
+    },
+    "static_analysis": "composer stan: 0 errors",
+    "formatting": "composer rector; PHP and Twig lint pass",
+    "downstream_quality_gate": {
+      "command": "./check",
+      "result": "passed",
+      "php_tests": 21104,
+      "bundle": {
+        "tests": 4860,
+        "assertions": 25346
+      },
+      "grandangle": {
+        "tests": 10684,
+        "assertions": 194061
+      },
+      "furthertreks": {
+        "tests": 5560,
+        "assertions": 30046
+      },
+      "note": "Full local gate passed on the delivery tree before the final rebase. Stable patch IDs verified unchanged after rebasing concurrent main publications."
+    },
+    "scope": "HTML minification caching in Pushword; deterministic static recommendations in the shared GA/FT bundle. No media, typography, Twig output-fragment or persistent-worker changes shipped.",
+    "downstream_test_isolation": {
+      "focused_tests": 10,
+      "focused_assertions": 45,
+      "regressions": "On isolated copies, both legacy catalogue-page deletion paths fail with a SQLite foreign-key violation; the retained tests seed referenced pages and pass while preserving them. Existing token and erasure guards also pass after fixture isolation."
+    }
+  }
+}

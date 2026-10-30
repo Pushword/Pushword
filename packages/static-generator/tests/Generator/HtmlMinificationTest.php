@@ -6,9 +6,12 @@ namespace Pushword\StaticGenerator\Tests\Generator;
 
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
+use Psr\Cache\CacheItemPoolInterface;
 use Psr\Log\LoggerInterface;
 use Pushword\StaticGenerator\Generator\HtmlMinification;
 use Pushword\StaticGenerator\Generator\HtmlMinifier;
+use RuntimeException;
+use Symfony\Component\Cache\Adapter\ArrayAdapter;
 use Symfony\Component\Filesystem\Filesystem;
 
 final class HtmlMinificationTest extends TestCase
@@ -41,7 +44,9 @@ final class HtmlMinificationTest extends TestCase
     {
         $logger = $this->createMock(LoggerInterface::class);
         $logger->expects(self::never())->method('warning');
-        self::assertSame([], new HtmlMinification($this->directory.'/missing', logger: $logger)->compressMany([]));
+        $cache = $this->createMock(CacheItemPoolInterface::class);
+        $cache->expects(self::never())->method('getItem');
+        self::assertSame([], new HtmlMinification($this->directory.'/missing', logger: $logger, cache: $cache)->compressMany([]));
     }
 
     public function testWorkerIsReusedWithAnIndependentDeadlineAndReset(): void
@@ -88,8 +93,8 @@ final class HtmlMinificationTest extends TestCase
     {
         $logger = $this->createMock(LoggerInterface::class);
         $logger->expects(self::exactly(2))->method('warning');
-        self::assertSame(HtmlMinifier::compress($this->html()), new HtmlMinification($this->directory.'/missing', logger: $logger)->compress($this->html()));
-        $this->minifier = new HtmlMinification($this->worker('normal'), logger: $logger);
+        self::assertSame(HtmlMinifier::compress($this->html()), new HtmlMinification($this->directory.'/missing', logger: $logger, cache: new ArrayAdapter())->compress($this->html()));
+        $this->minifier = new HtmlMinification($this->worker('normal'), logger: $logger, cache: new ArrayAdapter());
         self::assertSame("<p>\xff</p>", $this->minifier->compress("<p>\xff</p><!-- remove -->"));
     }
 
@@ -100,6 +105,102 @@ final class HtmlMinificationTest extends TestCase
         $this->minifier = new HtmlMinification($this->worker('normal'), logger: $logger);
         $html = str_repeat('x', 16 * 1024 * 1024);
         self::assertSame($html, $this->minifier->compress($html));
+    }
+
+    public function testCachedResultsSurviveResetAndPreserveBatchOrder(): void
+    {
+        $cache = new ArrayAdapter();
+        $binary = $this->worker('normal');
+        $this->minifier = new HtmlMinification($binary, cache: $cache);
+        $first = $this->minifier->compress('first');
+        $this->minifier->reset();
+        $this->minifier = new HtmlMinification($binary, cache: $cache);
+
+        self::assertSame($first, $this->minifier->compress('first'), 'a cached document must not start another worker');
+        $mixed = $this->minifier->compressMany(['first', 'second', 'first']);
+        self::assertSame($first, $mixed[0]);
+        self::assertStringEndsWith(':second', $mixed[1]);
+        self::assertSame($first, $mixed[2]);
+        self::assertSame($mixed, $this->minifier->compressMany(['first', 'second', 'first']));
+        self::assertSame(['first', 'second'], new HtmlMinification(cache: $cache)->compressMany(['first', 'second']));
+    }
+
+    public function testPhpCacheReusesRawInputsAndKeepsChangedDocumentsFresh(): void
+    {
+        $storage = new ArrayAdapter();
+        $cache = $this->createMock(CacheItemPoolInterface::class);
+        $cache->method('getItem')->willReturnCallback($storage->getItem(...));
+        $cache->expects(self::exactly(3))->method('save')->willReturnCallback($storage->save(...));
+        $this->minifier = new HtmlMinification(cache: $cache);
+        $documents = ['', $this->html()];
+        $expected = array_map(HtmlMinifier::compress(...), $documents);
+        self::assertSame($expected, $this->minifier->compressMany($documents));
+        $this->minifier->reset();
+        self::assertSame($expected, $this->minifier->compressMany($documents));
+
+        $changed = str_replace('à   b', 'updated content', $this->html());
+        self::assertSame(HtmlMinifier::compress($changed), $this->minifier->compress($changed));
+        self::assertSame($expected, new HtmlMinification(cache: $cache)->compressMany($documents));
+    }
+
+    public function testInvalidCachedValueIsRecomputed(): void
+    {
+        $storage = new ArrayAdapter();
+        $storage->save($storage->getItem('invalid')->set(['unexpected format']));
+
+        $cache = $this->createMock(CacheItemPoolInterface::class);
+        $cache->method('getItem')->willReturn($storage->getItem('invalid'));
+        $cache->expects(self::once())->method('save')->willReturnCallback($storage->save(...));
+
+        self::assertSame(HtmlMinifier::compress($this->html()), new HtmlMinification(cache: $cache)->compress($this->html()));
+    }
+
+    public function testReplacingTheNativeBinaryInvalidatesCachedOutput(): void
+    {
+        $cache = new ArrayAdapter();
+        $binary = $this->worker('normal');
+        $this->minifier = new HtmlMinification($binary, cache: $cache);
+        $first = $this->minifier->compress('same document');
+        $this->minifier->reset();
+        file_put_contents($binary, "\n// A new native release.\n", \FILE_APPEND);
+
+        self::assertNotSame($first, $this->minifier->compress('same document'));
+    }
+
+    public function testFailedNativeBatchDoesNotMixCachedNativeAndPhpResults(): void
+    {
+        $cache = new ArrayAdapter();
+        $binary = $this->worker('normal');
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects(self::once())->method('warning');
+        $this->minifier = new HtmlMinification($binary, logger: $logger, cache: $cache);
+        self::assertStringStartsWith('native:', $this->minifier->compress('cached'));
+        $this->minifier->reset();
+        file_put_contents($binary.'.mode', 'crash');
+
+        self::assertSame(['cached', 'missing'], $this->minifier->compressMany(['cached', 'missing']));
+        self::assertSame(['cached', 'missing'], $this->minifier->compressMany(['cached', 'missing']));
+    }
+
+    #[DataProvider('cacheFailures')]
+    public function testCacheFailureDoesNotDiscardMinifiedHtml(bool $failOnRead): void
+    {
+        $cache = $this->createMock(CacheItemPoolInterface::class);
+        if ($failOnRead) {
+            $cache->expects(self::once())->method('getItem')->willThrowException(new RuntimeException('unavailable cache'));
+        } else {
+            $cache->expects(self::once())->method('getItem')->willReturn(new ArrayAdapter()->getItem('missing'));
+            $cache->expects(self::once())->method('save')->willThrowException(new RuntimeException('unavailable cache'));
+        }
+
+        self::assertSame(HtmlMinifier::compress($this->html()), new HtmlMinification(cache: $cache)->compress($this->html()));
+    }
+
+    /** @return iterable<string, array{bool}> */
+    public static function cacheFailures(): iterable
+    {
+        yield 'read' => [true];
+        yield 'write' => [false];
     }
 
     private function html(): string
