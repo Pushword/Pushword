@@ -18,7 +18,7 @@ use Throwable;
 final class HtmlMinification implements ResetInterface
 {
     /** Bump whenever PHP minification, native fallback or SVG serialization changes output. */
-    private const int CACHE_VERSION = 2;
+    private const int CACHE_VERSION = 3;
 
     // Numeric references may omit their semicolon; reject digit prefixes of valid references.
     private const string PHP_SERIALIZATION_REQUIRED = '/[\x00-\x08\x0b\x0c\x0e-\x1f]|&#(?:0*(?:[0-9]|[12][0-9]|3[01])(?![0-9])|x0*(?:[0-9a-f]|1[0-9a-f])(?![0-9a-f]))/i';
@@ -30,6 +30,8 @@ final class HtmlMinification implements ResetInterface
     private bool $failed = false;
 
     private bool $parityChecked = false;
+
+    private string $operation = 'minify_html';
 
     private ?string $cacheVersion = null;
 
@@ -137,7 +139,7 @@ final class HtmlMinification implements ResetInterface
             $engine = 'native.'.hash_file('xxh128', $this->binary);
         }
 
-        return $this->cacheVersion = self::CACHE_VERSION.'|'.$engine.'|'.\PHP_VERSION.'|'.\LIBXML_DOTTED_VERSION.'|'.InstalledVersions::getVersion('symfony/dom-crawler');
+        return $this->cacheVersion = self::CACHE_VERSION.'|'.$engine.'|'.\PHP_VERSION.'|'.\LIBXML_DOTTED_VERSION.'|'.\LIBXML_LOADED_VERSION.'|'.InstalledVersions::getVersion('symfony/dom-crawler').'|'.InstalledVersions::getVersion('masterminds/html5');
     }
 
     /**
@@ -154,8 +156,10 @@ final class HtmlMinification implements ResetInterface
         if ($this->usesNative()) {
             try {
                 if (! $this->parityChecked) {
+                    $expected = HtmlMinifier::compress(self::PARITY_PROBE);
+                    $this->operation = str_contains($expected, 'href="') ? 'minify_html5' : 'minify_html';
                     $result = $this->compressNative([self::PARITY_PROBE, ...$documents]);
-                    if (array_shift($result) !== HtmlMinifier::compress(self::PARITY_PROBE)) {
+                    if (array_shift($result) !== $expected) {
                         throw new RuntimeException('Native HTML serialization differs from PHP');
                     }
 
@@ -181,6 +185,7 @@ final class HtmlMinification implements ResetInterface
         $this->worker->reset();
         $this->failed = false;
         $this->parityChecked = false;
+        $this->operation = 'minify_html';
         $this->cacheVersion = null;
     }
 
@@ -192,7 +197,7 @@ final class HtmlMinification implements ResetInterface
     private function compressNative(array $documents): array
     {
         $validated = [];
-        foreach ($this->worker->request('minify_html', $documents) as $index => $html) {
+        foreach ($this->worker->request($this->operation, $documents) as $index => $html) {
             if (! \is_string($html)) {
                 throw new RuntimeException('Invalid native HTML document');
             }

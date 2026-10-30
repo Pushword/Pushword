@@ -1,4 +1,4 @@
-use pushword_html_minifier::minify;
+use pushword_html_minifier::{minify, minify_html5};
 use serde::{Deserialize, Serialize};
 use std::io::{self, BufRead, Read, Write};
 use std::process::ExitCode;
@@ -39,10 +39,19 @@ fn run() -> Result<(), Box<dyn std::error::Error>> {
             return Err("oversized or incomplete request".into());
         }
         let request: Request = serde_json::from_str(&frame)?;
-        if request.version != 1 || request.operation != "minify_html" {
-            return Err("unsupported protocol version or operation".into());
+        if request.version != 1 {
+            return Err("unsupported protocol version".into());
         }
-        let documents = request.documents.iter().map(|html| minify(html)).collect();
+        let minifier = match request.operation.as_str() {
+            "minify_html" => minify,
+            "minify_html5" => minify_html5,
+            _ => return Err("unsupported operation".into()),
+        };
+        let documents = request
+            .documents
+            .iter()
+            .map(|html| minifier(html))
+            .collect();
         serde_json::to_writer(
             &mut output,
             &Response {

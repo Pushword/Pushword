@@ -40,7 +40,7 @@ Several changes land here between two tags: append to the file, do not replace i
 
 ## Optional native accelerators
 
-Content analysis is deferred on pages without a TOC; HTML minification now matches PHP's control-character serialization.
+Content analysis is deferred on pages without a TOC; HTML minification selects the installed libxml serializer's attribute quoting.
 **Only sites using the optional Rust binaries are affected.**
 Rebuild and redeploy `pushword-content-analyzer` and `pushword-html-minifier` with their package's `rust/Makefile`.
 Control-character edge cases use PHP serialization to match the installed libxml version.

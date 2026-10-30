@@ -9,6 +9,7 @@ use Psr\Log\LoggerInterface;
 use Pushword\Core\Service\NativeWorker;
 use Pushword\StaticGenerator\Generator\HtmlMinification;
 use Pushword\StaticGenerator\Generator\HtmlMinifier;
+use Symfony\Component\Cache\Adapter\ArrayAdapter;
 use Symfony\Component\Process\Process;
 
 /** Explicit native suite: requires a built binary and never skips missing tooling. */
@@ -97,6 +98,46 @@ final class NativeHtmlMinificationTest extends TestCase
 
         try {
             self::assertSame(array_map(HtmlMinifier::compress(...), $documents), $worker->request('minify_html', $documents));
+        } finally {
+            $worker->reset();
+        }
+    }
+
+    public function testCachedSerializationProfileSurvivesResetAndMixedBatches(): void
+    {
+        $documents = [
+            '<!DOCTYPE html><html><body><p title="&quot;">first</p></body></html>',
+            '<!DOCTYPE html><html><body><pre title="&quot;">next</pre><source src="x"></body></html>',
+            '<!DOCTYPE html><html><body><a href="/&#13;">control reference</a></body></html>',
+        ];
+        $expected = array_map(HtmlMinifier::compress(...), $documents);
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects(self::never())->method('warning');
+        $minifier = new HtmlMinification($this->binary(), logger: $logger, cache: new ArrayAdapter());
+
+        try {
+            self::assertSame($expected[0], $minifier->compress($documents[0]));
+            $minifier->reset();
+            self::assertSame($expected, $minifier->compressMany($documents));
+            $minifier->reset();
+            self::assertSame($expected, $minifier->compressMany($documents));
+        } finally {
+            $minifier->reset();
+        }
+    }
+
+    public function testProtocolSupportsLegacyAndHtml5AttributeQuoting(): void
+    {
+        $input = '<!DOCTYPE html><html><body><p title="&quot;">x</p><pre title="&quot;"> y </pre></body></html>';
+        $legacy = <<<'HTML'
+            <!DOCTYPE html><html><head></head><body><p title='"'>x</p><pre title='"'> y </pre></body></html>
+            HTML;
+        $html5 = '<!DOCTYPE html><html><head></head><body><p title="&quot;">x</p><pre title="&quot;"> y </pre></body></html>';
+        $worker = new NativeWorker($this->binary());
+
+        try {
+            self::assertSame([$legacy], $worker->request('minify_html', [$input]));
+            self::assertSame([$html5], $worker->request('minify_html5', [$input]));
         } finally {
             $worker->reset();
         }

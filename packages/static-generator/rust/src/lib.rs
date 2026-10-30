@@ -51,10 +51,18 @@ fn replace_whitespace(regex: &Regex, html: String, replacement: &str) -> String 
     }
 }
 
-fn escape_uri(value: &str) -> String {
+fn escape_uri(value: &str, html5: bool) -> String {
+    let leading = value.len() - value.trim_start_matches([' ', '\t', '\r', '\n']).len();
     let mut output = String::new();
-    for byte in value.trim_start_matches([' ', '\t', '\r', '\n']).bytes() {
-        if (0x21..0x7f).contains(&byte) {
+    if html5 {
+        output.extend(value[..leading].chars().filter(|ch| *ch == ' '));
+    }
+    for byte in value[leading..].bytes() {
+        if html5 && byte == b'&' {
+            output.push_str("&amp;");
+        } else if html5 && byte == b'"' {
+            output.push_str("&quot;");
+        } else if (0x21..0x7f).contains(&byte) {
             output.push(byte as char);
         } else {
             use std::fmt::Write;
@@ -64,8 +72,13 @@ fn escape_uri(value: &str) -> String {
     output
 }
 
-// DOMDocument::saveHTML uses HTML4 boolean/void tables, even after an HTML5 parse.
-fn serialize(element: ElementRef<'_>, output: &mut String, placeholders: &HashMap<NodeId, String>) {
+// libxml versions use either the legacy HTML4 serializer or its newer HTML5 rules.
+fn serialize(
+    element: ElementRef<'_>,
+    output: &mut String,
+    placeholders: &HashMap<NodeId, String>,
+    html5: bool,
+) {
     if let Some(placeholder) = placeholders.get(&element.id()) {
         output.push_str(placeholder);
         return;
@@ -105,21 +118,28 @@ fn serialize(element: ElementRef<'_>, output: &mut String, placeholders: &HashMa
         ) {
             continue;
         }
-        let mut escaped = escape_text(value).replace("&amp;{", "&{");
-        if name.prefix.is_none()
+        let uri = name.prefix.is_none()
             && (matches!(name.local.as_ref(), "href" | "src" | "action")
-                || (tag == "a" && name.local.as_ref() == "name"))
-        {
-            escaped = escape_uri(&escaped);
-        }
-        let quote = if escaped.contains('"') && !escaped.contains('\'') {
+                || (tag == "a" && name.local.as_ref() == "name"));
+        let mut escaped = if html5 && uri {
+            escape_uri(value, true)
+        } else {
+            let escaped = escape_text(value);
+            if uri {
+                escape_uri(&escaped, false)
+            } else {
+                escaped
+            }
+        };
+        let has_double_quote = escaped.contains('"');
+        let quote = if !html5 && has_double_quote && !escaped.contains('\'') {
             '\''
         } else {
             '"'
         };
         output.push('=');
         output.push(quote);
-        if quote == '"' {
+        if quote == '"' && has_double_quote {
             escaped = escaped.replace('"', "&quot;");
         }
         output.push_str(&escaped);
@@ -131,23 +151,26 @@ fn serialize(element: ElementRef<'_>, output: &mut String, placeholders: &HashMa
         matches!(tag, "script" | "style"),
         output,
         placeholders,
+        html5,
     );
-    if !matches!(
-        tag,
-        "area"
-            | "base"
-            | "basefont"
-            | "br"
-            | "col"
-            | "frame"
-            | "hr"
-            | "img"
-            | "input"
-            | "isindex"
-            | "link"
-            | "meta"
-            | "param"
-    ) {
+    if !(html5 && matches!(tag, "embed" | "source" | "track" | "wbr"))
+        && !matches!(
+            tag,
+            "area"
+                | "base"
+                | "basefont"
+                | "br"
+                | "col"
+                | "frame"
+                | "hr"
+                | "img"
+                | "input"
+                | "isindex"
+                | "link"
+                | "meta"
+                | "param"
+        )
+    {
         output.push_str("</");
         output.push_str(tag);
         output.push('>');
@@ -159,11 +182,17 @@ fn append_children(
     raw_text: bool,
     output: &mut String,
     placeholders: &HashMap<NodeId, String>,
+    html5: bool,
 ) {
     for child in parent.children() {
         match child.value() {
-            Node::Element(_) => serialize(ElementRef::wrap(child).unwrap(), output, placeholders),
-            Node::Fragment => append_children(child, raw_text, output, placeholders),
+            Node::Element(_) => serialize(
+                ElementRef::wrap(child).unwrap(),
+                output,
+                placeholders,
+                html5,
+            ),
+            Node::Fragment => append_children(child, raw_text, output, placeholders, html5),
             Node::Text(text) => {
                 if raw_text {
                     output.push_str(text);
@@ -181,9 +210,9 @@ fn append_children(
     }
 }
 
-fn outer_html(element: ElementRef<'_>) -> String {
+fn outer_html(element: ElementRef<'_>, html5: bool) -> String {
     let mut output = String::new();
-    serialize(element, &mut output, &HashMap::new());
+    serialize(element, &mut output, &HashMap::new(), html5);
     output
 }
 
@@ -193,13 +222,13 @@ fn has_protected_markup(html: &str) -> bool {
         .any(|tag| html.contains(tag))
 }
 
-fn minify_protected(document: &Html, capacity: usize) -> Option<String> {
+fn minify_protected(document: &Html, capacity: usize, html5: bool) -> Option<String> {
     let mut placeholders = HashMap::new();
     let mut originals = HashMap::new();
     let mut restorations = HashMap::new();
     for (tag, selector) in PROTECTED.iter() {
         for (index, node) in document.select(selector).enumerate() {
-            let original = outer_html(node);
+            let original = outer_html(node, html5);
             let start = original.find('>').unwrap() + 1;
             let end = original.rfind("</").unwrap();
             // Nested markup, literal tags in raw text and placeholder collisions
@@ -222,7 +251,7 @@ fn minify_protected(document: &Html, capacity: usize) -> Option<String> {
     }
     let mut output = String::with_capacity(capacity);
     output.push_str("<!DOCTYPE html>");
-    serialize(document.root_element(), &mut output, &placeholders);
+    serialize(document.root_element(), &mut output, &placeholders, html5);
     output = collapse_whitespace(output);
     Some(
         PLACEHOLDER
@@ -244,24 +273,32 @@ fn collapse_whitespace(mut output: String) -> String {
 }
 
 pub fn minify(html: &str) -> String {
+    minify_document(html, false)
+}
+
+pub fn minify_html5(html: &str) -> String {
+    minify_document(html, true)
+}
+
+fn minify_document(html: &str, html5: bool) -> String {
     let stripped = COMMENTS.replace_all(html, "");
     if !stripped.starts_with("<!DOCTYPE html>") {
         return stripped.into_owned();
     }
 
     let document = Html::parse_document(&stripped);
-    if let Some(output) = minify_protected(&document, stripped.len()) {
+    if let Some(output) = minify_protected(&document, stripped.len(), html5) {
         return output;
     }
     let mut output = String::with_capacity(stripped.len());
     output.push_str("<!DOCTYPE html>");
-    serialize(document.root_element(), &mut output, &HashMap::new());
+    serialize(document.root_element(), &mut output, &HashMap::new(), html5);
     let mut protected = Vec::new();
     // Keep PHP's replacement order, including nested tags and repeated markup.
     for (tag, selector) in PROTECTED.iter() {
         for (index, node) in document.select(selector).enumerate() {
             let placeholder = format!("<{tag}-placeholder-{index}></{tag}-placeholder-{index}>");
-            let original = outer_html(node);
+            let original = outer_html(node, html5);
             output = output.replace(&original, &placeholder);
             protected.push((placeholder, original));
         }

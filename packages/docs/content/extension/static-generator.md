@@ -119,7 +119,8 @@ the persistent `cache.pushword_markdown` pool and its 30-day lifetime and cleanu
 `cache:clear` preserves them, and `cache:pool:clear cache.pushword_markdown` removes
 them along with Markdown fragments.
 PHP handles control-character edge cases, including numeric HTML references,
-to preserve the installed libxml version's serialization.
+to preserve the installed libxml version's serialization. The native worker selects
+legacy or HTML5 serialization from PHP's output, including attribute quoting and void tags.
 
 ### Incremental generation
 

@@ -1,0 +1,145 @@
+{
+  "method": "Three alternating before/after/warm-cache phases over the full captured Altimood HTML corpus. Same current PHP adapter for both binaries; no full-build claim. New service per phase, fixed CPU 16; output hashes included in component timings. Cache seeded once outside the timed warm phases.",
+  "php": "8.5.12",
+  "libxml": "2.12.10",
+  "cpu_affinity": [
+    16
+  ],
+  "input_sha256": "2faa7036bc1ccc1cb1220c91272cd3f9a94367ee1de26c0813e197d5d5d1d694",
+  "control_documents": 0,
+  "ordinary_documents": 1203,
+  "before_binary_sha256": "2e71a9d4c35ac0c2e31f53c60c7dec6394e4a78e50be71139871b87bde75cc2f",
+  "after_binary_sha256": "241f17b10215d4420f038998e95a73042a7cb5af025193b81df6b7ad215fffed",
+  "source_sha256": {
+    "packages/static-generator/rust/src/lib.rs": "c283cbf4ea73ee17317d4fa045e1bea817a41b8ec326bbc0916103661560a1c5",
+    "packages/static-generator/src/Generator/HtmlMinification.php": "b3784c4595e5d091dbe93b2d93498535eadbf642cce590ebd79ef6298366f0be",
+    "packages/static-generator/rust/src/main.rs": "4f5fd5b60784da4378aeb19e0437ca793cd13b6481d8fdc9654b7520b29be2ef"
+  },
+  "samples": [
+    {
+      "mode": "before-1",
+      "seconds": 4.369495561,
+      "count": 1203
+    },
+    {
+      "mode": "after-1",
+      "seconds": 3.976900715,
+      "count": 1203,
+      "equal": 1203,
+      "different": 0
+    },
+    {
+      "mode": "warm-1",
+      "seconds": 0.111874757,
+      "count": 1203,
+      "equal": 1203,
+      "different": 0
+    },
+    {
+      "mode": "before-2",
+      "seconds": 4.347960853,
+      "count": 1203,
+      "equal": 1203,
+      "different": 0
+    },
+    {
+      "mode": "after-2",
+      "seconds": 3.958348855,
+      "count": 1203,
+      "equal": 1203,
+      "different": 0
+    },
+    {
+      "mode": "warm-2",
+      "seconds": 0.109488087,
+      "count": 1203,
+      "equal": 1203,
+      "different": 0
+    },
+    {
+      "mode": "before-3",
+      "seconds": 4.319855541,
+      "count": 1203,
+      "equal": 1203,
+      "different": 0
+    },
+    {
+      "mode": "after-3",
+      "seconds": 3.977963382,
+      "count": 1203,
+      "equal": 1203,
+      "different": 0
+    },
+    {
+      "mode": "warm-3",
+      "seconds": 0.110042889,
+      "count": 1203,
+      "equal": 1203,
+      "different": 0
+    }
+  ],
+  "cache_seed": {
+    "mode": "cache-seed",
+    "seconds": 4.427308273,
+    "count": 1203,
+    "equal": 1203,
+    "different": 0
+  },
+  "before_median_seconds": 4.347960853,
+  "after_median_seconds": 3.976900715,
+  "warm_median_seconds": 0.110042889,
+  "serialization_reduction_percent": 8.534118648836875,
+  "warm_cache_speedup": 36.13955205229117,
+  "fallback_warnings": 0,
+  "before_rust_revision": "33f77e748d92a07e528c4340d2b0aaf063ba4d49",
+  "implementation": "Select legacy or HTML5 serialization using a PHP parity probe. Match runtime-specific attribute quoting, URI escaping and void tags; retain per-document PHP control serialization. Avoid redundant escaping allocations. Include loaded libxml and HTML5 parser versions in cache keys; invalidate previous results with cache epoch 3.",
+  "full_build_reference": "2026-10-30-minification-cache.json retains the earlier full-build samples and implementation hashes. Those builds use PHP minification; its steady-state algorithm is unchanged by this native compatibility follow-up.",
+  "validation": {
+    "native_suite": "make -C packages/static-generator/rust test: debug/release unit and property tests, Clippy, fmt, rustdoc, real-worker PHP comparisons and proc_open-disabled hosting passed.",
+    "native_php_tests": 8,
+    "native_php_assertions": 934,
+    "targeted_php_tests": 257,
+    "targeted_php_assertions": 966,
+    "static_analysis": "composer stan: 0 errors",
+    "formatting": "composer rector: 0 changed files; PHP/Twig lint: 185 files, 0 errors, warnings or notices",
+    "modern_runtime": {
+      "environment": "Ubuntu 26.04 container, network disabled during comparisons",
+      "php": "8.5.4",
+      "libxml": "2.15.2",
+      "control_documents_equal": 448,
+      "control_documents_different": 0,
+      "corpus_documents_equal": 286,
+      "corpus_documents_different": 0,
+      "fallback_warnings": 0,
+      "dependency_runs": [
+        {
+          "dom_crawler": "8.1.5",
+          "control_equal": 448,
+          "corpus_equal": 286,
+          "fallback_warnings": 0
+        },
+        {
+          "dom_crawler": "8.1.10",
+          "masterminds_html5": "2.12.0",
+          "control_equal": 448,
+          "corpus_equal": 286,
+          "fallback_warnings": 0
+        }
+      ]
+    },
+    "integration_coverage": "Both protocol operations, protected markup, partial and fully cached batches after reset, malformed frames, ordinary markup and control references are covered by the native suite. The earlier CI failure reproduced the missing serialization-profile support.",
+    "database_fixture_guard": {
+      "scope": "Four existing SQLite file restoration hooks; skip file operations for MariaDB/PostgreSQL URLs.",
+      "before": "On original copies: 4 SQLite checks pass; 8 server-database checks raise warnings converted to exceptions.",
+      "after": "12 checks pass, including SQLite fixture copying and both server URL schemes."
+    },
+    "mariadb": {
+      "command": "composer test-mariadb -- --filter 'Pushword.StaticGenerator|ReleaseUpgradeNoteTest'",
+      "tests": 259,
+      "passed": 259,
+      "assertions": 980,
+      "php_warnings_or_notices": 0,
+      "result": "passed"
+    }
+  }
+}
