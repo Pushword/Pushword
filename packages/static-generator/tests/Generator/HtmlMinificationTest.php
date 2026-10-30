@@ -203,6 +203,50 @@ final class HtmlMinificationTest extends TestCase
         yield 'write' => [false];
     }
 
+    #[DataProvider('controlCharacterCacheModes')]
+    public function testControlCharactersUsePhpWithoutChangingOtherDocuments(bool $cached): void
+    {
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects(self::never())->method('warning');
+        $this->minifier = new HtmlMinification($this->worker('normal'), logger: $logger, cache: $cached ? new ArrayAdapter() : null);
+        $first = $this->minifier->compress('first');
+        $pid = explode(':', $first)[1];
+        $documents = [];
+        foreach (range(0, 31) as $code) {
+            $controls = ['&#'.$code.';', '&#x'.dechex($code).';', '&#000'.$code.';', '&#X000'.strtoupper(dechex($code)).';', '&#'.$code.'Z', '&#x'.dechex($code).'Z'];
+            if (! \in_array($code, [9, 10, 13], true)) {
+                $controls[] = \chr($code);
+            }
+
+            foreach ($controls as $control) {
+                $text = 'a'.$control.'é';
+                $documents[] = '<!DOCTYPE html><html><body><p title="'.$text.'">'.$text.'</p><script>'.$text.'</script></body></html>';
+            }
+        }
+
+        $normal = ['first'];
+        foreach (["\t", "\n", "\r"] as $whitespace) {
+            $normal[] = '<!DOCTYPE html><html><body><p>a'.$whitespace.'b</p></body></html>';
+        }
+
+        foreach ([32, 39, 65, 128, 256, 0x10FF, 0x1FFF] as $code) {
+            foreach (['&#'.$code.';', '&#000'.$code.';', '&#x'.dechex($code).';', '&#X000'.strtoupper(dechex($code)).';'] as $reference) {
+                $normal[] = '<!DOCTYPE html><html><body><p>'.$reference.'</p></body></html>';
+            }
+        }
+
+        $expected = [...array_map(HtmlMinifier::compress(...), $documents), ...array_map(static fn (string $html): string => 'native:'.$pid.':'.$html, $normal)];
+        self::assertSame($expected, $this->minifier->compressMany([...$documents, ...$normal]));
+        self::assertSame($expected, $this->minifier->compressMany([...$documents, ...$normal]));
+    }
+
+    /** @return iterable<string, array{bool}> */
+    public static function controlCharacterCacheModes(): iterable
+    {
+        yield 'uncached' => [false];
+        yield 'cached' => [true];
+    }
+
     private function html(): string
     {
         return '<!DOCTYPE html><html><body><p>à   b</p><!-- c --></body></html>';

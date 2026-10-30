@@ -1,4 +1,5 @@
 //! Port of Pushword's HtmlMinifier rules; HTML parsing uses html5ever via scraper.
+//! Runtime-dependent control serialization belongs to the PHP adapter.
 use ego_tree::{NodeId, NodeRef};
 use regex::Regex;
 use scraper::{ElementRef, Html, Node, Selector};
@@ -7,10 +8,6 @@ use std::{borrow::Cow, collections::HashMap, sync::LazyLock};
 static COMMENTS: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"(?s)<!--(.*?)-->").unwrap());
 static NEWLINES: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"[ \t]*\n[ \t\r\n\x0c]*").unwrap());
 static HORIZONTAL: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"[ \t]{2,}").unwrap());
-// libxml drops XML-invalid controls from ordinary text and attributes, but
-// retains them in raw-text elements such as script and style.
-static INVALID_XML: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"[\x01-\x08\x0b\x0c\x0e-\x1f]").unwrap());
 const BLOCK: &str = "address|article|aside|base|blockquote|body|canvas|dd|details|dialog|div|dl|dt|fieldset|figcaption|figure|footer|form|h[1-6]|head|header|hgroup|hr|html|li|link|main|map|meta|nav|ol|p|picture|section|source|style|summary|table|tbody|td|tfoot|th|thead|title|tr|ul|video";
 static BEFORE_BLOCK: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(&format!(r"[ \t]+(</?(?:{BLOCK})(?-u:\b))")).unwrap());
@@ -33,9 +30,7 @@ fn escape_text(text: &str) -> String {
     output
 }
 
-fn append_escaped_text(text: &str, output: &mut String) {
-    let normalized = INVALID_XML.replace_all(text, "");
-    let mut text = normalized.as_ref();
+fn append_escaped_text(mut text: &str, output: &mut String) {
     while let Some(index) = text.find(['&', '<', '>']) {
         output.push_str(&text[..index]);
         output.push_str(match text.as_bytes()[index] {
@@ -289,8 +284,7 @@ mod tests {
 
         #[test]
         fn streaming_escape_matches_the_original_replacements(text in ".{0,2048}") {
-            let normalized: String = text.chars().filter(|ch| !matches!(ch, '\u{1}'..='\u{8}' | '\u{b}' | '\u{c}' | '\u{e}'..='\u{1f}')).collect();
-            let expected = normalized.replace('&', "&amp;").replace('<', "&lt;").replace('>', "&gt;");
+            let expected = text.replace('&', "&amp;").replace('<', "&lt;").replace('>', "&gt;");
             prop_assert_eq!(escape_text(&text), expected);
         }
     }

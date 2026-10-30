@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pushword\StaticGenerator\Tests\Generator;
 
 use PHPUnit\Framework\TestCase;
+use Psr\Log\LoggerInterface;
 use Pushword\Core\Service\NativeWorker;
 use Pushword\StaticGenerator\Generator\HtmlMinification;
 use Pushword\StaticGenerator\Generator\HtmlMinifier;
@@ -59,19 +60,24 @@ final class NativeHtmlMinificationTest extends TestCase
     {
         $documents = [];
         foreach (range(0, 31) as $code) {
-            $text = 'a'.\chr($code).'é';
-            $documents[] = '<!DOCTYPE html><html><head><style>'.$text.'</style></head><body>'
-                .'<p title="'.$text.'"><a href="/'.$text.'">'.$text.'</a></p>'
-                .'<pre>'.$text.'</pre><code>'.$text.'</code><textarea>'.$text.'</textarea>'
-                .'<script>'.$text.'</script></body></html>';
+            foreach ([\chr($code), '&#'.$code.';', '&#x'.dechex($code).';', '&#000'.$code.';', '&#X000'.strtoupper(dechex($code)).';', '&#'.$code.'Z', '&#x'.dechex($code).'Z'] as $control) {
+                $text = 'a'.$control.'é';
+                $documents[] = '<!DOCTYPE html><html><head><style>'.$text.'</style></head><body>'
+                    .'<p title="'.$text.'"><a href="/'.$text.'">'.$text.'</a></p>'
+                    .'<pre>'.$text.'</pre><code>'.$text.'</code><textarea>'.$text.'</textarea>'
+                    .'<script>'.$text.'</script></body></html>';
+                $documents[] = '<!DOCTYPE html><html><body><a href="/'.$control.'">URI only</a></body></html>';
+            }
         }
 
-        $worker = new NativeWorker($this->binary());
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects(self::never())->method('warning');
+        $minifier = new HtmlMinification($this->binary(), logger: $logger);
 
         try {
-            self::assertSame(array_map(HtmlMinifier::compress(...), $documents), $worker->request('minify_html', $documents));
+            self::assertSame(array_map(HtmlMinifier::compress(...), $documents), $minifier->compressMany($documents));
         } finally {
-            $worker->reset();
+            $minifier->reset();
         }
     }
 

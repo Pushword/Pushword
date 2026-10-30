@@ -1,0 +1,112 @@
+{
+  "method": "Three alternating before/after/warm-cache phases over the full captured Altimood HTML corpus. Same current PHP adapter for both binaries; no full-build claim. New service per phase, fixed CPU 16; output hashes included in component timings. Cache seeded once outside the timed warm phases.",
+  "php": "8.5.12",
+  "libxml": "2.12.10",
+  "cpu_affinity": [
+    16
+  ],
+  "input_sha256": "2faa7036bc1ccc1cb1220c91272cd3f9a94367ee1de26c0813e197d5d5d1d694",
+  "control_documents": 0,
+  "ordinary_documents": 1203,
+  "before_binary_sha256": "2e71a9d4c35ac0c2e31f53c60c7dec6394e4a78e50be71139871b87bde75cc2f",
+  "after_binary_sha256": "7d976d2c63c84e62f733170f0ee9ddd44034a9978cdf02971fae6cad540f8ec3",
+  "source_sha256": {
+    "packages/static-generator/rust/src/lib.rs": "691d20ce19f7b53aa81e916b2ee43ba15e1dc473a5ad56b181632b95ba0098d1",
+    "packages/static-generator/src/Generator/HtmlMinification.php": "4d40e93e592163b3d44fea373c46e0752ebdd6d6c185a89f3d89ea5c92162bb9"
+  },
+  "samples": [
+    {
+      "mode": "before-1",
+      "seconds": 4.762948237,
+      "count": 1203
+    },
+    {
+      "mode": "after-1",
+      "seconds": 4.439114203,
+      "count": 1203,
+      "equal": 1203,
+      "different": 0
+    },
+    {
+      "mode": "warm-1",
+      "seconds": 0.117608559,
+      "count": 1203,
+      "equal": 1203,
+      "different": 0
+    },
+    {
+      "mode": "before-2",
+      "seconds": 4.666978174,
+      "count": 1203,
+      "equal": 1203,
+      "different": 0
+    },
+    {
+      "mode": "after-2",
+      "seconds": 4.468477167,
+      "count": 1203,
+      "equal": 1203,
+      "different": 0
+    },
+    {
+      "mode": "warm-2",
+      "seconds": 0.115173503,
+      "count": 1203,
+      "equal": 1203,
+      "different": 0
+    },
+    {
+      "mode": "before-3",
+      "seconds": 4.715832256,
+      "count": 1203,
+      "equal": 1203,
+      "different": 0
+    },
+    {
+      "mode": "after-3",
+      "seconds": 4.775503883,
+      "count": 1203,
+      "equal": 1203,
+      "different": 0
+    },
+    {
+      "mode": "warm-3",
+      "seconds": 0.120117783,
+      "count": 1203,
+      "equal": 1203,
+      "different": 0
+    }
+  ],
+  "cache_seed": {
+    "mode": "cache-seed",
+    "seconds": 4.866347326,
+    "count": 1203,
+    "equal": 1203,
+    "different": 0
+  },
+  "before_median_seconds": 4.715832256,
+  "after_median_seconds": 4.468477167,
+  "warm_median_seconds": 0.117608559,
+  "serialization_reduction_percent": 5.2452054180953445,
+  "warm_cache_speedup": 37.99448955921652,
+  "fallback_warnings": 0,
+  "before_rust_revision": "33f77e748d92a07e528c4340d2b0aaf063ba4d49",
+  "implementation": "Remove redundant per-text-node control normalization from Rust. The PHP adapter serializes literal control edge cases and numeric C0 references with the installed PHP/libxml runtime; mixed and cached batches preserve per-document behavior. Bump the minification cache version to invalidate earlier native results.",
+  "full_build_reference": "2026-10-30-minification-cache.json records the preceding implementation by source hash. Full-build samples use PHP minification, whose steady-state render/minification path is unchanged apart from the cache epoch.",
+  "validation": {
+    "native_suite": "make -C packages/static-generator/rust test: debug/release tests, Clippy, fmt, rustdoc, real-worker PHP comparisons and proc_open-disabled hosting passed.",
+    "native_php_tests": 6,
+    "native_php_assertions": 767,
+    "targeted_php_tests": 257,
+    "targeted_php_assertions": 966,
+    "static_analysis": "composer stan: 0 errors",
+    "regression_guards": "Copies without PHP control serialization, or with only literal-control detection, fail the mixed-document regressions. Valid numeric references and ordinary tabs/newlines retain the same worker.",
+    "release_note": "ReleaseUpgradeNoteTest validates backtick-quoted package names in the draft.",
+    "mariadb": {
+      "command": "composer test-mariadb -- --filter 'Pushword.StaticGenerator|ReleaseUpgradeNoteTest'",
+      "tests": 259,
+      "assertions": 980,
+      "result": "passed"
+    }
+  }
+}

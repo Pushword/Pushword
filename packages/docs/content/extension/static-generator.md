@@ -118,6 +118,8 @@ so a content or template change cannot reuse stale HTML. Minified documents shar
 the persistent `cache.pushword_markdown` pool and its 30-day lifetime and cleanup;
 `cache:clear` preserves them, and `cache:pool:clear cache.pushword_markdown` removes
 them along with Markdown fragments.
+PHP handles control-character edge cases, including numeric HTML references,
+to preserve the installed libxml version's serialization.
 
 ### Incremental generation
 

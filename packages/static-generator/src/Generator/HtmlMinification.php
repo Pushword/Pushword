@@ -17,8 +17,11 @@ use Throwable;
 /** PHP is the default; the optional worker only receives already rendered HTML. */
 final class HtmlMinification implements ResetInterface
 {
-    /** Bump whenever PHP minification or its SVG serialization patch changes output. */
-    private const int CACHE_VERSION = 1;
+    /** Bump whenever PHP minification, native fallback or SVG serialization changes output. */
+    private const int CACHE_VERSION = 2;
+
+    // Numeric references may omit their semicolon; reject digit prefixes of valid references.
+    private const string PHP_SERIALIZATION_REQUIRED = '/[\x00-\x08\x0b\x0c\x0e-\x1f]|&#(?:0*(?:[0-9]|[12][0-9]|3[01])(?![0-9])|x0*(?:[0-9a-f]|1[0-9a-f])(?![0-9a-f]))/i';
 
     private const string PARITY_PROBE = '<!DOCTYPE html><html><body><a href="/?x=&quot;[\\]^`{|}">x</a></body></html>';
 
@@ -189,12 +192,15 @@ final class HtmlMinification implements ResetInterface
     private function compressNative(array $documents): array
     {
         $validated = [];
-        foreach ($this->worker->request('minify_html', $documents) as $html) {
+        foreach ($this->worker->request('minify_html', $documents) as $index => $html) {
             if (! \is_string($html)) {
                 throw new RuntimeException('Invalid native HTML document');
             }
 
-            $validated[] = $html;
+            // Match the installed PHP/libxml serialization of controls and their numeric references.
+            $validated[] = 1 === preg_match(self::PHP_SERIALIZATION_REQUIRED, $documents[$index])
+                ? HtmlMinifier::compress($documents[$index])
+                : $html;
         }
 
         return $validated;
