@@ -6,13 +6,13 @@ without `proc_open`, Cargo, FFI or a native executable. No Hugo or Zola dependen
 
 ## Layout and ownership
 
-- `src/lib.rs`: the port of `../src/Generator/HtmlMinifier.php`, including the
-  legacy libxml serialization rules used by PHP after HTML5 parsing.
+- `src/lib.rs`: the port of `../src/Generator/HtmlMinifier.php`, with legacy
+  libxml and HTML5 serialization profiles selected to match PHP.
 - `src/main.rs`: a private stdin/stdout worker; no HTTP server, filesystem writes,
   database access or publication policy.
 - `../src/Generator/HtmlMinification.php`: PHP selection and fallback; bounded
   process transport is shared with content analysis in `Core\Service\NativeWorker`.
-- `tests/corpus.json`: 233 fixed and seeded examples shared by differential tests.
+- `tests/corpus.json`: fixed and seeded examples shared by differential tests.
 - `tests/`: the explicit native suite, including actual static publication.
 - `../tests/Generator/HtmlMinificationTest.php`: PHP-only transport/failure tests
   using a small fake executable; normal Pushword tests require no Rust build.
@@ -100,6 +100,11 @@ One UTF-8 JSON object per line on stdin, with a newline terminator:
 ```json
 {"version":1,"id":1,"operation":"minify_html","documents":["<p>text</p>"]}
 ```
+
+PHP probes its serializer before the first native request. It selects
+`minify_html` for legacy libxml, `minify_html5` for HTML5 serialization without
+XML attribute prefixes, or `minify_html5_with_xml_prefixes` when those prefixes
+are preserved. Control-character edge cases use PHP directly.
 
 One flushed response line, preserving document count and order:
 

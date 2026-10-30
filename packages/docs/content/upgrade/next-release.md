@@ -1,6 +1,5 @@
 ---
-title: 'native accelerators avoid unused analysis and preserve control-character serialization; page corpus checks use a covering index; full static rebuilds reuse unchanged compressed files and HTML minification'
-run: 'doctrine:schema:update --force'
+title: ''
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -35,32 +34,3 @@ belongs in the feature doc, which you link to instead.
 
 Several changes land here between two tags: append to the file, do not replace it.
 -->
-
-**Concerns:** `pushword/core`, `pushword/static-generator`
-
-## Optional native accelerators
-
-Content analysis is deferred on pages without a TOC; HTML minification selects the installed libxml serializer's attribute quoting.
-**Only sites using the optional Rust binaries are affected.**
-Rebuild and redeploy `pushword-content-analyzer` and `pushword-html-minifier` with their package's `rust/Makefile`.
-Control-character edge cases use PHP serialization to match the installed libxml version.
-Native minification also matches PHP for `<noscript>`, SVG/MathML XML attributes,
-and Alpine `@event` attribute names.
-PHP remains the default; no configuration change is required.
-
-## Published page corpus index
-
-Corpus freshness checks now use a covering index without loading parent or image rows.
-Run `php bin/console doctrine:schema:update --force` in every installed application to create `idx_page_corpus_state`.
-
-## Unchanged compressed files
-
-Full static rebuilds reuse existing compressed files when the newly rendered bytes are identical.
-Pages still render on every full build; changed pages and missing compressed files are compressed normally.
-No action or configuration change is required.
-
-## Cached HTML minification
-
-Static builds reuse minified HTML when the freshly rendered input and minifier identity are unchanged.
-The cache survives `cache:clear` and shares `cache.pushword_markdown` with Markdown fragments.
-No action or configuration change is required.

@@ -106,24 +106,21 @@ on `publish` regenerates them once the date passes.
 
 ### Full rebuilds
 
-Full builds still render every page into a temporary directory before the atomic
-swap. When the resulting bytes match the previous export, its non-empty gzip,
-Brotli and Zstandard files are copied instead of compressed again. Changed pages
-and missing compressed files are compressed normally. This applies to sequential
-and parallel builds and keeps the existing compression quality and output bytes.
+Full builds render every page into a temporary directory before the atomic swap.
+When the bytes match the previous export, existing non-empty gzip, Brotli and
+Zstandard files are reused. Changed pages and missing compressed files are
+compressed normally, in both sequential and parallel builds.
 
-HTML minification is cached by the freshly rendered HTML and minifier identity,
-including the native binary's contents when enabled. The page is still rendered,
-so a content or template change cannot reuse stale HTML. Minified documents share
-the persistent `cache.pushword_markdown` pool and its 30-day lifetime and cleanup;
-`cache:clear` preserves them, and `cache:pool:clear cache.pushword_markdown` removes
-them along with Markdown fragments.
-PHP handles control-character edge cases, including numeric HTML references,
-to preserve the installed libxml version's serialization. The native worker selects
-legacy or HTML5 serialization from PHP's output, including attribute quoting and void tags.
-Attribute quoting and XML prefix handling are detected independently.
-It also matches PHP's handling of `<noscript>`, XML attributes on SVG/MathML,
-and Alpine `@event` attribute names.
+HTML minification is cached by the rendered HTML and minifier identity, including
+the native binary's contents when enabled. Content, template or minifier changes
+invalidate the result. Minified documents share the persistent
+`cache.pushword_markdown` pool and its 30-day lifetime with Markdown fragments.
+`cache:clear` preserves them; `cache:pool:clear cache.pushword_markdown` removes both.
+
+The optional Rust minifier matches the installed PHP/libxml serializer, including
+`<noscript>`, SVG/MathML and Alpine `@event` attributes. Control-character edge cases
+fall back to PHP. For build and configuration instructions, see the package's
+[`rust/README.md`](https://github.com/Pushword/Pushword/blob/main/packages/static-generator/rust/README.md#build-and-enable).
 
 ### Incremental generation
 
