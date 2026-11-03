@@ -183,7 +183,10 @@ final class DeliveryStatisticsTest extends AbstractNewsletterTestCase
 
         $campaign->markSent();
         $this->entityManager->flush();
+        $this->entityManager->getConnection()->update('newsletter_campaign', ['sent_at' => '2026-01-01 00:00:00'], ['id' => $campaign->id]);
+        $this->entityManager->refresh($campaign);
         $messages = $this->entityManager->getRepository(DeliveryMessage::class)->findBy(['campaign' => $campaign]);
+        self::assertCount(2, $messages);
         foreach ($messages as $message) {
             $this->backdate($message, '2026-01-01');
         }
@@ -207,7 +210,9 @@ final class DeliveryStatisticsTest extends AbstractNewsletterTestCase
             $event->observedAt = $watermark;
             $event->notice = 'Complete collector snapshot';
         });
-        foreach ([$provider->campaign($campaign->id ?? 0, $query), $this->reports($query)[0]] as $complete) {
+        $reports = [$provider->campaign($campaign->id ?? 0, $query), ...$this->reports($query)];
+        self::assertCount(2, $reports);
+        foreach ($reports as $complete) {
             self::assertSame(2, $complete->metric('delivered')->value);
             self::assertTrue($complete->metric('delivered')->complete);
             self::assertSame(100.0, $complete->rate('deliveryRate')['value']);
