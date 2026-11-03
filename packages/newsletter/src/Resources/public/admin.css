@@ -916,6 +916,80 @@ body[data-newsletter] :is(.form-fieldset-body, .form-group)[hidden] {
   display: none;
 }
 
+.pw-newsletter-variables {
+  margin-block-end: 1rem;
+  color: var(--bs-body-color);
+  font-size: var(--pw-text-sm);
+}
+
+.pw-newsletter-variables > summary {
+  min-block-size: 2.75rem;
+  padding-block: 0.625rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.pw-newsletter-variables > summary:hover {
+  color: var(--color-primary);
+}
+
+.pw-newsletter-variables > summary:focus-visible {
+  outline: var(--focus-ring-width) solid var(--focus-ring-color);
+  outline-offset: var(--focus-ring-offset);
+  border-radius: var(--pw-radius-md);
+}
+
+.pw-newsletter-variables-content {
+  padding: 1rem;
+  border-radius: var(--pw-radius-md);
+  background: var(--bs-tertiary-bg);
+  line-height: 1.5;
+}
+
+.pw-newsletter-variables-content p {
+  max-inline-size: 65ch;
+  margin-block: 0 1rem;
+  color: var(--bs-secondary-color);
+}
+
+.pw-newsletter-variables-content h3 {
+  margin-block: 0 0.5rem;
+  font-size: var(--pw-text-sm);
+  font-weight: 600;
+}
+
+.pw-newsletter-variables-content dl {
+  display: grid;
+  gap: 0.5rem;
+  margin: 0;
+}
+
+.pw-newsletter-variables-content dl > div {
+  display: grid;
+  grid-template-columns: minmax(12rem, 1fr) 2fr;
+  align-items: baseline;
+  gap: 0.25rem 1rem;
+}
+
+.pw-newsletter-variables-content dd {
+  margin: 0;
+}
+
+.pw-newsletter-variables-content code {
+  color: var(--bs-body-color);
+  overflow-wrap: anywhere;
+}
+
+.pw-newsletter-variables-content section {
+  margin-block-start: 1.5rem;
+}
+
+@media (max-width: 575px) {
+  .pw-newsletter-variables-content dl > div {
+    grid-template-columns: 1fr;
+  }
+}
+
 .pw-newsletter-step-preview {
   inline-size: 100%;
   min-inline-size: 0;

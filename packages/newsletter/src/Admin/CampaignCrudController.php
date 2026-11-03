@@ -634,7 +634,6 @@ class CampaignCrudController extends AbstractCrudController
         if (! class_exists(EditorjsType::class)) {
             return TextareaField::new('bodyMarkdown', 'newsletter.campaign.field.body')
                 ->hideOnIndex()
-                ->setHelp('newsletter.campaign.field.body.help')
                 ->setNumOfRows(18)->setColumns('col-12');
         }
 
@@ -645,7 +644,6 @@ class CampaignCrudController extends AbstractCrudController
         // campaign has no page, so it stays empty but the key must exist.
         return Field::new('bodyMarkdown', 'newsletter.campaign.field.body')
             ->setColumns('col-12')
-            ->setHelp('newsletter.campaign.field.body.help')
             ->setFormType(EditorjsType::class)
             ->setFormTypeOptions(['required' => false, 'attr' => ['page_host' => $host, 'page_id' => '']])
             ->hideOnIndex();

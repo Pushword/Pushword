@@ -138,7 +138,6 @@ newsletter:
     field:
       audience: "Doelgroep"
       body: "Inhoud"
-      body.help: "Personaliseer met %firstName|allemaal%, %name% of %email%. De tekst na | wordt gebruikt als de voornaam ontbreekt."
       bounced: "Bounces"
       clicks: "Klikken"
       failed: "Mislukt"
@@ -438,6 +437,29 @@ newsletter:
     submit: "Aanmelden"
   menu:
     label: "Nieuwsbrief"
+  personalization:
+    automationHelp: "Te gebruiken in het onderwerp en de inhoud. Ontvangergegevens worden bij het verzenden van elke e-mail ingevuld."
+    blockHelp: "Te gebruiken in de blokinhoud. Deze variabelen worden bij het verzenden voor elke ontvanger vervangen."
+    campaignHelp: "Te gebruiken in het onderwerp, de voorbeeldtekst en de inhoud, inclusief vertalingen. Deze variabelen worden bij het verzenden voor elke ontvanger vervangen."
+    contact: "Contact dat de reeks heeft gestart"
+    contactEmail: "E-mailadres van het startende contact"
+    contactHelp: "Deze waarden worden bij het starten van de reeks opgeslagen. Gebruik hierboven %name% en %email% voor de huidige gegevens van de ontvanger."
+    contactName: "Naam van het startende contact"
+    email: "E-mailadres van de ontvanger"
+    fallbackHelp: "Voornaam, of “allemaal” als die ontbreekt. Je kunt de tekst na | aanpassen."
+    fallbackToken: "%firstName|allemaal%"
+    firstName: "Voornaam uit de contacteigenschap firstName; leeg als die ontbreekt"
+    name: "Naam van de ontvanger"
+    page: "Pagina die de reeks heeft gestart"
+    pageChapeau: "Inleiding van de pagina"
+    pageExcerpt: "Pagina-uittreksel"
+    pageHelp: "Gegevens van de gepubliceerde pagina, opgeslagen bij het activeren van de automatisering."
+    pageMainContent: "Begin van de pagina-inhoud"
+    pageMainImage: "URL van de hoofdafbeelding"
+    pageTitle: "Paginatitel"
+    pageUrl: "Pagina-URL"
+    recipient: "E-mailontvanger"
+    title: "Personalisatievariabelen"
   recipient:
     field:
       campaign: "Nieuwsbrief"

@@ -150,7 +150,6 @@ newsletter:
     field:
       audience: Audience
       body: Contenu
-      body.help: "Personnalisez avec %firstName|à vous%, %name% ou %email%. Le texte après | remplace le prénom manquant."
       bounced: Rejetés
       clicks: Clics
       failed: Échecs
@@ -438,6 +437,29 @@ newsletter:
     submit: S'inscrire
   menu:
     label: Newsletter
+  personalization:
+    automationHelp: "À utiliser dans l’objet et le contenu. Les données du destinataire sont remplacées au moment de chaque envoi."
+    blockHelp: "À utiliser dans le contenu du bloc. Ces variables sont remplacées pour chaque destinataire au moment de l’envoi."
+    campaignHelp: "À utiliser dans l’objet, le texte d’aperçu et le contenu, y compris les traductions. Ces variables sont remplacées pour chaque destinataire au moment de l’envoi."
+    contact: "Contact à l’origine de la séquence"
+    contactEmail: "Adresse e-mail du contact déclencheur"
+    contactHelp: "Ces valeurs sont enregistrées au démarrage de la séquence. Utilisez %name% et %email% ci-dessus pour les coordonnées actuelles du destinataire."
+    contactName: "Nom du contact déclencheur"
+    email: "Adresse e-mail du destinataire"
+    fallbackHelp: "Prénom, sinon « à vous ». Vous pouvez modifier le texte après |."
+    fallbackToken: "%firstName|à vous%"
+    firstName: "Prénom issu de la propriété firstName du contact ; vide si absent"
+    name: "Nom du destinataire"
+    page: "Page à l’origine de la séquence"
+    pageChapeau: "Chapeau de la page"
+    pageExcerpt: "Extrait de la page"
+    pageHelp: "Données de la page publiée, enregistrées au déclenchement de l’automatisation."
+    pageMainContent: "Début du contenu de la page"
+    pageMainImage: "URL de l’image principale"
+    pageTitle: "Titre de la page"
+    pageUrl: "URL de la page"
+    recipient: "Destinataire du mail"
+    title: "Variables de personnalisation"
   recipient:
     label:
       plural: Destinataires

@@ -150,7 +150,6 @@ newsletter:
     field:
       audience: Audience
       body: Body
-      body.help: "Personalize with %firstName|there%, %name% or %email%. The text after | is used when the first name is missing."
       bounced: Bounced
       clicks: Clicks
       failed: Failed
@@ -438,6 +437,29 @@ newsletter:
     submit: Subscribe
   menu:
     label: Newsletter
+  personalization:
+    automationHelp: "Use these variables in the subject and body. Recipient values are filled in when each email is sent."
+    blockHelp: "Use these variables in the block content. They are filled in for each recipient when the email is sent."
+    campaignHelp: "Use these variables in the subject, preview text and body, including translations. They are filled in for each recipient when the email is sent."
+    contact: "Contact that triggered the sequence"
+    contactEmail: "Triggering contact’s email address"
+    contactHelp: "These values are saved when the sequence starts. Use %name% and %email% above for the recipient’s current details."
+    contactName: "Triggering contact’s name"
+    email: "Recipient’s email address"
+    fallbackHelp: "First name, or “there” if it is missing. You can change the text after |."
+    fallbackToken: "%firstName|there%"
+    firstName: "First name from the contact’s firstName property; empty if missing"
+    name: "Recipient’s name"
+    page: "Page that triggered the sequence"
+    pageChapeau: "Lead paragraph"
+    pageExcerpt: "Page excerpt"
+    pageHelp: "Values from the published page, saved when the automation is triggered."
+    pageMainContent: "Opening of the page content"
+    pageMainImage: "Main image URL"
+    pageTitle: "Page title"
+    pageUrl: "Page URL"
+    recipient: "Email recipient"
+    title: "Personalization variables"
   recipient:
     label:
       plural: Recipients

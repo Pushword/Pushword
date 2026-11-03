@@ -159,6 +159,21 @@ export function initAutomationRecipients(root = document) {
   })
 }
 
+export function initNewsletterVariables(root = document) {
+  root.querySelectorAll('[data-pw-mail-variables]').forEach((panel) => {
+    if (panel.dataset.initialized) return
+    panel.dataset.initialized = 'true'
+    const source = panel.closest('form').elements.namedItem('Automation[source]')
+    function update() {
+      panel.querySelectorAll('[data-pw-variable-source]').forEach((group) => {
+        group.hidden = group.dataset.pwVariableSource !== source.value
+      })
+    }
+    source.addEventListener('change', update)
+    update()
+  })
+}
+
 export function initEmailPreview(root = document) {
   root.querySelectorAll('[data-pw-email-preview]').forEach((panel) => {
     if (panel.dataset.initialized) return
@@ -318,6 +333,7 @@ export function initEmailPreview(root = document) {
 document.addEventListener('ea.collection.item-added', (event) => {
   numberNewNewsletterStep(event.detail.newElement)
   initNewsletterDelays(event.detail.newElement)
+  initNewsletterVariables(event.detail.newElement)
   initEmailPreview(event.detail.newElement)
 })
 
@@ -330,4 +346,5 @@ window.addEventListener('load', () => {
   initNewsletterIndexes()
   initCampaignDesigns()
   initAutomationRecipients()
+  initNewsletterVariables()
 })

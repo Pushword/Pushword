@@ -18,16 +18,116 @@ use Pushword\Newsletter\Entity\Campaign;
 use Pushword\Newsletter\Entity\CampaignRecipient;
 use Pushword\Newsletter\Entity\ClickEvent;
 use Pushword\Newsletter\Entity\Contact;
+use Pushword\Newsletter\Entity\EmailBlock;
 use Pushword\Newsletter\Service\CampaignSender;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Component\DomCrawler\Crawler;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Mime\Email;
+use Twig\Environment;
 
 #[Group('integration')]
 final class NewsletterAdminTest extends AbstractAdminTestClass
 {
+    /** @return iterable<string, array{string, bool}> */
+    public static function personalizationForms(): iterable
+    {
+        yield 'new campaign' => ['campaign', false];
+        yield 'saved campaign' => ['campaign', true];
+        yield 'new block' => ['block', false];
+        yield 'saved block' => ['block', true];
+    }
+
+    #[DataProvider('personalizationForms')]
+    public function testCompositionFormsExplainOnlyTheirSupportedVariables(string $section, bool $saved): void
+    {
+        $client = $this->loginUser();
+        $suffix = 'new';
+        if ($saved) {
+            $entity = 'campaign' === $section ? $this->campaign($this->seed(), 'Personalized campaign') : new EmailBlock();
+            if ($entity instanceof EmailBlock) {
+                $entity->name = 'Personalized block';
+                $this->entityManager()->persist($entity);
+            }
+
+            $this->entityManager()->flush();
+            $suffix = $entity->id.'/edit';
+        }
+
+        $crawler = $client->request(Request::METHOD_GET, '/admin/newsletter/'.$section.'/'.$suffix);
+        self::assertResponseIsSuccessful();
+        $help = $crawler->filter('.pw-newsletter-variables');
+        self::assertCount(1, $help);
+        self::assertSame(['%name%', '%email%', '%firstName%', '%firstName|there%'], $help->filter('dt code')->each(static fn (Crawler $node): string => $node->text()));
+        self::assertStringContainsString('when the email is sent', $help->text());
+        self::assertCount(0, $help->filter('[data-pw-variable-source]'));
+        self::assertStringNotContainsString('newsletter.personalization.', $help->text());
+    }
+
+    /** @return iterable<string, array{string}> */
+    public static function personalizationSources(): iterable
+    {
+        yield 'contact' => ['contact'];
+        yield 'page' => ['page'];
+    }
+
+    #[DataProvider('personalizationSources')]
+    public function testAutomationHelpInitiallyMatchesItsSavedTriggerSource(string $source): void
+    {
+        $client = $this->loginUser();
+        $automation = new Automation();
+        $automation->name = 'Variable help';
+        $automation->audience = $this->seed();
+        $automation->source = $source;
+
+        $step = new AutomationStep();
+        $step->subject = 'Hello %name%';
+
+        $automation->addStep($step);
+        $this->entityManager()->persist($automation);
+        $this->entityManager()->flush();
+        $crawler = $client->request(Request::METHOD_GET, '/admin/newsletter/automation/'.$automation->id.'/edit');
+        self::assertResponseIsSuccessful();
+        $help = $crawler->filter('[data-pw-mail-variables]');
+        self::assertCount(1, $help);
+        self::assertCount(1, $help->filter('[data-pw-variable-source="'.$source.'"]:not([hidden])'));
+        self::assertCount(1, $help->filter('[data-pw-variable-source][hidden]'));
+        self::assertCount(4, $help->filter('.pw-newsletter-variables-content > dl dt code'));
+        self::assertSame(['{{ contact.name }}', '{{ contact.email }}'], $help->filter('[data-pw-variable-source="contact"] dt code')->each(static fn (Crawler $node): string => $node->text()));
+        self::assertSame(['{{ page.h1 }}', '{{ page.excerpt }}', '{{ page.chapeau }}', '{{ page.mainContent }}', '{{ page.url }}', '{{ page.mainImage }}'], $help->filter('[data-pw-variable-source="page"] dt code')->each(static fn (Crawler $node): string => $node->text()));
+        self::assertStringNotContainsString('newsletter.personalization.', $help->text());
+    }
+
+    /** @return iterable<string, array{string, string}> */
+    public static function personalizationLocales(): iterable
+    {
+        yield 'English' => ['en', '%firstName|there%'];
+        yield 'French' => ['fr', '%firstName|à vous%'];
+        yield 'German' => ['de', '%firstName|zusammen%'];
+        yield 'Italian' => ['it', '%firstName|a tutti%'];
+        yield 'Dutch' => ['nl', '%firstName|allemaal%'];
+    }
+
+    #[DataProvider('personalizationLocales')]
+    public function testVariableHelpIsTranslated(string $locale, string $fallback): void
+    {
+        self::bootKernel();
+        $translator = self::getContainer()->get('translator');
+        $originalLocale = $translator->getLocale();
+        $translator->setLocale($locale);
+
+        try {
+            $html = self::getContainer()->get(Environment::class)->render('@PushwordNewsletter/admin/_personalization_help.html.twig', ['usage' => 'automation', 'source' => 'page']);
+            $help = new Crawler($html);
+            self::assertCount(1, $help);
+            self::assertSame(['%name%', '%email%', '%firstName%', $fallback], $help->filter('.pw-newsletter-variables-content > dl dt code')->each(static fn (Crawler $node): string => $node->text()));
+            self::assertStringNotContainsString('newsletter.personalization.', $help->text());
+        } finally {
+            $translator->setLocale($originalLocale);
+        }
+    }
+
     public function testSecondaryCampaignActionsStillSaveAndContinueEditing(): void
     {
         $client = $this->loginUser();
@@ -743,6 +843,8 @@ final class NewsletterAdminTest extends AbstractAdminTestClass
         self::assertStringContainsString('data-pw-editor-widget="editorjs_Automation_steps___stepsname___bodyMarkdown"', $prototype);
         self::assertStringContainsString('data-pw-editorjs-config=', $prototype);
         self::assertStringContainsString('class: window.PushwordNewsletterBlock', $prototype);
+        self::assertStringContainsString('data-pw-mail-variables', $prototype);
+        self::assertStringContainsString('%firstName|there%', $prototype);
         self::assertCount(1, $crawler->filter('script[src*="/bundles/pushwordnewsletter/blocks/blocks.js"]'));
         self::assertSame('Add an email', $crawler->filter('.field-collection-add-button')->text());
         $triggerBody = $crawler->filter('input[name="Automation[activeFrom]"]')->closest('.form-fieldset-body');
@@ -772,6 +874,7 @@ final class NewsletterAdminTest extends AbstractAdminTestClass
 
         $crawler = $client->request(Request::METHOD_GET, '/admin/newsletter/automation/'.$automation->id.'/edit');
         self::assertCount(2, $crawler->filter('.pw-newsletter-sequence .accordion-collapse.show'));
+        self::assertCount(2, $crawler->filter('[data-pw-mail-variables]'));
         self::assertSame('Welcome', $crawler->filter('input[name="Automation[steps][0][subject]"]')->attr('value'));
         self::assertCount(1, $crawler->filter('[data-preview-step="0"]'));
         self::assertCount(1, $crawler->filter('[data-preview-step="1"]'));

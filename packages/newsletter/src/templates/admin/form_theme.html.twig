@@ -36,6 +36,20 @@
   </div>
 {% endblock %}
 
+{% block _Automation_steps_entry_subject_row %}
+  <div class="col-12">
+    {{ include('@PushwordNewsletter/admin/_personalization_help.html.twig', {usage: 'automation', source: form.parent.parent.parent.source.vars.value}, with_context: false) }}
+  </div>
+  {{ block('form_row') }}
+{% endblock %}
+
+{% block _EmailBlock_bodyMarkdown_row %}
+  <div class="col-12">
+    {{ include('@PushwordNewsletter/admin/_personalization_help.html.twig', {usage: 'block'}, with_context: false) }}
+  </div>
+  {{ block('form_row') }}
+{% endblock %}
+
 {% block _Automation_steps_entry_bodyMarkdown_row %}
   {{ block('form_row') }}
   <details class="pw-newsletter-step-preview">

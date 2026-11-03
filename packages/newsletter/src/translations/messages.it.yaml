@@ -138,7 +138,6 @@ newsletter:
     field:
       audience: "Pubblico"
       body: "Contenuto"
-      body.help: "Personalizza con %firstName|a tutti%, %name% o %email%. Il testo dopo | sostituisce il nome mancante."
       bounced: "Rimbalzi"
       clicks: "Clic"
       failed: "Falliti"
@@ -438,6 +437,29 @@ newsletter:
     submit: "Iscriviti"
   menu:
     label: "Newsletter"
+  personalization:
+    automationHelp: "Da usare nell’oggetto e nel contenuto. I dati del destinatario vengono inseriti all’invio di ogni email."
+    blockHelp: "Da usare nel contenuto del blocco. Queste variabili vengono sostituite per ogni destinatario all’invio."
+    campaignHelp: "Da usare nell’oggetto, nel testo di anteprima e nel contenuto, incluse le traduzioni. Queste variabili vengono sostituite per ogni destinatario all’invio."
+    contact: "Contatto che ha avviato la sequenza"
+    contactEmail: "Indirizzo email del contatto iniziale"
+    contactHelp: "Questi valori vengono salvati all’avvio della sequenza. Usa %name% e %email% sopra per i dati attuali del destinatario."
+    contactName: "Nome del contatto iniziale"
+    email: "Indirizzo email del destinatario"
+    fallbackHelp: "Nome, oppure «a tutti» se assente. Puoi modificare il testo dopo |."
+    fallbackToken: "%firstName|a tutti%"
+    firstName: "Nome dalla proprietà firstName del contatto; vuoto se assente"
+    name: "Nome del destinatario"
+    page: "Pagina che ha avviato la sequenza"
+    pageChapeau: "Introduzione della pagina"
+    pageExcerpt: "Estratto della pagina"
+    pageHelp: "Dati della pagina pubblicata, salvati all’attivazione dell’automazione."
+    pageMainContent: "Inizio del contenuto della pagina"
+    pageMainImage: "URL dell’immagine principale"
+    pageTitle: "Titolo della pagina"
+    pageUrl: "URL della pagina"
+    recipient: "Destinatario dell’email"
+    title: "Variabili di personalizzazione"
   recipient:
     field:
       campaign: "Newsletter"

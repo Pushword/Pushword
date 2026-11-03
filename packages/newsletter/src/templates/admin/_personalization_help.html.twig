@@ -1,0 +1,32 @@
+<details class="pw-newsletter-variables"{% if usage == 'automation' %} data-pw-mail-variables{% endif %}>
+  <summary>{{ 'newsletter.personalization.title'|trans }}</summary>
+  <div class="pw-newsletter-variables-content">
+    <p>{{ ('newsletter.personalization.' ~ usage ~ 'Help')|trans }}</p>
+    <h3>{{ 'newsletter.personalization.recipient'|trans }}</h3>
+    <dl>
+      {% for token, label in {'%name%': 'name', '%email%': 'email', '%firstName%': 'firstName'} %}
+        <div><dt><code>{{ token }}</code></dt><dd>{{ ('newsletter.personalization.' ~ label)|trans }}</dd></div>
+      {% endfor %}
+      <div><dt><code>{{ 'newsletter.personalization.fallbackToken'|trans }}</code></dt><dd>{{ 'newsletter.personalization.fallbackHelp'|trans }}</dd></div>
+    </dl>
+    {% if usage == 'automation' %}
+      <section data-pw-variable-source="contact"{% if source != 'contact' %} hidden{% endif %}>
+        <h3>{{ 'newsletter.personalization.contact'|trans }}</h3>
+        <p>{{ 'newsletter.personalization.contactHelp'|trans }}</p>
+        <dl>
+          <div><dt><code>{{ '{{ contact.name }}' }}</code></dt><dd>{{ 'newsletter.personalization.contactName'|trans }}</dd></div>
+          <div><dt><code>{{ '{{ contact.email }}' }}</code></dt><dd>{{ 'newsletter.personalization.contactEmail'|trans }}</dd></div>
+        </dl>
+      </section>
+      <section data-pw-variable-source="page"{% if source != 'page' %} hidden{% endif %}>
+        <h3>{{ 'newsletter.personalization.page'|trans }}</h3>
+        <p>{{ 'newsletter.personalization.pageHelp'|trans }}</p>
+        <dl>
+          {% for token, label in {h1: 'pageTitle', excerpt: 'pageExcerpt', chapeau: 'pageChapeau', mainContent: 'pageMainContent', url: 'pageUrl', mainImage: 'pageMainImage'} %}
+            <div><dt><code>{{ '{{ page.' ~ token ~ ' }}' }}</code></dt><dd>{{ ('newsletter.personalization.' ~ label)|trans }}</dd></div>
+          {% endfor %}
+        </dl>
+      </section>
+    {% endif %}
+  </div>
+</details>

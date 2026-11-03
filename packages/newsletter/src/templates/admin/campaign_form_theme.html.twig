@@ -1,5 +1,12 @@
 {% extends '@PushwordNewsletter/admin/form_theme.html.twig' %}
 
+{% block _Campaign_subject_row %}
+  <div class="col-12">
+    {{ include('@PushwordNewsletter/admin/_personalization_help.html.twig', {usage: 'campaign'}, with_context: false) }}
+  </div>
+  {{ block('form_row') }}
+{% endblock %}
+
 {% block _Campaign_emailLayout_widget %}
   {{ block('choice_widget') }}
   <div class="pw-campaign-design-summary" data-campaign-design-summary

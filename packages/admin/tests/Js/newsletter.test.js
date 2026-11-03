@@ -1,6 +1,52 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { initAutomationRecipients, initCampaignDesigns, initNewsletterDelays, initNewsletterIndexes, numberNewNewsletterStep } from '../../../newsletter/src/Resources/public/admin.js'
+import { initAutomationRecipients, initCampaignDesigns, initNewsletterDelays, initNewsletterIndexes, initNewsletterVariables, numberNewNewsletterStep } from '../../../newsletter/src/Resources/public/admin.js'
+
+describe('newsletter personalization variables', () => {
+  afterEach(() => { document.body.innerHTML = '' })
+
+  const help = '<details data-pw-mail-variables><summary>Variables</summary><p>%name%</p><section data-pw-variable-source="contact">Contact</section><section data-pw-variable-source="page">Page</section></details>'
+
+  function setup(source = 'contact') {
+    document.body.innerHTML = `<form><select name="Automation[source]"><option>contact</option><option>page</option><option>custom</option></select>${help}</form>`
+    const select = document.querySelector('select')
+    select.value = source
+    initNewsletterVariables()
+    return select
+  }
+
+  it('shows only the selected trigger source while preserving recipient variables', () => {
+    const select = setup()
+    expect(document.querySelector('[data-pw-variable-source="contact"]').hidden).toBe(false)
+    expect(document.querySelector('[data-pw-variable-source="page"]').hidden).toBe(true)
+    select.value = 'page'
+    select.dispatchEvent(new Event('change'))
+    expect(document.querySelector('[data-pw-variable-source="contact"]').hidden).toBe(true)
+    expect(document.querySelector('[data-pw-variable-source="page"]').hidden).toBe(false)
+    expect(document.querySelector('details p').textContent).toBe('%name%')
+  })
+
+  it('offers only recipient variables for an extension source without a built-in vocabulary', () => {
+    setup('custom')
+    expect(Array.from(document.querySelectorAll('section')).map((group) => group.hidden)).toEqual([true, true])
+    expect(document.querySelector('details p').textContent).toBe('%name%')
+  })
+
+  it('initializes added steps with the current source and follows later changes', () => {
+    const select = setup('page')
+    const step = document.createElement('div')
+    step.innerHTML = help
+    document.querySelector('form').append(step)
+    initNewsletterVariables(step)
+    initNewsletterVariables()
+    expect(step.querySelector('[data-pw-variable-source="page"]').hidden).toBe(false)
+    expect(step.querySelector('[data-pw-variable-source="contact"]').hidden).toBe(true)
+    select.value = 'contact'
+    select.dispatchEvent(new Event('change'))
+    expect(Array.from(document.querySelectorAll('[data-pw-variable-source="contact"]')).map((group) => group.hidden)).toEqual([false, false])
+    expect(Array.from(document.querySelectorAll('[data-pw-variable-source="page"]')).map((group) => group.hidden)).toEqual([true, true])
+  })
+})
 
 function renderDelay(value) {
   document.body.innerHTML = `<input id="delay" type="number" value="${value}" data-pw-delay-preview>

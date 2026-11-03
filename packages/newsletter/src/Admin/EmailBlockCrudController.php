@@ -34,6 +34,7 @@ class EmailBlockCrudController extends AbstractCrudController
     {
         $crud->overrideTemplate('layout', '@PushwordNewsletter/admin/layout.html.twig')
             ->overrideTemplate('crud/index', '@PushwordNewsletter/admin/index.html.twig')
+            ->addFormTheme('@PushwordNewsletter/admin/form_theme.html.twig')
             ->setEntityLabelInSingular('newsletter.block.singular')->setEntityLabelInPlural('newsletter.block.plural')
             ->setEntityPermission('ROLE_EDITOR')->setDefaultSort(['name' => 'ASC'])->setSearchFields(['name']);
         if (class_exists(EditorjsType::class)) {

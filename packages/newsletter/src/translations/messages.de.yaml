@@ -138,7 +138,6 @@ newsletter:
     field:
       audience: "Zielgruppe"
       body: "Inhalt"
-      body.help: "Personalisieren mit %firstName|zusammen%, %name% oder %email%. Der Text nach | wird verwendet, wenn der Vorname fehlt."
       bounced: "Rückläufer"
       clicks: "Klicks"
       failed: "Fehlgeschlagen"
@@ -438,6 +437,29 @@ newsletter:
     submit: "Abonnieren"
   menu:
     label: "Newsletter"
+  personalization:
+    automationHelp: "Im Betreff und Inhalt verwendbar. Empfängerdaten werden beim Versand jeder E-Mail eingesetzt."
+    blockHelp: "Im Bausteininhalt verwendbar. Diese Variablen werden beim Versand für jeden Empfänger ersetzt."
+    campaignHelp: "Im Betreff, Vorschautext und Inhalt verwendbar, auch in Übersetzungen. Diese Variablen werden beim Versand für jeden Empfänger ersetzt."
+    contact: "Kontakt, der die Sequenz ausgelöst hat"
+    contactEmail: "E-Mail-Adresse des auslösenden Kontakts"
+    contactHelp: "Diese Werte werden beim Start der Sequenz gespeichert. Für die aktuellen Empfängerdaten verwenden Sie oben %name% und %email%."
+    contactName: "Name des auslösenden Kontakts"
+    email: "E-Mail-Adresse des Empfängers"
+    fallbackHelp: "Vorname, sonst „zusammen“. Der Text nach | ist anpassbar."
+    fallbackToken: "%firstName|zusammen%"
+    firstName: "Vorname aus der Kontakteigenschaft firstName; leer, wenn nicht vorhanden"
+    name: "Name des Empfängers"
+    page: "Seite, die die Sequenz ausgelöst hat"
+    pageChapeau: "Vorspann der Seite"
+    pageExcerpt: "Seitenauszug"
+    pageHelp: "Daten der veröffentlichten Seite, gespeichert beim Auslösen der Automatisierung."
+    pageMainContent: "Anfang des Seiteninhalts"
+    pageMainImage: "URL des Hauptbildes"
+    pageTitle: "Seitentitel"
+    pageUrl: "Seiten-URL"
+    recipient: "E-Mail-Empfänger"
+    title: "Personalisierungsvariablen"
   recipient:
     field:
       campaign: "Newsletter"
