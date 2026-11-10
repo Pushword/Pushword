@@ -1,8 +1,7 @@
 ---
-title: 'conversation notification templates can be overridden; selected messages support delayed delivery'
+title: ''
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
-run: 'doctrine:schema:update --force'
 ---
 
 <!--
@@ -35,16 +34,3 @@ belongs in the feature doc, which you link to instead.
 
 Several changes land here between two tags: append to the file, do not replace it.
 -->
-
-**Concerns:** `pushword/conversation`
-
-## Conversation notification templates
-
-Individual subjects, HTML and plain text now use [overridable Twig templates](/extension/conversation#customize-individual-notifications); visitor content is escaped in HTML.
-**Sites customizing conversation templates:** Symfony overrides in `templates/bundles/PushwordConversationBundle/` now take priority over bundled templates. Review existing overrides, then clear the cache in each environment used (for example `cache:clear --env=prod` and `cache:clear --env=test`).
-
-## Delayed conversation notifications
-
-Update the packages, then run `doctrine:schema:update --force` to add the notification queue fields and index.
-**Sites using `notificationDelay` (for example `600` seconds / ten minutes):** run `pw:conversation:notify-pending` every minute, clear the application/test caches, restart the scheduler worker if used, and run the tests before enabling delivery; see the [integration steps](/extension/conversation#delay-one-message-notification).
-The worker must keep running even when a visitor abandons the optional form step; no Messenger transport or HTTP sleep is required, and later updates after delivery send no second email.

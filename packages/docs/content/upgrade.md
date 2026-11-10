@@ -16,6 +16,7 @@ Package names omit `pushword/`; `js-helper` is the npm package
 
 | Version | Packages | What changed |
 | --- | --- | --- |
+| [1.0.107](/upgrade/1.0.107) | `conversation` | conversation notification templates can be overridden; selected messages support delayed delivery — run `doctrine:schema:update --force` |
 | [1.0.104](/upgrade/1.0.104) | `core` `static-generator` | native accelerators need rebuilding; page corpus checks need a new index — run `doctrine:schema:update --force` |
 | [1.0.103](/upgrade/1.0.103) | `core` `newsletter` | missing media URLs return empty 404 responses; newsletter dates use the editorial timezone |
 | [1.0.100](/upgrade/1.0.100) | `newsletter` | newsletter custom designs use configured Twig templates |
