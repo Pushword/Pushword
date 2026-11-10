@@ -67,8 +67,8 @@ final class NewMessageMailNotifierTest extends KernelTestCase
         });
 
         $notifier = $this->createNotifier($mailer);
-        $notifier->sendMessage($message);
-        $notifier->sendMessage($message);
+        self::assertTrue($notifier->sendMessage($message));
+        self::assertTrue($notifier->sendMessage($message));
     }
 
     public function testAllThreeTemplatesCanBeOverriddenWithTheFullContext(): void
@@ -106,8 +106,7 @@ final class NewMessageMailNotifierTest extends KernelTestCase
         self::bootKernel();
         self::getContainer()->get(Environment::class)->setLoader(new ArrayLoader());
 
-        $this->createNotifier(null)->sendMessage($this->createMessage());
-        $this->expectNotToPerformAssertions();
+        self::assertFalse($this->createNotifier(null)->sendMessage($this->createMessage()));
     }
 
     private function createMessage(): Message

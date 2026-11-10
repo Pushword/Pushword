@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pushword\Conversation\Service;
 
 use DateInterval;
+use DateTimeImmutable;
 use DateTimeInterface;
 use Doctrine\ORM\EntityManagerInterface;
 use Exception;
@@ -23,6 +24,7 @@ use Symfony\Contracts\Cache\ItemInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use Twig\Environment;
 
+#[AutoconfigureTag('doctrine.orm.entity_listener', ['entity' => Message::class, 'event' => 'prePersist'])]
 #[AutoconfigureTag('doctrine.orm.entity_listener', ['entity' => Message::class, 'event' => 'postPersist'])]
 #[AutoconfigureTag('doctrine.orm.entity_listener', ['entity' => Message::class, 'event' => 'postUpdate'])]
 class NewMessageMailNotifier
@@ -73,10 +75,22 @@ class NewMessageMailNotifier
         return $result;
     }
 
+    public function prePersist(Message $message): void
+    {
+        if ($this->importContext->isImporting() || false === filter_var($message->authorEmail, \FILTER_VALIDATE_EMAIL)) {
+            return;
+        }
+
+        $delay = $message->getCustomProperty('notificationDelay');
+        if (\is_int($delay) && $delay > 0) {
+            $message->notificationSendAfter = new DateTimeImmutable()->modify('+'.$delay.' seconds');
+        }
+    }
+
     public function postUpdate(Message $message): void
     {
-        if ($this->importContext->isImporting()) {
-            return; // Skip notifications during import
+        if ($this->importContext->isImporting() || $message->notificationSendAfter instanceof DateTimeImmutable) {
+            return;
         }
 
         if ($this->security->getUser() instanceof UserInterface) {
@@ -92,8 +106,8 @@ class NewMessageMailNotifier
 
     public function postPersist(Message $message): void
     {
-        if ($this->importContext->isImporting()) {
-            return; // Skip notifications during import
+        if ($this->importContext->isImporting() || $message->notificationSendAfter instanceof DateTimeImmutable) {
+            return;
         }
 
         if (false === filter_var($message->authorEmail, \FILTER_VALIDATE_EMAIL)) {
@@ -105,23 +119,30 @@ class NewMessageMailNotifier
         $this->sendMessage($message);
     }
 
-    public function sendMessage(Message $message): void
+    public function sendMessage(Message $message): bool
     {
-        if (! $this->emailSender->canSend($this->envelope)) {
+        $envelope = $this->emailSender->resolveEnvelope(
+            'conversation_notification_email_from',
+            'conversation_notification_email_to',
+            $message->host,
+        );
+        if (! $this->emailSender->canSend($envelope)) {
             $this->logger->info('Not sending conversation notification: email not configured');
 
-            return;
+            return false;
         }
 
         $authorEmail = $message->authorEmail ?? throw new Exception();
-        $cacheKey = 'conversation_message_'.md5($message->getContent().' '.$message->authorEmail);
+        $cacheKey = 'conversation_message_'.($message->notificationSendAfter instanceof DateTimeImmutable
+            ? $message->getOrGenerateUuid()
+            : md5($message->getContent().' '.$message->authorEmail));
 
-        $this->cache->get($cacheKey, function (ItemInterface $item) use ($message, $authorEmail): bool {
+        return $this->cache->get($cacheKey, function (ItemInterface $item) use ($message, $authorEmail, $envelope): bool {
             $item->expiresAfter(600); // 10 minutes
 
             $context = [
                 'message' => $message,
-                'appName' => $this->appName,
+                'appName' => $this->apps->get($message->host)->getStr('name'),
                 'content' => htmlspecialchars_decode($message->getContent()),
                 'authorName' => $message->authorName ?? '...',
                 'authorEmail' => $authorEmail,
@@ -134,9 +155,12 @@ class NewMessageMailNotifier
             $htmlBody = $this->twig->render('@PushwordConversation/conversation/new_message.html.twig', $context);
             $textBody = $this->twig->render('@PushwordConversation/conversation/new_message.txt.twig', $context);
 
-            $this->emailSender->send($this->envelope->withReplyTo($authorEmail), $subject, $htmlBody, $textBody);
+            $sent = $this->emailSender->send($envelope->withReplyTo($authorEmail), $subject, $htmlBody, $textBody);
+            if (! $sent) {
+                $item->expiresAfter(0);
+            }
 
-            return true;
+            return $sent;
         });
     }
 

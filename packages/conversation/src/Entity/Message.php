@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pushword\Conversation\Entity;
 
 use DateTime;
+use DateTimeImmutable;
 use DateTimeInterface;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
@@ -24,6 +25,7 @@ use Symfony\Component\HttpFoundation\IpUtils;
 use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: MessageRepository::class)]
+#[ORM\Index(name: 'notification_pending_idx', fields: ['notificationSentAt', 'notificationSendAfter'])]
 #[ORM\InheritanceType('SINGLE_TABLE')]
 #[ORM\DiscriminatorColumn(name: 'message_type', type: Types::INTEGER, options: ['default' => 0])]
 #[ORM\DiscriminatorMap([
@@ -92,6 +94,12 @@ class Message implements Stringable, Taggable, IdInterface
 
     #[ORM\Column(type: Types::STRING, length: 5, nullable: true)]
     public ?string $locale = null;
+
+    #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true)]
+    public ?DateTimeImmutable $notificationSendAfter = null;
+
+    #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true)]
+    public ?DateTimeImmutable $notificationSentAt = null;
 
     public function __construct()
     {

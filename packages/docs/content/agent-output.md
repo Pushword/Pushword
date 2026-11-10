@@ -36,7 +36,7 @@ Agent JSON usually includes `tool` and `result`:
 `pw:image:cache`, `pw:media:license`, `pw:media:usage:rebuild`, `pw:media:clean-unused`,
 `pw:pages-list:lint`, `pw:link-improver`, `pw:quiz:validate`, `pw:repurpose:render`,
 `pw:repurpose:validate`, `pw:repurpose:fonts`, `pw:repurpose:motion`, `pw:newsletter:tick`, `pw:newsletter:send`,
-`pw:newsletter:bounces`, `pw:schema:dump`, `pw:page:delete`, `pw:show-more:convert`.
+`pw:newsletter:bounces`, `pw:conversation:notify-pending`, `pw:schema:dump`, `pw:page:delete`, `pw:show-more:convert`.
 (`pw:media:debug --json`, `pw:quiz:schema` and
 `pw:repurpose:schema` already emit JSON.)
 
