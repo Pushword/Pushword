@@ -1,5 +1,5 @@
 ---
-title: ''
+title: 'conversation notification templates can be overridden'
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -34,3 +34,10 @@ belongs in the feature doc, which you link to instead.
 
 Several changes land here between two tags: append to the file, do not replace it.
 -->
+
+**Concerns:** `pushword/conversation`
+
+## Conversation notification templates
+
+Individual subjects, HTML and plain text now use [overridable Twig templates](/extension/conversation#customize-individual-notifications); visitor content is escaped in HTML.
+**Sites customizing conversation templates:** Symfony overrides in `templates/bundles/PushwordConversationBundle/` now take priority over bundled templates. Review existing overrides, then clear the cache in each environment used (for example `cache:clear --env=prod` and `cache:clear --env=test`).

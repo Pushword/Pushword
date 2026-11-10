@@ -1,0 +1,6 @@
+<div>{{ content|nl2br }}</div>
+<hr>
+<p>
+  {{ 'adminConversationNotificationSentBy'|trans({'%authorName%': authorName, '%authorEmail%': authorEmail}) }}<br>
+  {{ 'adminConversationNotificationFrom'|trans({'%host%': host, '%referring%': referring}) }}
+</p>

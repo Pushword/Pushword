@@ -96,6 +96,35 @@ Messages with a valid author email are notified one by one. For the others, sche
 `Pushword\Conversation\Service\NewMessageMailNotifier::send()`, which mails a summary at
 most once per interval.
 
+### Customize individual notifications
+
+Override any of these templates in
+`templates/bundles/PushwordConversationBundle/conversation/`:
+
+- `new_message.subject.txt.twig`: subject, normalized to one line after rendering.
+- `new_message.html.twig`: HTML body, with Twig HTML escaping.
+- `new_message.txt.twig`: plain text body.
+
+Their namespace is `@PushwordConversation/conversation/`. All three receive:
+
+| Variable | Value |
+| --- | --- |
+| `message` | Complete `Message` entity, including custom properties |
+| `appName` | Site name |
+| `content` | Message content decoded once with `htmlspecialchars_decode`; untrusted plain text |
+| `authorName` | Contact name, or `...` when null |
+| `authorEmail` | Contact email; also used as Reply-To |
+| `host` | Message host |
+| `referring` | Message form/page identifier |
+
+Keep `{% autoescape false %}` around subject and plain text overrides. In HTML,
+use `{{ content|nl2br }}` to preserve line breaks while escaping visitor content;
+never mark it `raw`. The default plain text keeps the translated sender and
+`form[...]` origin markers. Sites parsing notifications should preserve these markers
+in their overrides. Duplicate content from the same email is suppressed for ten minutes.
+
+The batch summary continues to use `notification.html.twig` with `appName` and `messages`.
+
 ## Customize
 
 Override `@PushwordConversation/conversation/conversation.html.twig`, or per step

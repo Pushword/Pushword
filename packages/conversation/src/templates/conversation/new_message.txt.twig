@@ -1,0 +1,7 @@
+{% autoescape false %}
+{{ content }}
+
+---
+{{ 'adminConversationNotificationSentBy'|trans({'%authorName%': authorName, '%authorEmail%': authorEmail}) }}
+{{ 'adminConversationNotificationFrom'|trans({'%host%': host, '%referring%': referring}) }}
+{% endautoescape %}

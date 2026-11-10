@@ -21,6 +21,7 @@ use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Contracts\Cache\CacheInterface;
 use Symfony\Contracts\Cache\ItemInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
+use Twig\Environment;
 
 #[AutoconfigureTag('doctrine.orm.entity_listener', ['entity' => Message::class, 'event' => 'postPersist'])]
 #[AutoconfigureTag('doctrine.orm.entity_listener', ['entity' => Message::class, 'event' => 'postUpdate'])]
@@ -45,6 +46,7 @@ class NewMessageMailNotifier
         private readonly Security $security,
         private readonly CacheInterface $cache,
         private readonly ImportContext $importContext,
+        private readonly Environment $twig,
     ) {
         $this->envelope = $this->emailSender->resolveEnvelope(
             'conversation_notification_email_from',
@@ -112,27 +114,27 @@ class NewMessageMailNotifier
         }
 
         $authorEmail = $message->authorEmail ?? throw new Exception();
-        $subject = $this->translator->trans('adminConversationNotificationTitleSingular', ['%appName%' => $this->appName]);
-
         $cacheKey = 'conversation_message_'.md5($message->getContent().' '.$message->authorEmail);
 
-        $this->cache->get($cacheKey, function (ItemInterface $item) use ($message, $authorEmail, $subject): bool {
+        $this->cache->get($cacheKey, function (ItemInterface $item) use ($message, $authorEmail): bool {
             $item->expiresAfter(600); // 10 minutes
 
-            $envelopeWithReply = $this->envelope->withReplyTo($authorEmail);
+            $context = [
+                'message' => $message,
+                'appName' => $this->appName,
+                'content' => htmlspecialchars_decode($message->getContent()),
+                'authorName' => $message->authorName ?? '...',
+                'authorEmail' => $authorEmail,
+                'host' => $message->host,
+                'referring' => $message->referring,
+            ];
+            $subject = $this->twig->render('@PushwordConversation/conversation/new_message.subject.txt.twig', $context);
+            $subject = trim(preg_replace('/\R/u', ' ', $subject) ?? throw new Exception());
 
-            $textBody = htmlspecialchars_decode($message->getContent())
-                ."\n\n---\n"
-                .$this->translator->trans('adminConversationNotificationSentBy', [
-                    '%authorName%' => $message->authorName ?? '...',
-                    '%authorEmail%' => $message->authorEmail,
-                ])
-                ."\n".$this->translator->trans('adminConversationNotificationFrom', [
-                    '%host%' => $message->host,
-                    '%referring%' => $message->referring,
-                ]);
+            $htmlBody = $this->twig->render('@PushwordConversation/conversation/new_message.html.twig', $context);
+            $textBody = $this->twig->render('@PushwordConversation/conversation/new_message.txt.twig', $context);
 
-            $this->emailSender->send($envelopeWithReply, $subject, nl2br($textBody), $textBody);
+            $this->emailSender->send($this->envelope->withReplyTo($authorEmail), $subject, $htmlBody, $textBody);
 
             return true;
         });
