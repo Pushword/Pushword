@@ -65,11 +65,6 @@ final class LoginTokenTest extends TestCase
         self::assertSame(LoginToken::TYPE_SET_PASSWORD, $token->type);
     }
 
-    public function testTokenTtl(): void
-    {
-        self::assertGreaterThan(0, LoginToken::TTL_SECONDS);
-    }
-
     public function testExpiresAtIsOneHourFromCreation(): void
     {
         $user = new User();
@@ -78,6 +73,6 @@ final class LoginTokenTest extends TestCase
         $token = new LoginToken($user);
 
         $diff = $token->expiresAt->getTimestamp() - $token->createdAt->getTimestamp();
-        self::assertSame(LoginToken::TTL_SECONDS, $diff);
+        self::assertSame(3600, $diff);
     }
 }

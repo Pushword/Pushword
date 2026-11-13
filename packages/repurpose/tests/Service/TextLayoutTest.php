@@ -104,8 +104,7 @@ final class TextLayoutTest extends TestCase
             self::assertNotSame('?', trim($line->text), 'the question mark stayed glued to its word');
         }
 
-        $last = end($lines);
-        self::assertNotFalse($last);
+        $last = $lines[\count($lines) - 1];
         self::assertStringEndsWith("\u{00A0}?", $last->text);
     }
 
