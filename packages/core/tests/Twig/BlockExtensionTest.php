@@ -12,6 +12,7 @@ use Pushword\Core\Twig\BlockExtension;
 use function Safe\preg_match;
 
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
+use Symfony\Component\DomCrawler\Crawler;
 
 #[Group('integration')]
 final class BlockExtensionTest extends KernelTestCase
@@ -125,6 +126,27 @@ final class BlockExtensionTest extends KernelTestCase
 
         self::assertStringContainsString('data-type="image"', $html);
         self::assertStringContainsString('data-dwl="/media/default/2.webp"', $html);
+    }
+
+    public function testGalleryItemLinkOverrideDoesNotAffectFollowingImages(): void
+    {
+        $html = $this->getBlockExtension()->renderGallery([
+            '1.jpg' => ['First image', false],
+            '2.jpg' => 'Second image',
+        ]);
+        $items = new Crawler($html)->filter('li');
+
+        self::assertCount(0, $items->eq(0)->filter('[data-gallery]'));
+        self::assertCount(1, $items->eq(1)->filter('[data-gallery]'));
+    }
+
+    public function testGalleryWithoutLinksRendersImagesInsteadOfHtmlText(): void
+    {
+        $html = $this->getBlockExtension()->renderGallery(['1.jpg' => 'First image', '2.jpg' => 'Second image'], clickable: false);
+        $gallery = new Crawler($html);
+
+        self::assertCount(2, $gallery->filter('picture img'));
+        self::assertCount(0, $gallery->filter('[data-gallery]'));
     }
 
     /** A few images sit in one centered row at native ratios, not in a cropped grid. */

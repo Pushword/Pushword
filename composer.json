@@ -208,6 +208,7 @@
     "dev": "cd packages/dev-app && symfony server:start -d --no-tls",
     "stan": "vendor/bin/phpstan",
     "twigstan": "./.scripts/twigstan/run",
+    "twigstan-ci": ["./.scripts/twigstan/run --ci", "@php .scripts/twigstan/check-ci-coverage.php"],
     "test-twigstan": "composer --working-dir=.scripts/twigstan test",
     "test": "./.scripts/test $*",
     "test-live": "PANTHER_NO_HEADLESS=1 PANTHER_NO_SANDBOX=1 composer test $*",

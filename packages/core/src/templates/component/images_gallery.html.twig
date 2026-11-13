@@ -29,7 +29,7 @@
 <ul class="{{ gallery_class|default(default_gallery_class) }}">
   {% for media, mediaData in images %}
     {# Normalize input: extract current_media, imageClickable, linkAttr, linkObfuscate #}
-    {% set imageClickable = imageClickable ?? clickable ?? true %}
+    {% set imageClickable = clickable ?? true %}
     {% set linkAttr = null %}
     {% set linkObfuscate = true %}
 
@@ -74,7 +74,7 @@
       {% elseif imageClickable %}
         {{ link(img, imageClickable, linkAttr ?? {}, linkObfuscate) }}
       {% else %}
-        {{ img }}
+        {{ img|raw }}
       {% endif %}
 
       {% if wrapInContainer %}</div>{% endif %}

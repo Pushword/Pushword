@@ -1,5 +1,5 @@
 ---
-title: ''
+title: 'gallery link overrides apply to one image'
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -34,3 +34,12 @@ belongs in the feature doc, which you link to instead.
 
 Several changes land here between two tags: append to the file, do not replace it.
 -->
+
+**Concerns:** `pushword/core`
+
+## Gallery links
+
+An image's link override now applies only to that image. Sites overriding
+`component/images_gallery.html.twig` should reset `imageClickable` from
+`clickable ?? true` on each loop iteration and render unlinked images with
+`{{ img|raw }}`.

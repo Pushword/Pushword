@@ -20,6 +20,7 @@ From the repository root:
 ```shell
 composer twigstan
 composer twigstan -- packages/core/src/templates/user/forgot_password.html.twig
+composer twigstan-ci
 composer test-twigstan
 ```
 
@@ -40,12 +41,47 @@ To analyze another configured site:
 PUSHWORD_TWIGSTAN_HOST=pushword.piedweb.com composer twigstan
 ```
 
-The analysis uses its own Symfony container and separates TwigStan caches by host
-and patch lock. PAO is disabled for this command because its PHPStan formatter
+The analysis uses its own Symfony container and separates TwigStan caches by host,
+patch lock and PHP view adapter. Literal PHP `getView()` calls are resolved for the
+selected site too, so their render arguments reach TwigStan's context collectors.
+Dynamic template names remain unresolved.
+
+PAO is disabled for this command because its PHPStan formatter
 replaces the result files TwigStan needs. Remaining template diagnostics still
-make the command fail. CI runs the patch regression fixtures and analyzes the
-password-reset template to check the application integration. Full project
-analysis is not a required check.
+make the command fail.
+
+### CI scope and diagnostic triage
+
+`composer twigstan-ci` checks the 22 entry templates listed in
+`.scripts/twigstan/ci.php`, plus their dependencies, at level 8. They cover login and
+password forms, links, cards, videos, conversation notifications, static-server
+configuration and progress fragments. The command also verifies that each entry
+has a PHP render context; losing a collector cannot silently remove it from the
+check. There is no baseline or ignored error in this scope.
+
+The initial full run reported 159 diagnostics. Each was assigned to one of these
+investigation groups; the counts are diagnostics, not confirmed bugs:
+
+| Group | Diagnostics | Follow-up |
+| --- | ---: | --- |
+| EasyAdmin vendor templates | 60 | Embedded-template compilation and admin context typing |
+| Controller, branch and form-theme context propagation | 44 | Preserve controller context separately from form widget context |
+| Generated guards and specialized contexts | 23 | Distinguish redundant generated checks from template errors |
+| Nullable request, admin, field or review context | 17 | Check request and branch narrowing before changing templates |
+| Generated write-only escaper properties | 6 | TwigStan compiler output |
+| Guarded optional values | 5 | Check `is defined` and coalescing propagation |
+| Library type contracts | 4 | Compare declared types with runtime behavior |
+
+For example, the Git history timestamp renders correctly as an integer despite
+IntlExtension's narrower PHPDoc, and newsletter design variables are supplied by
+the controller despite form-theme diagnostics. Existing runtime tests cover these
+cases. The PHP view adapter expands the full analysis and can expose additional
+diagnostics; the full command remains outside the required CI check.
+
+Inspecting the gallery also uncovered two runtime bugs: an image's link override
+leaked to following images, and unlinked images were escaped as HTML text. Both
+have rendering regression tests. The gallery remains outside TwigStan CI while
+its generated optional-attribute guards still produce false positives.
 
 When an upstream release fixes either issue, remove the corresponding patch entry
 and file, update the pinned dependencies in `.scripts/twigstan/composer.json`, then run:

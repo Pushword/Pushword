@@ -34,7 +34,8 @@
   "scripts": {
     "test": [
       "@composer install --no-interaction --no-progress",
-      "@php tests/run.php"
+      "@php tests/run.php",
+      "@php phpstan.php analyse --configuration=tests/phpstan.neon --no-progress --no-ansi"
     ]
   },
   "config": {

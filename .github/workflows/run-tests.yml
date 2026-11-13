@@ -40,10 +40,10 @@ jobs:
       - name: Twig CS
         run: vendor/bin/twig-cs-fixer lint --report=github
 
-      - name: TwigStan patch regressions
+      - name: TwigStan
         run: |
           composer test-twigstan
-          composer twigstan -- packages/core/src/templates/user/forgot_password.html.twig
+          composer twigstan-ci
 
       - name: Symfony LSP
         run: symfony lsp:check --format=github

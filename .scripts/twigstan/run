@@ -9,4 +9,10 @@ cd "$repo_dir"
 
 # PAO replaces PHPStan's custom result formatter, which TwigStan needs to collect contexts.
 export PAO_DISABLE=1
-exec php "$tool_dir/analyze.php" analyze --configuration="$tool_dir/twigstan.php" "$@"
+configuration="$tool_dir/twigstan.php"
+if [[ "${1:-}" == "--ci" ]]; then
+    configuration="$tool_dir/ci.php"
+    shift
+fi
+
+exec php "$tool_dir/analyze.php" analyze --configuration="$configuration" "$@"
