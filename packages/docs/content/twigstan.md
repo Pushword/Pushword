@@ -18,7 +18,7 @@ the application's Twig environment and does not add a TwigStan dependency to cor
 Install the development package alongside Pushword core 1.0.108 or later:
 
 ```shell
-composer require --dev pushword/twigstan:^1.0.108
+composer require --dev pushword/twigstan:^1.0.108.1
 ```
 
 Follow the [package setup](https://github.com/Pushword/twigstan#install): a small

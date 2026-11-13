@@ -8,7 +8,7 @@ Twig `view()` and PHP `getView()` calls using the selected site's template resol
 Requires PHP 8.5 and Pushword core 1.0.108 or later.
 
 ```shell
-composer require --dev pushword/twigstan:^1.0.108
+composer require --dev pushword/twigstan:^1.0.108.1
 ```
 
 Create `.scripts/TwigStanKernel.php` outside the application service scan:

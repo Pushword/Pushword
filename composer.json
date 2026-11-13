@@ -210,7 +210,7 @@
     "stan": "vendor/bin/phpstan",
     "twigstan": "./.scripts/twigstan/run",
     "twigstan-ci": "./.scripts/twigstan/run --ci",
-    "test-twigstan": ["@composer --working-dir=packages/twigstan test", "@php .scripts/twigstan/tests/bootstrap.php", "@php .scripts/twigstan/phpstan.php analyse --configuration=.scripts/twigstan/tests/phpstan.neon --no-progress --no-ansi"],
+    "test-twigstan": ["@composer --working-dir=packages/twigstan test", "@php .scripts/twigstan/tests/bootstrap.php", "@php .scripts/twigstan/phpstan.php analyse --configuration=.scripts/twigstan/tests/phpstan.neon --no-progress --no-ansi -- .scripts/twigstan/tests/view-types.php packages/twigstan/src .scripts/twigstan/AnalysisKernel.php"],
     "test": "./.scripts/test $*",
     "test-live": "PANTHER_NO_HEADLESS=1 PANTHER_NO_SANDBOX=1 composer test $*",
     "test-mariadb": "PUSHWORD_TEST_DATABASE_BASE_URL='mysql://pushword:pushword@127.0.0.1:3306/pushword_test?serverVersion=11.8.6-MariaDB&charset=utf8mb4' ./.scripts/test $*",
