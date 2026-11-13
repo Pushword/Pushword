@@ -30,3 +30,9 @@
     </details>
   </div>
 {% endblock %}
+
+{% block _Campaign_smsContent_widget %}
+  {% set attr = attr|merge({'aria-describedby': (attr['aria-describedby']|default('') ~ ' ' ~ id ~ '_count')|trim}) %}
+  {{ block('textarea_widget') }}
+  <output id="{{ id }}_count" for="{{ id }}" class="form-text pw-sms-counter" data-sms-counter data-limit="480" data-template="{{ 'newsletter.sms.characters'|trans({'%count%': '__count__'}) }}" data-too-long="{{ 'newsletter.sms.contentInvalid'|trans }}" aria-live="polite">{{ 'newsletter.sms.characters'|trans({'%count%': value|length}) }}</output>
+{% endblock %}

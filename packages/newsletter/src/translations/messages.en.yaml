@@ -493,25 +493,34 @@ newsletter:
     inherit: "Use audience sender"
     label: "Sender profile"
   sms:
-    actionDone: "SMS request recorded. Queued tests will be sent automatically."
     actionFailed: "The SMS operation failed. Check the connector and the saved draft."
+    addText: "Add SMS text"
     alternative: SMS alternative
     cancel: Cancel pending SMS
-    characters: "%count% characters, up to 480. A message may use several SMS segments."
+    cancelConfirm: "Confirm cancellation"
+    cancelHelp: "Only SMS still waiting for transmission will be cancelled. Emails continue, and messages already handed to the gateway cannot be recalled."
+    characters: "%count% / 480 characters"
     consentAt: SMS permission recorded on
     consentHelp: "Enter only with evidence of SMS permission. Clearing this date stops pending and future SMS."
     content: SMS text
     contentHelp: "Optional text for consenting mobile contacts without an email. Email takes priority. Up to 480 characters after personalization."
     contentInvalid: "SMS text must contain between 1 and 480 characters after personalization."
-    disabled: "SMS sending is paused. Preparation remains available."
+    deliveryHelp: "Gateway acceptance does not confirm delivery. Test messages are separate from campaign totals."
+    disabled: "SMS sending is paused. You can still prepare the text and review recipients."
     doNotContact: Do not contact by SMS
+    emailTest: "Send email test"
+    emptyHelp: "Add a short alternative for mobile contacts without an email address. You can then review recipients and send yourself a test."
+    history: "SMS delivery"
+    manageContacts: "Review contacts"
     mobile: This number receives SMS
     nextAttempt: Next attempt
-    phone: Phone
+    noRecipients: "No eligible SMS recipients. Check phone numbers, SMS permission and whether contacts already have an email."
+    pendingCancelled: "Pending SMS have been cancelled."
     preferences: SMS preferences
     recipients: "%count% SMS recipient(s)"
     refresh: Refresh SMS delivery
     retrying: "Awaiting retry after an uncertain gateway response."
+    routingHelp: "For consenting mobile contacts without an email. Email takes priority."
     state:
       accepted: Accepted by gateway
       delivered: Delivery reported
@@ -519,12 +528,14 @@ newsletter:
       pending: Pending
       sent: Sent to mobile network
       skipped: Excluded
-    status: Status
-    test: Queue an SMS test
-    testHelp: "Use an international number starting with +. The saved default text is sent exactly as shown, under the shared quota."
+    test: "Send SMS test"
+    testHelp: "Use an international number starting with +. The text above is queued exactly as shown and respects the shared quota."
     testInvalid: "Save a draft with valid SMS text and an international test number before testing."
     testLabel: Test
     testPhone: Test phone number
+    testQueued: "SMS test queued. Its status appears in SMS delivery."
+    testTitle: "Test this SMS"
+    trackingUpdated: "SMS delivery status refreshed."
     unconfigured: "Configure the SMS connector before authorizing a campaign with an SMS alternative."
   statistics:
     aboutActivity: "About these events"

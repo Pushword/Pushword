@@ -26,6 +26,7 @@ use EasyCorp\Bundle\EasyAdminBundle\Field\TextareaField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextField;
 use EasyCorp\Bundle\EasyAdminBundle\Form\Type\ComparisonType;
 use EasyCorp\Bundle\EasyAdminBundle\Router\AdminUrlGenerator;
+use InvalidArgumentException;
 use LogicException;
 use Override;
 use Pushword\AdminBlockEditor\Form\EditorjsType;
@@ -167,7 +168,7 @@ class CampaignCrudController extends AbstractCrudController
             return $responseParameters;
         }
 
-        if ($this->smsSettings->isConfigured() && $campaign->hasSmsAlternative()) {
+        if ($this->smsSettings->isConfigured()) {
             $responseParameters->set('sms_configured', true);
             $responseParameters->set('sms_enabled', $this->smsSettings->canSend());
             $responseParameters->set('sms_reference', Uuid::v7()->toRfc4122());
@@ -251,7 +252,7 @@ class CampaignCrudController extends AbstractCrudController
             ->setCssClass('btn btn-outline-secondary');
 
         // A test never touches recipients or counters, so it stays available.
-        $sendTest = Action::new('sendTest', 'newsletter.campaign.action.sendTest', 'fa fa-flask')
+        $sendTest = Action::new('sendTest', $this->smsSettings->isConfigured() ? 'newsletter.sms.emailTest' : 'newsletter.campaign.action.sendTest', 'fa fa-flask')
             ->linkToCrudAction('sendTest')
             ->setCssClass('btn btn-outline-secondary');
 
@@ -350,8 +351,7 @@ class CampaignCrudController extends AbstractCrudController
             yield FormField::addFieldset('newsletter.sms.alternative')->hideOnIndex()->setIcon('fa fa-comment-sms');
             yield TextareaField::new('smsContent', 'newsletter.sms.content')->setRequired(false)->hideOnIndex()
                 ->setColumns('col-12')->setNumOfRows(4)->setHelp('newsletter.sms.contentHelp')
-                ->setFormTypeOption('disabled', ! $preparing)
-                ->setFormTypeOption('attr', ['maxlength' => 480]);
+                ->setFormTypeOption('disabled', ! $preparing);
         }
 
         yield FormField::addFieldset('newsletter.campaign.fieldset.audience')->setIcon('fa fa-users');
@@ -484,7 +484,13 @@ class CampaignCrudController extends AbstractCrudController
                 'cancel' => $this->smsSender->cancel($campaign),
                 default => throw $this->createNotFoundException(),
             };
-            $this->addFlash('success', 'newsletter.sms.actionDone');
+            $this->addFlash('success', match ($operation) {
+                'test' => 'newsletter.sms.testQueued',
+                'refresh' => 'newsletter.sms.trackingUpdated',
+                'cancel' => 'newsletter.sms.pendingCancelled',
+            });
+        } catch (InvalidArgumentException) {
+            $this->addFlash('danger', 'newsletter.sms.testInvalid');
         } catch (Throwable) {
             $this->addFlash('danger', 'newsletter.sms.actionFailed');
         }

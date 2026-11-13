@@ -215,3 +215,185 @@
     padding: 1.5rem;
   }
 }
+
+.pw-sms-review {
+  margin-block-start: 2rem;
+  padding-block-start: 1.5rem;
+  border-block-start: 1px solid var(--bs-border-color);
+}
+
+.pw-sms-heading,
+.pw-sms-identity {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+}
+
+.pw-sms-heading {
+  justify-content: space-between;
+  margin-block-end: 0.75rem;
+}
+
+.pw-sms-review :is(h2, h3) {
+  margin: 0;
+  font-size: var(--pw-text-md);
+  font-weight: 600;
+}
+
+.pw-sms-review :is(p, li, strong, time, .badge) {
+  overflow-wrap: anywhere;
+}
+
+.pw-sms-review :is(.pw-sms-meta, .pw-sms-delivery-text, .pw-sms-preview) {
+  max-inline-size: 65ch;
+}
+
+.pw-sms-meta {
+  margin-block: 0.5rem 0;
+  color: var(--bs-secondary-color);
+  font-size: var(--pw-text-sm);
+  line-height: 1.6;
+}
+
+.pw-sms-preview,
+.pw-sms-empty {
+  margin-block: 1rem;
+  padding: 1.25rem;
+  border-radius: var(--pw-radius-md);
+  background: var(--bs-tertiary-bg);
+}
+
+.pw-sms-preview p,
+.pw-sms-delivery-text {
+  margin: 0;
+  white-space: pre-wrap;
+  line-height: 1.6;
+}
+
+.pw-sms-notice {
+  margin-block: 1rem;
+  font-size: var(--pw-text-sm);
+  font-weight: 500;
+}
+
+.pw-sms-recipients {
+  margin-block: 1.25rem;
+}
+
+.pw-sms-recipients ul,
+.pw-sms-deliveries {
+  list-style: none;
+  padding: 0;
+  margin: 1rem 0 0;
+}
+
+.pw-sms-recipients li + li {
+  margin-block-start: 0.75rem;
+}
+
+.pw-sms-recipients li > span {
+  display: block;
+  margin: 0;
+}
+
+.pw-sms-test,
+.pw-sms-history {
+  margin-block-start: 2rem;
+}
+
+.pw-sms-test h3 {
+  margin-block-end: 1rem;
+}
+
+.pw-sms-test-controls {
+  display: flex;
+  align-items: stretch;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  max-inline-size: 36rem;
+}
+
+.pw-sms-test-controls input {
+  flex: 1 1 14rem;
+  min-inline-size: 0;
+}
+
+.pw-sms-test-controls button {
+  flex: 0 1 auto;
+  white-space: normal;
+}
+
+.pw-sms-counts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));
+  gap: 1rem;
+  margin-block: 1.25rem;
+}
+
+.pw-sms-counts dt {
+  color: var(--bs-secondary-color);
+  font-size: var(--pw-text-sm);
+  font-weight: 400;
+}
+
+.pw-sms-counts dd {
+  margin: 0.25rem 0 0;
+  font-size: var(--pw-text-md);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.pw-sms-delivery {
+  min-inline-size: 0;
+  padding-block: 1.25rem;
+}
+
+.pw-sms-delivery + .pw-sms-delivery {
+  border-block-start: 1px solid var(--bs-border-color);
+}
+
+.pw-sms-delivery .badge {
+  max-inline-size: 100%;
+  white-space: normal;
+  text-align: start;
+  line-height: 1.5;
+}
+
+.pw-sms-cancel {
+  margin-block-start: 1rem;
+}
+
+.pw-sms-review summary {
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.pw-sms-cancel button {
+  margin-block-start: 0.75rem;
+}
+
+.pw-sms-review :is(summary, a, button, input):focus-visible {
+  outline: var(--focus-ring-width) solid var(--focus-ring-color);
+  outline-offset: var(--focus-ring-offset);
+}
+
+@media (max-width: 575px) {
+  .pw-sms-test-controls input,
+  .pw-sms-test-controls button {
+    flex-basis: 100%;
+  }
+
+  .pw-sms-review :is(button, input, summary, .btn) {
+    min-block-size: 2.75rem;
+  }
+
+  .pw-sms-review summary {
+    align-content: center;
+  }
+
+  .pw-sms-preview,
+  .pw-sms-empty {
+    padding: 1rem;
+  }
+}

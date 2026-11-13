@@ -57,9 +57,6 @@
       {% endif %}
     </section>
   {% endif %}
-  {% if sms_configured|default(false) %}
-    {{ include('@PushwordNewsletter/admin/_campaign_sms.html.twig') }}
-  {% endif %}
   <div class="pw-campaign-review">
     <div class="pw-campaign-message">
       {% if campaign.preheader %}
@@ -77,6 +74,9 @@
             {{ include(action.templatePath, {action: action, entity: entity}, with_context: false) }}
           {% endfor %}
         </section>
+      {% endif %}
+      {% if sms_configured|default(false) %}
+        {{ include('@PushwordNewsletter/admin/_campaign_sms.html.twig') }}
       {% endif %}
       {% if has_body %}
         <details class="pw-campaign-disclosure" data-campaign-source>

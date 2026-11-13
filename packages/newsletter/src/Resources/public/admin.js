@@ -1,3 +1,22 @@
+export function initSmsCounters(root = document) {
+  root.querySelectorAll('[data-sms-counter]').forEach((output) => {
+    if (output.dataset.initialized) return
+    const input = document.getElementById(output.getAttribute('for'))
+    if (!input) return
+    output.dataset.initialized = 'true'
+    const update = () => {
+      const count = Array.from(input.value).length
+      const overLimit = count > Number(output.dataset.limit)
+      output.textContent = output.dataset.template.replace('__count__', count)
+      output.toggleAttribute('data-over-limit', overLimit)
+      input.setCustomValidity(overLimit ? output.dataset.tooLong : '')
+      input.setAttribute('aria-invalid', String(overLimit))
+    }
+    input.addEventListener('input', update)
+    update()
+  })
+}
+
 export function initCampaignDesigns(root = document) {
   root.querySelectorAll('[data-pw-campaign-design]').forEach((select) => {
     if (select.dataset.designInitialized) return
@@ -341,6 +360,7 @@ window.addEventListener('load', () => {
   const navigation = document.querySelector('.pw-newsletter-nav')
   const active = navigation?.querySelector('[aria-current="page"]')
   if (active) navigation.scrollLeft = Math.max(0, active.offsetLeft - navigation.offsetLeft + active.offsetWidth - navigation.clientWidth)
+  initSmsCounters()
   initEmailPreview()
   initNewsletterDelays()
   initNewsletterIndexes()

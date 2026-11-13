@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { initAutomationRecipients, initCampaignDesigns, initNewsletterDelays, initNewsletterIndexes, initNewsletterVariables, numberNewNewsletterStep } from '../../../newsletter/src/Resources/public/admin.js'
+import { initAutomationRecipients, initCampaignDesigns, initNewsletterDelays, initNewsletterIndexes, initNewsletterVariables, initSmsCounters, numberNewNewsletterStep } from '../../../newsletter/src/Resources/public/admin.js'
 
 describe('newsletter personalization variables', () => {
   afterEach(() => { document.body.innerHTML = '' })
@@ -276,5 +276,37 @@ describe('newsletter asset self-wiring', () => {
       <output for="delay" data-delay-output data-immediate="Immediately" data-days="d" data-hours="h" data-minutes="min"></output></div></form>`
     document.dispatchEvent(new CustomEvent('ea.collection.item-added', { detail: { newElement: document.querySelector('#added') } }))
     expect(document.querySelector('output').textContent).toBe('1 h')
+  })
+})
+
+describe('SMS text length feedback', () => {
+  afterEach(() => { document.body.innerHTML = '' })
+
+  function setup(value = '') {
+    document.body.innerHTML = `<form><textarea id="sms"></textarea><output for="sms" data-sms-counter data-limit="480" data-template="__count__ / 480 characters" data-too-long="SMS too long"></output></form>`
+    const input = document.querySelector('textarea')
+    input.value = value
+    initSmsCounters()
+    return input
+  }
+
+  it('counts existing text and Unicode code points consistently with the server', () => {
+    const input = setup('Salut 👋')
+    expect(document.querySelector('output').textContent).toBe('7 / 480 characters')
+    input.value = '👋'.repeat(480)
+    input.dispatchEvent(new Event('input'))
+    expect(document.querySelector('output').textContent).toBe('480 / 480 characters')
+    expect(input.validity.valid).toBe(true)
+  })
+
+  it('blocks an overlong draft and clears the error when the text is shortened', () => {
+    const input = setup('a'.repeat(481))
+    expect(input.validationMessage).toBe('SMS too long')
+    expect(input.getAttribute('aria-invalid')).toBe('true')
+    input.value = ''
+    input.dispatchEvent(new Event('input'))
+    expect(input.validity.valid).toBe(true)
+    expect(document.querySelector('output').textContent).toBe('0 / 480 characters')
+    expect(input.getAttribute('aria-invalid')).toBe('false')
   })
 })

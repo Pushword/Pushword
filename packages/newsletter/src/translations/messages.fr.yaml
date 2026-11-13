@@ -493,25 +493,34 @@ newsletter:
     inherit: "Utiliser l’expéditeur de l’audience"
     label: "Profil d’expéditeur"
   sms:
-    actionDone: "Demande SMS enregistrée. Les tests en attente seront envoyés automatiquement."
     actionFailed: "L’opération SMS a échoué. Vérifiez le connecteur et le brouillon enregistré."
+    addText: "Ajouter un texte SMS"
     alternative: Alternative SMS
     cancel: Annuler les SMS en attente
-    characters: "%count% caractères, jusqu’à 480. Un message peut utiliser plusieurs segments SMS."
+    cancelConfirm: "Confirmer l’annulation"
+    cancelHelp: "Seuls les SMS encore en attente de transmission seront annulés. Les emails continuent et les messages déjà confiés à la passerelle ne peuvent pas être rappelés."
+    characters: "%count% / 480 caractères"
     consentAt: Autorisation SMS enregistrée le
     consentHelp: "Renseignez uniquement avec une preuve d’autorisation SMS. Effacer la date arrête les SMS en attente et à venir."
     content: Texte SMS
     contentHelp: "Texte facultatif pour les contacts mobiles consentants sans email. L’email est prioritaire. Jusqu’à 480 caractères après personnalisation."
     contentInvalid: "Le texte SMS doit contenir entre 1 et 480 caractères après personnalisation."
-    disabled: "Les envois SMS sont en pause. La préparation reste disponible."
+    deliveryHelp: "La prise en charge par la passerelle ne confirme pas la livraison. Les tests sont distincts des totaux de campagne."
+    disabled: "Les envois SMS sont en pause. Vous pouvez préparer le texte et relire les destinataires."
     doNotContact: Ne plus contacter par SMS
+    emailTest: "Test email"
+    emptyHelp: "Ajoutez une alternative courte pour les contacts mobiles sans email. Vous pourrez ensuite relire les destinataires et vous envoyer un test."
+    history: "Suivi SMS"
+    manageContacts: "Vérifier les contacts"
     mobile: Ce numéro reçoit les SMS
     nextAttempt: Prochaine tentative
-    phone: Téléphone
+    noRecipients: "Aucun destinataire SMS éligible. Vérifiez les numéros, l’autorisation SMS et la présence éventuelle d’un email."
+    pendingCancelled: "Les SMS en attente ont été annulés."
     preferences: Préférences SMS
     recipients: "%count% destinataire(s) SMS"
     refresh: Actualiser le suivi SMS
     retrying: "Nouvelle tentative prévue après une réponse incertaine de la passerelle."
+    routingHelp: "Pour les contacts mobiles consentants sans email. L’email est prioritaire."
     state:
       accepted: Pris en charge par la passerelle
       delivered: Livraison signalée
@@ -519,12 +528,14 @@ newsletter:
       pending: En attente
       sent: Transmis au réseau mobile
       skipped: Exclu
-    status: État
-    test: Mettre un SMS de test en attente
-    testHelp: "Utilisez un numéro international commençant par +. Le texte enregistré par défaut est envoyé tel quel, dans la limite du quota commun."
+    test: "Envoyer un test SMS"
+    testHelp: "Utilisez un numéro international commençant par +. Le texte ci-dessus rejoint la file tel quel et respecte le quota commun."
     testInvalid: "Enregistrez un brouillon avec un texte SMS valide et un numéro de test international."
     testLabel: Test
     testPhone: Numéro de test
+    testQueued: "SMS de test en attente. Son état apparaît dans le suivi SMS."
+    testTitle: "Tester ce SMS"
+    trackingUpdated: "Le suivi SMS a été actualisé."
     unconfigured: "Configurez le connecteur SMS avant d’autoriser une campagne avec une alternative SMS."
   statistics:
     aboutActivity: "À propos de ces événements"

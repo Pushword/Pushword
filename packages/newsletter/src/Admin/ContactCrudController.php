@@ -229,6 +229,11 @@ class ContactCrudController extends AbstractCrudController
             ->setRequired(false)
             ->setHelp('newsletter.contact.field.clickTrackingConsentAt.help')
             ->setFormTypeOption('context_help', 'newsletterHelpConsent');
+        yield DateTimeField::new('createdAt', 'newsletter.contact.field.registeredAt')->hideOnForm();
+        yield DateTimeField::new('confirmedAt', 'newsletter.contact.field.confirmedAt')->onlyOnDetail();
+        yield DateTimeField::new('unsubscribedAt', 'newsletter.contact.field.unsubscribedAt')->onlyOnDetail();
+        yield DateTimeField::new('bouncedAt', 'newsletter.contact.field.bouncedAt')->onlyOnDetail();
+
         if ($this->smsSettings->isConfigured()) {
             yield FormField::addFieldset('newsletter.sms.preferences')->hideOnIndex();
             yield BooleanField::new('isMobile', 'newsletter.sms.mobile')->hideOnIndex()->renderAsSwitch(false);
@@ -236,11 +241,6 @@ class ContactCrudController extends AbstractCrudController
                 ->setHelp('newsletter.sms.consentHelp');
             yield BooleanField::new('smsDoNotContact', 'newsletter.sms.doNotContact')->hideOnIndex()->renderAsSwitch(false);
         }
-
-        yield DateTimeField::new('createdAt', 'newsletter.contact.field.registeredAt')->hideOnForm();
-        yield DateTimeField::new('confirmedAt', 'newsletter.contact.field.confirmedAt')->onlyOnDetail();
-        yield DateTimeField::new('unsubscribedAt', 'newsletter.contact.field.unsubscribedAt')->onlyOnDetail();
-        yield DateTimeField::new('bouncedAt', 'newsletter.contact.field.bouncedAt')->onlyOnDetail();
     }
 
     /**

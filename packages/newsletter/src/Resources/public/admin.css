@@ -229,6 +229,8 @@ body[data-newsletter] .pw-newsletter-sequence .accordion-item {
 }
 
 @media (max-width: 767.98px) {
+  body[data-newsletter] .content-header-title { flex: 0 1 auto; }
+
   .pw-newsletter-nav {
     gap: 0.25rem;
     margin-block-end: 1.25rem;
@@ -1116,3 +1118,13 @@ body[data-newsletter] :is(.form-fieldset-body, .form-group)[hidden] {
 .pw-newsletter-block-actions details { inline-size: 100%; }
 .pw-newsletter-block-actions summary { cursor: pointer; font-size: var(--pw-text-sm); }
 .pw-newsletter-block :is(button, input, select, textarea, summary):focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
+
+.pw-sms-counter {
+  display: block;
+  margin-block-start: 0.5rem;
+  font-variant-numeric: tabular-nums;
+}
+
+body[data-newsletter] .pw-sms-counter[data-over-limit] {
+  color: var(--color-danger);
+}
