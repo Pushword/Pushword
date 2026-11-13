@@ -1,0 +1,29 @@
+{
+    "_hash": "6471ec923b27ad1db4a8e1006e7243f2d6c6161a471e7de20b22c9cbe7addb00",
+    "patches": {
+        "twigstan/twigstan": [
+            {
+                "package": "twigstan/twigstan",
+                "description": "Temporary fix for twigstan/twigstan#328",
+                "url": "patches/328-parent-block-context.patch",
+                "sha256": "aa4237adf8a7ea41c270df907ebaee591fd9eb46595a643c8b5626700c139715",
+                "depth": 1,
+                "extra": {
+                    "issue-tracker-url": "https://github.com/twigstan/twigstan/issues/328",
+                    "provenance": "root"
+                }
+            },
+            {
+                "package": "twigstan/twigstan",
+                "description": "Temporary fix for twigstan/twigstan#329",
+                "url": "patches/329-null-coalesce.patch",
+                "sha256": "79be5522cb69df000ad0a499980f311fe726f7c846bd476f69a65b1e99287ab1",
+                "depth": 1,
+                "extra": {
+                    "issue-tracker-url": "https://github.com/twigstan/twigstan/issues/329",
+                    "provenance": "root"
+                }
+            }
+        ]
+    }
+}

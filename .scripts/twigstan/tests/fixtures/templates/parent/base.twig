@@ -1,0 +1,8 @@
+{% block head %}
+    {% block css %}
+        {% block stylesheets %}{{ site_name }}{% endblock %}
+        {% set font = 'Inter' %}
+        {% block css_vars %}{{ site_name }} {{ font }}{% endblock %}
+    {% endblock %}
+{% endblock %}
+{% block body %}{% endblock %}

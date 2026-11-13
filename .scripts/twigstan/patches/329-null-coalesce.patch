@@ -1,0 +1,26 @@
+diff --git a/src/PHPStan/GetAttributeCheck.php b/src/PHPStan/GetAttributeCheck.php
+index 7e03e5d..88ca6a0 100644
+--- a/src/PHPStan/GetAttributeCheck.php
++++ b/src/PHPStan/GetAttributeCheck.php
+@@ -37,6 +37,7 @@ use PHPStan\Type\ErrorType;
+ use PHPStan\Type\IntegerType;
+ use PHPStan\Type\MixedType;
+ use PHPStan\Type\NeverType;
++use PHPStan\Type\NullType;
+ use PHPStan\Type\ObjectType;
+ use PHPStan\Type\StringType;
+ use PHPStan\Type\Type;
+@@ -91,6 +92,13 @@ final readonly class GetAttributeCheck
+ 
+         // vendor/twig/twig/src/Extension/CoreExtension.php: getAttribute() returns false or null for null, instead of failing,
+         // in the defined test and when the strict check is ignored, such as in `a.b|default`.
++        if (
++            $objectType->isNull()->yes()
++            && ($this->isTrue($arguments['isDefinedTest'], $scope) || $this->isTrue($arguments['ignoreStrictCheck'], $scope))
++        ) {
++            return [new NullType(), []];
++        }
++
+         if (
+             ! $objectType->isNull()->no()
+             && ! $objectType->isNull()->yes()

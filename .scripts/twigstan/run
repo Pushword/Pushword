@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+tool_dir="$(cd "$(dirname "$0")" && pwd)"
+repo_dir="$(cd "$tool_dir/../.." && pwd)"
+
+composer --working-dir="$tool_dir" install --no-interaction --no-progress >&2
+cd "$repo_dir"
+
+# PAO replaces PHPStan's custom result formatter, which TwigStan needs to collect contexts.
+export PAO_DISABLE=1
+exec php "$tool_dir/analyze.php" analyze --configuration="$tool_dir/twigstan.php" "$@"

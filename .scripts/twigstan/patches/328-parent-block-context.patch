@@ -1,0 +1,47 @@
+diff --git a/src/Processing/Flattening/PhpVisitor/BlockMethodFindingVisitor.php b/src/Processing/Flattening/PhpVisitor/BlockMethodFindingVisitor.php
+index a5fae13..c6e70d6 100644
+--- a/src/Processing/Flattening/PhpVisitor/BlockMethodFindingVisitor.php
++++ b/src/Processing/Flattening/PhpVisitor/BlockMethodFindingVisitor.php
+@@ -15,6 +15,11 @@ final class BlockMethodFindingVisitor extends NodeVisitorAbstract
+      */
+     public array $blocks = [];
+ 
++    /**
++     * @var array<string, Node\Stmt\ClassMethod>
++     */
++    public array $parentBlocks = [];
++
+     private bool $inTemplateClass = false;
+ 
+     public function enterNode(Node $node): ?int
+@@ -34,6 +39,12 @@ final class BlockMethodFindingVisitor extends NodeVisitorAbstract
+             return null;
+         }
+ 
++        if (str_starts_with($node->name->name, 'parent_block_')) {
++            $this->parentBlocks[substr($node->name->name, 13)] = $node;
++
++            return null;
++        }
++
+         if ( ! str_starts_with($node->name->name, 'block_')) {
+             return null;
+         }
+diff --git a/src/Processing/Flattening/TwigFlattener.php b/src/Processing/Flattening/TwigFlattener.php
+index 125d2aa..d5dd7ef 100644
+--- a/src/Processing/Flattening/TwigFlattener.php
++++ b/src/Processing/Flattening/TwigFlattener.php
+@@ -114,6 +114,13 @@ final class TwigFlattener
+                         $blocks[$alias] = $blockMethodFinderVisitor->blocks[$block];
+                     }
+ 
++                    // An inherited override can still call the parent block copied into its template.
++                    foreach ($blockMethodFinderVisitor->parentBlocks as $block => $method) {
++                        if (isset($blocksNeededFromParent['block_' . $block])) {
++                            $blocks['parent_block_' . $block] = $method;
++                        }
++                    }
++
+                     $parentBlocks[] = $blocks;
+                 }
+ 

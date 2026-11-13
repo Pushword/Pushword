@@ -207,6 +207,8 @@
     "console": "cd packages/dev-app && php bin/console $2",
     "dev": "cd packages/dev-app && symfony server:start -d --no-tls",
     "stan": "vendor/bin/phpstan",
+    "twigstan": "./.scripts/twigstan/run",
+    "test-twigstan": "composer --working-dir=.scripts/twigstan test",
     "test": "./.scripts/test $*",
     "test-live": "PANTHER_NO_HEADLESS=1 PANTHER_NO_SANDBOX=1 composer test $*",
     "test-mariadb": "PUSHWORD_TEST_DATABASE_BASE_URL='mysql://pushword:pushword@127.0.0.1:3306/pushword_test?serverVersion=11.8.6-MariaDB&charset=utf8mb4' ./.scripts/test $*",

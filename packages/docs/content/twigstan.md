@@ -13,6 +13,53 @@ resolver, including host overrides, themes and fallback namespaces.
 The visitor is activated explicitly in the analysis loader. It is not registered in
 the application's Twig environment and does not add a TwigStan dependency to core.
 
+## Patched tool in the Pushword monorepo
+
+From the repository root:
+
+```shell
+composer twigstan
+composer twigstan -- packages/core/src/templates/user/forgot_password.html.twig
+composer test-twigstan
+```
+
+These commands install a separate development tool under `.scripts/twigstan/vendor`.
+Composer Patches applies the checked-in patches automatically. The tool pins
+TwigStan 0.2.6, Twig 3.30.0 and PHPStan 2.3.5; its dependency lock and patch hashes
+are versioned separately from the application's dependencies.
+
+The temporary fixes preserve inherited parent block methods
+([#328](https://github.com/twigstan/twigstan/issues/328)) and accept guarded attribute
+access on a null value ([#329](https://github.com/twigstan/twigstan/issues/329)).
+The regression tests also check that invalid arguments, missing variables and
+unguarded null access still produce errors.
+
+To analyze another configured site:
+
+```shell
+PUSHWORD_TWIGSTAN_HOST=pushword.piedweb.com composer twigstan
+```
+
+The analysis uses its own Symfony container and separates TwigStan caches by host
+and patch lock. PAO is disabled for this command because its PHPStan formatter
+replaces the result files TwigStan needs. Remaining template diagnostics still
+make the command fail. CI runs the patch regression fixtures and analyzes the
+password-reset template to check the application integration. Full project
+analysis is not a required check.
+
+When an upstream release fixes either issue, remove the corresponding patch entry
+and file, update the pinned dependencies in `.scripts/twigstan/composer.json`, then run:
+
+```shell
+composer --working-dir=.scripts/twigstan patches-relock
+composer --working-dir=.scripts/twigstan update
+composer --working-dir=.scripts/twigstan patches-repatch
+composer test-twigstan
+```
+
+Commit the updated tool lock files with the patch removal. The setup below installs
+upstream TwigStan directly in a downstream project; it does not apply these patches.
+
 ## Install and configure
 
 Install TwigStan as a development dependency in the downstream project:

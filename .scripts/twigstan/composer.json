@@ -1,0 +1,46 @@
+{
+  "name": "pushword/twigstan-tools",
+  "description": "Isolated TwigStan tooling with temporary upstream fixes.",
+  "type": "project",
+  "license": "MIT",
+  "require-dev": {
+    "cweagans/composer-patches": "^2.0",
+    "phpstan/phpstan": "2.3.5",
+    "twig/twig": "3.30.0",
+    "twigstan/twigstan": "0.2.6"
+  },
+  "extra": {
+    "patches": {
+      "twigstan/twigstan": [
+        {
+          "description": "Temporary fix for twigstan/twigstan#328",
+          "url": "patches/328-parent-block-context.patch",
+          "sha256": "aa4237adf8a7ea41c270df907ebaee591fd9eb46595a643c8b5626700c139715",
+          "extra": {
+            "issue-tracker-url": "https://github.com/twigstan/twigstan/issues/328"
+          }
+        },
+        {
+          "description": "Temporary fix for twigstan/twigstan#329",
+          "url": "patches/329-null-coalesce.patch",
+          "sha256": "79be5522cb69df000ad0a499980f311fe726f7c846bd476f69a65b1e99287ab1",
+          "extra": {
+            "issue-tracker-url": "https://github.com/twigstan/twigstan/issues/329"
+          }
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "test": [
+      "@composer install --no-interaction --no-progress",
+      "@php tests/run.php"
+    ]
+  },
+  "config": {
+    "allow-plugins": {
+      "cweagans/composer-patches": true
+    },
+    "sort-packages": true
+  }
+}
