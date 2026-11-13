@@ -1,12 +1,34 @@
 {
   "name": "pushword/twigstan",
-  "description": "TwigStan integration for Pushword projects.",
+  "description": "Twig template static analysis for Pushword CMS: catch missing variables and type errors with TwigStan and PHPStan in CI.",
+  "keywords": ["twigstan", "twig", "phpstan", "static-analysis", "type-checking", "template-analysis", "continuous-integration", "symfony", "cms", "pushword"],
+  "homepage": "https://pushword.piedweb.com/twigstan",
   "type": "library",
   "license": "MIT",
+  "authors": [
+    {
+      "name": "Robin@PiedWeb",
+      "email": "contact@piedweb.com",
+      "homepage": "https://en.piedweb.com"
+    }
+  ],
+  "funding": [
+    {
+      "type": "liberapay",
+      "url": "https://liberapay.com/RobinPiedWeb"
+    }
+  ],
   "require": {
     "php": "~8.5.0",
     "pushword/core": "^1.0.108",
     "symfony/process": "^7.3 || ^8.0"
+  },
+  "suggest": {
+    "pushword/docs": "Pushword documentation, readable offline from vendor/.",
+    "pushword/page-scanner": "Check rendered pages for broken links, redirects and TODO reminders.",
+    "pushword/snippet": "Reusable content fragments and dev-registered Twig components.",
+    "pushword/static-generator": "Export the whole site as static files (GitHub Pages, Apache, FrankenPHP).",
+    "pushword/template-editor": "Edit Twig view files online from the admin."
   },
   "autoload": {
     "psr-4": {
@@ -23,7 +45,8 @@
   },
   "support": {
     "issues": "https://github.com/Pushword/Pushword/issues",
-    "source": "https://github.com/Pushword/twigstan"
+    "source": "https://github.com/Pushword/Pushword/tree/main/packages/twigstan",
+    "docs": "https://pushword.piedweb.com/twigstan"
   },
   "scripts": {
     "test": [

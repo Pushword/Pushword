@@ -1,7 +1,13 @@
-# Pushword TwigStan
+# TwigStan for Pushword — Twig template static analysis
 
-Development-only template analysis for Pushword sites. The package resolves literal
-Twig `view()` and PHP `getView()` calls using the selected site's template resolver.
+Find missing Twig variables and type errors in Pushword CMS templates with TwigStan
+and PHPStan. This development package loads your Symfony application, resolves
+literal Twig `view()` and PHP `getView()` calls for the selected site, and provides
+a CI command that checks template types and render-context coverage.
+
+[Documentation](https://pushword.piedweb.com/twigstan) ·
+[Composer package](https://packagist.org/packages/pushword/twigstan) ·
+[Report an issue](https://github.com/Pushword/Pushword/issues)
 
 ## Install
 
