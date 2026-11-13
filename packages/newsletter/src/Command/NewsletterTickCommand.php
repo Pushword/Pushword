@@ -9,6 +9,7 @@ use Pushword\Core\Command\AgentOutputTrait;
 use Pushword\Newsletter\Repository\CampaignRepository;
 use Pushword\Newsletter\Service\AutomationRunner;
 use Pushword\Newsletter\Service\CampaignSender;
+use Pushword\Newsletter\Sms\SmsCampaignSender;
 use Pushword\Newsletter\Validation\CampaignValidationFailed;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Attribute\Option;
@@ -43,6 +44,7 @@ final class NewsletterTickCommand
         private readonly CampaignSender $campaignSender,
         private readonly AutomationRunner $automationRunner,
         private readonly LockFactory $lockFactory,
+        private readonly SmsCampaignSender $sms,
         #[Autowire(param: 'pw.newsletter.send_batch')]
         private readonly int $defaultBatch,
     ) {
@@ -51,7 +53,7 @@ final class NewsletterTickCommand
     public function __invoke(
         InputInterface $input,
         OutputInterface $output,
-        #[Option(description: 'Maximum number of mails this run may send', name: 'batch')]
+        #[Option(description: 'Maximum number of emails and SMS this run may send', name: 'batch')]
         ?int $batch = null,
         #[Option(description: 'Output format: auto (compact JSON when an AI agent is detected), agent (force JSON), or text', name: 'format')]
         string $format = 'auto',
@@ -83,7 +85,7 @@ final class NewsletterTickCommand
         }
 
         $io->success(\sprintf(
-            '%d enrollment(s), %d campaign(s) scheduled by a trigger, %d cancelled, %d armed, %d blocked, %d broadcast mail(s), %d drip mail(s).',
+            '%d enrollment(s), %d campaign(s) scheduled by a trigger, %d cancelled, %d armed, %d blocked, %d broadcast mail(s), %d drip mail(s), %d SMS accepted, %d failed, %d excluded, %d awaiting retry.',
             $report['enrolled'],
             $report['scheduled'],
             $report['cancelled'],
@@ -91,12 +93,16 @@ final class NewsletterTickCommand
             $report['blocked'],
             $report['campaignMails'],
             $report['dripMails'],
+            $report['smsAccepted'],
+            $report['smsFailed'],
+            $report['smsSkipped'],
+            $report['smsErrors'],
         ));
 
         return Command::SUCCESS;
     }
 
-    /** @return array{enrolled: int, scheduled: int, cancelled: int, armed: int, blocked: int, campaignMails: int, dripMails: int, budgetLeft: int} */
+    /** @return array{enrolled: int, scheduled: int, cancelled: int, armed: int, blocked: int, campaignMails: int, dripMails: int, budgetLeft: int, smsAccepted: int, smsFailed: int, smsSkipped: int, smsAttempts: int, smsErrors: int} */
     private function run(int $budget): array
     {
         $now = new DateTimeImmutable();
@@ -130,13 +136,15 @@ final class NewsletterTickCommand
 
         $dripMails = $this->automationRunner->advance($budget);
 
-        return $triggered + [
+        $sms = $this->sms->drain(max(0, $budget - $dripMails));
+
+        return $triggered + $sms + [
             'cancelled' => $cancelled,
             'armed' => $armed,
             'blocked' => $blocked,
             'campaignMails' => $campaignMails,
             'dripMails' => $dripMails,
-            'budgetLeft' => $budget - $dripMails,
+            'budgetLeft' => max(0, $budget - $dripMails - $sms['smsAttempts']),
         ];
     }
 }

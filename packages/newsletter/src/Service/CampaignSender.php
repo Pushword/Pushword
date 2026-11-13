@@ -11,6 +11,7 @@ use Pushword\Newsletter\Entity\Campaign;
 use Pushword\Newsletter\Entity\CampaignRecipient;
 use Pushword\Newsletter\Repository\CampaignRecipientRepository;
 use Pushword\Newsletter\Segment\SegmentResolver;
+use Pushword\Newsletter\Sms\SmsCampaignSender;
 use Pushword\Newsletter\Validation\CampaignPreflight;
 use Pushword\Newsletter\Validation\CampaignValidationFailed;
 use Throwable;
@@ -31,6 +32,7 @@ final readonly class CampaignSender
         private EntityManagerInterface $entityManager,
         private NewsletterMailer $mailer,
         private CampaignPreflight $preflight,
+        private SmsCampaignSender $sms,
     ) {
     }
 
@@ -100,6 +102,7 @@ final readonly class CampaignSender
             ++$count;
         }
 
+        $this->sms->queue($campaign);
         $campaign->markSending($count + \count($already));
         $this->entityManager->flush();
 
@@ -148,7 +151,7 @@ final readonly class CampaignSender
 
         $this->entityManager->flush();
 
-        if (0 === $this->recipientRepository->countPending($campaign)) {
+        if (0 === $this->recipientRepository->countPending($campaign) && ! $this->sms->hasPending($campaign)) {
             $campaign->markSent();
             $this->entityManager->flush();
         }

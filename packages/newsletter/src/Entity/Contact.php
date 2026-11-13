@@ -117,6 +117,21 @@ class Contact implements IdInterface, Taggable, Stringable, CustomPropertiesInte
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true)]
     public ?DateTimeImmutable $clickTrackingConsentAt = null;
 
+    #[ORM\Column(type: Types::BOOLEAN, options: ['default' => false])]
+    public bool $isMobile = false;
+
+    #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true)]
+    public ?DateTimeImmutable $smsConsentAt = null;
+
+    #[ORM\Column(type: Types::BOOLEAN, options: ['default' => false])]
+    public bool $smsDoNotContact = false;
+
+    public function canReceiveSms(): bool
+    {
+        return $this->isMobile && $this->smsConsentAt instanceof DateTimeImmutable && ! $this->smsDoNotContact
+            && null !== $this->phone && 1 === preg_match('/^\+[1-9][0-9]{7,14}$/D', $this->phone);
+    }
+
     public function __construct(
         #[ORM\ManyToOne(targetEntity: Audience::class)]
         #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
@@ -173,6 +188,9 @@ class Contact implements IdInterface, Taggable, Stringable, CustomPropertiesInte
         $contact->optinHost = $origin->optinHost;
         $contact->optinIp = $origin->optinIp;
         $contact->clickTrackingConsentAt = $origin->clickTrackingConsentAt;
+        $contact->isMobile = $origin->isMobile;
+        $contact->smsConsentAt = $origin->smsConsentAt;
+        $contact->smsDoNotContact = $origin->smsDoNotContact;
         $contact->status = $origin->status;
         $contact->confirmedAt = $origin->confirmedAt;
 

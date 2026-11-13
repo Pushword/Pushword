@@ -1,0 +1,54 @@
+<section class="mb-4" data-campaign-sms aria-labelledby="campaign-sms-title">
+  <h2 class="h5" id="campaign-sms-title">{{ 'newsletter.sms.alternative'|trans }}</h2>
+  <p class="text-muted">{{ 'newsletter.sms.contentHelp'|trans }}</p>
+  <p class="text-break border rounded p-3">{{ campaign.smsContent|nl2br }}</p>
+  <p>{{ 'newsletter.sms.characters'|trans({'%count%': campaign.smsContent|length}) }}</p>
+  {% if not sms_enabled %}<p class="alert alert-info">{{ 'newsletter.sms.disabled'|trans }}</p>{% endif %}
+  {% if campaign.isDraft or campaign.isScheduled %}
+    <details>
+      <summary>{{ 'newsletter.sms.recipients'|trans({'%count%': sms_recipients|length}) }}</summary>
+      <ul>
+        {% for contact in sms_recipients %}
+          <li>{{ contact.name }} · {{ contact.phone }}{% if contact.locale %} · {{ contact.locale }}{% endif %}</li>
+        {% endfor %}
+      </ul>
+    </details>
+  {% endif %}
+  {% if campaign.isDraft and sms_enabled %}
+    <form method="post" action="{{ path('admin_newsletter_campaign_sms', {entityId: campaign.id, operation: 'test'}) }}" class="my-3">
+      <input type="hidden" name="_token" value="{{ csrf_token('admin_action_sms_' ~ campaign.id) }}">
+      <input type="hidden" name="reference" value="{{ sms_reference }}">
+      <label for="sms-test-phone" class="form-label">{{ 'newsletter.sms.testPhone'|trans }}</label>
+      <div class="d-flex flex-wrap gap-2">
+        <input type="tel" id="sms-test-phone" name="phone" class="form-control w-auto" required pattern="\+[1-9][0-9]{7,14}" aria-describedby="sms-test-help" autocomplete="tel">
+        <button class="btn btn-secondary" type="submit">{{ 'newsletter.sms.test'|trans }}</button>
+      </div>
+      <p id="sms-test-help" class="form-text">{{ 'newsletter.sms.testHelp'|trans }}</p>
+    </form>
+  {% endif %}
+  {% if sms_sends is not empty %}
+    <dl class="d-flex flex-wrap gap-4">
+      {% for state, count in sms_counts %}
+        <div><dt>{{ ('newsletter.sms.state.' ~ state)|trans }}</dt><dd>{{ count }}</dd></div>
+      {% endfor %}
+    </dl>
+    <div class="d-flex flex-wrap gap-2 my-3">
+      {% for operation in ['refresh', 'cancel'] %}
+        <form method="post" action="{{ path('admin_newsletter_campaign_sms', {entityId: campaign.id, operation: operation}) }}">
+          <input type="hidden" name="_token" value="{{ csrf_token('admin_action_sms_' ~ campaign.id) }}">
+          <button type="submit" class="btn btn-secondary">{{ ('newsletter.sms.' ~ operation)|trans }}</button>
+        </form>
+      {% endfor %}
+    </div>
+    <div class="table-responsive">
+      <table class="table">
+        <thead><tr><th>{{ 'newsletter.sms.phone'|trans }}</th><th>{{ 'newsletter.sms.content'|trans }}</th><th>{{ 'newsletter.sms.status'|trans }}</th><th>{{ 'newsletter.sms.nextAttempt'|trans }}</th></tr></thead>
+        <tbody>
+          {% for send in sms_sends %}
+            <tr><td>{{ send.phone }}{% if send.isTest %} <span class="badge badge-secondary">{{ 'newsletter.sms.testLabel'|trans }}</span>{% endif %}</td><td>{{ send.content }}</td><td>{{ ('newsletter.sms.state.' ~ send.state.value)|trans }}{% if send.gatewayState %} ({{ send.gatewayState }}){% endif %}{% if send.error %}<br>{{ 'newsletter.sms.retrying'|trans }}{% endif %}</td><td>{{ send.nextAttemptAt ? send.nextAttemptAt|date('d/m/Y H:i') : '—' }}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% endif %}
+</section>

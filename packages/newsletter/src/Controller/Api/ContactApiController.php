@@ -446,7 +446,12 @@ final class ContactApiController extends AbstractApiController
         }
 
         if (\array_key_exists('phone', $data)) {
-            $contact->phone = \is_string($data['phone']) ? $data['phone'] : null;
+            $phone = Contact::normalizePhone(\is_string($data['phone']) ? $data['phone'] : null);
+            if ($phone !== $contact->phone) {
+                $contact->smsConsentAt = null;
+            }
+
+            $contact->phone = $phone;
         }
 
         // Somebody known by phone alone gives their address later, and the
@@ -473,6 +478,30 @@ final class ContactApiController extends AbstractApiController
                 }
 
                 $contact->setCustomProperty((string) $key, $value);
+            }
+        }
+
+        foreach (['isMobile', 'smsDoNotContact'] as $field) {
+            if (\array_key_exists($field, $data)) {
+                if (! \is_bool($data[$field])) {
+                    return $this->badRequest('Invalid '.$field);
+                }
+
+                $contact->{$field} = $data[$field];
+            }
+        }
+
+        if (\array_key_exists('smsConsentAt', $data)) {
+            if (null === $data['smsConsentAt']) {
+                $contact->smsConsentAt = null;
+            } elseif (! \is_string($data['smsConsentAt']) || '' === trim($data['smsConsentAt'])) {
+                return $this->badRequest('Invalid smsConsentAt');
+            } else {
+                try {
+                    $contact->smsConsentAt = new DateTimeImmutable($data['smsConsentAt']);
+                } catch (Exception) {
+                    return $this->badRequest('Invalid smsConsentAt');
+                }
             }
         }
 
@@ -506,6 +535,9 @@ final class ContactApiController extends AbstractApiController
             'audience' => $contact->audience->slug,
             'email' => $contact->email,
             'phone' => $contact->phone,
+            'isMobile' => $contact->isMobile,
+            'smsConsentAt' => $contact->smsConsentAt?->format(DateTimeInterface::ATOM),
+            'smsDoNotContact' => $contact->smsDoNotContact,
             'name' => $contact->name,
             'mailable' => $contact->isMailable(),
             'locale' => $contact->locale,
@@ -582,6 +614,9 @@ final class ContactApiController extends AbstractApiController
                             'email' => ['type' => 'string', 'nullable' => true],
                             'phone' => ['type' => 'string', 'nullable' => true, 'description' => 'Digits and a leading `+`; a contact may be keyed on it alone and is then never mailed'],
                             'name' => ['type' => 'string'],
+                            'isMobile' => ['type' => 'boolean'],
+                            'smsConsentAt' => ['type' => 'string', 'format' => 'date-time', 'nullable' => true, 'description' => 'Dated SMS permission; clearing it stops pending and future SMS'],
+                            'smsDoNotContact' => ['type' => 'boolean', 'description' => 'SMS suppression, independent of email consent'],
                             'mailable' => ['type' => 'boolean', 'description' => 'Subscribed *and* holding an address'],
                             'locale' => ['type' => 'string'],
                             'status' => ['type' => 'string'],

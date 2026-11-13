@@ -8,6 +8,7 @@ use DateTimeImmutable;
 use DateTimeInterface;
 use Doctrine\ORM\EntityManagerInterface;
 use Exception;
+use InvalidArgumentException;
 use LogicException;
 use Pushword\Api\Controller\AbstractApiController;
 use Pushword\Core\Service\EditorialTimezone;
@@ -24,6 +25,8 @@ use Pushword\Newsletter\Segment\SegmentResolver;
 use Pushword\Newsletter\Service\CampaignSender;
 use Pushword\Newsletter\Service\NewsletterMailer;
 use Pushword\Newsletter\Service\SenderProfileRegistry;
+use Pushword\Newsletter\Sms\SmsCampaignSender;
+use Pushword\Newsletter\Sms\SmsSettings;
 use Pushword\Newsletter\Utm\UtmTag;
 use Pushword\Newsletter\Validation\CampaignPreflight;
 use Pushword\Newsletter\Validation\CampaignValidationFailed;
@@ -58,6 +61,8 @@ final class CampaignApiController extends AbstractApiController
         private readonly EditorialTimezone $timezone,
         private readonly CampaignPreflight $preflight,
         private readonly SenderProfileRegistry $senderProfiles,
+        private readonly SmsCampaignSender $smsSender,
+        private readonly SmsSettings $smsSettings,
     ) {
     }
 
@@ -208,6 +213,36 @@ final class CampaignApiController extends AbstractApiController
         return $this->respond($this->toArray($campaign));
     }
 
+    #[Route('/api/newsletter/campaign/{id}/sms/{operation}', name: 'pushword_api_newsletter_campaign_sms', requirements: ['id' => '\\d+', 'operation' => 'test|refresh|cancel'], methods: ['POST'])]
+    public function sms(int $id, string $operation, Request $request): JsonResponse
+    {
+        $campaign = $this->campaignRepository->find($id);
+        if (! $campaign instanceof Campaign || ! $this->smsSettings->isConfigured()) {
+            return $this->notFound('Campaign or SMS connector not found');
+        }
+
+        try {
+            if ('test' === $operation) {
+                $data = $this->decodeJson($request);
+                $send = $this->smsSender->queueTest($campaign, \is_string($data['phone'] ?? null) ? $data['phone'] : '', \is_string($data['reference'] ?? null) ? $data['reference'] : '');
+
+                return $this->respond(['reference' => $send->reference, 'state' => $send->state->value]);
+            }
+
+            if ('refresh' === $operation) {
+                $this->smsSender->refresh($campaign);
+            } else {
+                $this->smsSender->cancel($campaign);
+            }
+        } catch (InvalidArgumentException $error) {
+            return $this->badRequest($error->getMessage());
+        } catch (Throwable) {
+            return $this->respond(['error' => 'SMS operation failed'], Response::HTTP_BAD_GATEWAY);
+        }
+
+        return $this->respond($this->toArray($campaign));
+    }
+
     #[Route('/api/newsletter/campaign/{id}/test', name: 'pushword_api_newsletter_campaign_test', requirements: ['id' => '\d+'], methods: ['POST'])]
     public function test(int $id, Request $request): JsonResponse
     {
@@ -339,6 +374,18 @@ final class CampaignApiController extends AbstractApiController
             $campaign->preheader = \is_string($data['preheader']) ? $data['preheader'] : null;
         }
 
+        if (\array_key_exists('smsContent', $data)) {
+            if (! $this->smsSettings->isConfigured()) {
+                return $this->badRequest('SMS connector is not configured.');
+            }
+
+            if (null !== $data['smsContent'] && ! \is_string($data['smsContent'])) {
+                return $this->badRequest('Invalid smsContent');
+            }
+
+            $campaign->smsContent = $data['smsContent'];
+        }
+
         if (\array_key_exists('bodyMarkdown', $data) && \is_string($data['bodyMarkdown'])) {
             $campaign->bodyMarkdown = $data['bodyMarkdown'];
         }
@@ -399,6 +446,8 @@ final class CampaignApiController extends AbstractApiController
             'slug' => $campaign->slug,
             'preheader' => $campaign->preheader,
             'bodyMarkdown' => $campaign->bodyMarkdown,
+            'smsContent' => $campaign->smsContent,
+            'smsStats' => $this->smsSender->counts($campaign),
             'translations' => $campaign->translations,
             'segment' => $campaign->segment,
             'status' => $campaign->getStatusLabel(),
@@ -420,6 +469,7 @@ final class CampaignApiController extends AbstractApiController
         if ($withEstimate && $audience instanceof Audience && $campaign->isDraft()) {
             try {
                 $payload['estimatedRecipients'] = $this->segmentResolver->countMailable($audience, $campaign->segment);
+                $payload['estimatedSmsRecipients'] = \count($this->smsSender->recipients($campaign));
             } catch (SegmentException) {
                 $payload['estimatedRecipients'] = null;
             }
@@ -472,6 +522,13 @@ final class CampaignApiController extends AbstractApiController
                     'parameters' => [['name' => 'id', 'in' => 'path', 'required' => true, 'schema' => ['type' => 'integer']]],
                     'post' => ['summary' => 'Authorize delivery: schedule at a future scheduledAt, otherwise start now; the tick delivers', 'responses' => ['200' => ['description' => 'OK'], '422' => ['description' => 'Preflight blocked; issues explain corrections']]],
                 ],
+                '/api/newsletter/campaign/{id}/sms/{operation}' => [
+                    'parameters' => [
+                        ['name' => 'id', 'in' => 'path', 'required' => true, 'schema' => ['type' => 'integer']],
+                        ['name' => 'operation', 'in' => 'path', 'required' => true, 'schema' => ['type' => 'string', 'enum' => ['test', 'refresh', 'cancel']]],
+                    ],
+                    'post' => ['summary' => 'Queue an SMS test (phone and UUID reference required), refresh SMS delivery, or cancel pending SMS only', 'responses' => ['200' => ['description' => 'OK']]],
+                ],
                 '/api/newsletter/campaign/{id}/test' => [
                     'parameters' => [['name' => 'id', 'in' => 'path', 'required' => true, 'schema' => ['type' => 'integer']]],
                     'post' => ['summary' => 'Mail a preview to arbitrary addresses; touches no contact and no counter. `locale` picks which translation to proofread', 'responses' => ['200' => ['description' => 'OK']]],
@@ -492,6 +549,7 @@ final class CampaignApiController extends AbstractApiController
                             'slug' => ['type' => 'string', 'description' => 'utm_campaign value; derived from the subject when omitted'],
                             'preheader' => ['type' => 'string'],
                             'bodyMarkdown' => ['type' => 'string'],
+                            'smsContent' => ['type' => 'string', 'nullable' => true, 'maxLength' => 480, 'description' => 'Optional SMS alternative for contacts without email'],
                             'translations' => [
                                 'type' => 'object',
                                 'description' => 'The same campaign per locale — {"de": {"subject", "preheader", "bodyMarkdown"}}. Merged per locale on PATCH; a locale set to null drops it. A contact is sent their own locale, else its language part, else the campaign\'s own text',
@@ -501,6 +559,7 @@ final class CampaignApiController extends AbstractApiController
                                         'subject' => ['type' => 'string'],
                                         'preheader' => ['type' => 'string'],
                                         'bodyMarkdown' => ['type' => 'string'],
+                                        'smsContent' => ['type' => 'string', 'maxLength' => 480],
                                     ],
                                 ],
                             ],

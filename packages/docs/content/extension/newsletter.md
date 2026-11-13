@@ -276,9 +276,8 @@ digits with an optional leading `+` and is unique per audience, like the address
 - `subscribed` — they agreed to hear from the site.
 - **mailable** — subscribed *and* holding an address.
 
-Everything that sends asks the second question. A contact without an address is
-never a campaign recipient, never enrolled in an automation and never counted in
-reach: the audience page, the campaign preview and the API's audience payload
+Everything that sends email asks the second question. A contact without an address is
+never an email recipient or enrolled in an email automation. Email reach excludes them: the audience page, the campaign preview and the API's audience payload
 show `subscribed` and `mailable` side by side.
 
 They are otherwise ordinary contacts — tagged, segmented, exported — and
@@ -709,6 +708,86 @@ Counters stay per campaign; a per-language split is `CampaignRecipient` joined t
 its state (`pending`, `sent`, `skipped`, `failed`, `bounced`) and, for a failure,
 the transport's message — kept nowhere else, since `failedCount` only sums the
 rows. The button appears once the campaign is armed; the list is read-only.
+
+## SMS alternative with SMSGate
+
+SMS is optional and uses the site's own SMSGate HTTP API and Android device.
+Complete the connector configuration to show the SMS fields and review section in
+the admin. Missing credentials or an insecure URL keep them hidden. `enabled: false`
+pauses sending while leaving preparation available. Nothing contacts SMSGate when
+opening a form, saving a draft, reviewing recipients or queuing a test.
+
+```yaml
+newsletter:
+  sms:
+    url: '%env(SMS_GATEWAY_URL)%' # Full API base, ending in /3rdparty/v1
+    username: '%env(SMS_GATEWAY_USERNAME)%'
+    password: '%env(SMS_GATEWAY_PASSWORD)%'
+    device_id: '%env(SMS_GATEWAY_DEVICE_ID)%'
+    sim_number: 1
+    enabled: false             # Enable explicitly on the sending installation
+    daily_limit: 24            # Shared rolling 24-hour limit; 0 pauses sending
+    interval_seconds: 30
+    start_hour: 8              # Included
+    end_hour: 20               # Excluded; 24 means midnight
+    timezone: Europe/Paris
+```
+
+Use HTTPS, or HTTP on loopback. Store credentials in environment secrets, never
+in campaign data. Select the intended device and SIM explicitly. Dev and test
+installations should use dummy credentials and keep sending disabled.
+
+A campaign's `smsContent` is an optional alternative for contacts **without an
+email**. An email address always excludes SMS, even after a bounce; a failed email does not trigger a fallback. SMS recipients must have
+an international phone number (`+` and country code), `isMobile: true`, a dated
+`smsConsentAt`, and `smsDoNotContact: false`. The campaign's segment applies.
+SMS permission and suppression are independent of email subscription state.
+No country or permission is inferred from a stored number. Changing the phone
+through the API or admin clears unchanged SMS permission; record fresh permission
+for the replacement number. An audience split preserves SMS preferences; a merge
+preserves history and keeps either row's SMS suppression.
+
+Write the short text in the campaign form. `translations` may also carry
+`smsContent`, following the same locale/language/default fallback as email.
+The usual contact placeholders are expanded before delivery. The resulting text
+must contain 1–480 characters. This is a content limit, **not a segment count**:
+a long or Unicode message can consume several SMS segments.
+
+The campaign review shows the default SMS, eligible contacts and per-channel
+results. A test uses the saved default text literally and its submitted number;
+it creates no contact and does not count toward campaign results. Repeated
+submission of the same test form reuses its message identity. Sending a campaign
+with SMS recipients is blocked while its connector is unconfigured or paused.
+
+`pw:newsletter:tick` processes a durable SMS queue after emails and drips, within
+its remaining `--batch` budget. No Messenger worker is required. With a minutely
+cron, SMS submissions are at least one minute apart. The quota, minimum interval
+and one-message-per-number-per-24-hours rule cover all campaigns and tests in
+**this database**. If several applications share one SIM, configure a common
+limit on the gateway/device as well. These quotas count messages, not segments.
+
+Each queued message freezes its number, personalized text and provider identity.
+Before transmission, permission, suppression, number, audience, segment and email
+presence are checked again. Quota reservations survive an uncertain response;
+retries look up the same identity before posting it again. Deleting a campaign
+retains its send history and quota reservations; its pending SMS are excluded. Failed SMS do not mark
+an email bounced or change email automations. A campaign finishes when no email or
+campaign SMS remains pending; gateway acceptance does not prove delivery.
+
+**Refresh SMS delivery** reads gateway states, including tests. An accepted or
+network-sent message remains distinct from a delivery report. **Cancel pending
+SMS** excludes only the SMS still queued locally, including tests; it does not
+cancel emails or recall messages already handed to SMSGate. Withdrawal can be
+recorded by clearing `smsConsentAt` or setting `smsDoNotContact`; pending messages
+are excluded before transmission. Incoming replies and automatic STOP handling
+remain the responsibility of the site's receiving integration.
+
+The authenticated API supports `smsContent` and its locale overrides on campaigns,
+and `isMobile`, `smsConsentAt`, `smsDoNotContact` on contacts. Campaign reads include
+`smsStats` and item reads include `estimatedSmsRecipients` while drafting.
+`POST /api/newsletter/campaign/{id}/sms/test` accepts `phone` and a client-generated
+UUID `reference`. The same endpoint with `/refresh` or `/cancel` performs the
+corresponding admin action. Reads never contact SMSGate.
 
 ## Automations
 
@@ -1626,7 +1705,8 @@ not in the newsletter bundle.
 2. cancels the campaigns whose subject no longer deserves them;
 3. arms scheduled campaigns whose date has passed;
 4. drains pending recipients at the cadence;
-5. sends the drip steps that are due.
+5. sends the drip steps that are due;
+6. processes the optional SMS queue under its shared quota and sending window.
 
 Triggering comes first, so something whose delay has already elapsed goes out in
 the run that noticed it.
@@ -1637,7 +1717,7 @@ actually sent rather than from a sleep, so the command returns immediately and a
 campaign resumes at the right rate whatever happened to the previous run. A
 minutely cron at 30 s sends two mails per run.
 
-`--batch` caps the mails one run may send (default 50, set by
+`--batch` caps the emails and SMS one run may send (default 50, set by
 `newsletter.send_batch`). It only matters when catching up: after an outage, the
 elapsed time would allow hundreds at once, and the cap keeps a resumed campaign
 from becoming a burst.

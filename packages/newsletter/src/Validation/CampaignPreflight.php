@@ -16,6 +16,7 @@ use Pushword\Newsletter\Event\CampaignIssue;
 use Pushword\Newsletter\Event\CheckCampaign;
 use Pushword\Newsletter\Service\MailRenderer;
 use Pushword\Newsletter\Service\SenderProfileRegistry;
+use Pushword\Newsletter\Sms\SmsCampaignSender;
 use Symfony\Component\DomCrawler\Crawler;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Throwable;
@@ -24,14 +25,14 @@ final readonly class CampaignPreflight
 {
     private const string UNSUBSCRIBE = 'https://newsletter.invalid/unsubscribe-check';
 
-    public function __construct(private MailRenderer $renderer, private SiteRegistry $sites, private EventDispatcherInterface $events, private SenderProfileRegistry $senderProfiles, private BlockRegistry $blocks)
+    public function __construct(private MailRenderer $renderer, private SiteRegistry $sites, private EventDispatcherInterface $events, private SenderProfileRegistry $senderProfiles, private BlockRegistry $blocks, private ?SmsCampaignSender $sms = null)
     {
     }
 
     /** @return list<CampaignIssue> */
     public function check(Campaign $campaign): array
     {
-        $issues = [];
+        $issues = $this->sms?->issues($campaign) ?? [];
         $contents = ['' => $campaign->contentFor('')];
         foreach ($campaign->translatedLocales() as $locale) {
             $contents[$locale] = $campaign->contentFor($locale);

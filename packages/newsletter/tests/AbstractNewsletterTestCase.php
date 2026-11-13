@@ -251,6 +251,7 @@ abstract class AbstractNewsletterTestCase extends WebTestCase
         $connection = $this->entityManager->getConnection();
 
         $statements = [
+            'DELETE FROM newsletter_sms_send WHERE campaign_id IN (SELECT id FROM newsletter_campaign WHERE audience_id = :id)',
             'DELETE FROM newsletter_click_event WHERE contact_id IN (SELECT id FROM newsletter_contact WHERE audience_id = :id)',
             'DELETE FROM newsletter_contact_event WHERE contact_id IN (SELECT id FROM newsletter_contact WHERE audience_id = :id)',
             'DELETE FROM newsletter_trigger_log WHERE automation_id IN (SELECT id FROM newsletter_automation WHERE audience_id = :id)',

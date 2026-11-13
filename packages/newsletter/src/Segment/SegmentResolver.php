@@ -17,15 +17,15 @@ use Pushword\Newsletter\Query\ContactFieldRegistry;
 /**
  * Compiles a {@see SegmentCriteria} rule into a Contact query.
  *
- * Every query it builds is scoped to one audience and to subscribed contacts:
+ * Email queries are scoped to one audience and to subscribed contacts:
  * an unsubscribed or bounced address cannot be reached by any criteria that can
  * be written, which is the property the whole sending side relies on.
  *
  * The `mailable` variants add the second half of that property — an address to
  * send to — and are what every surface that *sends* or predicts a send goes
  * through. The plain ones stay unfiltered, because a contact the site can only
- * phone is still to be listed, segmented and exported; they are simply never a
- * recipient.
+ * phone is still to be listed, segmented and exported. SMS queries use their own
+ * dated permission and suppression, independently of email subscription status.
  *
  * What each field means is {@see ContactFieldRegistry}'s business, and walking
  * the rule is {@see QueryCompiler}'s, so what is left here is exactly those
@@ -145,13 +145,43 @@ final readonly class SegmentResolver
      */
     public function queryBuilder(Audience $audience, array $criteria): QueryBuilder
     {
+        return $this->contactQueryBuilder($audience, $criteria)
+            ->andWhere('c.status = :subscribed')
+            ->setParameter('subscribed', ContactStatus::Subscribed->value);
+    }
+
+    /** @param array<mixed> $criteria
+     * @return list<Contact>
+     */
+    public function smsContacts(Audience $audience, array $criteria): array
+    {
+        return $this->fetch($this->smsQueryBuilder($audience, $criteria), null);
+    }
+
+    /** @param array<mixed> $criteria */
+    public function matchesSms(Contact $contact, array $criteria): bool
+    {
+        return 0 < (int) $this->smsQueryBuilder($contact->audience, $criteria)
+            ->select('COUNT(c.id)')->andWhere('c.id = :contactId')->setParameter('contactId', $contact->id)
+            ->getQuery()->getSingleScalarResult();
+    }
+
+    /** @param array<mixed> $criteria */
+    private function smsQueryBuilder(Audience $audience, array $criteria): QueryBuilder
+    {
+        return $this->contactQueryBuilder($audience, $criteria)
+            ->andWhere('c.email IS NULL')->andWhere('c.phone IS NOT NULL')
+            ->andWhere('c.isMobile = true')->andWhere('c.smsConsentAt IS NOT NULL')->andWhere('c.smsDoNotContact = false');
+    }
+
+    /** @param array<mixed> $criteria */
+    private function contactQueryBuilder(Audience $audience, array $criteria): QueryBuilder
+    {
         $queryBuilder = $this->entityManager->createQueryBuilder()
             ->select('c')
             ->from(Contact::class, 'c')
             ->andWhere('c.audience = :audience')
-            ->andWhere('c.status = :subscribed')
-            ->setParameter('audience', $audience)
-            ->setParameter('subscribed', ContactStatus::Subscribed->value);
+            ->setParameter('audience', $audience);
 
         $rule = SegmentCriteria::normalize($criteria);
 

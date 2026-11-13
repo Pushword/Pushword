@@ -15,6 +15,7 @@ use EasyCorp\Bundle\EasyAdminBundle\Config\KeyValueStore;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Option\EA;
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
 use EasyCorp\Bundle\EasyAdminBundle\Field\AssociationField;
+use EasyCorp\Bundle\EasyAdminBundle\Field\BooleanField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\ChoiceField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\DateTimeField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\EmailField;
@@ -35,6 +36,7 @@ use Pushword\Newsletter\Repository\ContactEventRepository;
 use Pushword\Newsletter\Repository\ContactRepository;
 use Pushword\Newsletter\Service\ContactManager;
 use Pushword\Newsletter\Service\ContactMerger;
+use Pushword\Newsletter\Sms\SmsSettings;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -59,6 +61,7 @@ class ContactCrudController extends AbstractCrudController
         private readonly ContactEventRepository $contactEventRepository,
         private readonly AdminUrlGenerator $adminUrlGenerator,
         private readonly EntityManagerInterface $entityManager,
+        private readonly SmsSettings $smsSettings,
     ) {
     }
 
@@ -71,12 +74,17 @@ class ContactCrudController extends AbstractCrudController
     #[Override]
     public function updateEntity(EntityManagerInterface $entityManager, object $entityInstance): void
     {
-        if (null === $entityInstance->clickTrackingConsentAt) {
-            $stored = $entityManager->getUnitOfWork()->getOriginalEntityData($entityInstance);
+        $stored = $entityManager->getUnitOfWork()->getOriginalEntityData($entityInstance);
+        $originalConsent = $stored['smsConsentAt'] ?? null;
+        $consentUnchanged = $originalConsent instanceof DateTimeImmutable
+            ? $originalConsent->getTimestamp() === $entityInstance->smsConsentAt?->getTimestamp()
+            : null === $entityInstance->smsConsentAt;
+        if (($stored['phone'] ?? null) !== $entityInstance->phone && $consentUnchanged) {
+            $entityInstance->smsConsentAt = null;
+        }
 
-            if (null !== ($stored['clickTrackingConsentAt'] ?? null)) {
-                $this->clickEventRepository->purgeFor($entityInstance);
-            }
+        if (null === $entityInstance->clickTrackingConsentAt && null !== ($stored['clickTrackingConsentAt'] ?? null)) {
+            $this->clickEventRepository->purgeFor($entityInstance);
         }
 
         parent::updateEntity($entityManager, $entityInstance);
@@ -221,6 +229,14 @@ class ContactCrudController extends AbstractCrudController
             ->setRequired(false)
             ->setHelp('newsletter.contact.field.clickTrackingConsentAt.help')
             ->setFormTypeOption('context_help', 'newsletterHelpConsent');
+        if ($this->smsSettings->isConfigured()) {
+            yield FormField::addFieldset('newsletter.sms.preferences')->hideOnIndex();
+            yield BooleanField::new('isMobile', 'newsletter.sms.mobile')->hideOnIndex()->renderAsSwitch(false);
+            yield DateTimeField::new('smsConsentAt', 'newsletter.sms.consentAt')->hideOnIndex()->setRequired(false)
+                ->setHelp('newsletter.sms.consentHelp');
+            yield BooleanField::new('smsDoNotContact', 'newsletter.sms.doNotContact')->hideOnIndex()->renderAsSwitch(false);
+        }
+
         yield DateTimeField::new('createdAt', 'newsletter.contact.field.registeredAt')->hideOnForm();
         yield DateTimeField::new('confirmedAt', 'newsletter.contact.field.confirmedAt')->onlyOnDetail();
         yield DateTimeField::new('unsubscribedAt', 'newsletter.contact.field.unsubscribedAt')->onlyOnDetail();

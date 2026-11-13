@@ -35,6 +35,7 @@ use Pushword\Newsletter\Controller\CriteriaController;
 use Pushword\Newsletter\Entity\Audience;
 use Pushword\Newsletter\Entity\Campaign;
 use Pushword\Newsletter\Entity\Contact;
+use Pushword\Newsletter\Entity\SmsSend;
 use Pushword\Newsletter\Enum\CampaignStatus;
 use Pushword\Newsletter\Repository\ContactRepository;
 use Pushword\Newsletter\Segment\SegmentException;
@@ -44,6 +45,8 @@ use Pushword\Newsletter\Service\EmailTemplateRegistry;
 use Pushword\Newsletter\Service\MailRenderer;
 use Pushword\Newsletter\Service\NewsletterMailer;
 use Pushword\Newsletter\Service\SenderProfileRegistry;
+use Pushword\Newsletter\Sms\SmsCampaignSender;
+use Pushword\Newsletter\Sms\SmsSettings;
 use Pushword\Newsletter\Utm\UtmTag;
 use Pushword\Newsletter\Validation\CampaignPreflight;
 use Pushword\Newsletter\Validation\CampaignValidationFailed;
@@ -53,6 +56,7 @@ use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+use Symfony\Component\Uid\Uuid;
 use Throwable;
 
 /**
@@ -76,6 +80,8 @@ class CampaignCrudController extends AbstractCrudController
         private readonly CampaignPreflight $preflight,
         private readonly SenderProfileRegistry $senderProfiles,
         private readonly EditorialTimezone $timezone,
+        private readonly SmsSettings $smsSettings,
+        private readonly SmsCampaignSender $smsSender,
     ) {
     }
 
@@ -159,6 +165,15 @@ class CampaignCrudController extends AbstractCrudController
         $campaign = $this->getContext()?->getEntity()->getInstance();
         if (! $campaign instanceof Campaign) {
             return $responseParameters;
+        }
+
+        if ($this->smsSettings->isConfigured() && $campaign->hasSmsAlternative()) {
+            $responseParameters->set('sms_configured', true);
+            $responseParameters->set('sms_enabled', $this->smsSettings->canSend());
+            $responseParameters->set('sms_reference', Uuid::v7()->toRfc4122());
+            $responseParameters->set('sms_recipients', $campaign->isDraft() || $campaign->isScheduled() ? $this->smsSender->recipients($campaign) : []);
+            $responseParameters->set('sms_counts', $this->smsSender->counts($campaign));
+            $responseParameters->set('sms_sends', $this->entityManager->getRepository(SmsSend::class)->findBy(['campaign' => $campaign], ['id' => 'DESC']));
         }
 
         $responseParameters->set('preflight_issues', $this->preflight->check($campaign));
@@ -331,6 +346,14 @@ class CampaignCrudController extends AbstractCrudController
             ->setFormTypeOption('context_help', true);
         yield $this->bodyField()->setFormTypeOption('disabled', ! $preparing);
 
+        if ($this->smsSettings->isConfigured()) {
+            yield FormField::addFieldset('newsletter.sms.alternative')->hideOnIndex()->setIcon('fa fa-comment-sms');
+            yield TextareaField::new('smsContent', 'newsletter.sms.content')->setRequired(false)->hideOnIndex()
+                ->setColumns('col-12')->setNumOfRows(4)->setHelp('newsletter.sms.contentHelp')
+                ->setFormTypeOption('disabled', ! $preparing)
+                ->setFormTypeOption('attr', ['maxlength' => 480]);
+        }
+
         yield FormField::addFieldset('newsletter.campaign.fieldset.audience')->setIcon('fa fa-users');
         if (! $isForm) {
             yield $audienceField;
@@ -441,6 +464,32 @@ class CampaignCrudController extends AbstractCrudController
             [] === $translated ? 'none' : implode(', ', $translated),
             implode(', ', $missing),
         );
+    }
+
+    #[AdminRoute(path: '/{entityId}/sms/{operation}', name: 'sms', options: ['methods' => ['POST'], 'requirements' => ['operation' => 'test|refresh|cancel']])]
+    public function sms(Request $request, string $operation): RedirectResponse
+    {
+        $this->denyAccessUnlessGranted('ROLE_EDITOR');
+        $campaign = $this->campaign();
+        if (! $campaign instanceof Campaign || ! $this->smsSettings->isConfigured()) {
+            throw $this->createNotFoundException();
+        }
+
+        $this->assertActionToken($request, 'sms', (int) $campaign->id);
+
+        try {
+            match ($operation) {
+                'test' => $this->smsSender->queueTest($campaign, $request->request->getString('phone'), $request->request->getString('reference')),
+                'refresh' => $this->smsSender->refresh($campaign),
+                'cancel' => $this->smsSender->cancel($campaign),
+                default => throw $this->createNotFoundException(),
+            };
+            $this->addFlash('success', 'newsletter.sms.actionDone');
+        } catch (Throwable) {
+            $this->addFlash('danger', 'newsletter.sms.actionFailed');
+        }
+
+        return new RedirectResponse($this->detailUrl($campaign));
     }
 
     #[AdminRoute(path: '/{entityId}/send', name: 'send', options: ['methods' => ['POST']])]

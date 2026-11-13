@@ -45,7 +45,7 @@ class Campaign implements IdInterface, Stringable
     private const int SLUG_MAX_LENGTH = 120;
 
     /** @var list<string> what a translation may carry, each falling back on its own */
-    private const array TRANSLATED_FIELDS = ['subject', 'preheader', 'bodyMarkdown'];
+    private const array TRANSLATED_FIELDS = ['subject', 'preheader', 'bodyMarkdown', 'smsContent'];
 
     #[Assert\When(expression: '!this.isDraft()', constraints: [new Assert\NotNull()])]
     #[ORM\ManyToOne(targetEntity: Audience::class)]
@@ -117,6 +117,22 @@ class Campaign implements IdInterface, Stringable
     #[ORM\Column(type: Types::TEXT)]
     public string $bodyMarkdown = '' {
         set(?string $value) => (string) $value;
+    }
+
+    #[Assert\Length(max: 480)]
+    #[ORM\Column(type: Types::TEXT, nullable: true)]
+    public ?string $smsContent = null {
+        set(?string $value) => '' === trim((string) $value) ? null : trim((string) $value);
+    }
+
+    public function hasSmsAlternative(): bool
+    {
+        return null !== $this->smsContent;
+    }
+
+    public function smsContentFor(string $locale): string
+    {
+        return $this->translationFor($locale)['smsContent'] ?? $this->smsContent ?? '';
     }
 
     /**
@@ -236,6 +252,7 @@ class Campaign implements IdInterface, Stringable
         $copy->workingTitle = $this->workingTitle;
         $copy->internalNotes = $this->internalNotes;
         $copy->preheader = $this->preheader;
+        $copy->smsContent = $this->smsContent;
         $copy->bodyMarkdown = $this->bodyMarkdown;
         $copy->translations = $this->translations;
         $copy->segment = $this->segment;

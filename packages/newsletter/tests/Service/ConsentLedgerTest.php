@@ -237,11 +237,17 @@ final class ConsentLedgerTest extends AbstractNewsletterTestCase
         $origin = $this->createAudience(requireDoubleOptIn: false);
         $target = $this->createAudience(requireDoubleOptIn: false);
         $contact = $this->manager()->subscribe($origin, source: 'admin:robin', phone: '0612345678');
+        $contact->isMobile = true;
+        $contact->smsConsentAt = new DateTimeImmutable('-1 day');
+        $contact->smsDoNotContact = true;
 
         $carried = $this->manager()->splitFrom($contact, $target);
 
         self::assertSame('0612345678', $carried->phone);
         self::assertNull($carried->email);
+        self::assertTrue($carried->isMobile);
+        self::assertSame($contact->smsConsentAt, $carried->smsConsentAt);
+        self::assertTrue($carried->smsDoNotContact);
         self::assertSame($carried->id, $this->manager()->splitFrom($contact, $target)->id, 'found again on the number');
         self::assertSame([ContactTransition::Split], $this->transitionsOf($carried));
     }

@@ -16,17 +16,20 @@ use Pushword\Newsletter\Entity\CampaignRecipient;
 use Pushword\Newsletter\Entity\ClickEvent;
 use Pushword\Newsletter\Entity\Contact;
 use Pushword\Newsletter\Entity\ContactEvent;
+use Pushword\Newsletter\Entity\SmsSend;
 use Pushword\Newsletter\Enum\CampaignStatus;
 use Pushword\Newsletter\Enum\ContactStatus;
 use Pushword\Newsletter\Segment\SegmentResolver;
 use Pushword\Newsletter\Service\AutomationRunner;
 use Pushword\Newsletter\Service\CampaignSender;
 use Pushword\Newsletter\Service\ContactManager;
+use Pushword\Newsletter\Sms\SmsSettings;
 use Pushword\Newsletter\Tests\AbstractNewsletterTestCase;
 use Symfony\Bundle\FrameworkBundle\Test\MailerAssertionsTrait;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Mime\Email;
+use Symfony\Component\Uid\Uuid;
 
 #[Group('integration')]
 final class NewsletterApiTest extends AbstractNewsletterTestCase
@@ -85,6 +88,50 @@ final class NewsletterApiTest extends AbstractNewsletterTestCase
         $updated = $this->request('PATCH', $url, ['senderProfile' => 'editorial']);
         self::assertResponseIsSuccessful();
         self::assertSame('editorial', $updated['senderProfile']);
+    }
+
+    public function testSmsContentCannotBeActivatedWithoutAConnector(): void
+    {
+        $campaign = $this->createCampaign($this->createAudience());
+        $this->request('PATCH', '/api/newsletter/campaign/'.$campaign->id, ['smsContent' => 'Hello']);
+        self::assertResponseStatusCodeSame(400);
+        self::assertNull($campaign->smsContent);
+    }
+
+    public function testSmsApiKeepsPermissionSeparateAndTestRequestsIdempotent(): void
+    {
+        self::getContainer()->set(SmsSettings::class, new SmsSettings('https://sms.example.test/api', 'test-user', 'test-password', 'test-device', 1, true, 24, 30, 0, 24, 'UTC'));
+        $audience = $this->createAudience();
+        $contact = $this->createPhoneContact($audience, '+33612345678');
+        $contactUrl = '/api/newsletter/contact/'.$contact->id;
+        $updated = $this->request('PATCH', $contactUrl, ['isMobile' => true, 'smsConsentAt' => '2026-11-01T12:00:00Z']);
+        self::assertResponseIsSuccessful();
+        self::assertTrue($updated['isMobile']);
+        self::assertNotNull($updated['smsConsentAt']);
+        self::assertFalse($updated['smsDoNotContact']);
+        $campaign = $this->createCampaign($audience);
+        $url = '/api/newsletter/campaign/'.$campaign->id;
+        $this->request('PATCH', $url, ['smsContent' => 'Hello SMS', 'translations' => ['fr' => ['smsContent' => 'Bonjour SMS']]]);
+        self::assertResponseIsSuccessful();
+        $review = $this->request('GET', $url);
+        self::assertSame(1, $review['estimatedSmsRecipients']);
+        self::assertSame('Hello SMS', $review['smsContent']);
+        $data = ['phone' => '+33699999999', 'reference' => Uuid::v7()->toRfc4122()];
+        $one = $this->request('POST', $url.'/sms/test', $data);
+        self::assertResponseIsSuccessful();
+        self::assertSame($one, $this->request('POST', $url.'/sms/test', $data));
+        self::assertSame(1, $this->entityManager->getRepository(SmsSend::class)->count(['campaign' => $campaign]));
+        $changed = $this->request('PATCH', $contactUrl, ['phone' => '+33612345679']);
+        self::assertResponseIsSuccessful();
+        self::assertNull($changed['smsConsentAt']);
+        $this->request('PATCH', $contactUrl, ['smsConsentAt' => '']);
+        self::assertResponseStatusCodeSame(400);
+        self::assertTrue($contact->isSubscribed());
+        $cancelled = $this->request('POST', $url.'/sms/cancel');
+        self::assertResponseIsSuccessful();
+        self::assertSame('draft', $cancelled['status']);
+        self::assertIsArray($cancelled['smsStats']);
+        self::assertSame(0, array_sum($cancelled['smsStats']));
     }
 
     public function testAnonymousAccessIsRefused(): void

@@ -1,7 +1,8 @@
 ---
-title: ''
+title: 'optional newsletter SMS storage'
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
+run: 'doctrine:schema:update --force'
 ---
 
 <!--
@@ -34,3 +35,10 @@ belongs in the feature doc, which you link to instead.
 
 Several changes land here between two tags: append to the file, do not replace it.
 -->
+
+**Concerns:** `pushword/newsletter`
+
+## Newsletter SMS storage
+
+Update the schema with `php bin/console doctrine:schema:update --force` to add SMS preferences and queue tables, including when SMS is disabled.
+SMS fields appear only after configuring `newsletter.sms`; sending remains disabled by default. See [Newsletter SMS](/extension/newsletter#sms-alternative-with-smsgate).

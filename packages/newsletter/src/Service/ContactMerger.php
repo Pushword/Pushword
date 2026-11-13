@@ -8,6 +8,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use InvalidArgumentException;
 use Pushword\Newsletter\Entity\Contact;
 use Pushword\Newsletter\Entity\DeliveryMessage;
+use Pushword\Newsletter\Entity\SmsSend;
 use Pushword\Newsletter\Repository\AutomationDeliveryRepository;
 use Pushword\Newsletter\Repository\CampaignRecipientRepository;
 use Pushword\Newsletter\Repository\ContactEventRepository;
@@ -128,6 +129,10 @@ final readonly class ContactMerger
      */
     private function moveLedger(Contact $absorbed, Contact $keeper): void
     {
+        foreach ($this->entityManager->getRepository(SmsSend::class)->findBy(['contact' => $absorbed]) as $send) {
+            $send->contact = null === $this->entityManager->getRepository(SmsSend::class)->findOneBy(['campaign' => $send->campaign, 'contact' => $keeper]) ? $keeper : null;
+        }
+
         foreach ($this->entityManager->getRepository(DeliveryMessage::class)->findBy(['contact' => $absorbed]) as $message) {
             $message->moveTo($keeper);
         }
@@ -184,6 +189,9 @@ final readonly class ContactMerger
      */
     private function fill(Contact $keeper, Contact $absorbed): void
     {
+        $keeper->isMobile = $keeper->isMobile || $absorbed->isMobile;
+        $keeper->smsConsentAt ??= $absorbed->smsConsentAt;
+        $keeper->smsDoNotContact = $keeper->smsDoNotContact || $absorbed->smsDoNotContact;
         if ('' === $keeper->name) {
             $keeper->name = $absorbed->name;
         }

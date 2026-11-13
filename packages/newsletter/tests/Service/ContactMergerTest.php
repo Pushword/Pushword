@@ -31,6 +31,9 @@ final class ContactMergerTest extends AbstractNewsletterTestCase
         $audience = $this->createAudience(requireDoubleOptIn: false);
         $addressed = $this->createContact($audience, 'both@example.tld');
         $phoneOnly = $this->createPhoneContact($audience, '0612345678');
+        $phoneOnly->isMobile = true;
+        $phoneOnly->smsConsentAt = new DateTimeImmutable('-1 day');
+        $phoneOnly->smsDoNotContact = true;
 
         $id = $addressed->id;
         $token = $addressed->token;
@@ -42,6 +45,9 @@ final class ContactMergerTest extends AbstractNewsletterTestCase
         self::assertSame($id, $kept->id);
         self::assertSame($token, $kept->token, 'the links already in a mailbox have to keep working');
         self::assertSame('0612345678', $kept->phone);
+        self::assertTrue($kept->isMobile);
+        self::assertSame($phoneOnly->smsConsentAt, $kept->smsConsentAt);
+        self::assertTrue($kept->smsDoNotContact);
         self::assertNull($this->entityManager->getRepository(Contact::class)->find($absorbedId));
     }
 
