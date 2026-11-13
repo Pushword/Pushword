@@ -8,7 +8,6 @@ Twig `view()` and PHP `getView()` calls using the selected site's template resol
 Requires PHP 8.5 and Pushword core 1.0.108 or later.
 
 ```shell
-composer config repositories.pushword-twigstan vcs https://github.com/Pushword/twigstan
 composer require --dev pushword/twigstan:^1.0.108
 ```
 
@@ -24,7 +23,7 @@ namespace App\TwigStan;
 use App\Kernel;
 use Pushword\TwigStan\AnalysisKernelTrait;
 
-final class AnalysisKernel extends Kernel
+final class TwigStanKernel extends Kernel
 {
     use AnalysisKernelTrait;
 }
@@ -37,14 +36,14 @@ Create `twigstan-loader.php`:
 
 declare(strict_types=1);
 
-use App\TwigStan\AnalysisKernel;
+use App\TwigStan\TwigStanKernel;
 use Pushword\TwigStan\Environment;
 use Symfony\Component\Dotenv\Dotenv;
 
 require_once __DIR__.'/.scripts/TwigStanKernel.php';
 new Dotenv()->bootEnv(__DIR__.'/.env');
 
-return Environment::load(new AnalysisKernel('dev', true));
+return Environment::load(new TwigStanKernel('dev', true));
 ```
 
 Create `twigstan.php`:
