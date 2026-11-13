@@ -65,6 +65,8 @@ composer test
 composer console ...
 ```
 
+For optional template analysis in downstream projects, see [TwigStan](/twigstan).
+
 ## Packages
 
 | Package | Purpose | Depends on |
