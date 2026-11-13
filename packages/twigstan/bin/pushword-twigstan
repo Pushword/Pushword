@@ -1,0 +1,8 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+require $_composer_autoload_path ?? getcwd().'/vendor/autoload.php';
+
+exit(\Pushword\TwigStan\Runtime::run($_SERVER['argv']));

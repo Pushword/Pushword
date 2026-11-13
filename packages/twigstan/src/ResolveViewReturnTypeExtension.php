@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Pushword\TwigStanTool;
+namespace Pushword\TwigStan;
 
 use PhpParser\Node\Expr\MethodCall;
 use PHPStan\Analyser\ArgumentsNormalizer;
@@ -13,7 +13,6 @@ use PHPStan\Type\Constant\ConstantStringType;
 use PHPStan\Type\DynamicMethodReturnTypeExtension;
 use PHPStan\Type\Type;
 use Pushword\Core\Site\SiteConfig;
-use Pushword\Core\Site\SiteRegistry;
 
 /** Resolves PHP getView() calls for the same site as the Twig analysis loader. */
 final class ResolveViewReturnTypeExtension implements DynamicMethodReturnTypeExtension
@@ -67,9 +66,9 @@ final class ResolveViewReturnTypeExtension implements DynamicMethodReturnTypeExt
             return $this->site;
         }
 
-        $kernel = require __DIR__.'/twig-loader.php';
-        $registry = $kernel->getContainer()->get('test.service_container')->get(SiteRegistry::class);
+        $configuration = require Runtime::configurationFile();
+        $kernel = require $configuration->twigEnvironmentLoader;
 
-        return $this->site = $registry->get(getenv('PUSHWORD_TWIGSTAN_HOST') ?: null);
+        return $this->site = Environment::site($kernel);
     }
 }

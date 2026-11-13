@@ -1,0 +1,14 @@
+parameters:
+    level: 8
+
+services:
+    -
+        class: Pushword\TwigStan\ResolveViewReturnTypeExtension
+        arguments:
+            className: Pushword\Core\Site\SiteConfig
+        tags: [phpstan.broker.dynamicMethodReturnTypeExtension]
+    -
+        class: Pushword\TwigStan\ResolveViewReturnTypeExtension
+        arguments:
+            className: Pushword\Core\Controller\AbstractPushwordController
+        tags: [phpstan.broker.dynamicMethodReturnTypeExtension]

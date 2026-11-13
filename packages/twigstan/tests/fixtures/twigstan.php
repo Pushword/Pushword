@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 use TwigStan\Config\TwigStanConfig;
 
-$tool = \dirname(__DIR__, 2);
+$tool = \dirname(__DIR__, 2).'/tools';
 
 return TwigStanConfig::configure(__DIR__)
     ->phpstanBinPath($tool.'/vendor/bin/phpstan')

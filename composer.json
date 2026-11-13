@@ -180,6 +180,7 @@
   "autoload-dev": {
     "psr-4": {
       "Pushword\\PHPStan\\": ".scripts/phpstan",
+      "Pushword\\TwigStan\\": "packages/twigstan/src",
       "App\\": "packages/dev-app/src",
       "Pushword\\Admin\\Tests\\": "packages/admin/tests",
       "Pushword\\Api\\Tests\\": "packages/api/tests",
@@ -208,8 +209,8 @@
     "dev": "cd packages/dev-app && symfony server:start -d --no-tls",
     "stan": "vendor/bin/phpstan",
     "twigstan": "./.scripts/twigstan/run",
-    "twigstan-ci": ["./.scripts/twigstan/run --ci", "@php .scripts/twigstan/check-ci-coverage.php"],
-    "test-twigstan": "composer --working-dir=.scripts/twigstan test",
+    "twigstan-ci": "./.scripts/twigstan/run --ci",
+    "test-twigstan": ["@composer --working-dir=packages/twigstan test", "@php .scripts/twigstan/tests/bootstrap.php", "@php .scripts/twigstan/phpstan.php analyse --configuration=.scripts/twigstan/tests/phpstan.neon --no-progress --no-ansi"],
     "test": "./.scripts/test $*",
     "test-live": "PANTHER_NO_HEADLESS=1 PANTHER_NO_SANDBOX=1 composer test $*",
     "test-mariadb": "PUSHWORD_TEST_DATABASE_BASE_URL='mysql://pushword:pushword@127.0.0.1:3306/pushword_test?serverVersion=11.8.6-MariaDB&charset=utf8mb4' ./.scripts/test $*",

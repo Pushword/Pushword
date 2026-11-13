@@ -65,7 +65,8 @@ composer test
 composer console ...
 ```
 
-For optional template analysis in downstream projects, see [TwigStan](/twigstan).
+For optional template analysis in downstream projects, install the development
+package `pushword/twigstan`; see [TwigStan](/twigstan).
 
 ## Packages
 

@@ -41,6 +41,7 @@ jobs:
           - quiz
           - repurpose
           - docs
+          - twigstan
 
     steps:
       - uses: actions/checkout@v7

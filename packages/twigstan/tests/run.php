@@ -5,7 +5,7 @@ declare(strict_types=1);
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Process\Process;
 
-$tool = \dirname(__DIR__);
+$tool = __DIR__.'/../tools';
 require $tool.'/vendor/autoload.php';
 require __DIR__.'/fixtures/src/Renderer.php';
 

@@ -5,4 +5,5 @@ parameters:
     tmpDir: ../var/type-tests
     paths:
         - view-types.php
-        - ../ResolveViewReturnTypeExtension.php
+        - ../../../packages/twigstan/src
+        - ../AnalysisKernel.php

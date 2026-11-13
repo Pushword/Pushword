@@ -3,16 +3,14 @@ set -euo pipefail
 
 tool_dir="$(cd "$(dirname "$0")" && pwd)"
 repo_dir="$(cd "$tool_dir/../.." && pwd)"
-
-composer --working-dir="$tool_dir" install --no-interaction --no-progress >&2
 cd "$repo_dir"
 
-# PAO replaces PHPStan's custom result formatter, which TwigStan needs to collect contexts.
-export PAO_DISABLE=1
 configuration="$tool_dir/twigstan.php"
+coverage=()
 if [[ "${1:-}" == "--ci" ]]; then
     configuration="$tool_dir/ci.php"
+    coverage=(--check-coverage)
     shift
 fi
 
-exec php "$tool_dir/analyze.php" analyze --configuration="$configuration" "$@"
+exec php "$repo_dir/packages/twigstan/bin/pushword-twigstan" --configuration="$configuration" "${coverage[@]}" "$@"

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Pushword\TwigStanTool\Tests;
+namespace Pushword\TwigStan\Tests;
 
 use function PHPStan\Testing\assertType;
 

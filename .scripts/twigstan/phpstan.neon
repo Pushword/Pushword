@@ -1,18 +1,4 @@
 includes:
+    - ../../packages/twigstan/config/phpstan.neon
     - ../../vendor/phpstan/phpstan-doctrine/extension.neon
     - ../../vendor/phpstan/phpstan-symfony/extension.neon
-
-parameters:
-    level: 8
-
-services:
-    -
-        class: Pushword\TwigStanTool\ResolveViewReturnTypeExtension
-        arguments:
-            className: Pushword\Core\Site\SiteConfig
-        tags: [phpstan.broker.dynamicMethodReturnTypeExtension]
-    -
-        class: Pushword\TwigStanTool\ResolveViewReturnTypeExtension
-        arguments:
-            className: Pushword\Core\Controller\AbstractPushwordController
-        tags: [phpstan.broker.dynamicMethodReturnTypeExtension]

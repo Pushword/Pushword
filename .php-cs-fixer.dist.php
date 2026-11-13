@@ -11,7 +11,7 @@ $finder = Finder::create()
         __DIR__.'/.scripts/phpstan',
     ])
     ->name('*.php')
-    ->exclude('rust/target')
+    ->exclude(['rust/target', 'twigstan/tools/vendor'])
     ->ignoreDotFiles(true)
     ->ignoreVCS(true)
     ->append([

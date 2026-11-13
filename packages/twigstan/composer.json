@@ -1,0 +1,34 @@
+{
+  "name": "pushword/twigstan",
+  "description": "TwigStan integration for Pushword projects.",
+  "type": "library",
+  "license": "MIT",
+  "require": {
+    "php": "~8.5.0",
+    "pushword/core": "^1.0.108",
+    "symfony/process": "^7.3 || ^8.0"
+  },
+  "autoload": {
+    "psr-4": {
+      "Pushword\\TwigStan\\": "src/"
+    }
+  },
+  "bin": [
+    "bin/pushword-twigstan"
+  ],
+  "extra": {
+    "branch-alias": {
+      "dev-main": "1.0.x-dev"
+    }
+  },
+  "support": {
+    "issues": "https://github.com/Pushword/Pushword/issues",
+    "source": "https://github.com/Pushword/twigstan"
+  },
+  "scripts": {
+    "test": [
+      "@composer --working-dir=tools install --no-interaction --no-progress",
+      "@php tests/run.php"
+    ]
+  }
+}

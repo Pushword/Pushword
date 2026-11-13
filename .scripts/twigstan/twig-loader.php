@@ -2,8 +2,7 @@
 
 declare(strict_types=1);
 
-use Pushword\Core\Site\SiteRegistry;
-use Pushword\Core\TwigStan\ResolveViewNodeVisitor;
+use Pushword\TwigStan\Environment;
 use Pushword\TwigStanTool\AnalysisKernel;
 use Symfony\Component\Dotenv\Dotenv;
 use Twig\Loader\FilesystemLoader;
@@ -30,16 +29,9 @@ $kernel = new AnalysisKernel('test', true);
 $kernel->boot();
 $container = $kernel->getContainer()->get('test.service_container');
 $twig = $container->get('twig');
-$registry = $container->get(SiteRegistry::class);
-$host = getenv('PUSHWORD_TWIGSTAN_HOST') ?: $registry->getDefault()->getMainHost();
-$site = $registry->findByHost($host) ?? throw new InvalidArgumentException('Unknown TwigStan host: '.$host);
-
 $loader = $twig->getLoader();
 if ($loader instanceof FilesystemLoader) {
     $loader->addPath($root.'/packages/docs/templates', 'PushwordDocs');
 }
 
-$twig->setCache(false);
-$twig->addNodeVisitor(new ResolveViewNodeVisitor($site));
-
-return $kernel;
+return Environment::load($kernel);
