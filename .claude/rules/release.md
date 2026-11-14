@@ -28,8 +28,6 @@ one race-free split run.
   protection when creating a new mirror.
 - **Keep published tags immutable.** Supersede a mistaken version with the next shared
   release. Do not delete or move published tags without Robin's explicit approval.
-  The historical TwigStan `1.0.108.1` and `1.0.108.2` tags remain for existing lock files;
-  the next shared release restores the normal version sequence.
 - **A matrix entry needs both a `packages/<pkg>` directory and an existing mirror repo.**
   `admin-monaco-editor` and `ai-skills` have source dirs but no mirror and are
   deliberately absent; adding them would 404 at clone.
