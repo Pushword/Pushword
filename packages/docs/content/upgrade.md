@@ -16,6 +16,7 @@ Package names omit `pushword/`; `js-helper` is the npm package
 
 | Version | Packages | What changed |
 | --- | --- | --- |
+| [1.0.110](/upgrade/1.0.110) | `core` `dev-app` | update the Docker base image to FrankenPHP 1.13.5 |
 | [1.0.109](/upgrade/1.0.109) | `core` | gallery link overrides apply to one image |
 | [1.0.108](/upgrade/1.0.108) | `newsletter` | optional newsletter SMS storage — run `doctrine:schema:update --force` |
 | [1.0.107](/upgrade/1.0.107) | `conversation` | conversation notification templates can be overridden; selected messages support delayed delivery — run `doctrine:schema:update --force` |

@@ -1,5 +1,5 @@
 ---
-title: 'update the Docker base image to FrankenPHP 1.13.5'
+title: ''
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -34,10 +34,3 @@ belongs in the feature doc, which you link to instead.
 
 Several changes land here between two tags: append to the file, do not replace it.
 -->
-
-**Concerns:** `pushword/core`, `pushword/dev-app`
-
-## Update the Docker base image
-
-The Docker skeleton now pins FrankenPHP 1.13.5 with patched Go dependencies.
-**Sites using the generated Dockerfile:** copy the `FROM` line from `vendor/pushword/dev-app/docker-skeleton/Dockerfile` into your own, then rebuild and restart with `docker compose -f compose.prod.yaml up -d --build`.
