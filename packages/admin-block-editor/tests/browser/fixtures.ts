@@ -81,6 +81,7 @@ export async function saveAndReload(page: Page): Promise<void> {
     page.locator('.action-saveAndContinue').click(),
   ])
   expect((await response).status(), 'The edit form must redirect after saving').toBe(302)
+  await waitForEditor(page)
   await page.reload()
   await waitForEditor(page)
 }

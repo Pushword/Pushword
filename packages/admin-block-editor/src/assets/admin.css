@@ -7,6 +7,8 @@
    keeps the editor's content out of that measure. */
 .editorjs-holder {
   contain: inline-size;
+  /* Firefox treats the admin theme's intermediate normal weight as already bold. */
+  font-weight: 400;
 }
 
 /* Floating editor controls must escape open fieldsets in every editing form. */

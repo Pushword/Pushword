@@ -46,8 +46,9 @@ test('touch navigation keeps its toggle reachable and its last item scrollable',
   await toggle.tap()
   await expect(toggle).toHaveAttribute('aria-expanded', 'false')
   await toggle.tap()
-  await page.locator('.modal-backdrop').tap({ position: { x: 380, y: 400 } })
+  await page.locator('.ea-sidebar-backdrop.show').tap({ position: { x: 380, y: 400 } })
   await expect(toggle).toHaveAttribute('aria-expanded', 'false')
+  await expect(page.locator('.ea-sidebar-backdrop')).toHaveCount(0)
 })
 
 test('list controls keep their visual size inside larger touch targets', async ({
