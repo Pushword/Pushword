@@ -111,6 +111,15 @@ UI/templates/CSS: consult `packages/core/DesignGuidelines.md` (Tailwind, public 
 - Keep `origin/archive` as an intentional historical archive; do not ask to delete it during routine cleanup.
 - Keep `origin/docs` and `origin/badges`; CI publishes to these branches.
 
+## Releases
+
+- Use `composer release` from this monorepo. It increments the shared `1.0.N` version
+  and the split workflow applies that same tag to every distribution mirror.
+- Never publish or tag a package mirror directly, including for a new package, a
+  hotfix, or a README change. Do not invent a fourth version component.
+- Keep published tags immutable. Supersede a mistaken version with the next shared
+  release; deleting or moving a published tag requires Robin's explicit approval.
+
 ## Docs
 
 - `packages/docs/content/` — one `.md` per topic; `extension/` — per-bundle feature docs;

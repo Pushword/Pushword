@@ -53,6 +53,8 @@ else
     NOTE_SLUG="rc$NEXT_RC"
 fi
 
+bash .scripts/validate-release-tag "$NEW_TAG"
+
 if git rev-parse --verify --quiet "refs/tags/$NEW_TAG" >/dev/null; then
     echo -e "${RED}Error: Tag $NEW_TAG already exists${NC}"
     exit 1

@@ -2,6 +2,7 @@
 paths:
   - ".github/workflows/**"
   - ".scripts/release"
+  - ".scripts/validate-release-tag"
   - "monorepo-builder.php"
   - "packages/*/.gitattributes"
 ---
@@ -16,6 +17,19 @@ one race-free split run.
   `git tag X` when `X` already exists, with no `--force`. `.scripts/release` (what
   `composer release` and the global `/tag-and-push` skill delegate to) bumps the patch
   of the latest `1.0.N` tag.
+- **Release only from this monorepo with `composer release`.** Mirrors are distribution
+  outputs: never push commits or tags to them directly, even for a new package, a
+  hotfix, or a README edit. Every package receives the same `1.0.N` tag. Four-component
+  versions such as `1.0.108.1` are forbidden. The shared tag validator runs before
+  publication and splitting; deleted tags do not trigger a split.
+- **Keep the GitHub tag protection on every mirror.** The active ruleset named
+  `Block four-component release tags` blocks creation of `refs/tags/*.*.*.*` without
+  bypass actors on this monorepo and every mirror in the split matrix. Add the same
+  protection when creating a new mirror.
+- **Keep published tags immutable.** Supersede a mistaken version with the next shared
+  release. Do not delete or move published tags without Robin's explicit approval.
+  The historical TwigStan `1.0.108.1` and `1.0.108.2` tags remain for existing lock files;
+  the next shared release restores the normal version sequence.
 - **A matrix entry needs both a `packages/<pkg>` directory and an existing mirror repo.**
   `admin-monaco-editor` and `ai-skills` have source dirs but no mirror and are
   deliberately absent; adding them would 404 at clone.
@@ -59,6 +73,5 @@ This is **benign** — the originally-published ref is kept and nothing can be s
 To remove such a version, delete the tag(s) in the **mirror** repo, both forms:
 `git push git@github.com:Pushword/<pkg>.git :refs/tags/0.0.34 :refs/tags/v0.0.34`.
 
-**Never push a monorepo tag deletion to fix it.** The split workflow has no deletion
-guard, so touching an old `0.0.X` tag on the monorepo re-triggers the split and can
-resurrect the mirror tag.
+**Never push a monorepo tag deletion to fix it.** Cleanup belongs in the mirror and
+requires Robin's explicit approval. The split workflow ignores tag deletions.

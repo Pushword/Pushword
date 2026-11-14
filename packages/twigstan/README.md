@@ -14,7 +14,7 @@ a CI command that checks template types and render-context coverage.
 Requires PHP 8.5 and Pushword core 1.0.108 or later.
 
 ```shell
-composer require --dev pushword/twigstan:^1.0.108.1
+composer require --dev pushword/twigstan:^1.0.109
 ```
 
 Create `.scripts/TwigStanKernel.php` outside the application service scan:

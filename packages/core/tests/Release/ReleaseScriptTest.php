@@ -29,6 +29,7 @@ final class ReleaseScriptTest extends TestCase
 
         $repositoryRoot = \dirname(__DIR__, 4);
         $filesystem->copy($repositoryRoot.'/.scripts/release', $this->testRoot.'/.scripts/release');
+        $filesystem->copy($repositoryRoot.'/.scripts/validate-release-tag', $this->testRoot.'/.scripts/validate-release-tag');
         $filesystem->dumpFile($this->testRoot.'/.scripts/release-upgrade-note', "#!/bin/sh\nexit 0\n");
         $filesystem->dumpFile(
             $this->testRoot.'/bin/gh',
@@ -90,6 +91,24 @@ final class ReleaseScriptTest extends TestCase
 
         $remoteTag = $this->runCommand(['git', '--git-dir='.$this->remoteRoot, 'tag', '--list', '1.0.1']);
         self::assertSame('1.0.1', trim($remoteTag->getOutput()));
+    }
+
+    public function testReleaseAfter108Uses109DespiteHistoricalFourComponentTags(): void
+    {
+        foreach (['1.0.108', '1.0.108.1', '1.0.108.2'] as $tag) {
+            $this->runCommand(['git', '-C', $this->testRoot, 'tag', $tag]);
+        }
+
+        $process = new Process(
+            [$this->testRoot.'/.scripts/release'],
+            $this->testRoot,
+            ['PATH' => $this->testRoot.'/bin:'.getenv('PATH')],
+        );
+        $process->mustRun();
+
+        self::assertStringContainsString('Creating release 1.0.109 (previous: 1.0.108)', $process->getOutput());
+        $remoteTag = $this->runCommand(['git', '--git-dir='.$this->remoteRoot, 'tag', '--list', '1.0.109']);
+        self::assertSame('1.0.109', trim($remoteTag->getOutput()));
     }
 
     /** @param list<string> $command */

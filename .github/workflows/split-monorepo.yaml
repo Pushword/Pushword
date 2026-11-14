@@ -12,7 +12,18 @@ on:
       - "*"
 
 jobs:
+  validate_release:
+    if: ${{ !github.event.deleted }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Validate shared release tag
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: bash .scripts/validate-release-tag "$RELEASE_TAG"
+
   split_monorepo:
+    needs: validate_release
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
