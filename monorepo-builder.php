@@ -11,12 +11,15 @@ use Symplify\MonorepoBuilder\Release\ReleaseWorker\SetNextMutualDependenciesRele
 use Symplify\MonorepoBuilder\Release\ReleaseWorker\TagVersionReleaseWorker;
 use Symplify\MonorepoBuilder\Release\ReleaseWorker\UpdateBranchAliasReleaseWorker;
 use Symplify\MonorepoBuilder\Release\ReleaseWorker\UpdateReplaceReleaseWorker;
+use Symplify\MonorepoBuilder\ValueObject\Option;
 
 return static function (MBConfig $mbConfig): void {
     $mbConfig->packageDirectories([
         __DIR__.'/packages',
     ]);
-    $mbConfig->packageDirectoriesExcludes(['target']);
+    $mbConfig->packageDirectoriesExcludes(['target', 'twigstan/tools']);
+    // TwigStan requires the core adapter introduced in 1.0.108; other bundles use "*".
+    $mbConfig->parameters()->set(Option::EXCLUDE_PACKAGE_VERSION_CONFLICTS, ['pushword/core']);
     $mbConfig->workers([
         UpdateReplaceReleaseWorker::class,
         SetCurrentMutualDependenciesReleaseWorker::class,

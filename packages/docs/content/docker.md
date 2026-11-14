@@ -31,6 +31,10 @@ It writes `Dockerfile`, `compose.yaml`, `compose.prod.yaml`,
 `compose.postgresql.yaml`, `.dockerignore` and
 `docker/`, and never overwrites an existing file unless you pass `--force`.
 
+The generated `Dockerfile` pins FrankenPHP to a version and digest. Updating Pushword
+does not update files already copied into your project: compare its `FROM` line with
+`vendor/pushword/dev-app/docker-skeleton/Dockerfile`, update it, then rebuild the image.
+
 ## Development
 
 ```shell

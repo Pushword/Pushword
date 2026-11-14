@@ -37,7 +37,7 @@ final class SessionSaveListenerTest extends TestCase
     public function testSessionFactoryRemainsLazy(): void
     {
         $request = Request::create('/admin');
-        $request->setSessionFactory(static fn () => self::fail('An unused session must not be initialized.'));
+        $request->setSessionFactory(static fn (): never => self::fail('An unused session must not be initialized.'));
 
         new SessionSaveListener(new TokenStorage())->release($this->event($request));
 

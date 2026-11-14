@@ -13,6 +13,7 @@ function resolveSiteViews(SiteConfig $site, string $dynamic): void
 {
     assertType("'@Pushword/component/link.html.twig'", $site->getView('/component/link.html.twig'));
     assertType("'@Pushword/component/link.html.twig'", $site->getView(path: '/component/link.html.twig', fallback: '@Pushword'));
+    assertType("'@Pushword/component/link.html.twig'", $site->getView(fallback: '@Pushword', path: '/component/link.html.twig'));
     assertType("'@Pushword/component/link.html.twig'", $site->getView('@Pushword/component/link.html.twig'));
     assertType("'@Pushword/page/page.html.twig'", $site->getView(null, '@PushwordCore'));
     assertType("'@Pushword/page/page.html.twig'", $site->getView());

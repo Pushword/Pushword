@@ -69,6 +69,7 @@ body.ea-new .content-header {
   background-color: var(--bs-tertiary-bg);
   border: 0;
   border-radius: var(--pw-radius-md);
+  padding: 0;
   margin-bottom: 1rem;
   box-shadow: none; /* EasyAdmin draws .form-fieldset's hairline as an inset ring */
 }
@@ -154,6 +155,7 @@ body.ea-new .content-header {
   min-inline-size: 0;
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .form-column .form-fieldset-header {

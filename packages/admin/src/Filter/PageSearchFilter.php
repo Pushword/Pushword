@@ -21,11 +21,11 @@ final class PageSearchFilter implements FilterInterface
 {
     use FilterTrait;
 
-    /** @var string[] */
+    /** @var list<string> */
     private array $fieldNames = [];
 
     /**
-     * @param string[] $fieldNames
+     * @param list<string> $fieldNames
      */
     public static function new(array $fieldNames, TranslatableInterface|string|false|null $label = null): self
     {

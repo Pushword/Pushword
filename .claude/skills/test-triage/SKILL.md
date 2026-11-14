@@ -25,9 +25,9 @@ converge. Check the failing test against this dossier before investigating your 
    the two together. (`LinkedDocsScannerTest`'s redirection failure was exactly this:
    `PageSyncTest` imported a redirection.csv omitting the fixtures' rows, and `import()`
    deletes what the csv omits.)
-4. On CI, before believing several jobs failed at once: the matrix is fail-fast, so one
-   flaked shard cancels its siblings and the whole run reads red — check `conclusion` on
-   the siblings via `gh api repos/:owner/:repo/actions/jobs/<id>`.
+4. On CI, inspect each job's `conclusion` via
+   `gh api repos/:owner/:repo/actions/jobs/<id>`. The test matrix has `fail-fast: false`;
+   distinguish failed jobs from cancellations before comparing their failures.
 5. Confirm the tests *your* change touches pass deterministically — repeat-run locally,
    then `composer test-mariadb`.
 

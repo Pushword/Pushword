@@ -139,7 +139,8 @@ consented.
 **A contact with no address skips it.** There is no mail to click, so a
 phone-only contact is `subscribed` at once, whatever the audience asks. The
 consent is that of whoever entered the number, and `source` records who
-(`admin:<user>`, `import:…`, `api`).
+(`admin:<user>`, `import:…`, `api`). This does not grant SMS permission: sending
+requires the separate [SMS consent fields](#sms-alternative-with-smsgate).
 
 Every mail carries `List-Unsubscribe` with RFC 8058 one-click. The link in the
 body is one click too: it opts out without asking to confirm — a link that makes
@@ -738,7 +739,8 @@ in campaign data. Select the intended device and SIM explicitly. Dev and test
 installations should use dummy credentials and keep sending disabled.
 
 A campaign's `smsContent` is an optional alternative for contacts **without an
-email**. An email address always excludes SMS, even after a bounce; a failed email does not trigger a fallback. SMS recipients must have
+email**. An email address always excludes SMS, even after a bounce; a failed
+email does not trigger a fallback. SMS recipients must have
 an international phone number (`+` and country code), `isMobile: true`, a dated
 `smsConsentAt`, and `smsDoNotContact: false`. The campaign's segment applies.
 SMS permission and suppression are independent of email subscription state.
@@ -770,9 +772,10 @@ Each queued message freezes its number, personalized text and provider identity.
 Before transmission, permission, suppression, number, audience, segment and email
 presence are checked again. Quota reservations survive an uncertain response;
 retries look up the same identity before posting it again. Deleting a campaign
-retains its send history and quota reservations; its pending SMS are excluded. Failed SMS do not mark
-an email bounced or change email automations. A campaign finishes when no email or
-campaign SMS remains pending; gateway acceptance does not prove delivery.
+retains its send history and quota reservations; its pending SMS are excluded.
+Failed SMS do not mark an email bounced or change email automations. A campaign
+finishes when no email or campaign SMS remains pending; gateway acceptance does
+not prove delivery.
 
 **Refresh SMS delivery** reads gateway states, including tests. An accepted or
 network-sent message remains distinct from a delivery report. **Cancel pending
@@ -786,8 +789,9 @@ The authenticated API supports `smsContent` and its locale overrides on campaign
 and `isMobile`, `smsConsentAt`, `smsDoNotContact` on contacts. Campaign reads include
 `smsStats` and item reads include `estimatedSmsRecipients` while drafting.
 `POST /api/newsletter/campaign/{id}/sms/test` accepts `phone` and a client-generated
-UUID `reference`. The same endpoint with `/refresh` or `/cancel` performs the
-corresponding admin action. Reads never contact SMSGate.
+UUID `reference`. `POST /api/newsletter/campaign/{id}/sms/refresh` updates delivery
+states; `POST /api/newsletter/campaign/{id}/sms/cancel` cancels pending SMS.
+Reads never contact SMSGate.
 
 ## Automations
 
@@ -2004,9 +2008,6 @@ call to action, what the site sells.
   `/api/newsletter/contact/{id}/bounce`. A provider's feedback channel (SES→SNS,
   a Mailgun or Postmark webhook) needs an adapter that does not exist yet.
   Complaints (FBL) are not ingested.
-- **No SMS sending.** A phone number is a first-class field and can key a
-  contact on its own — stored, tagged, segmented, exported — but nothing sends to
-  it; a phone-only contact is never a campaign recipient.
 - **No `OR` between the two sides of a broadcast.** `triggerWhen` selects
   subjects, `recipientWhen` selects contacts, and a broadcast is their product
   (implicit `AND`). An `OR` would be a condition on a (page, contact) pair, which

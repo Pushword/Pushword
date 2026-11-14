@@ -11,6 +11,7 @@ use Pushword\Newsletter\Entity\AutomationDelivery;
 use Pushword\Newsletter\Entity\CampaignRecipient;
 use Pushword\Newsletter\Entity\Contact;
 use Pushword\Newsletter\Entity\Enrollment;
+use Pushword\Newsletter\Entity\SmsSend;
 use Pushword\Newsletter\Service\ContactMerger;
 use Pushword\Newsletter\Tests\AbstractNewsletterTestCase;
 
@@ -116,6 +117,36 @@ final class ContactMergerTest extends AbstractNewsletterTestCase
         self::assertSame($kept->id, $recipient->contact->id);
         self::assertSame($kept->id, $enrollment->contact->id);
         self::assertSame($kept->id, $delivery->contact->id, 'a step that went out is what says the sequence reached them');
+    }
+
+    public function testSmsHistorySurvivesAMergeWithoutDuplicatingCampaignRecipients(): void
+    {
+        $audience = $this->createAudience(requireDoubleOptIn: false);
+        $addressed = $this->createContact($audience, 'kept@example.tld');
+        $phoneOnly = $this->createPhoneContact($audience, '+33612345678');
+        $campaign = $this->createCampaign($audience);
+        $otherCampaign = $this->createCampaign($audience);
+        $moved = new SmsSend($campaign, $phoneOnly, '+33612345678', 'First message');
+        $kept = new SmsSend($otherCampaign, $addressed, '+33612345678', 'Earlier message');
+        $duplicate = new SmsSend($otherCampaign, $phoneOnly, '+33612345678', 'Later message');
+        $reservedAt = new DateTimeImmutable('2026-11-13 12:00 UTC');
+        $duplicate->quotaReservedAt = $reservedAt;
+        foreach ([$moved, $kept, $duplicate] as $send) {
+            $this->entityManager->persist($send);
+        }
+
+        $this->entityManager->flush();
+        $this->merger()->merge($addressed, $phoneOnly);
+        foreach ([$moved, $kept, $duplicate] as $send) {
+            $this->entityManager->refresh($send);
+        }
+
+        self::assertSame($addressed, $moved->contact);
+        self::assertSame($addressed, $kept->contact);
+        self::assertNull($duplicate->contact);
+        self::assertSame('Later message', $duplicate->content);
+        self::assertEquals($reservedAt, $duplicate->quotaReservedAt);
+        self::assertCount(2, $this->entityManager->getRepository(SmsSend::class)->findBy(['campaign' => $otherCampaign]));
     }
 
     /**

@@ -71,6 +71,7 @@
 .content-top .content-search .form-widget {
   position: relative;
   display: flex;
+  padding-inline: 0;
   margin-inline-start: calc(-1 * var(--content-padding-left));
 }
 
@@ -103,8 +104,12 @@
 }
 
 @media (min-width: 992px) {
+  .content-top {
+    padding-inline-start: var(--ea-sp-6);
+  }
+
   .content-top .content-search .form-widget {
-    margin-inline-start: calc(-1 * var(--lg-content-padding-left));
+    margin-inline-start: calc(-1 * var(--ea-sp-6));
   }
 
   .content-top .content-search .content-search-label {

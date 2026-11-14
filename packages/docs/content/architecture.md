@@ -46,6 +46,10 @@ This setup is for [contributing](/contribute). To build a site, follow the
 composer update && composer reset-dev-app
 ```
 
+Doctrine ORM stays below 3.8: its date comparison can suppress Vich's upload hook
+when a media file is replaced within the same second. Run the media replacement
+and license tests before lifting this constraint.
+
 ### Useful commands
 
 ```shell
@@ -86,7 +90,7 @@ package `pushword/twigstan`; see [TwigStan](/twigstan).
 | admin-monaco-editor | Monaco editor for the admin: Twig/YAML/JSON fields, and the markdown body with its toolbar (Node package) | — |
 | new | Project template whose Flex requirements install the standard bundles | — |
 | link-improver | Add bounded, auditable internal links at render time | core |
-| newsletter | Audiences, contacts, segmented campaigns and criteria-driven automations | core |
+| newsletter | Email campaigns, optional SMSGate delivery, contacts and automations | core |
 | page-scanner | Dead link detection, 404/301 checks, TODO scanning | core |
 | page-update-notifier | Email notifications on page edits | core |
 | quiz | Interactive client-side QCM / personality tests via a `{% quiz %}` block | core |
@@ -96,4 +100,5 @@ package `pushword/twigstan`; see [TwigStan](/twigstan).
 | snippet | Reusable content fragments + dev-registered components, via `snippet()` | core |
 | static-generator | Generate static HTML sites | core |
 | template-editor | Edit Twig templates from the admin UI | core |
+| twigstan | Optional Twig template static analysis for downstream projects | core |
 | version | Page versioning | core |

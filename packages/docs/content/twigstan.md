@@ -100,28 +100,11 @@ Commit the dependency and patch locks with the patch removal. PAO is disabled in
 analysis subprocesses because its PHPStan formatter replaces TwigStan's result
 files.
 
-## Initial diagnostic triage
+## Current limits
 
-The initial full run reported 159 diagnostics. Each was assigned to one of these
-investigation groups; the counts are diagnostics, not confirmed bugs:
-
-| Group | Diagnostics | Follow-up |
-| --- | ---: | --- |
-| EasyAdmin vendor templates | 60 | Embedded-template compilation and admin context typing |
-| Controller, branch and form-theme context propagation | 44 | Preserve controller context separately from form widget context |
-| Generated guards and specialized contexts | 23 | Distinguish redundant generated checks from template errors |
-| Nullable request, admin, field or review context | 17 | Check request and branch narrowing before changing templates |
-| Generated write-only escaper properties | 6 | TwigStan compiler output |
-| Guarded optional values | 5 | Check `is defined` and coalescing propagation |
-| Library type contracts | 4 | Compare declared types with runtime behavior |
-
-For example, the Git history timestamp renders correctly as an integer despite
-IntlExtension's narrower PHPDoc, and newsletter design variables are supplied by
-the controller despite form-theme diagnostics. Existing runtime tests cover these
-cases. The PHP view adapter expands the full analysis and can expose additional
-diagnostics; the full command remains outside the required CI check.
-
-Inspecting the gallery also uncovered two runtime bugs: an image's link override
-leaked to following images, and unlinked images were escaped as HTML text. Both
-have rendering regression tests. The gallery remains outside TwigStan CI while
-its generated optional-attribute guards still produce false positives.
+The full analysis remains outside required CI. EasyAdmin templates, form themes,
+embedded templates and generated optional-value guards can report diagnostics
+caused by incomplete context propagation or library type declarations. Check the
+PHP render context and runtime behavior before changing a template. The gallery
+remains outside TwigStan CI because of generated optional-attribute guards; its
+rendering behavior is covered by runtime tests.
