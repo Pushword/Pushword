@@ -7,13 +7,19 @@ namespace Pushword\Conversation\Tests\Controller;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
 use Pushword\Conversation\Entity\Message;
+use Pushword\Conversation\Tests\Form\Fixtures\ContentEditingMessageForm;
+use Pushword\Core\Site\SiteRegistry;
+use Symfony\Bundle\FrameworkBundle\Test\MailerAssertionsTrait;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Mime\Email;
 
 #[Group('integration')]
 final class ConversationFormControllerTest extends WebTestCase
 {
+    use MailerAssertionsTrait;
+
     /** The `anonymous_content` rate limiter's `limit`, set in core's framework.php. */
     private const int SUBMISSION_LIMIT = 20;
 
@@ -42,6 +48,65 @@ final class ConversationFormControllerTest extends WebTestCase
         $client->submit($form, [], $server);
 
         self::assertSame(Response::HTTP_OK, $client->getResponse()->getStatusCode(), (string) $client->getResponse()->getContent());
+    }
+
+    /** @return iterable<string, array{string}> */
+    public static function messageFormProvider(): iterable
+    {
+        yield 'single step' => ['message'];
+        yield 'two steps' => ['multistep-message'];
+        yield 'content edited on second step' => ['edit-message'];
+    }
+
+    #[DataProvider('messageFormProvider')]
+    public function testMessageFormsPreserveContentInNotifications(string $type): void
+    {
+        $client = self::createClient();
+        $client->disableReboot();
+
+        $site = self::getContainer()->get(SiteRegistry::class)->get('localhost.dev');
+        $site->setCustomProperty('conversation_notification_email_from', 'notifications@example.org');
+        $site->setCustomProperty('conversation_notification_email_to', 'team@example.org');
+        $site->setCustomProperty('conversation_form_edit_message', ContentEditingMessageForm::class);
+
+        $email = 'escaping-'.uniqid().'@example.org';
+        $content = "L'URSSAF & \"honoraires\"\n<script>alert('test')</script> &#039; &amp; ".$email;
+        $details = ['form[authorName]' => 'Camille', 'form[authorEmail]' => $email];
+        $crawler = $client->request(Request::METHOD_GET, '/conversation/'.$type.'/test?host=localhost.dev');
+        self::assertResponseIsSuccessful();
+
+        $fields = ['form[content]' => $content];
+        if ('message' === $type) {
+            $fields += $details;
+        }
+
+        $crawler = $client->submit($crawler->filter('[name="form"]')->form($fields));
+        self::assertResponseIsSuccessful();
+
+        if ('message' !== $type) {
+            self::assertEmailCount(0);
+            if ('edit-message' === $type) {
+                $content = 'Updated '.$content;
+                $details['form[content]'] = $content;
+            }
+
+            $client->submit($crawler->filter('[name="form"]')->form($details));
+            self::assertResponseIsSuccessful();
+        }
+
+        self::assertEmailCount(1);
+        $notification = self::getMailerMessage();
+        self::assertInstanceOf(Email::class, $notification);
+        self::assertEmailTextBodyContains($notification, $content);
+        self::assertEmailHtmlBodyContains($notification, 'L&#039;URSSAF &amp; &quot;honoraires&quot;<br');
+        self::assertEmailHtmlBodyContains($notification, '&lt;script&gt;');
+        self::assertEmailHtmlBodyContains($notification, '&amp;#039; &amp;amp;');
+        self::assertEmailHtmlBodyNotContains($notification, '<script>');
+
+        $message = self::getContainer()->get('doctrine')->getRepository(Message::class)
+            ->findOneBy(['authorEmail' => $email]);
+        self::assertInstanceOf(Message::class, $message);
+        self::assertSame(htmlspecialchars($content), $message->getContent());
     }
 
     /** @return iterable<string, array{string, string}> */

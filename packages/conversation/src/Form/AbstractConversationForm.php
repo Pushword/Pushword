@@ -160,7 +160,9 @@ abstract class AbstractConversationForm implements ConversationFormInterface
     protected function defaultStepValidator(FormInterface $form): string
     {
         if ($form->isValid()) {
-            $this->sanitizeConversation();
+            if (1 === $this->getStep() || $form->has('content')) {
+                $this->sanitizeConversation();
+            }
 
             if (1 === $this->getStep()) {
                 $cacheKey = 'conversation_dedup_'.md5($this->message->getContent().$this->message->authorEmail);
