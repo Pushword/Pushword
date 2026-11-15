@@ -27,7 +27,7 @@ and templates. The package preserves the project's kernel configuration, enables
 its analysis service container and keeps its cache under `.twigstan/`. Add that
 directory to `.gitignore`.
 
-The analyzer dependencies and temporary patches are locked inside the package.
+The analyzer dependencies are locked inside the package.
 Their installation does not change the site's PHPStan or its extension installer.
 Only extensions explicitly included in the template-analysis PHPStan configuration
 are loaded. Shared application libraries retain autoload priority.

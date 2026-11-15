@@ -46,9 +46,8 @@ This setup is for [contributing](/contribute). To build a site, follow the
 composer update && composer reset-dev-app
 ```
 
-Doctrine ORM stays below 3.8: its date comparison can suppress Vich's upload hook
-when a media file is replaced within the same second. Run the media replacement
-and license tests before lifting this constraint.
+Pushword requires Doctrine ORM 3.8+, DBAL 4.5+ and DoctrineBundle 3.4+, with the
+schema editor API enabled.
 
 ### Useful commands
 
