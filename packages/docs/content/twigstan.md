@@ -77,26 +77,28 @@ their dependencies, at level 8. These cover login and password forms, links, car
 videos, conversation notifications, static-server configuration and progress
 fragments. There is no baseline or ignored error in this scope.
 
-## Temporary upstream patches
+## Upstream tooling
 
-The package's isolated tool pins TwigStan 0.2.6, PHPStan 2.3.5 and Twig 3.30.0.
-Composer Patches applies hashed local fixes for inherited parent block methods
-([#328](https://github.com/twigstan/twigstan/issues/328)) and guarded attribute
-access on null ([#329](https://github.com/twigstan/twigstan/issues/329)). Nine
-regression fixtures also verify that invalid arguments, missing variables and
-unguarded null access still produce errors.
+The package's isolated tool pins TwigStan 0.2.7, PHPStan 2.3.5 and Twig 3.30.0
+without local patches. TwigStan includes the inherited parent block context fix
+([#328](https://github.com/twigstan/twigstan/issues/328)).
 
-For an upstream upgrade, remove fixed patch entries and their files under
-`packages/twigstan/tools/`, update the pinned constraints, then run:
+Attribute access on a value known to always be null is intentionally reported,
+including behind `??`, `|default` and `is defined`
+([#329](https://github.com/twigstan/twigstan/issues/329)). If the value can be an
+object, declare its actual nullable type at the PHP render point. If it is always
+null, remove the unreachable attribute access. Fifteen regression cases check
+inherited contexts, nullable objects, runtime fallbacks and real errors.
+
+For an upstream upgrade, update the pinned constraint in
+`packages/twigstan/tools/composer.json`, then run:
 
 ```shell
-composer --working-dir=packages/twigstan/tools patches-relock
-composer --working-dir=packages/twigstan/tools update
-composer --working-dir=packages/twigstan/tools patches-repatch
+composer --working-dir=packages/twigstan/tools update twigstan/twigstan
 composer test-twigstan
 ```
 
-Commit the dependency and patch locks with the patch removal. PAO is disabled in
+Commit the dependency lock with the constraint change. PAO is disabled in
 analysis subprocesses because its PHPStan formatter replaces TwigStan's result
 files.
 

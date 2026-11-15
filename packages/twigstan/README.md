@@ -110,22 +110,26 @@ Dynamic template names, including Pushword's generic page renderer, still requir
 additional context discovery. A clean scoped CI run does not establish coverage of
 every page template or of Twig embedded in page content.
 
-## Temporary upstream patches
+## Upstream tooling
 
-The isolated tool pins TwigStan 0.2.6, PHPStan 2.3.5 and Twig 3.30.0. Composer Patches
-applies two local, hashed patches:
+The isolated tool pins TwigStan 0.2.7, PHPStan 2.3.5 and Twig 3.30.0 without local
+patches. TwigStan 0.2.7 includes the inherited parent block context fix
+([#328](https://github.com/twigstan/twigstan/issues/328)).
 
-- [twigstan/twigstan#328](https://github.com/twigstan/twigstan/issues/328): preserve
-  inherited parent block methods during flattening.
-- [twigstan/twigstan#329](https://github.com/twigstan/twigstan/issues/329): accept
-  guarded attribute access on a null value.
+Attribute access on a value known to always be null is intentionally reported,
+including behind `??`, `|default` and `is defined`
+([#329](https://github.com/twigstan/twigstan/issues/329)). If the value can be an
+object, declare its actual nullable type at the PHP render point. If it is always
+null, remove the unreachable attribute access.
 
-Nine fixtures verify the fixes and preserve real invalid-argument, missing-variable
-and unguarded-null errors. Run `composer test` in this package to check them.
+Fifteen cases check inherited contexts, nullable objects with and without a value,
+and invalid-argument, missing-variable and null-access errors. They also check
+that guarded null access still renders its fallback. Run `composer test` in this
+package to check them.
 
-When upgrading TwigStan, remove fixed patch entries and their files, update the
-pinned constraints, then run `patches-relock`, `update`, `patches-repatch` and the
-tests from `tools/`. Commit the tool's dependency and patch locks together.
+When upgrading TwigStan, update the pinned constraint in `tools/composer.json`,
+run `composer update twigstan/twigstan` from `tools/`, then run the package tests.
+Commit the dependency lock with the constraint change.
 
 This repository is a distribution mirror. Source and changes live in the
 [Pushword monorepo](https://github.com/Pushword/Pushword/tree/main/packages/twigstan).

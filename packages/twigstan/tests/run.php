@@ -8,27 +8,34 @@ use Symfony\Component\Process\Process;
 $tool = __DIR__.'/../tools';
 require $tool.'/vendor/autoload.php';
 require __DIR__.'/fixtures/src/Renderer.php';
+require __DIR__.'/fixtures/src/Field.php';
 
 $twig = require __DIR__.'/fixtures/twig-loader.php';
 $renderer = new Renderer();
-$directory = sys_get_temp_dir().'/pw-twigstan-patches-'.uniqid();
+$directory = sys_get_temp_dir().'/pw-twigstan-'.uniqid();
 $cases = [
-    'parent context' => ['parentContext', 'parent/page.twig', null, 'DemoDemoInterDemoHello'],
-    'inherited parent context' => ['inheritedParentContext', 'parent/leaf.twig', null, 'DemoDemoInterDemoHello'],
-    'inherited argument error' => ['inheritedArgumentError', 'parent/invalid-argument.twig', 'argument.type', null],
-    'inherited missing variable' => ['inheritedMissingVariable', 'parent/missing-variable.twig', 'offsetAccess.notFound', null],
-    'null coalesce' => ['nullCoalesce', 'coalesce/null.twig', null, 'fallback'],
-    'null default' => ['nullDefault', 'coalesce/default.twig', null, 'fallback'],
-    'null defined' => ['nullDefined', 'coalesce/defined.twig', null, 'fallback'],
-    'present value' => ['presentValue', 'coalesce/present.twig', null, 'present'],
-    'unguarded null' => ['unguardedNull', 'coalesce/unguarded.twig', 'getAttribute.null', null],
+    'parent context' => ['parentContext', 'parent/page.twig', null, 'DemoDemoInterDemoHello', []],
+    'inherited parent context' => ['inheritedParentContext', 'parent/leaf.twig', null, 'DemoDemoInterDemoHello', []],
+    'inherited argument error' => ['inheritedArgumentError', 'parent/invalid-argument.twig', 'argument.type', null, []],
+    'inherited missing variable' => ['inheritedMissingVariable', 'parent/missing-variable.twig', 'offsetAccess.notFound', null, []],
+    'null coalesce' => ['nullCoalesce', 'coalesce/null.twig', 'getAttribute.null', 'fallback', []],
+    'null default' => ['nullDefault', 'coalesce/default.twig', 'getAttribute.null', 'fallback', []],
+    'null defined' => ['nullDefined', 'coalesce/defined.twig', 'getAttribute.null', 'fallback', []],
+    'nullable coalesce' => ['nullableCoalesce', 'coalesce/nullable.twig', null, 'fallback', [null]],
+    'nullable default' => ['nullableDefault', 'coalesce/nullable-default.twig', null, 'fallback', [null]],
+    'nullable defined' => ['nullableDefined', 'coalesce/nullable-defined.twig', null, 'fallback', [null]],
+    'nullable coalesce value' => ['nullableCoalesce', 'coalesce/nullable.twig', null, 'present', [new Field('present')]],
+    'nullable default value' => ['nullableDefault', 'coalesce/nullable-default.twig', null, 'present', [new Field('present')]],
+    'nullable defined value' => ['nullableDefined', 'coalesce/nullable-defined.twig', null, 'present', [new Field('present')]],
+    'present value' => ['presentValue', 'coalesce/present.twig', null, 'present', []],
+    'unguarded null' => ['unguardedNull', 'coalesce/unguarded.twig', 'getAttribute.null', null, []],
 ];
 $results = [];
 $passed = 0;
 $failed = 0;
 
 try {
-    foreach ($cases as $name => [$method, $template, $identifier, $expectedOutput]) {
+    foreach ($cases as $name => [$method, $template, $identifier, $expectedOutput, $arguments]) {
         $process = new Process([
             \PHP_BINARY,
             $tool.'/vendor/bin/twigstan',
@@ -44,10 +51,14 @@ try {
             $diagnostics = preg_match_all('/^🔖 /m', $output);
 
             if (null === $identifier) {
-                $rendered = preg_replace('/\s+/', '', $renderer->$method($twig));
-                $success = 0 === $exit && 0 === $diagnostics && str_contains($output, 'No errors found') && $expectedOutput === $rendered;
+                $success = 0 === $exit && 0 === $diagnostics && str_contains($output, 'No errors found');
             } else {
                 $success = 1 === $exit && 1 === $diagnostics && str_contains($output, '🔖 '.$identifier);
+            }
+
+            if (null !== $expectedOutput) {
+                $rendered = preg_replace('/\s+/', '', $renderer->$method($twig, ...$arguments));
+                $success = $success && $expectedOutput === $rendered;
             }
 
             if (! $success) {
@@ -69,5 +80,5 @@ try {
     new Filesystem()->remove($directory);
 }
 
-echo json_encode(['tool' => 'twigstan-patches', 'passed' => $passed, 'failed' => $failed, 'cases' => $results], \JSON_THROW_ON_ERROR)."\n";
+echo json_encode(['tool' => 'twigstan-tests', 'passed' => $passed, 'failed' => $failed, 'cases' => $results], \JSON_THROW_ON_ERROR)."\n";
 exit(0 === $failed ? 0 : 1);

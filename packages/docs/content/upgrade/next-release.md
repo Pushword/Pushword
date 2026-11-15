@@ -1,5 +1,5 @@
 ---
-title: ''
+title: 'twig analysis reports guarded access on always-null values'
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -34,3 +34,10 @@ belongs in the feature doc, which you link to instead.
 
 Several changes land here between two tags: append to the file, do not replace it.
 -->
+
+**Concerns:** `pushword/twigstan`
+
+## Twig analysis
+
+TwigStan now follows upstream behavior and reports attribute access on values known to always be null, even behind `??`, `|default` or `is defined`.
+Update inaccurate render-context types to the actual nullable object type, or remove unreachable attribute access. See [TwigStan](/twigstan).

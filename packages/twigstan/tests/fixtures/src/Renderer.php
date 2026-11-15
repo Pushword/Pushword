@@ -41,6 +41,21 @@ final class Renderer
         return $twig->render('coalesce/defined.twig', ['field' => null]);
     }
 
+    public function nullableCoalesce(Environment $twig, ?Field $field): string
+    {
+        return $twig->render('coalesce/nullable.twig', ['value' => null, 'field' => $field]);
+    }
+
+    public function nullableDefault(Environment $twig, ?Field $field): string
+    {
+        return $twig->render('coalesce/nullable-default.twig', ['field' => $field]);
+    }
+
+    public function nullableDefined(Environment $twig, ?Field $field): string
+    {
+        return $twig->render('coalesce/nullable-defined.twig', ['field' => $field]);
+    }
+
     public function presentValue(Environment $twig): string
     {
         return $twig->render('coalesce/present.twig', ['field' => ['value' => 'present']]);
