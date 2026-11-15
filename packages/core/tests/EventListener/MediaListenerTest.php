@@ -6,6 +6,7 @@ namespace Pushword\Core\Tests\Controller;
 
 use Exception;
 use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\TestWith;
 use Pushword\Admin\Tests\AbstractAdminTestClass;
 use Pushword\Core\BackgroundTask\BackgroundTaskDispatcherInterface;
 use Pushword\Core\Entity\Media;
@@ -23,6 +24,7 @@ use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Vich\UploaderBundle\FileAbstraction\ReplacingFile;
 
 #[Group('integration')]
 final class MediaListenerTest extends AbstractAdminTestClass // PantherTestCase // KernelTestCase
@@ -394,7 +396,9 @@ final class MediaListenerTest extends AbstractAdminTestClass // PantherTestCase 
      * The edit form's "replace file" flow: a stored media uploads new bytes at its own
      * name. The disk check that protects new uploads must not make it take a suffix.
      */
-    public function testReplacingAStoredMediaFileKeepsItsNameAndOverwritesItsFile(): void
+    #[TestWith([false])]
+    #[TestWith([true])]
+    public function testReplacingAStoredMediaFileWithinTheSameSecondKeepsItsNameAndOverwritesItsFile(bool $useReplacingFile): void
     {
         self::bootKernel();
 
@@ -405,11 +409,19 @@ final class MediaListenerTest extends AbstractAdminTestClass // PantherTestCase 
         $em->persist($media);
         $em->flush();
 
+        $updatedAt = $media->updatedAt;
+        self::assertNotNull($updatedAt);
+
         $replacement = $this->upload();
+        if ($useReplacingFile) {
+            $replacement = new ReplacingFile($replacement->getPathname());
+        }
+
         $replacementHash = sha1_file($replacement->getPathname());
 
         try {
             $media->setMediaFile($replacement);
+            $media->updatedAt = clone $updatedAt;
             $em->flush();
 
             self::assertSame($name, $media->getFileName());

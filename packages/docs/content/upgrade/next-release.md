@@ -1,5 +1,5 @@
 ---
-title: 'twig analysis reports guarded access on always-null values'
+title: 'twig analysis reports guarded access on always-null values; doctrine uses the schema editor API'
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -35,9 +35,14 @@ belongs in the feature doc, which you link to instead.
 Several changes land here between two tags: append to the file, do not replace it.
 -->
 
-**Concerns:** `pushword/twigstan`
+**Concerns:** `pushword/core`, `pushword/twigstan`
 
 ## Twig analysis
 
 TwigStan now follows upstream behavior and reports attribute access on values known to always be null, even behind `??`, `|default` or `is defined`.
 Update inaccurate render-context types to the actual nullable object type, or remove unreachable attribute access. See [TwigStan](/twigstan).
+
+## Doctrine schema generation
+
+Doctrine ORM 3.8+, DBAL 4.5+ and DoctrineBundle 3.4+ are now required, and Pushword enables the schema editor API by default.
+Update locked Doctrine packages together with `composer update doctrine/orm doctrine/dbal doctrine/doctrine-bundle --with-all-dependencies`.

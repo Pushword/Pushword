@@ -7,6 +7,7 @@ namespace Pushword\Core\EventListener;
 use Doctrine\Bundle\DoctrineBundle\Attribute\AsDoctrineListener;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Event\PostFlushEventArgs;
+use Doctrine\ORM\Event\PreFlushEventArgs;
 use Doctrine\ORM\Event\PreUpdateEventArgs;
 use Doctrine\ORM\Events;
 use Exception;
@@ -24,12 +25,15 @@ use Pushword\Core\Utils\MediaFileName;
 use function Safe\sha1_file;
 
 use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Contracts\Service\ResetInterface;
 use Throwable;
 use Vich\UploaderBundle\Event\Event;
+use Vich\UploaderBundle\FileAbstraction\ReplacingFile;
 
 #[AutoconfigureTag('doctrine.orm.entity_listener', ['entity' => '%pw.entity_media%', 'event' => 'postLoad'])]
 #[AutoconfigureTag('doctrine.orm.entity_listener', ['entity' => '%pw.entity_media%', 'event' => 'postPersist'])]
+#[AutoconfigureTag('doctrine.orm.entity_listener', ['entity' => '%pw.entity_media%', 'event' => 'preFlush'])]
 #[AutoconfigureTag('doctrine.orm.entity_listener', ['entity' => '%pw.entity_media%', 'event' => 'preUpdate'])]
 #[AutoconfigureTag('doctrine.orm.entity_listener', ['entity' => '%pw.entity_media%', 'event' => 'preRemove'])]
 #[AutoconfigureTag('kernel.event_listener', ['event' => 'vich_uploader.post_upload'])]
@@ -63,6 +67,23 @@ final class MediaStorageListener implements ResetInterface
     public function postPersist(Media $media): void
     {
         $this->auditLog->created($media);
+    }
+
+    public function preFlush(Media $media, PreFlushEventArgs $event): void
+    {
+        $file = $media->getMediaFile();
+        if (! $file instanceof UploadedFile && ! $file instanceof ReplacingFile) {
+            return;
+        }
+
+        $unitOfWork = $event->getObjectManager()->getUnitOfWork();
+        if ($unitOfWork->isScheduledForInsert($media)) {
+            return;
+        }
+
+        // Vich needs preUpdate even when both timestamps convert to the same second.
+        $unitOfWork->propertyChanged($media, 'updatedAt', $unitOfWork->getOriginalEntityData($media)['updatedAt'], $media->updatedAt);
+        $unitOfWork->scheduleForUpdate($media);
     }
 
     /**
