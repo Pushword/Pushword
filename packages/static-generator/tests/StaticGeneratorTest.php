@@ -17,6 +17,7 @@ use PHPUnit\Framework\Attributes\Group;
 use Psr\Log\LoggerInterface;
 use Pushword\Core\Cache\RenderEpoch;
 use Pushword\Core\Entity\Page;
+use Pushword\Core\Image\ImageCachePolicy;
 use Pushword\Core\Repository\MediaRepository;
 use Pushword\Core\Repository\PageRepository;
 use Pushword\Core\Service\EditorialTimezone;
@@ -51,6 +52,8 @@ use Symfony\Component\Console\Tester\CommandTester;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\KernelInterface;
+use Symfony\Component\Lock\LockFactory;
+use Symfony\Component\Lock\Store\FlockStore;
 use Symfony\Component\Process\Process;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
@@ -130,6 +133,34 @@ final class StaticGeneratorTest extends KernelTestCase
         }
 
         return self::getContainer()->getParameter('kernel.project_dir').'/var/.static-generation-state.json';
+    }
+
+    public function testStandaloneExportRejectsOnDemandImagesBeforeWritingOutput(): void
+    {
+        self::bootKernel();
+        self::getContainer()->set(ImageCachePolicy::class, new ImageCachePolicy(true, 0, $this->getStaticDir(), [], new LockFactory(new FlockStore())));
+        $this->overrideStaticDir();
+
+        try {
+            self::getContainer()->get(StaticAppGenerator::class)->generate('localhost.dev');
+            self::fail('An export with evictable images cannot be standalone.');
+        } catch (LogicException $logicException) {
+            self::assertStringContainsString('Standalone static exports require image_cache_on_demand: false', $logicException->getMessage());
+            self::assertDirectoryDoesNotExist($this->getStaticDir());
+        }
+    }
+
+    public function testHtmlCacheSupportsOnDemandImages(): void
+    {
+        self::bootKernel();
+        self::getContainer()->set(ImageCachePolicy::class, new ImageCachePolicy(true, 0, $this->getStaticDir(), [], new LockFactory(new FlockStore())));
+        $app = self::getContainer()->get(SiteRegistry::class)->switchSite('localhost.dev')->get();
+        $app->setCustomProperty('cache', 'static');
+
+        $generator = self::getContainer()->get(StaticAppGenerator::class);
+        $generator->generatePage('localhost.dev', 'homepage');
+
+        self::assertFileExists($generator->getCacheDir($app).'/index.html');
     }
 
     public function testStaticCommand(): void

@@ -9,6 +9,7 @@ use Pushword\Core\BackgroundTask\BackgroundCommand;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Image\ImageCacheGenerator;
 use Pushword\Core\Image\ImageCacheManager;
+use Pushword\Core\Image\ImageCachePolicy;
 use Pushword\Core\Image\ImageReader;
 use Pushword\Core\Image\ImageScratchSweeper;
 use Pushword\Core\Repository\MediaRepository;
@@ -78,6 +79,7 @@ final class ImageManagerCommand
         private readonly string $projectDir,
         #[Autowire(param: 'kernel.environment')]
         private readonly string $environment,
+        private readonly ?ImageCachePolicy $imageCachePolicy = null,
     ) {
     }
 
@@ -131,6 +133,7 @@ final class ImageManagerCommand
         }
 
         try {
+            $this->imageCachePolicy?->prune();
             $medias = $this->withoutSharedFileNames(null !== $mediaName
                 ? $this->resolveMediaNames($mediaName)
                 : $this->mediaRepository->findAll());

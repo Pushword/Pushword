@@ -4,14 +4,17 @@ declare(strict_types=1);
 
 namespace Pushword\Core\Controller;
 
+use DateTimeImmutable;
 use League\Flysystem\FilesystemException;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Image\ImageCacheGenerator;
 use Pushword\Core\Image\ImageCacheManager;
+use Pushword\Core\Image\ImageCachePolicy;
 use Pushword\Core\Repository\MediaRepository;
 use Pushword\Core\Service\MediaCacheStorageAdapter;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Symfony\Component\HttpFoundation\File\Exception\FileException;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -36,6 +39,7 @@ final class MediaCacheController extends AbstractController
         private readonly ImageCacheManager $imageCacheManager,
         private readonly ImageCacheGenerator $imageCacheGenerator,
         private readonly MediaCacheStorageAdapter $mediaCacheStorage,
+        private readonly ?ImageCachePolicy $imageCachePolicy = null,
     ) {
     }
 
@@ -62,6 +66,10 @@ final class MediaCacheController extends AbstractController
         $key = $this->imageCacheManager->getFilterKey($media, $filter, $format);
         $filePath = $this->imageCacheManager->getFilterPath($media, $filter, $format);
 
+        if (true === $this->imageCachePolicy?->isOnDemand()) {
+            return $this->generateOnDemand($media, $filter, $format ?? 'original', $key, $filePath);
+        }
+
         // Already produced by the background job (or a concurrent request): serve it —
         // but only when it is a real, non-empty file. A 0-byte variant (a poisoned cache
         // entry left by a failed encode/optimize) must be treated as missing and rebuilt,
@@ -79,6 +87,60 @@ final class MediaCacheController extends AbstractController
         }
 
         return $this->serve($key, $filePath);
+    }
+
+    private function generateOnDemand(Media $media, string $filter, string $format, string $key, string $filePath): StreamedResponse
+    {
+        $formats = $this->imageCacheManager->getFilterSets()[$filter]['formats'] ?? ['original', 'webp'];
+        if (! \is_array($formats)) {
+            throw $this->createNotFoundException();
+        }
+
+        if ('webp' === $format && 'webp' === strtolower(pathinfo($media->getFileName(), \PATHINFO_EXTENSION)) && ! \in_array('webp', $formats, true)) {
+            $format = 'original';
+        }
+
+        if (! \in_array($format, $formats, true)) {
+            throw $this->createNotFoundException();
+        }
+
+        $lock = $this->imageCachePolicy?->createVariantLock($filePath);
+        $lock?->acquire(blocking: true);
+
+        try {
+            $extension = 'original' === $format ? null : $format;
+            if (! $this->imageCacheManager->isFilterFileUsable($media, $filter, $extension)) {
+                $this->imageCacheGenerator->generateFilteredCache($media, $filter, format: $format);
+            }
+
+            // Open before releasing the variant lock: another request can then evict
+            // the path (including an oversized variant) without breaking this response.
+            $stream = $this->mediaCacheStorage->readStream($key);
+            $stat = fstat($stream);
+            if (false === $stat) {
+                fclose($stream);
+
+                throw new FileException('Cannot read image variant metadata.');
+            }
+
+            $response = new StreamedResponse(static function () use ($stream): void {
+                try {
+                    fpassthru($stream);
+                } finally {
+                    fclose($stream);
+                }
+            }, headers: [
+                'Content-Type' => 'webp' === $format ? 'image/webp' : $media->getMimeType(),
+                'Content-Length' => (string) $stat['size'],
+            ]);
+            $response->setPublic();
+            $response->setLastModified(new DateTimeImmutable('@'.$stat['mtime']));
+
+            return $response;
+        } finally {
+            $lock?->release();
+            $this->imageCachePolicy?->prune();
+        }
     }
 
     private function serve(string $key, string $localPath): BinaryFileResponse|RedirectResponse|StreamedResponse

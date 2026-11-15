@@ -10,6 +10,7 @@ use Pushword\Core\Command\ImageManagerCommand;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Image\ImageCacheGenerator;
 use Pushword\Core\Image\ImageCacheManager;
+use Pushword\Core\Image\ImageCachePolicy;
 use Pushword\Core\Image\ImageReader;
 use Pushword\Core\Image\ImageScratchFile;
 use Pushword\Core\Image\ImageScratchSweeper;
@@ -24,6 +25,7 @@ use Symfony\Component\Console\Output\BufferedOutput;
 use Symfony\Component\Console\Tester\CommandTester;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Lock\LockFactory;
+use Symfony\Component\Lock\Store\FlockStore;
 use Symfony\Component\Process\Process;
 
 #[Group('integration')]
@@ -65,6 +67,32 @@ final class MediaCacheGeneratorCommandTest extends KernelTestCase
         $commandTester->execute(['media' => 'piedweb-logo.png', '--format' => 'text']);
 
         self::assertStringContainsString('100%', $commandTester->getDisplay());
+    }
+
+    public function testOnDemandCommandPrunesExistingVariantsWithoutWarmingThem(): void
+    {
+        $kernel = self::bootKernel();
+        $container = self::getContainer();
+        $container->set(ImageCachePolicy::class, new ImageCachePolicy(true, 1, $this->getMediaCacheDir(), $container->getParameter('pw.image_filter_sets'), new LockFactory(new FlockStore())));
+
+        $manager = $container->get(ImageCacheManager::class);
+        $manager->remove('piedweb-logo.png');
+
+        $path = $manager->getFilterPath('piedweb-logo.png', 'md', 'webp');
+        new Filesystem()->dumpFile($path, 'old cached variant');
+        $original = file_get_contents($this->getMediaDir().'/piedweb-logo.png');
+        $tester = new CommandTester(new Application($kernel)->find('pw:image:cache'));
+
+        $exitCode = $tester->execute(['media' => 'piedweb-logo.png', '--force' => true, '--parallel' => 1, '--format' => 'agent']);
+
+        self::assertSame(0, $exitCode);
+        self::assertFileDoesNotExist($path);
+        foreach (array_keys($manager->getFilterSets()) as $filter) {
+            self::assertFalse($manager->isFilterFileUsable('piedweb-logo.png', $filter));
+            self::assertFalse($manager->isFilterFileUsable('piedweb-logo.png', $filter, 'webp'));
+        }
+
+        self::assertSame($original, file_get_contents($this->getMediaDir().'/piedweb-logo.png'));
     }
 
     public function testParallelExecution(): void

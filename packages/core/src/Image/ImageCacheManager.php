@@ -30,7 +30,13 @@ final class ImageCacheManager
         private readonly MediaStorageAdapter $mediaStorage,
         private readonly Filesystem $filesystem = new Filesystem(),
         private readonly ?MediaCacheStorageAdapter $mediaCacheStorage = null,
+        private readonly ?ImageCachePolicy $imageCachePolicy = null,
     ) {
+    }
+
+    public function isOnDemand(): bool
+    {
+        return $this->imageCachePolicy?->isOnDemand() ?? false;
     }
 
     public function getFilterPath(Media|string $media, string $filterName, ?string $extension = null, bool $browserPath = false): string

@@ -59,6 +59,8 @@ return static function (ContainerConfigurator $containerConfigurator): void {
         ->bind('$pathToBin', '%pw.path_to_bin%')
         ->bind('$tailwindGeneratorIsActive', '%pw.tailwind_generator%')
         ->bind('$imageDriver', '%pw.image_driver%')
+        ->bind('$imageCacheOnDemand', '%pw.image_cache_on_demand%')
+        ->bind('$imageCacheMaxSize', '%pw.image_cache_max_size%')
         ->bind('$pdfPreset', '%pw.pdf_preset%')
         ->bind('$pdfLinearize', '%pw.pdf_linearize%')
         ->bind('$enablePasswordReset', '%pw.enable_password_reset%')

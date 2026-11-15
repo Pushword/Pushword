@@ -14,6 +14,7 @@ final readonly class ImageOptimizer
         private ImageCacheManager $imageCacheManager,
         private ImageCacheGenerator $imageCacheGenerator,
         private OptimizerChain $optimizer,
+        private ?ImageCachePolicy $imageCachePolicy = null,
     ) {
     }
 
@@ -34,23 +35,37 @@ final readonly class ImageOptimizer
             $extensions[] = 'original' === $format ? null : $format;
         }
 
-        // Regenerate when a variant is missing OR poisoned (0-byte): a previously
-        // truncated derivative must be rebuilt before we try to optimize it.
-        foreach ($extensions as $extension) {
-            if (! $this->isUsable($this->imageCacheManager->getFilterPath($media, $filterName, $extension))) {
-                $this->imageCacheGenerator->generateFilteredCache($media, $filterName);
+        // Eager mode repairs missing/empty variants. On-demand optimization must
+        // not warm absent formats or sizes back into an evictable cache.
+        if (! $this->imageCacheManager->isOnDemand()) {
+            foreach ($extensions as $extension) {
+                if (! $this->isUsable($this->imageCacheManager->getFilterPath($media, $filterName, $extension))) {
+                    $this->imageCacheGenerator->generateFilteredCache($media, $filterName);
 
-                break;
+                    break;
+                }
             }
         }
 
         foreach ($extensions as $extension) {
             $path = $this->imageCacheManager->getFilterPath($media, $filterName, $extension);
-            if ($this->isUsable($path)) {
-                $this->optimizeAtomically($path);
-                $this->imageCacheManager->publishFilter($media, $filterName, $extension);
+            $lock = true === $this->imageCachePolicy?->isOnDemand() ? $this->imageCachePolicy->createVariantLock($path) : null;
+            $lock?->acquire(blocking: true);
+
+            try {
+                if ($this->isUsable($path)) {
+                    $this->optimizeAtomically($path);
+                    $this->imageCacheManager->publishFilter($media, $filterName, $extension);
+                } elseif ($this->imageCacheManager->isOnDemand() && is_file($path)) {
+                    // Leave a miss, so the web server routes the next request to PHP.
+                    unlink($path);
+                }
+            } finally {
+                $lock?->release();
             }
         }
+
+        $this->imageCachePolicy?->prune();
     }
 
     /**

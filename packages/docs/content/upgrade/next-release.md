@@ -1,5 +1,5 @@
 ---
-title: ''
+title: 'optional on-demand image generation with a local disk budget'
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -34,3 +34,11 @@ belongs in the feature doc, which you link to instead.
 
 Several changes land here between two tags: append to the file, do not replace it.
 -->
+
+**Concerns:** `pushword/core`, `pushword/static-generator`
+
+## Optional on-demand image cache
+
+Existing sites keep eager generation and unchanged URLs; no action is required.
+To opt in, set `pushword.image_cache_on_demand: true` (local variants only; 128 MiB default budget), clear the application cache, and run `pw:image:cache` once.
+Standalone static exports require disabling this option and warming all variants first; HTML cache mode remains supported. See [Image cache](/image-cache).

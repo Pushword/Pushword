@@ -12,9 +12,12 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
 use Pushword\Core\Controller\MediaCacheController;
 use Pushword\Core\Entity\Media;
+use Pushword\Core\Entity\User;
 use Pushword\Core\Image\ImageCacheGenerator;
 use Pushword\Core\Image\ImageCacheManager;
+use Pushword\Core\Image\ImageCachePolicy;
 use Pushword\Core\Repository\MediaRepository;
+use Pushword\Core\Repository\UserRepository;
 use Pushword\Core\Service\MediaCacheStorageAdapter;
 use Pushword\Core\Service\MediaStorageAdapter;
 use Pushword\Core\Tests\PathTrait;
@@ -24,6 +27,8 @@ use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\StreamedResponse;
+use Symfony\Component\Lock\LockFactory;
+use Symfony\Component\Lock\Store\FlockStore;
 use Symfony\Component\Process\Process;
 
 #[Group('integration')]
@@ -50,6 +55,46 @@ final class MediaCacheControllerTest extends WebTestCase
 
         self::assertResponseIsSuccessful();
         self::assertFileExists($webpPath);
+    }
+
+    /** @return iterable<string, array{string, bool}> */
+    public static function onDemandRequests(): iterable
+    {
+        yield 'anonymous GET' => [Request::METHOD_GET, false];
+        yield 'anonymous HEAD' => [Request::METHOD_HEAD, false];
+        yield 'authenticated GET' => [Request::METHOD_GET, true];
+    }
+
+    #[DataProvider('onDemandRequests')]
+    public function testOnDemandRouteUsesTheConfiguredPolicy(string $method, bool $authenticated): void
+    {
+        $container = self::getContainer();
+        $container->set(ImageCachePolicy::class, new ImageCachePolicy(
+            true,
+            1,
+            $this->getMediaCacheDir(),
+            $container->getParameter('pw.image_filter_sets'),
+            new LockFactory(new FlockStore()),
+        ));
+        $manager = $container->get(ImageCacheManager::class);
+        $manager->remove('piedweb-logo.png');
+        self::assertTrue($manager->isOnDemand());
+
+        if ($authenticated) {
+            $user = $container->get(UserRepository::class)->findOneBy(['email' => 'john.doe@example.com']);
+            self::assertInstanceOf(User::class, $user);
+            $this->client->loginUser($user);
+        }
+
+        $this->client->request($method, '/media/md/piedweb-logo.webp');
+
+        self::assertResponseIsSuccessful();
+        self::assertResponseHeaderSame('Content-Type', 'image/webp');
+        self::assertTrue($this->client->getResponse()->headers->hasCacheControlDirective('public'), (string) $this->client->getResponse()->headers->get('Cache-Control'));
+        self::assertFalse($this->client->getResponse()->headers->has('Set-Cookie'));
+        self::assertGreaterThan(0, (int) $this->client->getResponse()->headers->get('Content-Length'));
+        self::assertFileDoesNotExist($manager->getFilterPath('piedweb-logo.png', 'md', 'webp'));
+        self::assertFileDoesNotExist($manager->getFilterPath('piedweb-logo.png', 'md'));
     }
 
     public function testGeneratesOriginalFormatVariantOnTheFly(): void

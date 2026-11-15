@@ -246,6 +246,15 @@ final class Configuration implements ConfigurationInterface
           ->variableNode('image_filter_sets')
           ->defaultValue(self::IMAGE_FILTERS_SET)
           ->end()
+          ->booleanNode('image_cache_on_demand')
+          ->defaultFalse()
+          ->info('Generate local image variants only when requested. URLs and CDN invalidation remain unchanged.')
+          ->end()
+          ->integerNode('image_cache_max_size')
+          ->defaultValue(134217728)
+          ->min(0)
+          ->info('Local image variant budget in bytes in on-demand mode (default 128 MiB; 0 disables eviction). Originals, OG previews and temporary files are excluded.')
+          ->end()
           ->enumNode('image_driver')
           ->values(['auto', 'vips', 'imagick', 'gd'])
           ->defaultValue('auto')
@@ -363,6 +372,10 @@ final class Configuration implements ConfigurationInterface
           )
           ->end()
 
+          ->end()
+          ->validate()
+          ->ifTrue(static fn (array $config): bool => true === $config['image_cache_on_demand'] && false === $config['media_cache_is_local'])
+          ->thenInvalid('image_cache_on_demand requires local media cache storage (media_cache_is_local: true).')
           ->end();
 
         return $treeBuilder;

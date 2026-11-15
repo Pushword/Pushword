@@ -8,6 +8,7 @@ use LogicException;
 use Psr\Log\LoggerInterface;
 use Pushword\Core\Cache\RenderEpoch;
 use Pushword\Core\Entity\Page;
+use Pushword\Core\Image\ImageCachePolicy;
 use Pushword\Core\Repository\PageRepository;
 use Pushword\Core\Service\EditorialTimezone;
 use Pushword\Core\Site\SiteConfig;
@@ -70,6 +71,7 @@ final class StaticAppGenerator implements PageCacheGeneratorInterface
         private readonly string $projectDir,
         private readonly string $environment,
         private readonly string $varDir,
+        private readonly ?ImageCachePolicy $imageCachePolicy = null,
     ) {
     }
 
@@ -157,6 +159,7 @@ final class StaticAppGenerator implements PageCacheGeneratorInterface
     public function generatePage(string $host, string $page): void
     {
         $app = $this->apps->switchSite($host)->get();
+        $this->assertImageCacheCompatible($app);
 
         if (self::isCacheMode($app)) {
             $app->setCustomProperty('static_dir', $this->getCacheDir($app));
@@ -171,6 +174,13 @@ final class StaticAppGenerator implements PageCacheGeneratorInterface
     public static function isCacheMode(SiteConfig $app): bool
     {
         return 'static' === $app->getStr('cache', 'none');
+    }
+
+    private function assertImageCacheCompatible(SiteConfig $app): void
+    {
+        if (true === $this->imageCachePolicy?->isOnDemand() && ! self::isCacheMode($app)) {
+            throw new LogicException('Standalone static exports require image_cache_on_demand: false and a complete pw:image:cache warmup. HTML cache mode (cache: static) supports on-demand images.');
+        }
     }
 
     public function getCacheDir(SiteConfig $app): string
@@ -191,6 +201,7 @@ final class StaticAppGenerator implements PageCacheGeneratorInterface
     private function generateHost(string $host): void
     {
         $app = $this->apps->switchSite($host)->get();
+        $this->assertImageCacheCompatible($app);
 
         // Sample before any rendering: pages must never be stamped with an epoch
         // newer than the content they were rendered from.

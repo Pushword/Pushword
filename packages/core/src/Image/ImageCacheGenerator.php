@@ -27,10 +27,18 @@ final readonly class ImageCacheGenerator
     }
 
     /**
-     * @return bool True if cache was generated, false if skipped (already fresh)
+     * @return bool True if variants were generated; false when fresh or when on-demand mode only refreshes metadata
      */
     public function generateCache(Media $media, bool $force = false): bool
     {
+        if ($this->imageCacheManager->isOnDemand()) {
+            if ($this->decodeFitsInMemory($media)) {
+                $this->readAndUpdateMetadata($media);
+            }
+
+            return false;
+        }
+
         if (! $force && $this->imageCacheManager->isAllCacheFresh($media)) {
             return false;
         }
@@ -124,6 +132,7 @@ final readonly class ImageCacheGenerator
         array|string $filter,
         ?ImageInterface $originalImage = null,
         bool $skipClone = false,
+        ?string $format = null,
     ): ImageInterface {
         if (\is_array($filter)) {
             $filterName = array_keys($filter)[0];
@@ -147,6 +156,9 @@ final readonly class ImageCacheGenerator
         $quality = (int) ($filters[$filterName]['quality'] ?? 90); // @phpstan-ignore-line
         /** @var string[] $formats */
         $formats = $filters[$filterName]['formats'] ?? ['original', 'webp']; // @phpstan-ignore-line
+        if (null !== $format) {
+            $formats = [$format];
+        }
 
         $this->imageCacheManager->createFilterDir(\dirname($this->imageCacheManager->getFilterPath($media, $filterName)));
 
@@ -169,14 +181,16 @@ final readonly class ImageCacheGenerator
     }
 
     /**
-     * Generate only a quick preview for admin by copying original file.
+     * Read upload metadata and, in eager mode, copy the original as a quick admin preview.
      *
      * @return ImageInterface|null null when the current driver cannot read the format, or when
      *                             decoding it would not fit in memory ({@see self::decodeFitsInMemory()})
      */
     public function generateQuickPreview(Media $media): ?ImageInterface
     {
-        $this->copyOriginalToFilter($media, 'md');
+        if (! $this->imageCacheManager->isOnDemand()) {
+            $this->copyOriginalToFilter($media, 'md');
+        }
 
         if (! $this->decodeFitsInMemory($media)) {
             return null;
@@ -245,9 +259,9 @@ final readonly class ImageCacheGenerator
      * that asked for the preview. 512 MB and a 48 Mpx master were enough (production, 2026-08-16).
      * imagick and vips allocate outside the limit, so only gd needs the check.
      *
-     * Skipping is cheap: the preview copy is already written, and dimensions and main color
-     * are filled by the background `pw:image:cache`, which runs in CLI where the limit is
-     * usually lifted.
+     * Dimensions and main color are filled by the background `pw:image:cache`, which
+     * runs in CLI where the limit is usually lifted. Eager mode also has a preview
+     * copy ready; on-demand mode leaves variant creation to the image request.
      */
     private function decodeFitsInMemory(Media $media): bool
     {
