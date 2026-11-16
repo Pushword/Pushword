@@ -1,5 +1,6 @@
 import type EditorJS from '@editorjs/editorjs'
 import type { editor, ISelection } from 'monaco-editor'
+import { paragraphSelections } from '../ParagraphSelection'
 
 /** Raw and CodeBlock register their embedded editor without exposing Editor.js internals. */
 export const embeddedEditors = new WeakMap<
@@ -128,8 +129,9 @@ export function captureSelection(holder: HTMLElement): EditorSelection | null {
   }
   const selection = window.getSelection()
   if (!selection) return null
-  const anchor = point(selection.anchorNode, selection.anchorOffset, holder)
-  const focus = point(selection.focusNode, selection.focusOffset, holder)
+  const range = paragraphSelections.get(holder)
+  const anchor = point(range?.startContainer ?? selection.anchorNode, range?.startOffset ?? selection.anchorOffset, holder)
+  const focus = point(range?.endContainer ?? selection.focusNode, range?.endOffset ?? selection.focusOffset, holder)
   return anchor && focus ? { anchor, focus } : null
 }
 

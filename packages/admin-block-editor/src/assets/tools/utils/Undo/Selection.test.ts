@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import type { editor as MonacoEditor } from 'monaco-editor'
 import { captureSelection, embeddedEditors, restoreSelection } from './Selection'
+import { paragraphSelections } from '../ParagraphSelection'
 
 let holder: HTMLElement
 let editor: any
@@ -21,8 +22,27 @@ beforeEach(() => {
   }
 })
 afterEach(() => {
+  paragraphSelections.delete(holder)
   document.body.replaceChildren()
   vi.restoreAllMocks()
+})
+
+it('captures both highlighted paragraph endpoints while native input keeps a collapsed caret', async () => {
+  const fields = holder.querySelectorAll('[contenteditable]')
+  const first = fields[0].firstChild!
+  const last = fields[1].firstChild!
+  const range = document.createRange()
+  range.setStart(first, 2)
+  range.setEnd(last, 3)
+  paragraphSelections.set(holder, range)
+  getSelection()!.collapse(first, 2)
+  const saved = captureSelection(holder)
+  paragraphSelections.delete(holder)
+  await restoreSelection(editor, holder, saved)
+  expect(getSelection()!.anchorNode).toBe(first)
+  expect(getSelection()!.anchorOffset).toBe(2)
+  expect(getSelection()!.focusNode).toBe(last)
+  expect(getSelection()!.focusOffset).toBe(3)
 })
 
 it('restores a backward selection across inline elements and blocks', async () => {

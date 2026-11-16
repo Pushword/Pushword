@@ -230,6 +230,11 @@ a[rel='encrypt']:not(.link-btn) {
   background-color: #e1f2ff;
 }
 
+::highlight(pw-paragraph-selection) {
+  background-color: Highlight;
+  color: HighlightText;
+}
+
 /* Disable convertTo */
 
 div[data-item-name='convert-to'] {

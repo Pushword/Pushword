@@ -31,6 +31,7 @@ interface Action {
   selection: EditorSelection | null
   kind: string
   time: number
+  transaction?: object
 }
 
 interface HistoryItem {
@@ -40,6 +41,7 @@ interface HistoryItem {
   afterSelection: EditorSelection | null
   kind: string
   time: number
+  transaction?: object
 }
 
 /**
@@ -69,6 +71,7 @@ export class Undo {
   private restoredBlockSelection = false
   private lastSelection: EditorSelection | null = null
   private action: Action | null = null
+  private pasteTransaction: object | undefined
 
   constructor({
     editor,
@@ -114,6 +117,7 @@ export class Undo {
       this.stack = []
       this.position = 0
       this.action = null
+      this.pasteTransaction = undefined
       this.groupClosed = true
       this.lastSelection = captureSelection(this.holder)
       this.observer.setMutationObserver()
@@ -177,8 +181,9 @@ export class Undo {
     const automatic = this.action === null
     const action = this.action ?? {
       selection: this.lastSelection,
-      kind: 'structure',
+      kind: this.pasteTransaction ? 'insertFromPaste' : 'structure',
       time: performance.now(),
+      transaction: this.pasteTransaction,
     }
     this.action = null
     const afterSelection = captureSelection(this.holder) ?? action.selection
@@ -203,10 +208,11 @@ export class Undo {
         !this.groupClosed &&
         this.position === this.stack.length &&
         previous &&
-        action.kind === previous.kind &&
-        action.time - previous.time < this.groupDelay &&
-        ((typing && equal(action.selection, previous.afterSelection)) ||
-          (automatic && action.kind === 'structure'))
+        ((action.transaction && action.transaction === previous.transaction) ||
+          (action.kind === previous.kind &&
+            action.time - previous.time < this.groupDelay &&
+            ((typing && equal(action.selection, previous.afterSelection)) ||
+              (automatic && action.kind === 'structure'))))
       if (continuation) {
         previous.after = after
         previous.afterSelection = afterSelection
@@ -220,6 +226,7 @@ export class Undo {
           afterSelection,
           kind: action.kind,
           time: action.time,
+          transaction: action.transaction,
         })
         if (this.stack.length > this.maxLength) this.stack.shift()
         this.position = this.stack.length
@@ -275,6 +282,7 @@ export class Undo {
       kind,
       time: performance.now(),
       selection: captureSelection(this.holder) ?? this.lastSelection,
+      transaction: kind === 'insertFromPaste' ? this.pasteTransaction : undefined,
     }
   }
 
@@ -308,6 +316,7 @@ export class Undo {
         if (event.isComposing) return
         const inside = event.target instanceof Node && this.holder.contains(event.target)
         if ((!inside && !this.commands) || this.editor.readOnly.isEnabled) return
+        this.pasteTransaction = undefined
         let direction: 'undo' | 'redo' | null = null
         if (this.shortcuts.undo.some((key) => this.matches(event, key)))
           direction = 'undo'
@@ -358,10 +367,19 @@ export class Undo {
       },
       options,
     )
-    document.addEventListener('pointerdown', () => this.clearRestoredBlockSelection(), options)
+    document.addEventListener('pointerdown', () => {
+      this.pasteTransaction = undefined
+      this.clearRestoredBlockSelection()
+    }, options)
     this.holder.addEventListener('pointerdown', () => this.begin('structure'), options)
-    this.holder.addEventListener('paste', () => this.begin('insertFromPaste'), options)
-    this.holder.addEventListener('cut', () => this.begin('deleteByCut'), options)
+    document.addEventListener('paste', event => {
+      if (!(event.target instanceof Node) || !this.holder.contains(event.target)) return
+      this.pasteTransaction = {}
+      this.begin('insertFromPaste')
+    }, options)
+    document.addEventListener('cut', event => {
+      if (event.target instanceof Node && this.holder.contains(event.target)) this.begin('deleteByCut')
+    }, options)
     document.addEventListener(
       'selectionchange',
       () => {

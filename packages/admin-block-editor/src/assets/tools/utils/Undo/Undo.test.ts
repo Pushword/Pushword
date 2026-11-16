@@ -163,6 +163,32 @@ afterEach(() => {
   document.body.replaceChildren()
 })
 
+it('groups delayed paste mutations once and keeps the next paste separate', async () => {
+  const initial = [paragraph('a', 'Before selected'), paragraph('b', 'selected after')]
+  const { undo, focus, editor, all } = fixture(initial)
+  await undo.initialize()
+  const field = focus()
+  field.dispatchEvent(new Event('paste', { bubbles: true }))
+  field.textContent = 'Before  after'
+  editor.blocks.delete(1)
+  await undo.flush()
+  field.textContent = 'Before pasted after'
+  field.dispatchEvent(new InputEvent('input', { bubbles: true }))
+  await undo.flush()
+  expect(undo.count()).toBe(1)
+
+  field.dispatchEvent(new Event('paste', { bubbles: true }))
+  field.textContent += ' again'
+  await undo.flush()
+  expect(undo.count()).toBe(2)
+  await undo.undo()
+  expect(all()).toEqual([paragraph('a', 'Before pasted after')])
+  await undo.undo()
+  expect(all()).toEqual(initial)
+  await undo.redo()
+  expect(all()).toEqual([paragraph('a', 'Before pasted after')])
+})
+
 describe('Undo history regressions', () => {
   it('compares and restores normalized snapshots while keeping empty blocks', async () => {
     const f = fixture([paragraph('a', 'original '), paragraph('b', '')], {
