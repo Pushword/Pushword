@@ -2,6 +2,8 @@ bytes_abbreviation: O
 editorAdd: 'Ajouter'
 editorAddColumnLeft: 'Ajouter une colonne à gauche'
 editorAddColumnRight: 'Ajouter une colonne à droite'
+editorAddParagraphAfter: 'Ajouter un paragraphe après'
+editorAddParagraphBefore: 'Ajouter un paragraphe avant'
 editorAddRowAbove: 'Ajouter une ligne au-dessus'
 editorAddRowBelow: 'Ajouter une ligne en dessous'
 editorAlignCenter: 'Centrer'

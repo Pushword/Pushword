@@ -6,6 +6,7 @@ import { BaseTool } from '../Abstract/BaseTool'
 import type { editor } from 'monaco-editor'
 import { embeddedEditors } from '../utils/Undo/Selection'
 import { loadMonaco } from '../utils/loadScript'
+import { IconChevronDown, IconChevronUp } from '@codexteam/icons'
 
 export interface RawData extends BlockToolData {
   html: string
@@ -54,6 +55,13 @@ export default class Raw extends BaseTool {
   render(): HTMLElement {
     this.wrapper = document.createElement('div')
     this.wrapper.classList.add('editorjs-monaco-wrapper')
+    this.wrapper.addEventListener('keydown', (event) => {
+      if (this.readOnly || event.isComposing || event.key !== 'Enter' ||
+        !(event.ctrlKey || event.metaKey) || event.altKey) return
+      event.preventDefault()
+      event.stopPropagation()
+      this.insertParagraph(event.shiftKey)
+    }, { capture: true })
 
     // Create Monaco editor container
     const editorElem = document.createElement('div')
@@ -98,6 +106,32 @@ export default class Raw extends BaseTool {
     }
 
     return this.wrapper
+  }
+
+  renderSettings() {
+    if (this.readOnly) return []
+
+    return [
+      {
+        icon: IconChevronUp,
+        title: this.api.i18n.t('Add paragraph before'),
+        closeOnActivate: true,
+        onActivate: () => this.insertParagraph(true),
+      },
+      {
+        icon: IconChevronDown,
+        title: this.api.i18n.t('Add paragraph after'),
+        closeOnActivate: true,
+        onActivate: () => this.insertParagraph(false),
+      },
+    ]
+  }
+
+  private insertParagraph(before: boolean): void {
+    const block = this.api.blocks.getBlockByElement(this.wrapper!)!
+    const index = this.api.blocks.getBlockIndex(block.id)
+    const paragraph = this.api.blocks.insert('paragraph', {}, undefined, index + (before ? 0 : 1), false)
+    this.api.caret.setToBlock(paragraph.id, 'start')
   }
 
   private initializeMonaco(editorElem: HTMLElement): Promise<void> {

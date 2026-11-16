@@ -16,6 +16,12 @@ use Symfony\Contracts\Translation\TranslatorInterface;
  */
 final readonly class EditorJsMessages
 {
+    /** Paragraph insertion around embedded code editors. */
+    private const array RAW = [
+        'Add paragraph after' => 'editorAddParagraphAfter',
+        'Add paragraph before' => 'editorAddParagraphBefore',
+    ];
+
     /** Labels emitted by the media tools' shared base class. */
     private const array MEDIA = [
         'Alternative text' => 'editorAlternativeText',
@@ -120,6 +126,7 @@ final readonly class EditorJsMessages
                     'No page has this slug' => 'editorCardListUnknownSlug',
                 ]),
                 'codeBlock' => $this->translate([
+                    ...self::RAW,
                     'Enter Mermaid code to preview the diagram.' => 'editorMermaidEmpty',
                     'Language' => 'editorLanguage',
                     'Loading preview…' => 'editorMermaidLoading',
@@ -182,6 +189,7 @@ final readonly class EditorJsMessages
                     'Media picker not available' => 'editorMediaPickerUnavailable',
                     'Upload failed' => 'editorUploadFailed',
                 ]),
+                'raw' => $this->translate(self::RAW),
                 'snippet' => $this->translate([
                     'Choose a snippet first.' => 'editorChooseSnippetFirst',
                     'Choose a snippet…' => 'editorChooseSnippet',

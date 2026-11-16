@@ -19,6 +19,12 @@
   border-radius: 5px;
 }
 
+/* Monaco's opaque surface covers Editor.js' selected-block background. */
+.ce-block--selected .editorjs-monaco-wrapper {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
 .editorjs-monaco-preview {
   display: block;
   width: 100%;

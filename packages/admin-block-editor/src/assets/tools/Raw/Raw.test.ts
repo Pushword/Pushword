@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest'
 import Raw, { type RawData } from './Raw'
 import MonacoHelper from '../../../../../admin-monaco-editor/MonacoHelper.js'
+import type { API } from '@editorjs/editorjs'
 
 type Listener = () => void
 
@@ -40,6 +41,75 @@ afterEach(() => {
 })
 
 const flush = () => new Promise((resolve) => setTimeout(resolve, 0))
+
+describe('Raw paragraph insertion', () => {
+  function setup(readOnly = false) {
+    const { editor } = makeFakeEditor(() => 20)
+    window.monaco = { editor: { create: () => editor } } as unknown as typeof window.monaco
+    window.monacoHelper = MonacoHelper
+    const blocks = {
+      getBlockByElement: vi.fn(() => ({ id: 'raw' })),
+      getBlockIndex: vi.fn(() => 2),
+      insert: vi.fn(() => ({ id: 'paragraph' })),
+    }
+    const caret = { setToBlock: vi.fn() }
+    const api = { blocks, caret, i18n: { t: (label: string) => label } } as unknown as API
+    const raw = new Raw({ data: { html: '<div>Keep me</div>' }, api, readOnly })
+    const wrapper = raw.render()
+    return { raw, wrapper, blocks, caret }
+  }
+
+  it.each([true, false])('inserts a paragraph at the current block position (before: %s)', before => {
+    const { raw, blocks, caret } = setup()
+    // Moving a block after its menu was built must not leave a stale insertion index.
+    const settings = raw.renderSettings()
+    blocks.getBlockIndex.mockReturnValue(5)
+    settings[before ? 0 : 1]!.onActivate()
+    expect(blocks.insert).toHaveBeenCalledExactlyOnceWith('paragraph', {}, undefined, before ? 5 : 6, false)
+    expect(caret.setToBlock).toHaveBeenCalledWith('paragraph', 'start')
+  })
+
+  it.each([
+    { ctrlKey: true, shiftKey: false, index: 3 },
+    { ctrlKey: true, shiftKey: true, index: 2 },
+    { metaKey: true, shiftKey: false, index: 3 },
+    { metaKey: true, shiftKey: true, index: 2 },
+  ])('handles the paragraph shortcut %j before Monaco', init => {
+    const { wrapper, blocks, caret } = setup()
+    const field = wrapper.querySelector('textarea')!
+    const monaco = vi.fn()
+    field.addEventListener('keydown', monaco)
+    const event = new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true, ...init })
+    field.dispatchEvent(event)
+    expect(event.defaultPrevented).toBe(true)
+    expect(monaco).not.toHaveBeenCalled()
+    expect(blocks.insert).toHaveBeenCalledExactlyOnceWith('paragraph', {}, undefined, init.index, false)
+    expect(caret.setToBlock).toHaveBeenCalledWith('paragraph', 'start')
+  })
+
+  it.each([
+    { key: 'Enter' },
+    { key: 'Enter', shiftKey: true },
+    { key: 'Enter', ctrlKey: true, altKey: true },
+    { key: 'Enter', ctrlKey: true, isComposing: true },
+    { key: 'a', ctrlKey: true },
+  ])('leaves ordinary code editing alone: %j', init => {
+    const { wrapper, blocks } = setup()
+    const event = new KeyboardEvent('keydown', { bubbles: true, cancelable: true, ...init })
+    wrapper.querySelector('textarea')!.dispatchEvent(event)
+    expect(event.defaultPrevented).toBe(false)
+    expect(blocks.insert).not.toHaveBeenCalled()
+  })
+
+  it('does not offer paragraph insertion in read-only mode', () => {
+    const { raw, wrapper, blocks } = setup(true)
+    expect(raw.renderSettings()).toEqual([])
+    const event = new KeyboardEvent('keydown', { key: 'Enter', ctrlKey: true, bubbles: true, cancelable: true })
+    wrapper.querySelector('textarea')!.dispatchEvent(event)
+    expect(event.defaultPrevented).toBe(false)
+    expect(blocks.insert).not.toHaveBeenCalled()
+  })
+})
 
 describe('MonacoHelper.updateHeight', () => {
   it('sizes the wrapper from getContentHeight, so wrapped lines count', () => {
