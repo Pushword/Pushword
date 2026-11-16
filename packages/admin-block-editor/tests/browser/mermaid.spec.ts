@@ -9,6 +9,7 @@ test('Mermaid reads as a diagram, edits live, and saves only its source', async 
   const preview = block.locator('.pw-mermaid-preview')
   await expect(preview.locator('svg')).toBeVisible()
   await expect(block.locator('.pw-code-source')).toBeHidden()
+  await expect(block.getByRole('status')).toHaveCount(0)
   const readingHeight = (await block.boundingBox())!.height
   await block.getByRole('button', { name: 'Edit diagram' }).click()
   const input = block.getByRole('textbox', { name: 'Mermaid source', exact: true })
@@ -77,3 +78,64 @@ for (const width of [1280, 390, 320]) {
     await expect(block.locator('.pw-code-source')).toBeHidden()
   })
 }
+
+test('Mermaid keeps tall and wide diagrams readable and reachable by keyboard', async ({ editorPage: page }, testInfo) => {
+  for (const width of [1920, 320]) {
+    await page.setViewportSize({ width, height: 1080 })
+    for (const direction of ['TD', 'LR']) {
+      await test.step(`${direction} at ${width}px`, async () => {
+        const source = `flowchart ${direction}\n` + Array.from({ length: 12 }, (_, index) =>
+          `S${index}[Step ${index + 1}] --> S${index + 1}[Step ${index + 2}]`,
+        ).join('\n')
+        await render(page, [{ type: 'codeBlock', data: { html: source, language: 'mermaid' } }])
+        const block = page.locator('.pw-code-block')
+        const preview = block.getByRole('region', { name: 'Diagram preview', exact: true })
+        const svg = preview.locator('svg')
+        await expect(svg).toBeVisible()
+        const scale = () => svg.evaluate(node => (node as SVGSVGElement).getScreenCTM()!.a)
+        expect(await scale(), 'Reading must preserve legible diagram detail').toBeGreaterThanOrEqual(0.84)
+        await block.getByRole('button', { name: 'Edit diagram' }).click()
+        await expect(block.getByRole('textbox', { name: 'Mermaid source', exact: true })).toBeFocused()
+        expect(await scale(), 'Editing must preserve legible diagram detail').toBeGreaterThanOrEqual(0.84)
+        expect((await preview.boundingBox())!.height).toBeLessThanOrEqual(width === 320 ? 160 : 384)
+        expect(await block.evaluate(node => node.scrollWidth)).toBeLessThanOrEqual(width)
+        const first = (await preview.locator('.node').first().boundingBox())!
+        const frame = (await preview.boundingBox())!
+        expect(first.x).toBeGreaterThanOrEqual(frame.x)
+        expect(first.y).toBeGreaterThanOrEqual(frame.y)
+        await preview.focus()
+        await expect(preview).toBeFocused()
+        await preview.press(direction === 'TD' ? 'ArrowDown' : 'ArrowRight')
+        await expect(page.locator('.ce-block')).toHaveCount(1)
+        await expect.poll(() => preview.evaluate((node, vertical) =>
+          vertical ? node.scrollTop : node.scrollLeft, direction === 'TD',
+        )).toBeGreaterThan(0)
+        await preview.evaluate((node, vertical) => {
+          if (vertical) node.scrollTop = node.scrollHeight
+          else node.scrollLeft = node.scrollWidth
+        }, direction === 'TD')
+        const last = (await preview.locator('.node').last().boundingBox())!
+        const end = (await preview.boundingBox())!
+        expect(last.x + last.width).toBeLessThanOrEqual(end.x + end.width)
+        expect(last.y + last.height).toBeLessThanOrEqual(end.y + end.height)
+        await page.screenshot({ path: testInfo.outputPath(`mermaid-${direction}-${width}.png`) })
+      })
+    }
+  }
+})
+
+test('Mermaid keeps an initial error concise above its editable source on mobile', async ({ editorPage: page }) => {
+  await page.setViewportSize({ width: 320, height: 850 })
+  await render(page, [{ type: 'codeBlock', data: { html: 'flowchart LR\nA[', language: 'mermaid' } }])
+  const block = page.locator('.pw-code-block')
+  await expect(block.getByRole('status')).toHaveText('Preview unavailable')
+  await expect(block.getByRole('alert')).toContainText('Unable to render the Mermaid diagram.')
+  const done = block.getByRole('button', { name: 'Done', exact: true })
+  const button = (await done.boundingBox())!
+  const status = (await block.getByRole('status').boundingBox())!
+  expect(status.y).toBeGreaterThanOrEqual(button.y + button.height)
+  expect(await block.evaluate(node => node.scrollWidth)).toBe(await block.evaluate(node => node.clientWidth))
+  await done.click()
+  await expect(block.getByRole('status')).toBeVisible()
+  await expect(block.locator('.pw-code-source')).toBeHidden()
+})

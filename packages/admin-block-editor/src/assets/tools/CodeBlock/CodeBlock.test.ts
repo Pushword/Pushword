@@ -305,6 +305,7 @@ describe('Mermaid code block', () => {
     await vi.dynamicImportSettled()
     expect(element.textContent).toContain('Unable to render the Mermaid diagram.')
     expect(element.querySelector('img')).toBeNull()
+    expect(element.querySelector('[role="status"]')?.textContent).toBe('Preview unavailable')
     expect(element.querySelector<HTMLElement>('.pw-code-source')?.hidden).toBe(false)
     monacoEditor.setValue('flowchart LR\n A --> C')
     await vi.advanceTimersByTimeAsync(300)

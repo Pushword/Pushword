@@ -91,7 +91,17 @@ export default class CodeBlock extends Raw {
     this.editButton.hidden = this.readOnly
     this.editButton.addEventListener('click', () => this.setEditing(!this.editing, true))
     toolbar.append(title, this.previewStatus, this.editButton)
-    this.preview = make.element('div', 'pw-mermaid-preview')
+    this.preview = make.element('div', 'pw-mermaid-preview', {
+      role: 'region',
+      'aria-label': this.api.i18n.t('Diagram preview'),
+      tabindex: '0',
+    })
+    this.preview.addEventListener('keydown', (event) => {
+      // Preserve native diagram scrolling instead of Editor.js block navigation.
+      if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Home', 'End', 'PageUp', 'PageDown'].includes(event.key)) {
+        event.stopPropagation()
+      }
+    })
     const body = make.element('div', 'pw-code-content')
     body.append(this.sourcePanel, this.preview)
     this.element.append(toolbar, body)
@@ -205,6 +215,10 @@ export default class CodeBlock extends Raw {
       if (revision !== this.previewRevision || !this.preview) return
       const diagram = make.element('div', ['pw-mermaid', 'not-prose'])
       diagram.innerHTML = svg
+      const viewBox = diagram.querySelector('svg')?.getAttribute('viewBox')
+      const width = Number(viewBox?.trim().split(/[\s,]+/)[2])
+      // Limit shrinking to 15% so the renderer's labels remain readable.
+      if (width > 0) diagram.style.setProperty('--pw-mermaid-min-width', `${width * 0.85}px`)
       this.preview.replaceChildren(diagram)
       this.clearPreviewError()
       this.previewStatus!.textContent = this.api.i18n.t('Live preview')
@@ -220,7 +234,7 @@ export default class CodeBlock extends Raw {
       this.updateSourceAccessibility()
       const hasPreview = Boolean(this.preview.querySelector('svg'))
       this.previewStatus!.textContent = this.api.i18n.t(
-        hasPreview ? 'Last valid preview' : 'Unable to render the Mermaid diagram.',
+        hasPreview ? 'Last valid preview' : 'Preview unavailable',
       )
       if (!hasPreview && !this.readOnly) this.setEditing(true)
     } finally {
