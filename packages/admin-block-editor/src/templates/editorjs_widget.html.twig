@@ -1,17 +1,17 @@
 {% block editorjs_widget %}
 {% set editor_id = 'editorjs_' ~ id %}
-<div data-pw-editor-widget="{{ editor_id }}">
+<div data-pw-editor-widget="{{ editor_id }}" data-pw-editor-state="loading">
 
 <div class="pw-editor-modes" data-pw-editor-modes-for="{{ editor_id }}" role="group" aria-label="{{ 'editorEditingTools'|trans }}">
-    <button type="button" class="pw-editor-mode" data-pw-editor-mode="json" aria-pressed="false" title="{{ 'editorSourceJson'|trans }}" aria-label="{{ 'editorSourceJson'|trans }}">
+    <button type="button" class="pw-editor-mode" disabled data-pw-editor-mode="json" aria-pressed="false" title="{{ 'editorSourceJson'|trans }}" aria-label="{{ 'editorSourceJson'|trans }}">
         {{ svg('code') }}
         <span>JSON</span>
     </button>
-    <button type="button" class="pw-editor-mode" data-pw-editor-mode="markdown" aria-pressed="false" title="{{ 'editorSourceMarkdown'|trans }} (Ctrl + U)" aria-label="{{ 'editorSourceMarkdown'|trans }}" aria-keyshortcuts="Control+U">
+    <button type="button" class="pw-editor-mode" disabled data-pw-editor-mode="markdown" aria-pressed="false" title="{{ 'editorSourceMarkdown'|trans }} (Ctrl + U)" aria-label="{{ 'editorSourceMarkdown'|trans }}" aria-keyshortcuts="Control+U">
         {{ svg('markdown') }}
         <span>Markdown</span>
     </button>
-    <button type="button" class="pw-editor-mode" data-pw-copy-markdown data-copied="{{ 'editorCopied'|trans }}" data-copy-label="{{ 'editorCopy'|trans }}" data-copy-status="{{ 'editorMarkdownCopied'|trans }}" title="{{ 'editorCopyMarkdown'|trans }}" aria-label="{{ 'editorCopyMarkdown'|trans }}">
+    <button type="button" class="pw-editor-mode" disabled data-pw-copy-markdown data-copied="{{ 'editorCopied'|trans }}" data-copy-label="{{ 'editorCopy'|trans }}" data-copy-status="{{ 'editorMarkdownCopied'|trans }}" title="{{ 'editorCopyMarkdown'|trans }}" aria-label="{{ 'editorCopyMarkdown'|trans }}">
         {{ svg('copy') }}
         <span data-pw-copy-label>{{ 'editorCopy'|trans }}</span>
     </button>
@@ -19,7 +19,15 @@
 </div>
 <div style="padding:10px 10px 0;">
     <textarea style="display:none" data-editorjs="{{ editor_id }}" {{ block('widget_attributes') }}>{{ value }}</textarea>
-    <div id="{{ editor_id }}" data-input-id="{{ id }}" class="editorjs-holder"></div>
+    <div class="pw-editor-content">
+        <div class="pw-editor-status" data-pw-editor-status role="status">
+            <p data-pw-editor-loading>{{ 'editorLoading'|trans }}</p>
+            <div class="pw-editor-skeleton" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
+            <p data-pw-editor-load-error hidden>{{ 'editorLoadingFailed'|trans }}</p>
+            <button type="button" class="btn btn-secondary btn-sm" data-pw-editor-reload hidden>{{ 'editorReloadPage'|trans }}</button>
+        </div>
+        <div id="{{ editor_id }}" data-input-id="{{ id }}" class="editorjs-holder" aria-busy="true" inert></div>
+    </div>
 
     {# Hidden media pickers the EditorJS image / gallery / attaches tools look up
        globally (select[id*="inline_image"] / [id*="inline_attaches"]). Rendered

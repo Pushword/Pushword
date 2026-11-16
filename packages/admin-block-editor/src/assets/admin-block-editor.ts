@@ -69,7 +69,7 @@ function initializeEditors(): void {
   document.addEventListener('keydown', (event) => {
     if (!event.ctrlKey || event.altKey || event.shiftKey || event.key.toLowerCase() !== 'u') return
     const widget = (event.target as Element).closest<HTMLElement>('[data-pw-editor-widget]')
-    if (!widget) return
+    if (!widget || widget.querySelector('.editorjs-holder[inert]')) return
     event.preventDefault()
     event.stopPropagation()
     editorJsHelper.getModeManager(widget.dataset.pwEditorWidget!)?.toggleMarkdownEditor()

@@ -1,0 +1,70 @@
+.pw-editor-content {
+  position: relative;
+}
+
+[data-pw-editor-state='loading'] .pw-editor-content,
+[data-pw-editor-state='failed'] .pw-editor-content {
+  min-height: 224px;
+}
+
+[data-pw-editor-state='loading'] .editorjs-holder,
+[data-pw-editor-state='failed'] .editorjs-holder {
+  visibility: hidden;
+}
+
+.pw-editor-status {
+  position: absolute;
+  inset: 0;
+  max-width: var(--pw-editor-width);
+  margin-inline: auto;
+  padding-block: 16px 32px;
+  color: var(--bs-secondary-color);
+  font-size: var(--pw-text-sm, 14px);
+  line-height: 1.6;
+}
+
+.pw-editor-status p {
+  margin-bottom: 24px;
+}
+
+.pw-editor-skeleton {
+  display: grid;
+  gap: 16px;
+}
+
+.pw-editor-skeleton span {
+  height: 12px;
+  border-radius: var(--pw-radius-sm, 4px);
+  background: var(--bs-border-color);
+}
+
+.pw-editor-skeleton span:first-child {
+  width: 60%;
+  height: 20px;
+  margin-bottom: 8px;
+}
+
+.pw-editor-skeleton span:last-child {
+  width: 80%;
+}
+
+[data-pw-editor-state='failed'] .pw-editor-skeleton {
+  display: none;
+}
+
+.pw-editor-mode:disabled {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .pw-editor-skeleton {
+    animation: pw-editor-loading 1.5s ease-in-out infinite alternate;
+  }
+}
+
+@keyframes pw-editor-loading {
+  to {
+    opacity: 0.6;
+  }
+}

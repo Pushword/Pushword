@@ -54,6 +54,13 @@ final class ControllerTest extends AbstractAdminTestClass
         $holderId = (string) $crawler->filter('.editorjs-holder')->attr('id');
         self::assertCount(2, $crawler->filter('[data-pw-editor-modes-for="'.$holderId.'"] button[data-pw-editor-mode]'));
 
+        // Loading feedback and disabled controls must exist before JavaScript runs.
+        self::assertSame('loading', $crawler->filter('[data-pw-editor-widget]')->attr('data-pw-editor-state'));
+        self::assertSame('true', $crawler->filter('.editorjs-holder[inert]')->attr('aria-busy'));
+        self::assertSame('Loading content…', $crawler->filter('[data-pw-editor-status][role="status"] [data-pw-editor-loading]')->text());
+        self::assertCount(3, $crawler->filter('.pw-editor-mode[disabled]'));
+        self::assertCount(1, $crawler->filter('[data-pw-editor-reload][hidden]'));
+
         // The editor widget ships its own hidden media-picker selects, which the
         // image/gallery/attaches tools look up globally. Exactly one per name:
         // PageInlineMediaField is gone, so the widget is the only source.

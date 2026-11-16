@@ -37,6 +37,7 @@ import { setupEditorPopovers } from './tools/utils/editorPopovers'
 import Raw from './tools/Raw/Raw'
 import CodeBlock from './tools/CodeBlock/CodeBlock'
 import { EditorModeManager } from './EditorModeManager'
+import { EditorLoading } from './EditorLoading'
 import { editorJsHelper } from './editorJsHelper'
 import { boundInputOf } from './boundInput'
 import { EditorDiagnostics, reportEditorError } from './EditorDiagnostics'
@@ -75,6 +76,7 @@ export class editorJs {
   private editors: Record<string, EditorJS> = {}
   private editorjsTools: Record<string, any> = {}
   private forms = new WeakSet<HTMLFormElement>()
+  private initializations = new Map<string, Promise<void>>()
   private pendingSaves = new Map<string, Promise<OutputData | null>>()
 
   constructor() {
@@ -213,6 +215,8 @@ export class editorJs {
       boundInputOf(config.holder!)?.setAttribute('data-pw-baseline-pending', '1')
     }
 
+    let contentReady = Promise.resolve()
+    const loading = new EditorLoading(document.getElementById(config.holder!)!)
     const editor = new EditorJS(
       Object.assign(config, {
         onReady: () => {
@@ -255,7 +259,7 @@ export class editorJs {
           if (markdownContent) {
             undoAwaitsParsedBaseline = true
             // @ts-ignore
-            void new window.EditorJsParseMarkdown(editor, markdownContent).parseMarkdown()
+            contentReady = new window.EditorJsParseMarkdown(editor, markdownContent).parseMarkdown()
           }
 
           // Content loaded from JSON data never fires onChange, so seed the panel here.
@@ -263,6 +267,13 @@ export class editorJs {
         },
       }),
     )
+
+    const initialization = editor.isReady.then(() => contentReady)
+    this.initializations.set(config.holder!, initialization)
+    void initialization.then(() => loading.ready(), (error: unknown) => {
+      loading.fail()
+      reportEditorError(document.getElementById(config.holder!), 'tool', error)
+    })
 
     this.editors[config.holder!] = editor
     const holder = document.getElementById(config.holder!)
@@ -317,6 +328,7 @@ export class editorJs {
     editorJsHelper.getModeManager(holderId)?.destroy(input)
     delete this.editors[holderId]
     delete window.editorJsHelper.modeManagers[holderId]
+    this.initializations.delete(holderId)
     this.pendingSaves.delete(holderId)
   }
 
@@ -335,10 +347,11 @@ export class editorJs {
         })
         if (!holders.length) return
 
-        // Editor.js debounces onChange; a quick Save must include the latest edit.
+        // Wait for the initial import, then flush Editor.js' debounced changes.
         event.preventDefault()
         event.stopImmediatePropagation()
         try {
+          await Promise.all(holders.map((holderId) => this.initializations.get(holderId)))
           await Promise.all(holders.map((holderId) => this.editorjsSave(holderId)))
         } catch {
           return // Leave the form open and let the author retry after the visible error.
