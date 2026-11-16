@@ -13,6 +13,7 @@ const destroyUndo = vi.fn()
 const parseMarkdown = vi.fn()
 const scheduleRefresh = vi.fn()
 const outlineCreated = vi.fn()
+let editorReady: Promise<void> = Promise.resolve()
 
 /** Config the editorJs class handed to Editor.js, captured at construction. */
 let captured: any = null
@@ -23,6 +24,7 @@ let undoOptions: any = null
 vi.mock('@editorjs/editorjs', () => ({
   default: class {
     destroy = destroyEditor
+    isReady = editorReady
     readOnly = { isEnabled: false }
     blocks = { getBlockIndex: () => 0, getBlocksCount: () => 0, getBlockByIndex: vi.fn(), insert: vi.fn(() => ({ id: 'replacement' })), delete: vi.fn() }
     caret = { setToBlock: vi.fn() }
@@ -68,6 +70,7 @@ vi.mock('./EditorModeManager', () => ({ EditorModeManager: class {} }))
 const { editorJs } = await import('./editor')
 const { editorJsHelper } = await import('./editorJsHelper')
 const { EditorModeManager } = await import('./EditorModeManager')
+const { EditorLoading } = await import('./EditorLoading')
 
 function setUpDom(pageEditor = true): void {
   document.body.innerHTML = ''
@@ -107,7 +110,8 @@ beforeEach(() => {
   delete window.editorjsConfigs
   configs.length = 0
   initialize.mockClear()
-  parseMarkdown.mockClear()
+  parseMarkdown.mockReset().mockResolvedValue(undefined)
+  editorReady = Promise.resolve()
   destroyEditor.mockClear()
   destroyUndo.mockClear()
   outlineCreated.mockClear()
@@ -605,4 +609,69 @@ it('decorates groups for structural changes but not ordinary typing', async () =
   ])
   expect(decorate).toHaveBeenCalledOnce()
   decorate.mockRestore()
+})
+
+describe('initial content loading', () => {
+  it.each(['{"blocks":[]}', ''])('reveals JSON or empty content on ready: %s', async (content) => {
+    const ready = vi.spyOn(EditorLoading.prototype, 'ready')
+    boot(content)
+    expect(ready).not.toHaveBeenCalled()
+    captured.onReady()
+    await vi.waitFor(() => expect(ready).toHaveBeenCalledOnce())
+    ready.mockRestore()
+  })
+
+  it('keeps loading until the Markdown import has finished', async () => {
+    let finish!: () => void
+    parseMarkdown.mockReturnValue(new Promise<void>(resolve => { finish = resolve }))
+    const ready = vi.spyOn(EditorLoading.prototype, 'ready')
+    boot('# Content')
+    captured.onReady()
+    expect(ready).not.toHaveBeenCalled()
+    finish()
+    await vi.waitFor(() => expect(ready).toHaveBeenCalledOnce())
+    ready.mockRestore()
+  })
+
+  it('shows a failure when the Markdown import rejects', async () => {
+    parseMarkdown.mockRejectedValue(new Error('Import failed'))
+    const failed = vi.spyOn(EditorLoading.prototype, 'fail')
+    boot('# Content')
+    captured.onReady()
+    await vi.waitFor(() => expect(failed).toHaveBeenCalledOnce())
+    failed.mockRestore()
+  })
+
+  it('waits for imported content before saving a form submitted during loading', async () => {
+    let finish!: () => void
+    parseMarkdown.mockReturnValue(new Promise<void>(resolve => { finish = resolve }))
+    const instance = boot('# Content')
+    captured.onReady()
+    const form = document.querySelector('form')!
+    const submit = vi.spyOn(form, 'requestSubmit').mockImplementation(() => {})
+    const save = instance.getEditors().ed!.saver.save
+    form.dispatchEvent(new SubmitEvent('submit', { cancelable: true }))
+    await Promise.resolve()
+    expect(save).not.toHaveBeenCalled()
+    expect(submit).not.toHaveBeenCalled()
+    finish()
+    await vi.waitFor(() => expect(submit).toHaveBeenCalledOnce())
+    expect(save).toHaveBeenCalledOnce()
+    submit.mockRestore()
+  })
+
+  it('shows a failure and blocks saving when Editor.js initialization rejects', async () => {
+    editorReady = Promise.reject(new Error('Initialization failed'))
+    const failed = vi.spyOn(EditorLoading.prototype, 'fail')
+    const instance = boot('{"blocks":[]}')
+    const form = document.querySelector('form')!
+    const submit = vi.spyOn(form, 'requestSubmit').mockImplementation(() => {})
+    form.dispatchEvent(new SubmitEvent('submit', { cancelable: true }))
+    await vi.waitFor(() => expect(failed).toHaveBeenCalledOnce())
+    expect(instance.getEditors().ed!.saver.save).not.toHaveBeenCalled()
+    expect(submit).not.toHaveBeenCalled()
+    expect(document.querySelector<HTMLTextAreaElement>('#inp')!.value).toBe('{"blocks":[]}')
+    submit.mockRestore()
+    failed.mockRestore()
+  })
 })
