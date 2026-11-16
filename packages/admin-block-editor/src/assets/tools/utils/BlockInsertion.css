@@ -76,8 +76,12 @@
 
 @media (pointer: coarse) {
   .pw-block-insertion {
-    gap: 0;
     opacity: 1;
+  }
+
+  .pw-block-insertion::before,
+  .pw-block-insertion::after {
+    content: none;
   }
 
   .editorjs-holder .pw-block-insertion__button {
@@ -88,6 +92,10 @@
     border: 0;
     background: transparent;
     pointer-events: auto;
+  }
+
+  .pw-block-insertion__button > [aria-hidden] {
+    transform: translateX(2px);
   }
 }
 

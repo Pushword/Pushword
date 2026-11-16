@@ -1,7 +1,7 @@
 import { test, expect, render, expectInsertionPreservesLayout } from './fixtures'
 import type { Locator } from '@playwright/test'
 
-test('the paragraph separator stays visible and tappable between non-text blocks', async ({ editorPage: page }) => {
+test('the paragraph plus stays visible and tappable between non-text blocks', async ({ editorPage: page }) => {
   await render(page, [
     { type: 'table', data: { content: [['Keep cell']] } },
     { type: 'raw', data: { html: '<div>Keep raw</div>' } },
@@ -33,7 +33,13 @@ test('touch insertion stays in the gutter without expanding text or mixing with 
     await paragraph.tap()
     const text = (await paragraph.boundingBox())!
     const button = page.getByRole('button', { name: 'Add paragraph', exact: true }).first()
+    const rule = await page.locator('.pw-block-insertion').first().evaluate(element =>
+      ['::before', '::after'].map(pseudo => getComputedStyle(element, pseudo).content),
+    )
+    expect(rule).toEqual(['none', 'none'])
     const insertion = (await button.boundingBox())!
+    const icon = (await button.locator('svg').boundingBox())!
+    expect(icon.x + icon.width / 2 - insertion.x - insertion.width / 2).toBe(2)
     expect(insertion.width).toBeGreaterThanOrEqual(24)
     expect(insertion.height).toBe(44)
     expect(insertion.x).toBeGreaterThanOrEqual(text.x + text.width)
