@@ -5,6 +5,9 @@ const raw = { type: 'raw', data: { html: '<div>Keep raw</div>' } }
 const table = { type: 'table', data: { content: [['Keep cell']] } }
 const samples: OutputBlockData[] = [
   raw, table,
+  { type: 'paragraph', data: { text: 'Paragraph' } },
+  { type: 'header', data: { text: 'Heading', level: 2 } },
+  { type: 'list', data: { style: 'unordered', items: [{ content: 'Item', meta: {}, items: [] }] } },
   { type: 'codeBlock', data: { html: 'Keep code', language: 'html' } },
   { type: 'quote', data: { text: 'Quote', caption: 'Author', alignment: 'left' } },
   { type: 'notice', data: { text: 'Notice', title: 'Title', level: 'note' } },
@@ -21,7 +24,7 @@ const samples: OutputBlockData[] = [
   { type: 'quiz', data: {} },
 ]
 
-test('all sixteen non-flowing block types offer insertion on either side', async ({ editorPage: page }) => {
+test('all nineteen block types offer insertion on either side', async ({ editorPage: page }) => {
   for (const sample of samples) {
     await test.step(sample.type, async () => {
       await render(page, [raw, sample, raw])
@@ -31,16 +34,54 @@ test('all sixteen non-flowing block types offer insertion on either side', async
   }
 })
 
-test('paragraphs, headings and lists do not get extra insertion controls', async ({ editorPage: page }) => {
+test('ordinary text blocks offer the same insertion control', async ({ editorPage: page }) => {
   for (const sample of [
     { type: 'paragraph', data: { text: 'Text' } },
     { type: 'header', data: { text: 'Heading', level: 2 } },
     { type: 'list', data: { style: 'unordered', items: [{ content: 'Item', meta: {}, items: [] }] } },
   ]) {
-    await render(page, [raw, sample, table])
-    await expect(page.locator('.pw-block-insertion')).toHaveCount(0)
+    await render(page, [sample, sample])
+    await expect(page.locator('.pw-block-insertion')).toHaveCount(1)
+    await page.getByRole('button', { name: 'Add paragraph', exact: true }).click()
+    await expect(page.locator('.ce-block')).toHaveCount(3)
+    await expect(page.locator('.ce-block').nth(1).locator('.ce-paragraph')).toBeFocused()
   }
 })
+
+for (const specimen of [
+  { name: 'raw', block: raw },
+  { name: 'Mermaid', block: { type: 'codeBlock', data: { html: 'graph TD\nA --> B', language: 'mermaid' } } },
+]) {
+  for (const level of [2, 3]) {
+    for (const headingFirst of [false, true]) {
+      test(`${specimen.name} ${headingFirst ? 'after' : 'before'} H${level}: insert and save a paragraph without altering either block`, async ({ editorPage: page }) => {
+        const heading = { type: 'header', data: { text: `Keep heading H${level}`, level } }
+        await render(page, headingFirst ? [heading, specimen.block] : [specimen.block, heading])
+        if (specimen.name === 'Mermaid') {
+          await expect(page.locator('.pw-mermaid-preview svg')).toBeVisible()
+        }
+        const before: OutputBlockData[] = await page.evaluate(async () => {
+          const holder = document.querySelector<HTMLElement>('.editorjs-holder')!
+          return (await window.editors[holder.id]!.save()).blocks
+        })
+        await page.getByRole('button', { name: 'Add paragraph', exact: true }).click()
+        await expect(page.locator('.ce-block').nth(1).locator('.ce-paragraph')).toBeFocused()
+        await page.keyboard.type('Between code and heading')
+        await saveAndReload(page)
+        await expect(page.locator(`h${level}.ce-header`)).toHaveText(`Keep heading H${level}`)
+        const after: OutputBlockData[] = await page.evaluate(async () => {
+          const holder = document.querySelector<HTMLElement>('.editorjs-holder')!
+          return (await window.editors[holder.id]!.save()).blocks
+        })
+        expect(after.map(({ type, data }) => ({ type, data }))).toEqual([
+          { type: before[0]!.type, data: before[0]!.data },
+          { type: 'paragraph', data: { text: 'Between code and heading' } },
+          { type: before[1]!.type, data: before[1]!.data },
+        ])
+      })
+    }
+  }
+}
 
 test('hover reveals the separator without moving content and clicking inserts persistent text', async ({ editorPage: page }) => {
   await render(page, [raw, table])
@@ -55,7 +96,7 @@ test('hover reveals the separator without moving content and clicking inserts pe
   expect(await page.locator('.tc-wrap').boundingBox()).toEqual(before)
   await button.click()
   await expect(page.locator('.ce-paragraph')).toBeFocused()
-  await expect(button).toHaveCount(0)
+  await expect(button).toHaveCount(2)
   await page.keyboard.type('Between the blocks')
   await saveAndReload(page)
   await expect(page.locator('.ce-block')).toHaveCount(3)
@@ -69,7 +110,8 @@ test('the decorative rule does not insert a paragraph; its labelled button does'
   await separator.click({ position: { x: 4, y: 16 } })
   await expect(page.locator('.ce-block')).toHaveCount(2)
   const button = page.getByRole('button', { name: 'Add paragraph', exact: true })
-  await expect(button).toHaveText('Add paragraph')
+  await expect(button).toHaveText('')
+  await expect(button).toHaveAttribute('title', 'Add paragraph')
   await button.click()
   await expect(page.locator('.ce-block').nth(1).locator('.ce-paragraph')).toBeFocused()
 })
@@ -94,12 +136,12 @@ test('insertion and its separator follow undo, redo and moving blocks', async ({
   await expect(page.locator('.pw-block-insertion')).toHaveCount(1)
   await page.keyboard.press('Control+y')
   await expect(page.locator('.ce-block')).toHaveCount(3)
-  await expect(page.locator('.pw-block-insertion')).toHaveCount(0)
+  await expect(page.locator('.pw-block-insertion')).toHaveCount(2)
   await page.evaluate(() => {
     const holder = document.querySelector<HTMLElement>('.editorjs-holder')!
     window.editors[holder.id]!.blocks.move(0, 1)
   })
-  await expect(page.locator('.pw-block-insertion')).toHaveCount(1)
+  await expect(page.locator('.pw-block-insertion')).toHaveCount(2)
 })
 
 test('clicking the separator after selecting blocks keeps their content', async ({ editorPage: page }) => {
@@ -108,7 +150,7 @@ test('clicking the separator after selecting blocks keeps their content', async 
   await page.keyboard.press('Control+a')
   await page.keyboard.press('Control+a')
   await expect(page.locator('.ce-block--selected')).toHaveCount(3)
-  await page.getByRole('button', { name: 'Add paragraph', exact: true }).click()
+  await page.getByRole('button', { name: 'Add paragraph', exact: true }).last().click()
   await page.keyboard.type('New text')
   await expect(page.locator('.ce-block')).toHaveCount(4)
   await expect(page.locator('.ce-paragraph')).toHaveText(['Keep introduction', 'New text'])

@@ -18,6 +18,20 @@ test('the paragraph separator stays visible and tappable between non-text blocks
   await expect(page.locator('.tc-cell')).toHaveText('Keep cell')
 })
 
+test('the plus inserts text between a Mermaid diagram and an H3 on touch screens', async ({ editorPage: page }) => {
+  await render(page, [
+    { type: 'codeBlock', data: { html: 'graph TD\nA --> B', language: 'mermaid' } },
+    { type: 'header', data: { text: 'Keep H3', level: 3 } },
+  ])
+  await expect(page.locator('.pw-mermaid-preview svg')).toBeVisible()
+  await page.getByRole('button', { name: 'Add paragraph', exact: true }).tap()
+  await expect(page.locator('.ce-block').nth(1).locator('.ce-paragraph')).toBeFocused()
+  await page.keyboard.type('Touch paragraph')
+  await expect(page.locator('h3.ce-header')).toHaveText('Keep H3')
+  await expect(page.locator('.ce-paragraph')).toHaveText('Touch paragraph')
+  await expect(page.locator('.pw-block-insertion')).toHaveCount(2)
+})
+
 async function insideViewport(panel: Locator): Promise<void> {
   await expect
     .poll(() =>

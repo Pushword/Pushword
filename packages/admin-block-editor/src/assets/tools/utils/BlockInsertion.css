@@ -20,19 +20,14 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  min-width: 32px;
-  min-height: 32px;
-  max-width: calc(100% - 48px);
-  padding: 4px 8px;
+  flex: none;
+  width: 32px;
+  height: 32px;
+  padding: 0;
   border: 1px solid var(--bs-border-color);
   border-radius: var(--pw-radius-sm, 4px);
   background: var(--bs-body-bg);
   color: var(--bs-secondary-color);
-  font: inherit;
-  font-size: var(--pw-text-sm, 14px);
-  font-weight: 500;
-  line-height: 1.4;
   cursor: pointer;
 }
 
@@ -44,13 +39,6 @@
 .pw-block-insertion__button svg {
   width: 20px;
   height: 20px;
-}
-
-.pw-block-insertion__label {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .pw-block-insertion:hover,
@@ -88,6 +76,7 @@
   }
 
   .editorjs-holder .pw-block-insertion__button {
-    min-height: 44px;
+    width: 44px;
+    height: 44px;
   }
 }

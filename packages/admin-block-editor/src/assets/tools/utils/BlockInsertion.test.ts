@@ -44,6 +44,7 @@ it.each([
   'attaches', 'card_list', 'codeBlock', 'delimiter', 'embed', 'gallery',
   'groupEnd', 'groupStart', 'image', 'notice', 'pages_list', 'quiz',
   'quote', 'raw', 'snippet', 'table',
+  'paragraph', 'header', 'list',
 ])('offers insertion between raw and %s, in both directions', type => {
   const { holder } = setup(['raw', type, 'raw'])
   const buttons = holder.querySelectorAll('.pw-block-insertion')
@@ -52,9 +53,9 @@ it.each([
   expect(buttons[1]!.closest('.ce-block')!.getAttribute('data-id')).toBe('2')
 })
 
-it.each(['paragraph', 'header', 'list'])('does not offer insertion beside %s', type => {
-  const { holder } = setup(['raw', type, 'raw'])
-  expect(holder.querySelector('.pw-block-insertion')).toBeNull()
+it.each([{ names: [] }, { names: ['paragraph'] }])('does not offer insertion without two adjacent blocks: %j', ({ names }) => {
+  const { holder } = setup(names)
+  expect(holder.querySelector('button')).toBeNull()
 })
 
 it('does not add leading, trailing or duplicate controls', async () => {
@@ -84,18 +85,27 @@ it('only inserts from the labelled button, not the surrounding separator', () =>
   holder.querySelector<HTMLElement>('.pw-block-insertion')!.click()
   expect(insert).not.toHaveBeenCalled()
   const button = holder.querySelector<HTMLButtonElement>('button')!
-  expect(button.textContent).toBe('Add paragraph')
+  expect(button.textContent).toBe('')
+  expect(button.getAttribute('aria-label')).toBe('Add paragraph')
+  expect(button.title).toBe('Add paragraph')
+  expect(button.querySelector('svg')).not.toBeNull()
   button.click()
   expect(insert).toHaveBeenCalledExactlyOnceWith('paragraph', {}, undefined, 1, false)
 })
 
-it('removes obsolete controls after a text block is moved between two other blocks', async () => {
+it('updates boundaries after moving and deleting blocks', async () => {
   const { holder, redactor, blocks } = setup(['raw', 'table', 'paragraph'])
   const paragraph = blocks.splice(2, 1)[0]!
-  blocks.splice(1, 0, paragraph)
-  redactor.insertBefore(paragraph.holder, blocks[2]!.holder)
+  blocks.unshift(paragraph)
+  redactor.prepend(paragraph.holder)
   await new Promise(resolve => setTimeout(resolve, 0))
-  expect(holder.querySelector('.pw-block-insertion')).toBeNull()
+  expect(paragraph.holder.querySelector('.pw-block-insertion')).toBeNull()
+  expect(holder.querySelectorAll('.pw-block-insertion')).toHaveLength(2)
+  blocks.shift()
+  paragraph.holder.remove()
+  await new Promise(resolve => setTimeout(resolve, 0))
+  expect(blocks[0]!.holder.querySelector('.pw-block-insertion')).toBeNull()
+  expect(holder.querySelectorAll('.pw-block-insertion')).toHaveLength(1)
 })
 
 it('does not offer insertion in read-only mode', () => {
