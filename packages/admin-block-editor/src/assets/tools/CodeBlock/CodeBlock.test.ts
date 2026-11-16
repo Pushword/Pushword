@@ -18,6 +18,8 @@ const monacoEditor = {
   getModel: () => model,
   updateOptions: vi.fn(),
   dispose: vi.fn(),
+  layout: vi.fn(),
+  focus: vi.fn(),
   onDidContentSizeChange: vi.fn(),
   onDidChangeModelContent: (listener: () => void) => {
     listeners.push(listener)
@@ -95,6 +97,141 @@ describe('Mermaid code block', () => {
     expect(tool.save()).toEqual({ html: value, language: 'mermaid' })
   })
 
+  it('shows only the diagram until editing, then folds without losing the source', async () => {
+    const { element, tool } = create()
+    await vi.advanceTimersByTimeAsync(300)
+    await vi.dynamicImportSettled()
+    const source = element.querySelector<HTMLElement>('.pw-code-source')!
+    const button = element.querySelector<HTMLButtonElement>('.pw-mermaid-edit')!
+    expect(source.hidden).toBe(true)
+    expect(button.textContent).toBe('Edit diagram')
+    expect(button.getAttribute('aria-expanded')).toBe('false')
+    expect(button.getAttribute('aria-controls')).toBe(source.id)
+
+    button.click()
+    expect(source.hidden).toBe(false)
+    expect(button.textContent).toBe('Done')
+    expect(button.getAttribute('aria-expanded')).toBe('true')
+    expect(monacoEditor.focus).toHaveBeenCalledOnce()
+    monacoEditor.setValue('flowchart LR\n A --> Edited')
+    button.click()
+    expect(source.hidden).toBe(true)
+    expect(document.activeElement).toBe(button)
+    expect(tool.save()).toEqual({ html: 'flowchart LR\n A --> Edited', language: 'mermaid' })
+  })
+
+  it('returns to reading with Escape but leaves composing input alone', async () => {
+    const { element } = create()
+    await vi.advanceTimersByTimeAsync(0)
+    const button = element.querySelector<HTMLButtonElement>('.pw-mermaid-edit')!
+    button.click()
+    const code = element.querySelector<HTMLElement>('.editorjs-monaco-wrapper')!
+    code.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, isComposing: true }))
+    expect(button.getAttribute('aria-expanded')).toBe('true')
+    const escape = new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true })
+    code.dispatchEvent(escape)
+    expect(escape.defaultPrevented).toBe(true)
+    expect(button.getAttribute('aria-expanded')).toBe('false')
+    expect(document.activeElement).toBe(button)
+  })
+
+  it('opens an empty diagram for editing and keeps read-only diagrams folded', () => {
+    const editable = create('mermaid', '')
+    expect(editable.element.querySelector<HTMLElement>('.pw-code-source')?.hidden).toBe(false)
+    const readOnly = create('mermaid', '', true)
+    expect(readOnly.element.querySelector<HTMLElement>('.pw-code-source')?.hidden).toBe(true)
+    expect(readOnly.element.querySelector<HTMLElement>('.pw-mermaid-edit')?.hidden).toBe(true)
+  })
+
+  it('previews and saves input before Monaco has loaded', async () => {
+    vi.stubGlobal('IntersectionObserver', class {
+      observe() {}
+      disconnect() {}
+    })
+    const { element, tool } = create('mermaid', '')
+    const input = element.querySelector('textarea')!
+    expect(input.getAttribute('aria-label')).toBe('Mermaid source')
+    input.value = 'flowchart LR\n A --> Typed'
+    input.dispatchEvent(new Event('input', { bubbles: true }))
+    await vi.advanceTimersByTimeAsync(300)
+    await vi.dynamicImportSettled()
+    expect(renderMermaid).toHaveBeenCalledWith(input.value)
+    expect(tool.save()).toEqual({ html: input.value, language: 'mermaid' })
+  })
+
+  it('keeps the last valid diagram when an edit has invalid syntax', async () => {
+    const { element } = create()
+    await vi.advanceTimersByTimeAsync(300)
+    await vi.dynamicImportSettled()
+    const diagram = element.querySelector('.pw-mermaid-preview svg')
+    element.querySelector<HTMLButtonElement>('.pw-mermaid-edit')!.click()
+    renderMermaid.mockRejectedValueOnce(new Error('Parse error on line 2'))
+    monacoEditor.setValue('flowchart LR\n A[')
+    await vi.advanceTimersByTimeAsync(300)
+    await vi.dynamicImportSettled()
+    expect(element.querySelector('.pw-mermaid-preview svg')).toBe(diagram)
+    expect(element.querySelector('.pw-mermaid-status')?.textContent).toBe('Last valid preview')
+    const error = element.querySelector<HTMLElement>('[role="alert"]')!
+    expect(error.hidden).toBe(false)
+    expect(error.textContent).toContain('Parse error on line 2')
+
+    element.querySelector<HTMLButtonElement>('.pw-mermaid-edit')!.click()
+    expect(element.querySelector<HTMLElement>('.pw-code-source')?.hidden).toBe(true)
+    expect(element.dataset.previewError).toBe('true')
+    element.querySelector<HTMLButtonElement>('.pw-mermaid-edit')!.click()
+    monacoEditor.setValue('flowchart LR\n A --> Fixed')
+    await vi.advanceTimersByTimeAsync(300)
+    await vi.dynamicImportSettled()
+    expect(error.hidden).toBe(true)
+    expect(element.dataset.previewError).toBeUndefined()
+    expect(element.querySelector('.pw-mermaid-status')?.textContent).toBe('Live preview')
+  })
+
+  it('associates errors with Monaco native edit contexts and clears them on recovery', async () => {
+    const { element } = create()
+    await vi.advanceTimersByTimeAsync(300)
+    await vi.dynamicImportSettled()
+    const input = document.createElement('div')
+    input.setAttribute('role', 'textbox')
+    element.querySelector('.editorjs-monaco-wrapper')!.append(input)
+    renderMermaid.mockRejectedValueOnce(new Error('Invalid source'))
+    monacoEditor.setValue('flowchart LR\n A[')
+    await vi.advanceTimersByTimeAsync(300)
+    await vi.dynamicImportSettled()
+    expect(input.getAttribute('aria-invalid')).toBe('true')
+    expect(input.getAttribute('aria-describedby')).toBe(element.querySelector('[role="alert"]')!.id)
+    monacoEditor.setValue('flowchart LR\n A --> Fixed')
+    await vi.advanceTimersByTimeAsync(300)
+    await vi.dynamicImportSettled()
+    expect(input.hasAttribute('aria-invalid')).toBe(false)
+  })
+
+  it('associates an existing error when deferred Monaco replaces the fallback input', async () => {
+    vi.stubGlobal('IntersectionObserver', class {
+      observe() {}
+      disconnect() {}
+    })
+    vi.stubGlobal('monaco', { editor: {
+      setModelLanguage,
+      create: (container: HTMLElement) => {
+        const input = document.createElement('div')
+        input.setAttribute('role', 'textbox')
+        container.append(input)
+        return monacoEditor
+      },
+    } })
+    renderMermaid.mockRejectedValueOnce(new Error('Invalid source'))
+    const { element } = create('mermaid', 'flowchart LR\n A[')
+    await vi.advanceTimersByTimeAsync(300)
+    await vi.dynamicImportSettled()
+    expect(element.querySelector<HTMLElement>('.pw-code-source')?.hidden).toBe(false)
+    element.querySelector('textarea')!.focus()
+    await vi.advanceTimersByTimeAsync(0)
+    const input = element.querySelector('[role="textbox"]')!
+    expect(input.getAttribute('aria-invalid')).toBe('true')
+    expect(input.getAttribute('aria-describedby')).toBe(element.querySelector('[role="alert"]')!.id)
+  })
+
   it('does not load Mermaid for other languages or empty diagrams', async () => {
     const { element } = create('php')
     await vi.advanceTimersByTimeAsync(300)
@@ -168,6 +305,7 @@ describe('Mermaid code block', () => {
     await vi.dynamicImportSettled()
     expect(element.textContent).toContain('Unable to render the Mermaid diagram.')
     expect(element.querySelector('img')).toBeNull()
+    expect(element.querySelector<HTMLElement>('.pw-code-source')?.hidden).toBe(false)
     monacoEditor.setValue('flowchart LR\n A --> C')
     await vi.advanceTimersByTimeAsync(300)
     await vi.dynamicImportSettled()

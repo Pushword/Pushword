@@ -327,3 +327,24 @@ test('the outline and media picker open and close by touch', async ({
   await modal.getByRole('button', { name: 'Close', exact: true }).tap()
   await expect(modal).toBeHidden()
 })
+
+test('Mermaid editing keeps a compact live preview and a tappable Done button', async ({ editorPage: page }) => {
+  await render(page, [
+    { type: 'codeBlock', data: { html: 'flowchart LR\nA[Before] --> B[After]', language: 'mermaid' } },
+  ])
+  const block = page.locator('.pw-code-block')
+  await expect(block.locator('.pw-mermaid-preview svg')).toBeVisible()
+  await block.getByRole('button', { name: 'Edit diagram' }).tap()
+  await expect(block.getByRole('textbox', { name: 'Mermaid source', exact: true })).toBeFocused()
+  const done = block.getByRole('button', { name: 'Done', exact: true })
+  expect((await done.boundingBox())!.height).toBeGreaterThanOrEqual(44)
+  const preview = (await block.locator('.pw-mermaid-preview').boundingBox())!
+  const code = (await block.locator('.pw-code-source').boundingBox())!
+  expect(preview.y + preview.height).toBeLessThanOrEqual(code.y + 1)
+  expect(preview.height).toBeLessThanOrEqual(160)
+  await page.keyboard.press('Control+a')
+  await page.keyboard.type('flowchart LR\nA[Mobile] --> B[Preview]')
+  await expect(block.locator('.pw-mermaid-preview svg')).toContainText('Mobile')
+  await done.tap()
+  await expect(block.locator('.pw-code-source')).toBeHidden()
+})

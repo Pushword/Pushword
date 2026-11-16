@@ -130,9 +130,15 @@ final readonly class EditorJsMessages
                 ]),
                 'codeBlock' => $this->translate([
                     ...self::RAW,
+                    'Code' => 'editorCode',
+                    'Done' => 'editorMermaidDone',
+                    'Edit diagram' => 'editorMermaidEdit',
                     'Enter Mermaid code to preview the diagram.' => 'editorMermaidEmpty',
                     'Language' => 'editorLanguage',
+                    'Last valid preview' => 'editorMermaidLastValid',
+                    'Live preview' => 'editorMermaidLive',
                     'Loading preview…' => 'editorMermaidLoading',
+                    'Mermaid source' => 'editorMermaidSource',
                     'Unable to render the Mermaid diagram.' => 'editorMermaidError',
                 ]),
                 'embed' => $this->translate([
