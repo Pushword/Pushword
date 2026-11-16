@@ -45,11 +45,12 @@ test('paragraphs, headings and lists do not get extra insertion controls', async
 test('hover reveals the separator without moving content and clicking inserts persistent text', async ({ editorPage: page }) => {
   await render(page, [raw, table])
   const button = page.getByRole('button', { name: 'Add paragraph', exact: true })
+  const separator = page.locator('.pw-block-insertion')
   await page.mouse.move(0, 0)
-  await expect(button).toHaveCSS('opacity', '0')
+  await expect(separator).toHaveCSS('opacity', '0')
   const before = await page.locator('.tc-wrap').boundingBox()
   await button.hover()
-  await expect(button).toHaveCSS('opacity', '1')
+  await expect(separator).toHaveCSS('opacity', '1')
   await expect(page.locator('.ce-toolbar')).toHaveCSS('visibility', 'hidden')
   expect(await page.locator('.tc-wrap').boundingBox()).toEqual(before)
   await button.click()
@@ -62,12 +63,23 @@ test('hover reveals the separator without moving content and clicking inserts pe
   await expect(page.locator('.tc-cell')).toHaveText('Keep cell')
 })
 
+test('the decorative rule does not insert a paragraph; its labelled button does', async ({ editorPage: page }) => {
+  await render(page, [raw, table])
+  const separator = page.locator('.pw-block-insertion')
+  await separator.click({ position: { x: 4, y: 16 } })
+  await expect(page.locator('.ce-block')).toHaveCount(2)
+  const button = page.getByRole('button', { name: 'Add paragraph', exact: true })
+  await expect(button).toHaveText('Add paragraph')
+  await button.click()
+  await expect(page.locator('.ce-block').nth(1).locator('.ce-paragraph')).toBeFocused()
+})
+
 for (const key of ['Enter', 'Space']) {
   test(`keyboard focus reveals the separator and ${key} inserts a paragraph`, async ({ editorPage: page }) => {
     await render(page, [table, raw])
     const button = page.getByRole('button', { name: 'Add paragraph', exact: true })
     await button.focus()
-    await expect(button).toHaveCSS('opacity', '1')
+    await expect(page.locator('.pw-block-insertion')).toHaveCSS('opacity', '1')
     await page.keyboard.press(key)
     await expect(page.locator('.ce-block').nth(1).locator('.ce-paragraph')).toBeFocused()
   })

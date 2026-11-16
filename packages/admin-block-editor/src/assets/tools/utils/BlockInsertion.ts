@@ -27,12 +27,18 @@ export function setupBlockInsertion(
       if (editor.readOnly.isEnabled || !previousNeedsInsertion || !needsInsertion) {
         existing?.remove()
       } else if (!existing) {
+        const separator = document.createElement('div')
+        separator.className = 'pw-block-insertion'
         const button = document.createElement('button')
         button.type = 'button'
-        button.className = 'pw-block-insertion'
+        button.className = 'pw-block-insertion__button'
         button.setAttribute('aria-label', label)
         button.title = label
         button.innerHTML = `<span aria-hidden="true">${IconPlus}</span>`
+        const text = document.createElement('span')
+        text.className = 'pw-block-insertion__label'
+        text.textContent = label
+        button.append(text)
         button.addEventListener('pointerdown', event => event.preventDefault())
         button.addEventListener('click', event => {
           event.stopPropagation()
@@ -44,7 +50,8 @@ export function setupBlockInsertion(
           const paragraph = editor.blocks.insert('paragraph', {}, undefined, position, false)
           editor.caret.setToBlock(paragraph.id, 'start')
         })
-        content.prepend(button)
+        separator.append(button)
+        content.prepend(separator)
       }
       previousNeedsInsertion = needsInsertion
     }

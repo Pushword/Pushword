@@ -7,8 +7,10 @@ test('the paragraph separator stays visible and tappable between non-text blocks
     { type: 'raw', data: { html: '<div>Keep raw</div>' } },
   ])
   const button = page.getByRole('button', { name: 'Add paragraph', exact: true })
-  await expect(button).toHaveCSS('opacity', '1')
+  await expect(page.locator('.pw-block-insertion')).toHaveCSS('opacity', '1')
   await expect(button).toHaveCSS('height', '44px')
+  await page.locator('.pw-block-insertion').tap({ position: { x: 4, y: 24 } })
+  await expect(page.locator('.ce-block')).toHaveCount(2)
   await button.tap()
   await expect(page.locator('.ce-block').nth(1).locator('.ce-paragraph')).toBeFocused()
   await page.keyboard.type('Touch paragraph')

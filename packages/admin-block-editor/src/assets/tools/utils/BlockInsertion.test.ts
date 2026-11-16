@@ -73,10 +73,20 @@ it('inserts at the live position after moving a block, clears selection, and foc
   await new Promise(resolve => setTimeout(resolve, 0))
   const raw = blocks[1]!
   raw.holder.classList.add('ce-block--selected')
-  raw.holder.querySelector<HTMLButtonElement>('.pw-block-insertion')!.click()
+  raw.holder.querySelector<HTMLButtonElement>('.pw-block-insertion button')!.click()
   expect(insert).toHaveBeenCalledExactlyOnceWith('paragraph', {}, undefined, 1, false)
   expect(caret).toHaveBeenCalledWith('paragraph', 'start')
   expect(holder.querySelector('.ce-block--selected')).toBeNull()
+})
+
+it('only inserts from the labelled button, not the surrounding separator', () => {
+  const { holder, insert } = setup(['raw', 'table'])
+  holder.querySelector<HTMLElement>('.pw-block-insertion')!.click()
+  expect(insert).not.toHaveBeenCalled()
+  const button = holder.querySelector<HTMLButtonElement>('button')!
+  expect(button.textContent).toBe('Add paragraph')
+  button.click()
+  expect(insert).toHaveBeenCalledExactlyOnceWith('paragraph', {}, undefined, 1, false)
 })
 
 it('removes obsolete controls after a text block is moved between two other blocks', async () => {
