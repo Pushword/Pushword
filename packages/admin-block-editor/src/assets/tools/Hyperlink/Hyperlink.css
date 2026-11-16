@@ -178,7 +178,13 @@
 .ninja {
   text-decoration: none !important;
   color: inherit !important;
-  border-bottom: 1px dotted #333;
+  border-bottom: 1px dotted currentColor;
+}
+
+/* The dashed underline identifies obfuscated links in either admin theme. */
+.editorjs-holder a[rel='obfuscate']:not(.link-btn),
+.editorjs-holder a[rel='encrypt']:not(.link-btn) {
+  color: var(--link-color);
 }
 
 .link-btn {

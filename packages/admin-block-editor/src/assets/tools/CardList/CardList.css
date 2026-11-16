@@ -5,6 +5,7 @@
   border-radius: var(--pw-radius-md, 8px);
   padding: 15px;
   background: #f8fafc; /* slate-50 */
+  color: #1d202b; /* The card preview keeps its light surface in both admin themes. */
   margin-top: 10px;
   margin-bottom: 10px;
 }
@@ -32,6 +33,7 @@
 /* Header input wrapper for slug */
 .cardlist-header-input {
   flex: 1;
+  min-width: 0;
   position: relative;
 }
 
@@ -381,6 +383,7 @@
 
 .cardlist-info-field {
   flex: 1;
+  min-width: 0;
 }
 
 /* Button fields in 2 columns */
@@ -399,6 +402,7 @@
 
 .cardlist-link-field {
   flex: 1;
+  min-width: 0;
 }
 
 /* Icon checkbox for obfuscate */
@@ -514,4 +518,19 @@
   color: #333;
   padding: unset;
   display: inline-block;
+}
+
+@media (max-width: 575.98px) {
+  .cardlist-item-header {
+    flex-wrap: wrap;
+  }
+
+  .cardlist-header-input {
+    flex-basis: 100%;
+  }
+
+  .cardlist-item-fields,
+  .cardlist-button-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }

@@ -88,7 +88,7 @@
   gap: 2px;
   padding: 4px 6px;
   border-radius: var(--pw-radius-sm, 4px);
-  color: #64748b; /* slate-500 */
+  color: var(--bs-secondary-color);
   pointer-events: none;
   /* Hide actual text content from copy */
   font-size: 0;
@@ -136,8 +136,8 @@
 
 .ce-header-level-wrapper:hover .ce-header-level-label,
 .ce-header-level-wrapper:focus-within .ce-header-level-label {
-  background-color: #f1f5f9; /* slate-100 */
-  color: #334155; /* slate-700 */
+  background-color: var(--bs-tertiary-bg);
+  color: var(--bs-body-color);
 }
 
 /* WCAG 2.1 AA: Visible focus indicator for keyboard navigation */

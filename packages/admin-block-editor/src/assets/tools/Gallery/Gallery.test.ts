@@ -26,6 +26,17 @@ function galleryWith(data: any, blocks?: API['blocks'], readOnly = false): Galle
   return new Gallery({ data, config, api, readOnly })
 }
 
+it.each([false, true])('gallery image actions respect read-only mode: %s', readOnly => {
+  const tool = galleryWith({ items: [{ media: '1.jpg', caption: 'Keep' }] }, undefined, readOnly)
+  const controls = tool.render().querySelectorAll<HTMLButtonElement>('.cdxcarousel-item button')
+  expect(controls).toHaveLength(3)
+  for (const control of controls) {
+    expect(control.disabled).toBe(readOnly)
+    expect(control.type).toBe('button')
+    expect(control.getAttribute('aria-label')).toBeTruthy()
+  }
+})
+
 describe('Gallery.normalizeData', () => {
   it('keeps the current shape as it is', () => {
     const data = {

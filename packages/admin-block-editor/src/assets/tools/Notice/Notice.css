@@ -6,6 +6,7 @@
   border-left: 4px solid #94a3b8;
   border-radius: 0 8px 8px 0;
   background: #f8fafc;
+  color: #1e293b; /* Keep text paired with the preview's light surface in both themes. */
   padding: 8px 12px;
 }
 
@@ -55,6 +56,20 @@
 
 .cdx-notice__body {
   outline: none;
+}
+
+.cdx-notice .inline-code {
+  background: color-mix(in srgb, currentColor 8%, transparent);
+}
+
+@media (max-width: 575.98px) {
+  .cdx-notice__header {
+    flex-wrap: wrap;
+  }
+
+  .cdx-notice__title {
+    flex-basis: 100%;
+  }
 }
 
 /* Editor preview of the front palettes — same hues as component/notice.html.twig. */

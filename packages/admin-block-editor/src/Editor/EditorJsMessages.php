@@ -144,6 +144,8 @@ final readonly class EditorJsMessages
                     ...self::MEDIA,
                     'Ce média est déjà présent dans la galerie.' => 'editorMediaAlreadyInGallery',
                     'Convert to image' => 'editorConvertToImage',
+                    'Move image left' => 'editorMoveImageLeft',
+                    'Move image right' => 'editorMoveImageRight',
                 ]),
                 'groupEnd' => $this->translate([
                     'End of collapsible' => 'editorCollapsibleEnd',

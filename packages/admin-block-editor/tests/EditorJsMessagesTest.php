@@ -38,6 +38,8 @@ final class EditorJsMessagesTest extends TestCase
             'editorConvertToImage' => 'Convertir en image',
             'editorMermaidError' => 'Impossible d’afficher le diagramme Mermaid.',
             'editorObfuscate' => 'Obfusquer',
+            'editorMoveImageLeft' => 'Déplacer l’image à gauche',
+            'editorMoveImageRight' => 'Déplacer l’image à droite',
             'editorWithHeadings' => 'Avec en-têtes',
         ], 'fr');
 
@@ -53,6 +55,8 @@ final class EditorJsMessagesTest extends TestCase
         self::assertSame('Convertir en', $messages['ui']['popover']['Convert to']);
         self::assertSame('Convertir en galerie', $messages['tools']['image']['Convert to gallery']);
         self::assertSame('Convertir en image', $messages['tools']['gallery']['Convert to image']);
+        self::assertSame('Déplacer l’image à gauche', $messages['tools']['gallery']['Move image left']);
+        self::assertSame('Déplacer l’image à droite', $messages['tools']['gallery']['Move image right']);
         self::assertSame('Impossible d’afficher le diagramme Mermaid.', $messages['tools']['codeBlock']['Unable to render the Mermaid diagram.']);
     }
 

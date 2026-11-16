@@ -47,7 +47,7 @@
     &[contentEditable='true'][data-placeholder]::before {
       position: absolute !important;
       content: attr(data-placeholder);
-      color: #707684;
+      color: var(--bs-secondary-color);
       font-weight: normal;
       display: none;
     }
@@ -178,7 +178,7 @@
 }
 
 .image-tool__caption:focus {
-  color: #1e293b; /* slate-800 */
+  color: var(--bs-body-color);
   outline: none;
   border-color: var(--focus-ring-color, #0284c7);
 }
@@ -196,7 +196,7 @@
   /* display: none !important; */
   font-size: 14px;
   padding: 4px 8px;
-  color: #475569; /* slate-600 */
+  color: var(--bs-secondary-color);
   padding-left: 28px;
   background-repeat: no-repeat;
   background-position: 4px;

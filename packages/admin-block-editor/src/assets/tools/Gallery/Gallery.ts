@@ -194,9 +194,9 @@ export default class Gallery extends AbstractMediaTool {
     const item = make.element('div', 'cdxcarousel-item')
 
     const leftBtn = make.element(
-      'div',
+      'button',
       'cdxcarousel-leftBtn',
-      { style: 'padding: 8px' },
+      { type: 'button', 'aria-label': this.api.i18n.t('Move image left') },
       MoveLeftIcon,
       () => {
         const parent = block.parentNode
@@ -211,9 +211,9 @@ export default class Gallery extends AbstractMediaTool {
       },
     )
     const rightBtn = make.element(
-      'div',
+      'button',
       'cdxcarousel-rightBtn',
-      { style: 'padding: 8px' },
+      { type: 'button', 'aria-label': this.api.i18n.t('Move image right') },
       MoveRightIcon,
       () => {
         const parent = block.parentNode
@@ -229,18 +229,19 @@ export default class Gallery extends AbstractMediaTool {
     )
 
     const removeBtn = make.element(
-      'div',
+      'button',
       'cdxcarousel-removeBtn',
-      { display: 'none' },
+      { type: 'button', 'aria-label': this.api.i18n.t('Remove the media') },
       CloseIcon,
       () => {
         block.remove()
       },
     )
 
-    item.appendChild(removeBtn)
-    item.appendChild(leftBtn)
-    item.appendChild(rightBtn)
+    for (const button of [removeBtn, leftBtn, rightBtn]) {
+      if (this.readOnly) button.setAttribute('disabled', '')
+      item.appendChild(button)
+    }
     block.appendChild(item)
 
     if (url) {
