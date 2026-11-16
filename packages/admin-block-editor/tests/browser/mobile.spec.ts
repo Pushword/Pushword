@@ -1,4 +1,4 @@
-import { test, expect, render } from './fixtures'
+import { test, expect, render, expectInsertionPreservesLayout } from './fixtures'
 import type { Locator } from '@playwright/test'
 
 test('the paragraph separator stays visible and tappable between non-text blocks', async ({ editorPage: page }) => {
@@ -9,13 +9,46 @@ test('the paragraph separator stays visible and tappable between non-text blocks
   const button = page.getByRole('button', { name: 'Add paragraph', exact: true })
   await expect(page.locator('.pw-block-insertion')).toHaveCSS('opacity', '1')
   await expect(button).toHaveCSS('height', '44px')
-  await page.locator('.pw-block-insertion').tap({ position: { x: 4, y: 24 } })
+  await expectInsertionPreservesLayout(page)
+  await page.locator('.pw-block-insertion').tap({ position: { x: 4, y: 4 } })
   await expect(page.locator('.ce-block')).toHaveCount(2)
   await button.tap()
   await expect(page.locator('.ce-block').nth(1).locator('.ce-paragraph')).toBeFocused()
   await page.keyboard.type('Touch paragraph')
   await expect(page.locator('.ce-paragraph')).toHaveText('Touch paragraph')
   await expect(page.locator('.tc-cell')).toHaveText('Keep cell')
+})
+
+test('touch insertion stays in the gutter without expanding text or mixing with block actions', async ({ editorPage: page }, testInfo) => {
+  for (const width of [390, 320]) {
+    await page.setViewportSize({ width, height: 844 })
+    await render(page, [
+      { type: 'paragraph', data: { text: 'First paragraph' } },
+      { type: 'paragraph', data: { text: 'Second paragraph' } },
+      { type: 'header', data: { text: 'Section', level: 2 } },
+      { type: 'paragraph', data: { text: 'Text below the heading' } },
+    ])
+    await expectInsertionPreservesLayout(page)
+    const paragraph = page.locator('.ce-paragraph').nth(1)
+    await paragraph.tap()
+    const text = (await paragraph.boundingBox())!
+    const button = page.getByRole('button', { name: 'Add paragraph', exact: true }).first()
+    const insertion = (await button.boundingBox())!
+    expect(insertion.width).toBeGreaterThanOrEqual(24)
+    expect(insertion.height).toBe(44)
+    expect(insertion.x).toBeGreaterThanOrEqual(text.x + text.width)
+    expect(insertion.x + insertion.width).toBeLessThanOrEqual(width)
+    const actions = page.locator('.ce-toolbar__actions')
+    await insideViewport(actions)
+    const toolbar = (await actions.boundingBox())!
+    expect(toolbar.y).toBeGreaterThan(text.y + text.height)
+    await page.screenshot({ path: testInfo.outputPath(`compact-insertion-${width}.png`) })
+    await button.tap()
+    await expect(page.locator('.ce-block').nth(1).locator('.ce-paragraph')).toBeFocused()
+    await expect(actions).toBeHidden()
+    await expect(page.locator('.ce-block')).toHaveCount(5)
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width)
+  }
 })
 
 test('the plus inserts text between a Mermaid diagram and an H3 on touch screens', async ({ editorPage: page }) => {

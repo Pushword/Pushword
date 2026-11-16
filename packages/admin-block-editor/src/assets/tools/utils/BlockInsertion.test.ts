@@ -25,6 +25,7 @@ function setup(names: string[], readOnly = false) {
   })
   const insert = vi.fn(() => ({ id: 'paragraph' }))
   const caret = vi.fn()
+  const closeToolbar = vi.fn()
   const state = { isEnabled: readOnly }
   const editor = {
     readOnly: state,
@@ -35,9 +36,10 @@ function setup(names: string[], readOnly = false) {
       insert,
     },
     caret: { setToBlock: caret },
+    toolbar: { close: closeToolbar },
   } as unknown as EditorJS
   setupBlockInsertion(editor, holder, 'Add paragraph', listeners.signal)
-  return { holder, redactor, blocks, insert, caret, state }
+  return { holder, redactor, blocks, insert, caret, state, closeToolbar }
 }
 
 it.each([
@@ -81,7 +83,7 @@ it('inserts at the live position after moving a block, clears selection, and foc
 })
 
 it('only inserts from the labelled button, not the surrounding separator', () => {
-  const { holder, insert } = setup(['raw', 'table'])
+  const { holder, insert, closeToolbar } = setup(['raw', 'table'])
   holder.querySelector<HTMLElement>('.pw-block-insertion')!.click()
   expect(insert).not.toHaveBeenCalled()
   const button = holder.querySelector<HTMLButtonElement>('button')!
@@ -91,6 +93,17 @@ it('only inserts from the labelled button, not the surrounding separator', () =>
   expect(button.querySelector('svg')).not.toBeNull()
   button.click()
   expect(insert).toHaveBeenCalledExactlyOnceWith('paragraph', {}, undefined, 1, false)
+  expect(closeToolbar).toHaveBeenCalledOnce()
+})
+
+it('closes block actions at touch start before they can intercept the insertion tap', () => {
+  const { holder, insert, closeToolbar } = setup(['codeBlock', 'header'])
+  const button = holder.querySelector<HTMLButtonElement>('button')!
+  button.dispatchEvent(new Event('touchstart', { bubbles: true }))
+  expect(closeToolbar).toHaveBeenCalledOnce()
+  expect(insert).not.toHaveBeenCalled()
+  button.click()
+  expect(insert).toHaveBeenCalledOnce()
 })
 
 it('updates boundaries after moving and deleting blocks', async () => {

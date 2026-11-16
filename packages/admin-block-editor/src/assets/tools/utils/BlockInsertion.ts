@@ -26,9 +26,13 @@ export function setupBlockInsertion(
         button.title = label
         button.innerHTML = `<span aria-hidden="true">${IconPlus}</span>`
         button.addEventListener('pointerdown', event => event.preventDefault())
+        // Editor.js opens its toolbar during touchstart capture. Close it before
+        // it can cover the insertion target and intercept the end of the tap.
+        button.addEventListener('touchstart', () => editor.toolbar.close(), { passive: true })
         button.addEventListener('click', event => {
           event.stopPropagation()
           if (editor.readOnly.isEnabled) return
+          editor.toolbar.close()
           for (const selected of holder.querySelectorAll('.ce-block--selected')) {
             selected.classList.remove('ce-block--selected')
           }

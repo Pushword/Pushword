@@ -71,6 +71,21 @@ export async function render(page: Page, blocks: OutputBlockData[]): Promise<voi
   await page.waitForTimeout(650)
 }
 
+export async function expectInsertionPreservesLayout(page: Page): Promise<void> {
+  const measure = () => page.locator('.codex-editor__redactor').evaluate(redactor =>
+    [redactor, ...redactor.querySelectorAll('.ce-block, [contenteditable="true"], .editorjs-monaco-wrapper')]
+      .map(element => element.getBoundingClientRect().toJSON()),
+  )
+  const withInsertion = await measure()
+  await page.locator('.pw-block-insertion').evaluateAll(elements => {
+    for (const element of elements) (element as HTMLElement).style.display = 'none'
+  })
+  expect(await measure(), 'Insertion controls must not change the document layout').toEqual(withInsertion)
+  await page.locator('.pw-block-insertion').evaluateAll(elements => {
+    for (const element of elements) (element as HTMLElement).style.removeProperty('display')
+  })
+}
+
 export async function saveAndReload(page: Page): Promise<void> {
   const formUrl = page.url()
   const response = page.waitForResponse(response =>

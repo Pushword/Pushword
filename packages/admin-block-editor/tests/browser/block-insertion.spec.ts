@@ -1,4 +1,4 @@
-import { test, expect, render, saveAndReload } from './fixtures'
+import { test, expect, render, saveAndReload, expectInsertionPreservesLayout } from './fixtures'
 import type { OutputBlockData } from '@editorjs/editorjs'
 
 const raw = { type: 'raw', data: { html: '<div>Keep raw</div>' } }
@@ -42,9 +42,43 @@ test('ordinary text blocks offer the same insertion control', async ({ editorPag
   ]) {
     await render(page, [sample, sample])
     await expect(page.locator('.pw-block-insertion')).toHaveCount(1)
+    await page.locator('.pw-block-insertion').hover()
     await page.getByRole('button', { name: 'Add paragraph', exact: true }).click()
     await expect(page.locator('.ce-block')).toHaveCount(3)
     await expect(page.locator('.ce-block').nth(1).locator('.ce-paragraph')).toBeFocused()
+  }
+})
+
+test('insertion preserves natural spacing and leaves text and its block actions reachable', async ({ editorPage: page }) => {
+  for (const width of [1280, 390]) {
+    await page.setViewportSize({ width, height: 900 })
+    await render(page, [
+      { type: 'paragraph', data: { text: 'First paragraph' } },
+      { type: 'paragraph', data: { text: 'Second paragraph' } },
+      { type: 'header', data: { text: 'Section', level: 2 } },
+      raw,
+    ])
+    await expectInsertionPreservesLayout(page)
+    const paragraph = page.locator('.ce-paragraph').nth(1)
+    await page.mouse.move(0, 0)
+    await paragraph.hover()
+    const actions = page.locator('.ce-toolbar__actions')
+    await expect(actions).toBeVisible()
+    const text = (await paragraph.boundingBox())!
+    const toolbar = (await actions.boundingBox())!
+    const center = toolbar.y + toolbar.height / 2
+    if (width > 650) {
+      expect(center).toBeGreaterThan(text.y)
+      expect(center).toBeLessThan(text.y + text.height)
+    } else {
+      expect(toolbar.y).toBeGreaterThan(text.y + text.height)
+      expect(toolbar.y + toolbar.height).toBeLessThanOrEqual(900)
+    }
+    // The idle insertion button overlaps this point visually but must let text receive the click.
+    await paragraph.click({ position: { x: text.width / 2, y: 12 } })
+    await page.keyboard.type(' edited')
+    await expect(paragraph).toContainText('edited')
+    await expect(page.locator('.ce-block')).toHaveCount(4)
   }
 })
 
@@ -64,6 +98,7 @@ for (const specimen of [
           const holder = document.querySelector<HTMLElement>('.editorjs-holder')!
           return (await window.editors[holder.id]!.save()).blocks
         })
+        await page.locator('.pw-block-insertion').hover()
         await page.getByRole('button', { name: 'Add paragraph', exact: true }).click()
         await expect(page.locator('.ce-block').nth(1).locator('.ce-paragraph')).toBeFocused()
         await page.keyboard.type('Between code and heading')
@@ -90,7 +125,7 @@ test('hover reveals the separator without moving content and clicking inserts pe
   await page.mouse.move(0, 0)
   await expect(separator).toHaveCSS('opacity', '0')
   const before = await page.locator('.tc-wrap').boundingBox()
-  await button.hover()
+  await separator.hover()
   await expect(separator).toHaveCSS('opacity', '1')
   await expect(page.locator('.ce-toolbar')).toHaveCSS('visibility', 'hidden')
   expect(await page.locator('.tc-wrap').boundingBox()).toEqual(before)
@@ -107,11 +142,12 @@ test('hover reveals the separator without moving content and clicking inserts pe
 test('the decorative rule does not insert a paragraph; its labelled button does', async ({ editorPage: page }) => {
   await render(page, [raw, table])
   const separator = page.locator('.pw-block-insertion')
-  await separator.click({ position: { x: 4, y: 16 } })
+  await separator.click({ position: { x: 4, y: 4 } })
   await expect(page.locator('.ce-block')).toHaveCount(2)
   const button = page.getByRole('button', { name: 'Add paragraph', exact: true })
   await expect(button).toHaveText('')
   await expect(button).toHaveAttribute('title', 'Add paragraph')
+  await separator.hover()
   await button.click()
   await expect(page.locator('.ce-block').nth(1).locator('.ce-paragraph')).toBeFocused()
 })
@@ -129,6 +165,7 @@ for (const key of ['Enter', 'Space']) {
 
 test('insertion and its separator follow undo, redo and moving blocks', async ({ editorPage: page }) => {
   await render(page, [raw, table])
+  await page.locator('.pw-block-insertion').hover()
   await page.getByRole('button', { name: 'Add paragraph', exact: true }).click()
   await expect(page.locator('.ce-paragraph')).toBeFocused()
   await page.keyboard.press('Control+z')
@@ -150,6 +187,7 @@ test('clicking the separator after selecting blocks keeps their content', async 
   await page.keyboard.press('Control+a')
   await page.keyboard.press('Control+a')
   await expect(page.locator('.ce-block--selected')).toHaveCount(3)
+  await page.locator('.pw-block-insertion').last().hover()
   await page.getByRole('button', { name: 'Add paragraph', exact: true }).last().click()
   await page.keyboard.type('New text')
   await expect(page.locator('.ce-block')).toHaveCount(4)
