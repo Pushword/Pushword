@@ -84,7 +84,10 @@ final readonly class EditorJsMessages
                     'converter' => $this->translate(['Convert to' => 'editorConvertTo']),
                 ],
                 'toolbar' => [
-                    'toolbox' => $this->translate(['Add' => 'editorAdd']),
+                    'toolbox' => $this->translate([
+                        'Add' => 'editorAdd',
+                        'Add paragraph' => 'editorAddParagraph',
+                    ]),
                 ],
                 'popover' => $this->translate([
                     'Convert to' => 'editorConvertTo',

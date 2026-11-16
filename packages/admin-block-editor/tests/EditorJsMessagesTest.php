@@ -138,6 +138,7 @@ final class EditorJsMessagesTest extends TestCase
         self::assertSame('Options de colonne', $messages['tools']['table']['Column options']);
         self::assertSame('Options de ligne', $messages['tools']['table']['Row options']);
         self::assertSame('Barré', $messages['toolNames']['Strikethrough']);
+        self::assertSame('Ajouter un paragraphe', $messages['ui']['toolbar']['toolbox']['Add paragraph']);
         foreach (['raw', 'codeBlock'] as $tool) {
             self::assertSame('Ajouter un paragraphe avant', $messages['tools'][$tool]['Add paragraph before']);
             self::assertSame('Ajouter un paragraphe après', $messages['tools'][$tool]['Add paragraph after']);

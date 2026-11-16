@@ -31,6 +31,7 @@ import PasteLink from './tools/Hyperlink/PasteLink'
 import ClipboardManager, { setupBlockCut } from './tools/utils/ClipboardManager'
 import { setupBlockSelection } from './tools/utils/BlockSelection'
 import { setupBlankBlockDeletion } from './tools/utils/BlankBlockDeletion'
+import { setupBlockInsertion } from './tools/utils/BlockInsertion'
 import { setupEditorPopovers } from './tools/utils/editorPopovers'
 import Raw from './tools/Raw/Raw'
 import CodeBlock from './tools/CodeBlock/CodeBlock'
@@ -214,6 +215,12 @@ export class editorJs {
     const editor = new EditorJS(
       Object.assign(config, {
         onReady: () => {
+          setupBlockInsertion(
+            editor,
+            document.getElementById(config.holder!)!,
+            config.i18n?.messages?.ui?.toolbar?.toolbox?.['Add paragraph'] ?? 'Add paragraph',
+            editorListeners.signal,
+          )
           new DragDrop(editor)
           undo = new Undo({
             editor,

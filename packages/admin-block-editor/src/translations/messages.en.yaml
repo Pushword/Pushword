@@ -2,6 +2,7 @@ bytes_abbreviation: B
 editorAdd: 'Add'
 editorAddColumnLeft: 'Add column to left'
 editorAddColumnRight: 'Add column to right'
+editorAddParagraph: 'Add paragraph'
 editorAddParagraphAfter: 'Add paragraph after'
 editorAddParagraphBefore: 'Add paragraph before'
 editorAddRowAbove: 'Add row above'

@@ -1,0 +1,60 @@
+.pw-block-insertion {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--color-primary);
+  cursor: pointer;
+  opacity: 0;
+}
+
+.pw-block-insertion::before,
+.pw-block-insertion::after {
+  content: '';
+  flex: 1;
+  border-top: 1px solid currentColor;
+}
+
+.pw-block-insertion > span {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border: 1px solid currentColor;
+  border-radius: var(--pw-radius-sm, 4px);
+  background: var(--bs-body-bg);
+}
+
+.pw-block-insertion svg {
+  width: 20px;
+  height: 20px;
+}
+
+.pw-block-insertion:hover,
+.pw-block-insertion:focus-visible {
+  opacity: 1;
+}
+
+.pw-block-insertion:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.editorjs-holder:has(.pw-block-insertion:hover, .pw-block-insertion:focus-visible) .ce-toolbar {
+  visibility: hidden;
+}
+
+.pw-block-insertion + .editorjs-monaco-wrapper {
+  margin-top: 0;
+}
+
+@media (pointer: coarse) {
+  .pw-block-insertion {
+    height: 44px;
+    opacity: 1;
+  }
+}

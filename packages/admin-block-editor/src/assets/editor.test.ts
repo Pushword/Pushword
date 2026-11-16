@@ -62,6 +62,7 @@ vi.mock('./outline/OutlinePanel', () => ({
 }))
 vi.mock('./tools/Hyperlink/PasteLink', () => ({ default: class {} }))
 vi.mock('./tools/utils/ClipboardManager', () => ({ default: class {}, setupBlockCut: vi.fn() }))
+vi.mock('./tools/utils/BlockInsertion', () => ({ setupBlockInsertion: vi.fn() }))
 vi.mock('./EditorModeManager', () => ({ EditorModeManager: class {} }))
 
 const { editorJs } = await import('./editor')

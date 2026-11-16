@@ -1,6 +1,21 @@
 import { test, expect, render } from './fixtures'
 import type { Locator } from '@playwright/test'
 
+test('the paragraph separator stays visible and tappable between non-text blocks', async ({ editorPage: page }) => {
+  await render(page, [
+    { type: 'table', data: { content: [['Keep cell']] } },
+    { type: 'raw', data: { html: '<div>Keep raw</div>' } },
+  ])
+  const button = page.getByRole('button', { name: 'Add paragraph', exact: true })
+  await expect(button).toHaveCSS('opacity', '1')
+  await expect(button).toHaveCSS('height', '44px')
+  await button.tap()
+  await expect(page.locator('.ce-block').nth(1).locator('.ce-paragraph')).toBeFocused()
+  await page.keyboard.type('Touch paragraph')
+  await expect(page.locator('.ce-paragraph')).toHaveText('Touch paragraph')
+  await expect(page.locator('.tc-cell')).toHaveText('Keep cell')
+})
+
 async function insideViewport(panel: Locator): Promise<void> {
   await expect
     .poll(() =>
