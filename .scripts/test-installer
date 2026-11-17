@@ -102,15 +102,15 @@ else
             if (in_array($pkg, [".", "..", "new", "docs", "js-helper"])) continue;
             $pkgDir = $monorepoDir."/packages/".$pkg;
             if (!is_dir($pkgDir) || !file_exists($pkgDir."/composer.json")) continue;
-            $repos[] = ["type" => "path", "url" => $pkgDir, "options" => ["symlink" => false]];
+            // Local branches must also satisfy inter-package requirements on ^1.
+            $repos[] = ["type" => "path", "url" => $pkgDir, "options" => ["symlink" => false, "versions" => ["pushword/".$pkg => "1.0.x-dev"]]];
         }
         $json["repositories"] = $repos;
 
         // Change pushword versions in flex-require to @dev
-        foreach ($json["flex-require"] ?? [] as $name => &$version) {
-            if (str_starts_with($name, "pushword/")) $version = "@dev";
+        foreach (array_keys($json["flex-require"] ?? []) as $name) {
+            if (str_starts_with($name, "pushword/")) $json["flex-require"][$name] = "@dev";
         }
-        unset($version);
 
         // Remove interactive bash installer from post-install-cmd
         if (isset($json["scripts"]["post-install-cmd"])) {

@@ -28,7 +28,7 @@ jobs:
           tools: composer:v2, symfony-cli:5.20.0
 
       - name: Install dependencies
-        uses: ramsey/composer-install@v3
+        uses: ramsey/composer-install@v4
         with:
           composer-options: --prefer-dist --no-interaction
 
@@ -162,7 +162,7 @@ jobs:
           extensions: dom, curl, libxml, mbstring, zip, pdo_sqlite, bcmath, intl, gd, exif, iconv, imagick, fileinfo, pcntl
 
       - name: Install PHP dependencies
-        uses: ramsey/composer-install@v3
+        uses: ramsey/composer-install@v4
         with:
           composer-options: --prefer-dist --no-interaction
 
@@ -221,9 +221,12 @@ jobs:
           extensions: dom, curl, libxml, mbstring, zip, pdo_sqlite, bcmath, intl, gd, exif, iconv, imagick, fileinfo, pcntl
 
       - name: Install PHP dependencies
-        uses: ramsey/composer-install@v3
+        uses: ramsey/composer-install@v4
         with:
           composer-options: --prefer-dist --no-interaction
+
+      - name: Install bundle assets
+        run: composer console assets:install --symlink --relative
 
       - name: Install Rust tooling
         run: |
@@ -291,7 +294,7 @@ jobs:
           echo "::add-matcher::${{ runner.tool_cache }}/phpunit.json"
 
       - name: Install dependencies
-        uses: ramsey/composer-install@v3
+        uses: ramsey/composer-install@v4
         with:
           # Keep one compatibility leg resolving the latest allowed dependencies.
           dependency-versions: ${{ matrix.node == 25 && 'highest' || 'locked' }}
@@ -410,7 +413,7 @@ jobs:
           echo "::add-matcher::${{ runner.tool_cache }}/phpunit.json"
 
       - name: Install dependencies
-        uses: ramsey/composer-install@v3
+        uses: ramsey/composer-install@v4
         with:
           composer-options: --prefer-dist --no-interaction
 
@@ -492,7 +495,7 @@ jobs:
           echo "::add-matcher::${{ runner.tool_cache }}/phpunit.json"
 
       - name: Install dependencies
-        uses: ramsey/composer-install@v3
+        uses: ramsey/composer-install@v4
         with:
           composer-options: --prefer-dist --no-interaction
 

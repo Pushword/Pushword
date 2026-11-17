@@ -72,7 +72,8 @@ run_profile() {
             if (in_array($pkg, [".", "..", "new", "docs", "js-helper"])) continue;
             $pkgDir = $monorepoDir."/packages/".$pkg;
             if (!is_dir($pkgDir) || !file_exists($pkgDir."/composer.json")) continue;
-            $repos[] = ["type" => "path", "url" => $pkgDir, "options" => ["symlink" => false]];
+            // Local branches must also satisfy inter-package requirements on ^1.
+            $repos[] = ["type" => "path", "url" => $pkgDir, "options" => ["symlink" => false, "versions" => ["pushword/".$pkg => "1.0.x-dev"]]];
         }
         $json["repositories"] = $repos;
 
