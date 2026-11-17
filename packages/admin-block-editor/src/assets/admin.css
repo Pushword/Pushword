@@ -62,21 +62,34 @@
   fill: currentColor;
 }
 
-/* Reporting a problem stays one quiet line below the editor; the panel turns
-   into an alert surface only once an editor action has failed. */
+/* Failures and their recovery action belong above even a very long document. */
+.pw-editor-alert {
+  max-width: var(--pw-editor-width);
+  margin: 0 auto 24px;
+  padding: 16px;
+  border-inline-start: 4px solid var(--bs-danger);
+  border-radius: var(--pw-radius-md, 8px);
+  background: var(--bs-danger-bg-subtle);
+  color: var(--bs-danger-text-emphasis);
+  font-size: var(--pw-text-sm, 14px);
+  line-height: 1.6;
+}
+
+.pw-editor-alert p {
+  margin-bottom: 12px;
+}
+
+.pw-editor-alert [data-pw-download-diagnostic],
+.pw-editor-diagnostics [data-pw-download-diagnostic] {
+  min-height: 36px;
+}
+
+/* Routine troubleshooting stays secondary to writing, including after a failure. */
 .pw-editor-diagnostics {
   max-width: calc(var(--pw-editor-width) + 20px);
   margin: 0 10px 16px;
   font-size: var(--pw-text-sm, 14px);
   line-height: 1.6;
-}
-
-.pw-editor-diagnostics:has(> [data-pw-editor-error]:not([hidden])) {
-  --bs-secondary-color: var(--bs-body-color);
-  padding: 12px 16px;
-  border-radius: var(--pw-radius-md, 8px);
-  background: var(--bs-danger-bg-subtle);
-  color: var(--bs-body-color);
 }
 
 .pw-editor-diagnostics summary {
@@ -88,10 +101,6 @@
 
 .pw-editor-diagnostics summary:hover {
   color: var(--bs-body-color);
-}
-
-.pw-editor-diagnostics [data-pw-editor-error] {
-  color: var(--bs-danger-text-emphasis);
 }
 
 .pw-editor-diagnostics summary:focus-visible {
@@ -117,6 +126,11 @@
 
   .pw-editor-diagnostics summary {
     padding-block: 11px;
+  }
+
+  .pw-editor-alert [data-pw-download-diagnostic],
+  .pw-editor-diagnostics [data-pw-download-diagnostic] {
+    min-height: 44px;
   }
 }
 
@@ -171,6 +185,10 @@ a[rel='encrypt']:not(.link-btn) {
   /* Line the report up with the blocks: the widget's 10px plus their 60px. */
   .pw-editor-diagnostics {
     margin-left: 70px;
+  }
+
+  .pw-editor-alert {
+    margin-left: 60px;
   }
 }
 

@@ -1,6 +1,30 @@
 import { test, expect, render, expectInsertionPreservesLayout } from './fixtures'
 import type { Locator } from '@playwright/test'
 
+test('failure recovery stays above long content with a tappable diagnostic download', async ({ editorPage: page }) => {
+  for (const width of [390, 320]) {
+    await page.setViewportSize({ width, height: 844 })
+    await render(page, Array.from({ length: 30 }, (_, index) => ({
+      type: 'paragraph', data: { text: `Paragraph ${index}` },
+    })))
+    await page.locator('.pw-editor-modes').scrollIntoViewIfNeeded()
+    await page.locator('.editorjs-holder').evaluate(holder => holder.dispatchEvent(
+      new CustomEvent('pw:editor-error', { detail: { operation: 'tool', error: new Error('Import failed') } }),
+    ))
+
+    const alert = page.locator('[data-pw-editor-error]')
+    await expect(alert).toBeInViewport()
+    const button = alert.getByRole('button', { name: 'Download diagnostic' })
+    const bounds = (await button.boundingBox())!
+    expect(bounds.height).toBeGreaterThanOrEqual(44)
+    expect(bounds.x + bounds.width).toBeLessThanOrEqual(width)
+    const downloaded = page.waitForEvent('download')
+    await button.tap()
+    expect((await downloaded).suggestedFilename()).toBe('pushword-editor-diagnostic.json')
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width)
+  }
+})
+
 test('the paragraph plus stays visible and tappable between non-text blocks', async ({ editorPage: page }) => {
   await render(page, [
     { type: 'table', data: { content: [['Keep cell']] } },

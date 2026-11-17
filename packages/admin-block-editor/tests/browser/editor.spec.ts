@@ -165,7 +165,8 @@ test('editing one block saves the untouched list and table back as written', asy
 })
 
 test('a failed block import shows an error while keeping the source and the other blocks', async ({ editorPage: page }) => {
-  const markdown = '* one\n* two\n\n| A |\n| --- |\n| 1 |'
+  const paragraphs = Array.from({ length: 30 }, (_, index) => `Paragraph ${index}`).join('\n\n')
+  const markdown = `${paragraphs}\n\n* one\n* two\n\n| A |\n| --- |\n| 1 |`
   const exported = await page.evaluate(async markdown => {
     const holder = document.querySelector<HTMLElement>('.editorjs-holder')!
     const editor = window.editors[holder.id]
@@ -182,7 +183,19 @@ test('a failed block import shows an error while keeping the source and the othe
     }
   }, markdown)
 
-  await expect(page.locator('[data-pw-editor-error]')).toBeVisible()
+  await page.locator('.pw-editor-modes').scrollIntoViewIfNeeded()
+  await expect(page.locator('[data-pw-editor-error]')).toBeInViewport()
+  expect(await page.evaluate(() =>
+    document.querySelector('[data-pw-editor-error]')!.getBoundingClientRect().bottom <=
+    document.querySelector('.ce-block')!.getBoundingClientRect().top,
+  )).toBe(true)
+  await page.locator('[data-pw-copy-markdown]').focus()
+  await page.keyboard.press('Tab')
+  const downloadButton = page.locator('[data-pw-editor-error] [data-pw-download-diagnostic]')
+  await expect(downloadButton).toBeFocused()
+  const downloaded = page.waitForEvent('download')
+  await downloadButton.press('Enter')
+  expect((await downloaded).suggestedFilename()).toBe('pushword-editor-diagnostic.json')
   await expect(page.locator('.cdx-list__item-content')).toHaveText(['one', 'two'])
   expect(exported).toBe(markdown)
 })

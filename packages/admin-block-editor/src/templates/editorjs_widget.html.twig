@@ -19,6 +19,10 @@
 </div>
 <div style="padding:10px 10px 0;">
     <textarea style="display:none" data-editorjs="{{ editor_id }}" {{ block('widget_attributes') }}>{{ value }}</textarea>
+    <div class="pw-editor-alert" data-pw-editor-error data-pw-editor-error-for="{{ editor_id }}" role="alert" hidden>
+        <p data-pw-editor-error-message></p>
+        <button type="button" class="btn btn-secondary btn-sm" data-pw-download-diagnostic>{{ 'editorDownloadDiagnostic'|trans }}</button>
+    </div>
     <div class="pw-editor-content">
         <div class="pw-editor-status" data-pw-editor-status role="status">
             <p data-pw-editor-loading>{{ 'editorLoading'|trans }}</p>
@@ -43,7 +47,6 @@
     </div>
 </div>
 <div class="pw-editor-diagnostics" data-pw-diagnostics-for="{{ editor_id }}" hidden>
-    <p class="mb-1" role="alert" data-pw-editor-error hidden></p>
     <details>
         <summary>{{ 'editorReportProblem'|trans }}</summary>
         <p class="text-muted my-2">{{ 'editorDiagnosticHelp'|trans }}</p>

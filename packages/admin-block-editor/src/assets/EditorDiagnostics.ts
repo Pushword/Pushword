@@ -65,6 +65,7 @@ export class EditorDiagnostics {
   private readonly actions: Action[] = []
   private readonly errors: Array<Record<string, unknown>> = []
   private readonly panel: HTMLElement | null
+  private readonly alert: HTMLElement | null
   private readonly started = new Date().toISOString()
 
   constructor(
@@ -75,6 +76,9 @@ export class EditorDiagnostics {
     this.panel = document.querySelector<HTMLElement>(
       `[data-pw-diagnostics-for="${holder.id}"]`,
     )
+    this.alert = document.querySelector<HTMLElement>(
+      `[data-pw-editor-error-for="${holder.id}"]`,
+    ) ?? this.panel?.querySelector<HTMLElement>('[data-pw-editor-error]') ?? null
     // Reachable before any failure: a problem that throws nothing must be reportable too.
     if (this.panel) this.panel.hidden = false
     const options = { capture: true, signal: this.listeners.signal }
@@ -161,13 +165,15 @@ export class EditorDiagnostics {
     holder
       .closest('form')
       ?.addEventListener('submit', () => this.record('submit'), options)
-    this.panel?.querySelector('[data-pw-download-diagnostic]')?.addEventListener(
-      'click',
-      () => {
-        this.download()
-      },
-      options,
-    )
+    for (const region of [this.panel, this.alert]) {
+      region?.querySelector('[data-pw-download-diagnostic]')?.addEventListener(
+        'click',
+        () => {
+          this.download()
+        },
+        options,
+      )
+    }
     this.panel
       ?.querySelector<HTMLInputElement>('[data-pw-writing-suggestions]')
       ?.addEventListener(
@@ -218,10 +224,10 @@ export class EditorDiagnostics {
     })
     if (this.errors.length > 20) this.errors.shift()
     if (warning) return
-    const status = this.panel?.querySelector<HTMLElement>('[data-pw-editor-error]')
-    if (status) {
-      status.hidden = false
-      status.textContent = this.config.labels.failure
+    if (this.alert) {
+      const message = this.alert.querySelector('[data-pw-editor-error-message]') ?? this.alert
+      message.textContent = this.config.labels.failure
+      this.alert.hidden = false
     }
   }
 

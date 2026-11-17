@@ -8,9 +8,12 @@ let holder: HTMLElement
 beforeEach(() => {
   document.body.innerHTML = `<form>
     <div><button type="button" data-pw-editor-mode="json">JSON</button></div>
+    <div data-pw-editor-error-for="editor" data-pw-editor-error hidden role="alert">
+      <p data-pw-editor-error-message></p>
+      <button type="button" data-pw-download-diagnostic>Download</button>
+    </div>
     <div><div id="editor"><div class="ce-block" data-id="block"><p contenteditable="true">Confidential page text</p></div></div></div>
     <div data-pw-diagnostics-for="editor" hidden>
-      <p data-pw-editor-error hidden role="alert"></p>
       <input type="checkbox" data-pw-writing-suggestions>
       <button type="button" data-pw-download-diagnostic>Download</button>
     </div>
@@ -76,11 +79,29 @@ it('records useful action metadata while omitting input, clipboard and exception
   const serialized = JSON.stringify(report)
   for (const value of ['Confidential', 'Secret', 'private', 'example.org'])
     expect(serialized).not.toContain(value)
-  expect(document.querySelector('[role=alert]')?.textContent).toBe(
+  expect(document.querySelector('[data-pw-editor-error-message]')?.textContent).toBe(
     'Retry or download a diagnostic.',
   )
+  expect(document.querySelector('[role=alert] [data-pw-download-diagnostic]')).not.toBeNull()
   expect(document.querySelector<HTMLElement>('[role=alert]')?.hidden).toBe(false)
   expect(document.querySelector<HTMLElement>('[data-pw-diagnostics-for]')?.hidden).toBe(false)
+})
+
+it('still reports failures in a legacy widget with its alert inside the support panel', () => {
+  diagnostics.destroy()
+  document.querySelector('[data-pw-editor-error]')!.remove()
+  const panel = document.querySelector('[data-pw-diagnostics-for]')!
+  panel.insertAdjacentHTML('afterbegin', '<p data-pw-editor-error hidden role="alert"></p>')
+  diagnostics = new EditorDiagnostics(holder, {} as EditorJS, {
+    version: '1.2.3',
+    editorjsVersion: '2.33.0',
+    labels: { failure: 'Retry or download a diagnostic.' },
+  })
+
+  reportEditorError(holder, 'tool', new Error('Private import failure'))
+
+  expect(panel.querySelector<HTMLElement>('[role=alert]')?.hidden).toBe(false)
+  expect(panel.querySelector('[role=alert]')?.textContent).toBe('Retry or download a diagnostic.')
 })
 
 it('bounds the journal and does not record unknown input types or rejection payloads', () => {

@@ -131,7 +131,7 @@ test('offers a reload after a failed import and preserves the original source', 
   await expect(page.locator('[data-pw-editor-load-error]')).toBeVisible()
   expect(posts).toEqual([])
   await expect(page.locator('textarea[data-editorjs]')).toHaveValue(original)
-  await page.getByRole('button', { name: 'Reload page', exact: true }).click()
+  await page.getByRole('button', { name: 'Reload page', exact: true }).press('Enter')
   await expect(page.locator('[data-pw-editor-widget]')).toHaveAttribute('data-pw-editor-state', 'ready')
   await expect(page.locator('.ce-paragraph')).toHaveText('Original source')
   await waitForEditorWorker(page)
