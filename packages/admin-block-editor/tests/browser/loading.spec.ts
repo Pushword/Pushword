@@ -1,10 +1,10 @@
-import { test, expect, render, saveAndReload } from './fixtures'
+import { test, expect, render, saveAndReload, editorUrl } from './fixtures'
 
 test.describe('before initialization', () => {
   test.use({ javaScriptEnabled: false })
 
-  test('renders loading feedback before JavaScript runs', async ({ page, editorUrl }, testInfo) => {
-    await page.goto(editorUrl)
+  test('renders loading feedback before JavaScript runs', async ({ page }, testInfo) => {
+    await page.goto(editorUrl(testInfo))
     await expect(page.locator('[data-pw-editor-widget]')).toHaveAttribute('data-pw-editor-state', 'loading')
     await expect(page.getByText('Loading content…', { exact: true })).toBeVisible()
     await expect(page.locator('.editorjs-holder')).toHaveAttribute('inert', '')

@@ -10,7 +10,7 @@ const workers = Number(process.env.PW_EDITOR_WORKERS ?? 1)
 export default defineConfig({
   testDir: './tests/browser',
   testMatch: '**/*.spec.ts',
-  fullyParallel: false,
+  fullyParallel: workers > 1,
   workers,
   forbidOnly: !!process.env.CI,
   retries: 0,

@@ -55,7 +55,7 @@ if (false === $publicDirectory) {
     throw new RuntimeException('The dev app public directory is missing.');
 }
 
-$server = new Process([\PHP_BINARY, '-dvariables_order=EGPCS', '-S', '127.0.0.1:9079', '-t', $publicDirectory], $publicDirectory, timeout: null);
+$server = new Process([\PHP_BINARY, '-dopcache.enable_cli=1', '-dvariables_order=EGPCS', '-S', '127.0.0.1:9079', '-t', $publicDirectory], $publicDirectory, timeout: null);
 register_shutdown_function(static function () use ($server, $filesystem, $directory): void {
     $server->stop();
     $filesystem->remove($directory);
