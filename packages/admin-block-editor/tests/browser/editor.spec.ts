@@ -139,7 +139,7 @@ for (const mode of ['markdown', 'json']) {
     const toggle = page.locator(`[data-pw-editor-mode="${mode}"]`)
     if (mode === 'markdown') await page.locator('.cdx-list__item-content').first().press('Control+u')
     else await toggle.click()
-    await expect(page.locator('.editorjs-holder').locator('..').locator('.monaco-editor')).toBeVisible()
+    await expect(page.locator('[data-pw-editor-widget] .monaco-editor')).toBeVisible()
     if (mode === 'markdown') await toggle.press('Control+u')
     else await toggle.click()
     const child = page.locator('.cdx-list__item-children .cdx-list__item-content')
