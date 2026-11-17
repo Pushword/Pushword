@@ -128,24 +128,39 @@ jobs:
         run: cd packages/admin-monaco-editor && yarn test
 
   editor-browsers:
-    name: Editor journeys - ${{ matrix.browser }} - ${{ matrix.shard }}/3
+    name: Editor journeys - ${{ matrix.browser }} - ${{ matrix.shard }}/${{ matrix.shards }}
     runs-on: ubuntu-latest
     timeout-minutes: 25
     env:
-      PW_EDITOR_WORKERS: 2
+      PW_EDITOR_WORKERS: ${{ matrix.workers }}
     strategy:
       fail-fast: false
       matrix:
         browser: [chrome, msedge, firefox]
         shard: [1, 2, 3]
+        exclude:
+          - browser: firefox
+            shard: 3
         include:
           # The phone journeys run on the same Chrome binary: one setup serves both.
           - browser: chrome
             projects: --project=chrome --project=chrome-mobile
+            workers: 2
+            shards: 3
+          # Keep nine runners; Edge needs more runners and less contention within each.
           - browser: msedge
             projects: --project=msedge
+            workers: 1
+            shards: 4
           - browser: firefox
             projects: --project=firefox
+            workers: 2
+            shards: 2
+          - browser: msedge
+            shard: 4
+            projects: --project=msedge
+            workers: 1
+            shards: 4
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -214,7 +229,7 @@ jobs:
 
       - name: Run the shared editor journeys
         # Each worker owns its editor page, session and edit lock within the runner.
-        run: yarn --cwd packages/admin-block-editor test:browser ${{ matrix.projects }} --shard=${{ matrix.shard }}/3
+        run: yarn --cwd packages/admin-block-editor test:browser ${{ matrix.projects }} --shard=${{ matrix.shard }}/${{ matrix.shards }}
 
       - name: Upload results, failure screenshots and traces
         if: ${{ !cancelled() }}
@@ -511,6 +526,7 @@ jobs:
         ports:
           - 5432:5432
         options: >-
+          --tmpfs /var/lib/postgresql/data
           --health-cmd="pg_isready -U pushword -d postgres"
           --health-interval=10s
           --health-timeout=5s
