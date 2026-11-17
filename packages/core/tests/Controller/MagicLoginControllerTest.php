@@ -168,6 +168,8 @@ final class MagicLoginControllerTest extends WebTestCase
         $this->client->request('POST', $this->url, ['action' => 'verify_code', 'code' => $code, '_csrf_token' => $csrf]);
         self::assertResponseIsSuccessful();
         self::assertSame(0, $this->reload()->sessionVersion);
+        self::assertSelectorExists('#magic-login-error[role="alert"]');
+        self::assertSelectorNotExists('#loginCode');
     }
 
     public function testFiveWrongAttemptsCannotBeResetByChangingBrowser(): void
@@ -187,6 +189,8 @@ final class MagicLoginControllerTest extends WebTestCase
         $this->client->request('POST', $this->url, ['action' => 'verify_code', 'code' => $code, '_csrf_token' => $csrf]);
         self::assertSame(0, $this->reload()->sessionVersion);
         self::assertSame(5, $this->token->loginCodeAttempts);
+        self::assertSelectorExists('#magic-login-error[role="alert"]');
+        self::assertSelectorNotExists('#loginCode');
     }
 
     public function testAFailedCsrfCheckDoesNotSpendACodeAttempt(): void
@@ -196,6 +200,19 @@ final class MagicLoginControllerTest extends WebTestCase
         $this->client->request('POST', $this->url, ['action' => 'verify_code', 'code' => $code, '_csrf_token' => 'invalid']);
         self::assertSame(0, $this->reload()->loginCodeAttempts);
         self::assertTrue($this->token->hasLoginCode());
+        self::assertSelectorNotExists('input[aria-invalid="true"]');
+        self::assertSelectorExists('#magic-login-error[role="alert"]');
+    }
+
+    public function testCodeValidationIsAssociatedWithTheField(): void
+    {
+        $this->markUsed();
+        $code = $this->requestCode();
+        $wrong = '00000000' === $code ? '11111111' : '00000000';
+        $this->submitCode($this->client->getCrawler(), $wrong);
+        self::assertSelectorExists('#magic-login-code-error[role="alert"]');
+        self::assertSelectorExists('#loginCode[aria-invalid="true"][aria-describedby="magic-login-code-help magic-login-code-error"]');
+        self::assertSelectorNotExists('#magic-login-error');
     }
 
     public function testResendingTooSoonKeepsTheExistingCode(): void
@@ -204,7 +221,8 @@ final class MagicLoginControllerTest extends WebTestCase
         $code = $this->requestCode();
         $this->client->submit($this->client->getCrawler()->filter('button[value="request_code"]')->form());
         self::assertEmailCount(0);
-        self::assertSelectorExists('[role="alert"]');
+        self::assertSelectorNotExists('[role="alert"], input[aria-invalid="true"]');
+        self::assertSelectorExists('[data-magic-resend-status]');
         self::assertTrue(password_verify($code, (string) $this->reload()->loginCodeHash));
     }
 
@@ -218,6 +236,25 @@ final class MagicLoginControllerTest extends WebTestCase
         self::assertResponseStatusCodeSame(429);
         self::assertEmailCount(0);
         self::assertNull($this->reload()->loginCodeHash);
+    }
+
+    public function testRateLimitedResendKeepsTheCodeUsableWithoutAFieldError(): void
+    {
+        $this->markUsed();
+        $code = $this->requestCode();
+        $this->reload()->loginCodeExpiresAt = new DateTimeImmutable('+8 minutes');
+        $this->em->flush();
+        self::getContainer()->get('limiter.login_address')->create(hash('sha256', $this->token->user->email))->consume(4);
+        $crawler = $this->client->request('GET', $this->url);
+        $this->client->submit($crawler->filter('button[value="request_code"]')->form());
+
+        self::assertResponseStatusCodeSame(429);
+        self::assertEmailCount(0);
+        self::assertSelectorExists('#magic-login-error[role="alert"]');
+        self::assertSelectorExists('#loginCode');
+        self::assertSelectorNotExists('#loginCode[aria-invalid="true"], #magic-login-code-error');
+        $this->submitCode($this->client->getCrawler(), $code);
+        self::assertResponseRedirects();
     }
 
     public function testCodeRequestsAlsoUseTheIpLimit(): void

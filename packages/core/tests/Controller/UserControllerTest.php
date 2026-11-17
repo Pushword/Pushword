@@ -145,6 +145,35 @@ final class UserControllerTest extends WebTestCase
         self::assertResponseRedirects('/login');
     }
 
+    public function testIncorrectPasswordKeepsTheEmailAndPasswordStep(): void
+    {
+        $email = 'password-retry@example.tld';
+        $this->createTestUser($email, 'correctPassword123');
+        $crawler = $this->client->request('GET', '/login');
+        $form = $crawler->filter('form')->form();
+        $form['email'] = $email;
+        $this->client->submit($form);
+        $crawler = $this->client->followRedirect();
+        $form = $crawler->filter('form')->form();
+        $form['password'] = 'incorrectPassword';
+        $this->client->submit($form);
+
+        self::assertResponseRedirects('/login?step=password');
+        $this->client->followRedirect();
+        self::assertSelectorExists('input[name="email"][readonly][value="'.$email.'"]');
+        self::assertSelectorExists('#inputPassword[aria-invalid="true"][aria-describedby="login-auth-error"]');
+        self::assertSelectorExists('#login-auth-error[role="alert"]');
+        self::assertSelectorNotExists('input[name="password"][value]');
+    }
+
+    public function testEmailCsrfErrorHasAnExistingAccessibleDescription(): void
+    {
+        $this->client->request('POST', '/login/check-email', ['email' => 'someone@example.tld', '_csrf_token' => 'invalid']);
+        $this->client->followRedirect();
+        self::assertSelectorExists('#login-error[role="alert"]');
+        self::assertSelectorExists('#inputEmail[aria-invalid="true"][aria-describedby="login-error"]');
+    }
+
     public function testMagicLoginWithValidToken(): void
     {
         $user = $this->createTestUser('magic-login-user@example.tld', null);

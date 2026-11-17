@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pushword\Core\Controller;
 
+use DateTimeImmutable;
 use Pushword\Core\Entity\LoginToken;
 use Pushword\Core\Entity\User;
 use Pushword\Core\Repository\LoginTokenRepository;
@@ -62,8 +63,8 @@ final class MagicLoginController extends AbstractController
                         return $this->authenticate($loginToken, $request);
                     }
 
-                    $error = 'magicLinkCodeInvalid';
-                } elseif ('request_code' === $action && ! $loginToken->isValid()) {
+                    $error = $loginToken->hasLoginCode() ? 'magicLinkCodeInvalid' : 'magicLinkCodeUnavailable';
+                } elseif ('request_code' === $action && ! $loginToken->isValid() && 0 === $this->resendAfter($loginToken)) {
                     if (! $this->canSendCode($request, $loginToken->user)) {
                         $error = 'magicLinkCodeRateLimited';
                         $status = Response::HTTP_TOO_MANY_REQUESTS;
@@ -82,6 +83,7 @@ final class MagicLoginController extends AbstractController
             'connecting' => $connecting,
             'autoConnect' => null === $error && $connecting,
             'hasCode' => $loginToken->hasLoginCode(),
+            'resendAfter' => $this->resendAfter($loginToken),
             'error' => $error,
         ], $this->response($status));
     }
@@ -108,6 +110,14 @@ final class MagicLoginController extends AbstractController
         $addressAccepted = $this->addressLimiter->create(hash('sha256', strtolower(trim($user->email))))->consume()->isAccepted();
 
         return $ipAccepted && $addressAccepted;
+    }
+
+    private function resendAfter(LoginToken $token): int
+    {
+        return $token->loginCodeExpiresAt instanceof DateTimeImmutable ? max(
+            0,
+            $token->loginCodeExpiresAt->getTimestamp() - time() - LoginToken::CODE_TTL_SECONDS + LoginToken::CODE_RESEND_SECONDS,
+        ) : 0;
     }
 
     private function authenticate(LoginToken $token, Request $request): Response
