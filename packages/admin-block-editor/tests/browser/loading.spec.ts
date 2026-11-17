@@ -19,7 +19,7 @@ test.describe('before initialization', () => {
     await page.screenshot({ animations: 'disabled', path: testInfo.outputPath('loading-desktop.png') })
     await page.setViewportSize({ width: 390, height: 844 })
     await expect(page.getByText('Loading content…', { exact: true })).toBeVisible()
-    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+    await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
     await page.screenshot({ animations: 'disabled', path: testInfo.outputPath('loading-mobile.png') })
     await page.emulateMedia({ reducedMotion: 'reduce' })
     expect(await page.locator('.pw-editor-skeleton').evaluate(element => getComputedStyle(element).animationName)).toBe('none')
