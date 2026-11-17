@@ -52,9 +52,10 @@ function reserialize(value: unknown): unknown {
 /**
  * Just enough of Editor.js for the parser: clear() leaves one empty paragraph
  * once it settles, and insert() goes after the current block — or in place of
- * the one at `index` — and makes the new one current.
+ * the one at `index` — and makes the new one current. With `deferredUpdates`,
+ * update() fills the block a task later, as Editor.js re-renders it.
  */
-function fakeEditor(): { editor: API; blocks: FakeBlock[] } {
+function fakeEditor({ deferredUpdates = false } = {}): { editor: API; blocks: FakeBlock[] } {
   const blocks: FakeBlock[] = []
   let current = -1
   let nextId = 0
@@ -85,9 +86,14 @@ function fakeEditor(): { editor: API; blocks: FakeBlock[] } {
         return { id: inserted.id }
       },
       update: (id: string, data: BlockToolData, tunes: BlockTuneData) => {
-        const block = blocks.find((candidate) => candidate.id === id)!
-        block.data = ['paragraph', 'list'].includes(block.type) ? reserialize(data) : data
-        block.tunes = tunes ?? {}
+        const apply = (): void => {
+          const block = blocks.find((candidate) => candidate.id === id)!
+          block.data = ['paragraph', 'list'].includes(block.type) ? reserialize(data) : data
+          block.tunes = tunes ?? {}
+        }
+        if (!deferredUpdates) return apply()
+
+        return new Promise<void>((resolve) => setTimeout(() => resolve(apply())))
       },
     },
   } as unknown as API
@@ -95,8 +101,11 @@ function fakeEditor(): { editor: API; blocks: FakeBlock[] } {
   return { editor, blocks }
 }
 
-async function parse(markdown: string): Promise<{ editor: API; blocks: FakeBlock[] }> {
-  const fake = fakeEditor()
+async function parse(
+  markdown: string,
+  options: { deferredUpdates?: boolean } = {},
+): Promise<{ editor: API; blocks: FakeBlock[] }> {
+  const fake = fakeEditor(options)
   await new EditorJsParseMarkdown(fake.editor, markdown).parseMarkdown()
 
   return fake
@@ -219,6 +228,37 @@ describe('untouched blocks', () => {
 
     expect(blocks).toHaveLength(1)
     expect(await save(editor, blocks)).toBe('* one\n* two')
+  })
+
+  it('keep their source when Editor.js fills the parsed blocks after the parse returns', async () => {
+    const list = '- Rubrique « Apport », vraiment ?\n- Deux'
+    const table = '| Départs | Coût |\n| --- | --- |\n| 1 | <span data-value="cost 1">850 €</span> |'
+    const { editor, blocks } = await parse(`Intro\n\n${list}\n\n${table}`, { deferredUpdates: true })
+    await new Promise((resolve) => setTimeout(resolve)) // the author edits once every block is filled
+
+    blocks[0]!.data = { text: 'Intro edited' }
+
+    expect(await save(editor, blocks)).toBe(`Intro edited\n\n${list}\n\n${table}`)
+  })
+
+  it('resolve only once Editor.js has filled every parsed block', async () => {
+    const { blocks } = await parse('* one\n* two\n\n| A |\n| --- |\n| 1 |', { deferredUpdates: true })
+
+    expect(blocks.map((block) => block.type)).toEqual(['list', 'table'])
+    expect(blocks.every((block) => Object.keys(block.data).length > 0)).toBe(true)
+  })
+
+  it('still open when Editor.js fails to fill one of them', async () => {
+    const fake = fakeEditor({ deferredUpdates: true })
+    const update = fake.editor.blocks.update.bind(fake.editor.blocks)
+    fake.editor.blocks.update = ((id, data, tunes) =>
+      fake.blocks.find((block) => block.id === id)?.type === 'table'
+        ? Promise.reject(new Error('render failed'))
+        : update(id, data, tunes)) as typeof update
+
+    await new EditorJsParseMarkdown(fake.editor, '* one\n* two\n\n| A |\n| --- |\n| 1 |').parseMarkdown()
+
+    expect(fake.blocks[0]).toMatchObject({ type: 'list', data: { style: 'unordered' } })
   })
 
   it('leave an edited block to its export', async () => {
