@@ -248,7 +248,8 @@ jobs:
   ci-performance:
     name: CI performance
     needs: [phpstan, js-quality, editor-browsers, native, test, test-mariadb, test-postgresql]
-    if: ${{ !cancelled() }}
+    # A required check must fail on incomplete inputs rather than pass as skipped.
+    if: ${{ always() }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
@@ -256,10 +257,12 @@ jobs:
       contents: read
     steps:
       - name: Checkout
+        if: ${{ always() }}
         uses: actions/checkout@v7
 
       - name: Measure and compare CI performance
         id: performance
+        if: ${{ always() }}
         run: python3 .github/scripts/ci_performance.py
         env:
           GH_TOKEN: ${{ github.token }}

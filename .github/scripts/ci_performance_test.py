@@ -167,8 +167,11 @@ class TimingTest(unittest.TestCase):
         self.assertEqual(profile["monaco"], "warm")
 
     def test_failed_upstream_and_negative_durations_cannot_be_measured(self):
-        with self.assertRaises(ValueError):
-            ci.job_sample({}, [{"name": "tests", "conclusion": "failure"}])
+        for state in ("failure", "cancelled", "skipped", None):
+            with self.subTest(state=state), self.assertRaisesRegex(ValueError, "tests"):
+                ci.job_sample({}, [{"name": "tests", "conclusion": state}])
+        with self.assertRaisesRegex(ValueError, "no jobs"):
+            ci.job_sample({}, [])
         with self.assertRaises(ValueError):
             ci.seconds("2026-11-17T00:02:00Z", "2026-11-17T00:01:00Z")
 

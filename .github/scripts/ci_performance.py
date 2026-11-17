@@ -49,8 +49,9 @@ def seconds(start, end):
 
 def job_sample(run, jobs):
     jobs = [job for job in jobs if job["name"] != GUARD_JOB]
-    if not jobs or any(job["conclusion"] != "success" for job in jobs):
-        raise ValueError("All upstream jobs must finish successfully before measuring CI")
+    unsuccessful = [job["name"] for job in jobs if job["conclusion"] != "success"]
+    if not jobs or unsuccessful:
+        raise ValueError(f"All upstream jobs must pass before measuring CI: {', '.join(unsuccessful) or 'no jobs'}")
     durations = {job["name"]: seconds(job["started_at"], job["completed_at"]) for job in jobs}
     steps = {
         f"{job['name']} / {step['name']}": seconds(step["started_at"], step["completed_at"])

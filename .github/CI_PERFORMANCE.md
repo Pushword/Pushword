@@ -61,6 +61,8 @@ reads the latest reports.
 Once this workflow is on the default branch, make `CI performance` a required
 status check to prevent merging a confirmed regression. A failed upstream test
 also fails this job instead of producing a performance comparison.
+The guard runs even when upstream jobs fail or are cancelled: a skipped required
+check would otherwise be accepted by branch protection without a measurement.
 
 ## Local verification
 
