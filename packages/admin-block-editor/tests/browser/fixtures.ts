@@ -7,11 +7,22 @@ import { join } from 'node:path'
 type StorageState = Awaited<ReturnType<BrowserContext['storageState']>>
 const directory = join(tmpdir(), 'com.github.pushword.pushword/tests', process.env.TEST_RUN_ID!)
 
+type WorkerStartupWindow = typeof window & { pwTestEditorWorkers: { started: number, ready: number } }
+
+export async function waitForEditorWorker(page: Page): Promise<void> {
+  // Page network-idle does not include the module imports inside a worker.
+  await expect.poll(() => page.evaluate(() => {
+    const { started, ready } = (window as WorkerStartupWindow).pwTestEditorWorkers
+    return started > 0 && ready === started
+  }), { message: 'Monaco worker imports must finish before navigating' }).toBe(true)
+}
+
 async function waitForEditor(page: Page): Promise<void> {
   await page.waitForFunction(() => {
     const holder = document.querySelector<HTMLElement>('.editorjs-holder')
     return holder && window.editors?.[holder.id]?.blocks && !document.querySelector('[data-pw-baseline-pending]')
   })
+  await waitForEditorWorker(page)
 }
 
 export function editorUrl(testInfo: TestInfo): string {
@@ -20,6 +31,26 @@ export function editorUrl(testInfo: TestInfo): string {
 }
 
 export const test = base.extend<{ editorPage: Page }, { authState: StorageState }>({
+  page: async ({ page }, use) => {
+    await page.addInitScript(() => {
+      const state = window as WorkerStartupWindow
+      state.pwTestEditorWorkers = { started: 0, ready: 0 }
+      window.Worker = new Proxy(window.Worker, {
+        construct(Target, args) {
+          const worker = Reflect.construct(Target, args) as Worker
+          if ((args[1] as WorkerOptions | undefined)?.name === 'editorWorkerService') {
+            state.pwTestEditorWorkers.started++
+            worker.addEventListener('message', event => {
+              // Monaco sends this after its module and static imports have loaded.
+              if (event.data?.type === 'vscode-worker-ready') state.pwTestEditorWorkers.ready++
+            })
+          }
+          return worker
+        },
+      })
+    })
+    await use(page)
+  },
   authState: [async ({ browser }, use, workerInfo) => {
     const statePath = join(directory, `auth-${workerInfo.project.name}-${workerInfo.parallelIndex}.json`)
     // A failed test restarts its worker; reuse the login instead of hitting the login throttle.

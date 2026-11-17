@@ -1,38 +1,4 @@
-import type { Page } from '@playwright/test'
-import { test as base, expect, render, saveAndReload, editorUrl } from './fixtures'
-
-type WorkerStartupWindow = typeof window & { pwTestEditorWorkers: { started: number, ready: number } }
-
-const test = base.extend({
-  page: async ({ page }, use) => {
-    await page.addInitScript(() => {
-      const state = window as WorkerStartupWindow
-      state.pwTestEditorWorkers = { started: 0, ready: 0 }
-      window.Worker = new Proxy(window.Worker, {
-        construct(Target, args) {
-          const worker = Reflect.construct(Target, args) as Worker
-          if ((args[1] as WorkerOptions | undefined)?.name === 'editorWorkerService') {
-            state.pwTestEditorWorkers.started++
-            worker.addEventListener('message', event => {
-              // Monaco sends this after its module and static imports have loaded.
-              if (event.data?.type === 'vscode-worker-ready') state.pwTestEditorWorkers.ready++
-            })
-          }
-          return worker
-        },
-      })
-    })
-    await use(page)
-  },
-})
-
-async function waitForEditorWorker(page: Page): Promise<void> {
-  // Page network-idle does not include the module imports inside a worker.
-  await expect.poll(() => page.evaluate(() => {
-    const { started, ready } = (window as WorkerStartupWindow).pwTestEditorWorkers
-    return started > 0 && ready === started
-  }), { message: 'Monaco worker imports must finish before navigating' }).toBe(true)
-}
+import { test, expect, render, saveAndReload, editorUrl, waitForEditorWorker } from './fixtures'
 
 test.describe('before initialization', () => {
   test.use({ javaScriptEnabled: false })
@@ -56,10 +22,8 @@ test.describe('before initialization', () => {
 })
 
 test('waits for Markdown content before revealing or saving the editor', async ({ editorPage: page }) => {
-  await waitForEditorWorker(page)
   await render(page, [{ type: 'paragraph', data: { text: 'Content to preserve' } }])
   await saveAndReload(page)
-  await waitForEditorWorker(page)
   await page.addInitScript(() => {
     if (sessionStorage.getItem('pw-test-loading-delayed')) return
     sessionStorage.setItem('pw-test-loading-delayed', '1')
@@ -101,10 +65,8 @@ test('waits for Markdown content before revealing or saving the editor', async (
 })
 
 test('offers a reload after a failed import and preserves the original source', async ({ editorPage: page }) => {
-  await waitForEditorWorker(page)
   await render(page, [{ type: 'paragraph', data: { text: 'Original source' } }])
   await saveAndReload(page)
-  await waitForEditorWorker(page)
   const original = await page.locator('textarea[data-editorjs]').inputValue()
   await page.addInitScript(() => {
     if (sessionStorage.getItem('pw-test-loading-failed')) return
