@@ -102,6 +102,10 @@ The older `window.pagesUriList` array of paths still works, without titles.
 The editor shows a loading message until the page content is ready. Editing and
 source controls become available together. If loading fails, use **Reload page**.
 
+Saving preserves the original Markdown of unchanged blocks, including list
+numbering, typography and table markup. Edited blocks use their tool's Markdown
+format.
+
 ### Insert a paragraph
 
 Use the **Add paragraph** button between blocks. It appears on hover or keyboard
