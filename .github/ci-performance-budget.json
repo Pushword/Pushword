@@ -1,5 +1,5 @@
 {
-  "reference": "2026-11-parallel-editor-v1",
+  "reference": "2026-11-ci-performance-v2",
   "calibration_runs": 20,
   "warning_ratio": 0.10,
   "blocking_ratio": 0.20,

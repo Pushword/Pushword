@@ -59,6 +59,8 @@ example with `gh run rerun <run-id>`. There are no automatic reruns. Re-running 
 the guard or a subset of upstream jobs cannot confirm a regression or add a
 calibration sample. Source artifacts are overwritten on full reruns so the guard
 reads the latest reports.
+GitHub can assign new IDs to jobs it has not re-executed. Independence uses the
+workflow run ID, job name, and actual start/end timestamps instead of job IDs.
 Ignoring warnings does not disable enforcement: three consecutive comparable
 over-budget runs on the same branch block even when each run tests a new commit.
 

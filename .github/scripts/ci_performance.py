@@ -52,6 +52,12 @@ def latest_jobs(jobs):
     return list({job["name"]: job for job in sorted(jobs, key=lambda job: job["id"])}.values())
 
 
+def execution_key(run_id, job):
+    # GitHub clones completed jobs with new IDs on partial reruns, retaining dates.
+    identity = [run_id, job["name"], job["started_at"], job["completed_at"]]
+    return hashlib.sha256(json.dumps(identity).encode()).hexdigest()
+
+
 def job_sample(run, jobs):
     jobs = [job for job in jobs if job["name"] != GUARD_JOB]
     unsuccessful = [job["name"] for job in jobs if job["conclusion"] != "success"]
@@ -81,6 +87,7 @@ def job_sample(run, jobs):
         "run_id": run["id"], "commit": run["head_sha"], "url": run["html_url"],
         "branch": run.get("head_branch"),
         "job_ids": sorted(job["id"] for job in jobs),
+        "executions": sorted(execution_key(run["id"], job) for job in jobs),
         "metrics": {"longest_job_seconds": max(durations.values()),
                     "runner_seconds": sum(durations.values())},
         "jobs": durations, "steps": steps,
@@ -136,29 +143,29 @@ def artifact_name(config, profile):
 
 
 def compact(sample):
-    return {key: sample[key] for key in ("run_id", "commit", "branch", "url", "job_ids", "metrics")}
+    return {key: sample[key] for key in ("run_id", "commit", "branch", "url", "job_ids", "executions", "metrics")}
 
 
 def independent_samples(samples, commit=None):
     selected, used = [], set()
     for sample in reversed(samples):
-        ids = set(sample["job_ids"])
+        executions = set(sample["executions"])
         # Re-running only this guard, or a subset of jobs, is not a fresh full run.
-        if (commit is None or sample["commit"] == commit) and ids.isdisjoint(used):
+        if (commit is None or sample["commit"] == commit) and executions.isdisjoint(used):
             selected.append(sample)
-            used.update(ids)
+            used.update(executions)
     return selected
 
 
 def assess(sample, previous, config):
     baseline = list(previous.get("baseline", []))
-    recent = [item for item in previous.get("recent", []) if item["job_ids"] != sample["job_ids"]]
+    recent = [item for item in previous.get("recent", []) if item["executions"] != sample["executions"]]
     current = compact(sample)
     if len(baseline) < config["calibration_runs"] and not any(
-        item["job_ids"] == current["job_ids"] for item in baseline
+        item["executions"] == current["executions"] for item in baseline
     ):
         # Only independent full runs contribute to calibration.
-        if all(set(item["job_ids"]).isdisjoint(current["job_ids"]) for item in baseline):
+        if all(set(item["executions"]).isdisjoint(current["executions"]) for item in baseline):
             baseline.append(current)
     recent = [*recent, current][-max(config["calibration_runs"], config["trend_runs"]):]
     calibrated = len(baseline) >= config["calibration_runs"]

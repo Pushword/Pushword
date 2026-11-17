@@ -22,6 +22,7 @@ def sample(number, seconds=300, commit=None):
         "branch": "feature",
         "url": f"https://github.com/Pushword/Pushword/actions/runs/{number}",
         "job_ids": [number * 2, number * 2 + 1],
+        "executions": [f"execution-{number}-a", f"execution-{number}-b"],
         "metrics": {"longest_job_seconds": seconds, "runner_seconds": seconds * 10},
         "jobs": {"browser": seconds}, "steps": {"browser / tests": seconds},
         "tests": {"chrome / example.spec.ts": seconds}, "counts": {"editor-chrome-1": 10},
@@ -80,13 +81,17 @@ class BudgetTest(unittest.TestCase):
 
     def test_a_guard_only_rerun_neither_calibrates_nor_confirms(self):
         record = calibrated()
-        for _ in range(4):
-            record, findings = ci.assess(sample(21, 400, "regression"), record, CONFIG)
+        for attempt in range(4):
+            current = sample(21, 400, "regression")
+            current["job_ids"] = [attempt * 1000, attempt * 1000 + 1]
+            record, findings = ci.assess(current, record, CONFIG)
         self.assertFalse(any(finding["blocked"] for finding in findings))
         self.assertEqual(len(record["recent"]), 20)
         observing = {}
-        for _ in range(4):
-            observing, _ = ci.assess(sample(1), observing, CONFIG)
+        for attempt in range(4):
+            current = sample(1)
+            current["job_ids"] = [attempt * 1000, attempt * 1000 + 1]
+            observing, _ = ci.assess(current, observing, CONFIG)
         self.assertEqual(len(observing["baseline"]), 1)
 
     def test_partial_reruns_do_not_confirm_old_measurements(self):
@@ -94,7 +99,7 @@ class BudgetTest(unittest.TestCase):
         observing = {}
         for number in range(21, 25):
             current = sample(number, 400, "regression")
-            current["job_ids"][0] = 9999
+            current["executions"][0] = "unchanged-execution"
             record, findings = ci.assess(current, record, CONFIG)
             observing, _ = ci.assess(current, observing, CONFIG)
         self.assertFalse(any(finding["blocked"] for finding in findings))
@@ -171,6 +176,28 @@ class BudgetTest(unittest.TestCase):
 
 
 class TimingTest(unittest.TestCase):
+    def test_github_job_clones_are_the_same_execution_but_real_reruns_are_not(self):
+        run = {"id": 1, "head_sha": "abc", "html_url": "https://example.test/1"}
+        job = {"id": 10, "name": "editor", "conclusion": "success",
+               "started_at": "2026-11-17T00:01:00Z", "completed_at": "2026-11-17T00:02:00Z",
+               "steps": [{"name": "Build Monaco and its language workers", "conclusion": "skipped"}]}
+        _, original = ci.job_sample(run, [job])
+        _, clone = ci.job_sample(run, [{**job, "id": 11}])
+        self.assertNotEqual(original["job_ids"], clone["job_ids"])
+        self.assertEqual(original["executions"], clone["executions"])
+        record, _ = ci.assess(original, {}, CONFIG)
+        record, _ = ci.assess(clone, record, CONFIG)
+        self.assertEqual(len(record["baseline"]), 1)
+        rerun = {**job, "id": 12, "started_at": "2026-11-17T00:03:00Z", "completed_at": "2026-11-17T00:04:00Z"}
+        _, repeated = ci.job_sample(run, [rerun])
+        self.assertNotEqual(original["executions"], repeated["executions"])
+        record, _ = ci.assess(repeated, record, CONFIG)
+        self.assertEqual(len(record["baseline"]), 2)
+
+    def test_simultaneous_jobs_in_different_runs_are_independent(self):
+        job = {"name": "editor", "started_at": "2026-11-17T00:01:00Z", "completed_at": "2026-11-17T00:02:00Z"}
+        self.assertNotEqual(ci.execution_key(1, job), ci.execution_key(2, job))
+
     def test_partial_reruns_keep_unchanged_jobs_and_replace_old_failed_attempts(self):
         old = {"id": 1, "name": "editor", "conclusion": "failure"}
         unchanged = {"id": 2, "name": "php", "conclusion": "success"}
