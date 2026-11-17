@@ -1,6 +1,8 @@
 ---
 title: 'login links offer code recovery; authentication layouts include an introduction block'
-run: 'doctrine:schema:update --force'
+run:
+  - 'doctrine:schema:update --force'
+  - 'assets:install --symlink'
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
