@@ -340,7 +340,8 @@ test('table menus support keyboard navigation, show alignment and cancel deletio
     await page.locator('.tc-cell').first().click()
     await page.locator('.tc-cell').first().hover()
     const toggle = page.getByRole('button', { name: 'Column options', exact: true })
-    await toggle.click()
+    await toggle.focus()
+    await toggle.press('Enter')
     const menu = page.locator('.tc-toolbox--column .tc-popover--opened')
     await insideViewport(menu)
     await expect(

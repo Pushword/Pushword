@@ -11,19 +11,19 @@
   },
   "devDependencies": {
     "css-loader": "^7",
-    "dompurify": "^3.4.17",
+    "dompurify": "^3.4.18",
     "file-loader": "^6.2.0",
     "monaco-editor": "~0.57.0",
     "monaco-editor-webpack-plugin": "^7.1",
     "monaco-mermaid": "1.1.0",
-    "monaco-yaml": "^5.4",
+    "monaco-yaml": "^5.5",
     "style-loader": "^4",
-    "vite": "^8.3.5",
-    "vitest": "^5.0.5",
+    "vite": "^8.3.8",
+    "vitest": "^5.1.0",
     "webpack": "^5.112.2",
-    "webpack-cli": "^7.2.3"
+    "webpack-cli": "^7.3.1"
   },
   "resolutions": {
-    "monaco-editor/dompurify": "3.4.17"
+    "monaco-editor/dompurify": "3.4.18"
   }
 }

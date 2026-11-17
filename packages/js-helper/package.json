@@ -12,21 +12,21 @@
     "140.css": "^1.0",
     "@tailwindcss/forms": "^0.5",
     "@tailwindcss/typography": "^0.5",
-    "@tailwindcss/vite": "^4.1",
+    "@tailwindcss/vite": "^4.3",
     "alpinejs": "^3.17.5",
     "codemirror": "^6.0",
     "fuzzysearch": "^1.0.3",
     "glightbox": "^3.3",
-    "mermaid": "12.2.0",
+    "mermaid": "12.3.0",
     "tailwindcss-animated": "^2",
-    "vite": "^8.3.5",
-    "vite-plugin-compression2": "^2.3.1",
+    "vite": "^8.3.8",
+    "vite-plugin-compression2": "^2.5.4",
     "vite-plugin-static-copy": "^4.1.1",
     "vite-plugin-symfony": "^8.2"
   },
   "devDependencies": {
-    "jsdom": "^30.1.3",
-    "vitest": "^5.0.5"
+    "jsdom": "^31.0.1",
+    "vitest": "^5.1.0"
   },
   "repository": {
     "type": "git",
@@ -41,5 +41,8 @@
   "homepage": "https://pushword.piedweb.com",
   "peerDependencies": {
     "tailwindcss": ">=4.0.0"
+  },
+  "resolutions": {
+    "**/@tailwindcss/typography/postcss-selector-parser": "6.1.5"
   }
 }

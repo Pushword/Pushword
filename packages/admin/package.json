@@ -1,10 +1,10 @@
 {
   "devDependencies": {
     "@pushword/js-helper": "file:../js-helper",
-    "jsdom": "^30.1.3",
-    "sass-embedded": "^1.106.1",
-    "vite": "^8.3.5",
-    "vitest": "^5.0.5"
+    "jsdom": "^31.0.1",
+    "sass-embedded": "^1.108.2",
+    "vite": "^8.3.8",
+    "vitest": "^5.1.0"
   },
   "type": "module",
   "license": "UNLICENSED",
@@ -19,5 +19,8 @@
     "browser-image-compression": "^2.0.2",
     "htmx.org": "^4.0.0",
     "suggest.js": "https://github.com/onozaty/suggest.js"
+  },
+  "resolutions": {
+    "**/@tailwindcss/typography/postcss-selector-parser": "6.1.5"
   }
 }

@@ -40,7 +40,7 @@ test('calendar time slots prefill the selected day and time', async ({ page }) =
   await page.goto('/admin/newsletter/calendar?q=calendar-create-no-match')
   await page.getByRole('tab', { name: 'Week view', exact: true }).click()
   const date = await page.locator('[role="columnheader"][data-date]').nth(3).getAttribute('data-date')
-  const slot = page.locator('[data-time="09:30:00"]')
+  const slot = page.locator('[data-time="09:30:00"]').last()
   await slot.scrollIntoViewIfNeeded()
   const bounds = await slot.boundingBox()
   expect(bounds).not.toBeNull()

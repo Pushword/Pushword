@@ -106,9 +106,11 @@ test.describe('gallery touch layout', () => {
     for (const width of [320, 375]) {
       await page.setViewportSize({ width, height: 900 })
       const item = page.locator('.cdxcarousel-item').first()
-      const picture = (await item.boundingBox())!
       await expect(item.getByRole('button')).toHaveCount(3)
-      const buttons = await item.locator('button').evaluateAll(elements => elements.map(element => element.getBoundingClientRect().toJSON()))
+      const { picture, buttons } = await item.evaluate(element => ({
+        picture: element.getBoundingClientRect().toJSON(),
+        buttons: Array.from(element.querySelectorAll('button'), button => button.getBoundingClientRect().toJSON()),
+      }))
       for (const button of buttons) {
         expect(button.width).toBeGreaterThanOrEqual(44)
         expect(button.height).toBeGreaterThanOrEqual(44)

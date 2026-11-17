@@ -2,7 +2,7 @@
 
 The app bundles dependencies which contain the following licenses:
 
-## @full-ui/headless-calendar - 7.1.3 (MIT)
+## @full-ui/headless-calendar - 7.1.5 (MIT)
 
 MIT License
 
@@ -27,7 +27,7 @@ LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-## fullcalendar - 7.1.3 (MIT)
+## fullcalendar - 7.1.5 (MIT)
 
 MIT License
 
@@ -76,7 +76,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
-## temporal-polyfill - 1.0.6 (MIT)
+## temporal-polyfill - 1.0.8 (MIT)
 
 MIT License
 
@@ -100,7 +100,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
-## temporal-utils - 1.0.3 (MIT)
+## temporal-utils - 1.0.4 (MIT)
 
 MIT License
 

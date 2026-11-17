@@ -10,5 +10,8 @@
   "dependencies": {
     "@pushword/js-helper": "file:../../js-helper",
     "highlight.js": "^11.12.0"
+  },
+  "resolutions": {
+    "**/@tailwindcss/typography/postcss-selector-parser": "6.1.5"
   }
 }

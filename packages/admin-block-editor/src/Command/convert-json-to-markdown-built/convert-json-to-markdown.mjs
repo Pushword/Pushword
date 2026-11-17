@@ -3,6 +3,8 @@
 var l$1 = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" fill=\"none\" viewBox=\"0 0 24 24\"><path stroke=\"currentColor\" stroke-linecap=\"round\" stroke-width=\"2\" d=\"M18 7L6 7\"/><path stroke=\"currentColor\" stroke-linecap=\"round\" stroke-width=\"2\" d=\"M18 17H6\"/><path stroke=\"currentColor\" stroke-linecap=\"round\" stroke-width=\"2\" d=\"M16 12L8 12\"/></svg>";
 var d = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" fill=\"none\" viewBox=\"0 0 24 24\"><path stroke=\"currentColor\" stroke-linecap=\"round\" stroke-width=\"2\" d=\"M17 7L5 7\"/><path stroke=\"currentColor\" stroke-linecap=\"round\" stroke-width=\"2\" d=\"M17 17H5\"/><path stroke=\"currentColor\" stroke-linecap=\"round\" stroke-width=\"2\" d=\"M13 12L5 12\"/></svg>";
 var k$2 = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" fill=\"none\" viewBox=\"0 0 24 24\"><path stroke=\"currentColor\" stroke-linecap=\"round\" stroke-width=\"2\" d=\"M19 7L7 7\"/><path stroke=\"currentColor\" stroke-linecap=\"round\" stroke-width=\"2\" d=\"M19 17H7\"/><path stroke=\"currentColor\" stroke-linecap=\"round\" stroke-width=\"2\" d=\"M19 12L11 12\"/></svg>";
+var a$1 = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" fill=\"none\" viewBox=\"0 0 24 24\"><path stroke=\"currentColor\" stroke-linecap=\"round\" stroke-width=\"2\" d=\"M7 10L11.8586 14.8586C11.9367 14.9367 12.0633 14.9367 12.1414 14.8586L17 10\"/></svg>";
+var x$2 = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" fill=\"none\" viewBox=\"0 0 24 24\"><path stroke=\"currentColor\" stroke-linecap=\"round\" stroke-width=\"2\" d=\"M7 15L11.8586 10.1414C11.9367 10.0633 12.0633 10.0633 12.1414 10.1414L17 15\"/></svg>";
 var H$2 = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" fill=\"none\" viewBox=\"0 0 24 24\"><path stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M7 9L10 12M10 12L7 15M10 12H4\"/><path stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M17 9L14 12M14 12L17 15M14 12H20\"/></svg>";
 var B$2 = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" fill=\"none\" viewBox=\"0 0 24 24\"><path stroke=\"currentColor\" stroke-linecap=\"round\" stroke-width=\"2\" d=\"M8 8L12 12M12 12L16 16M12 12L16 8M12 12L8 16\"/></svg>";
 var I$2 = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" fill=\"none\" viewBox=\"0 0 24 24\"><path stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M9 17C7 17 7 15.2536 7 13.5L5.5 12L7 10.5C7 8.74644 7 7 9 7\"/><path stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M15 17C17 17 17 15.2536 17 13.5L18.5 12L17 10.5C17 8.74644 17 7 15 7\"/></svg>";
@@ -8199,6 +8201,12 @@ var Raw = class extends BaseTool {
 	render() {
 		this.wrapper = globalThis.document.createElement("div");
 		this.wrapper.classList.add("editorjs-monaco-wrapper");
+		this.wrapper.addEventListener("keydown", (event) => {
+			if (this.readOnly || event.isComposing || event.key !== "Enter" || !(event.ctrlKey || event.metaKey) || event.altKey) return;
+			event.preventDefault();
+			event.stopPropagation();
+			this.insertParagraph(event.shiftKey);
+		}, { capture: true });
 		const editorElem = globalThis.document.createElement("div");
 		editorElem.classList.add("editorjs-monaco-editor");
 		editorElem.style.height = "100%";
@@ -8235,6 +8243,26 @@ var Raw = class extends BaseTool {
 			this.visibility.observe(this.wrapper);
 		}
 		return this.wrapper;
+	}
+	renderSettings() {
+		if (this.readOnly) return [];
+		return [{
+			icon: x$2,
+			title: this.api.i18n.t("Add paragraph before"),
+			closeOnActivate: true,
+			onActivate: () => this.insertParagraph(true)
+		}, {
+			icon: a$1,
+			title: this.api.i18n.t("Add paragraph after"),
+			closeOnActivate: true,
+			onActivate: () => this.insertParagraph(false)
+		}];
+	}
+	insertParagraph(before) {
+		const block = this.api.blocks.getBlockByElement(this.wrapper);
+		const index = this.api.blocks.getBlockIndex(block.id);
+		const paragraph = this.api.blocks.insert("paragraph", {}, void 0, index + (before ? 0 : 1), false);
+		this.api.caret.setToBlock(paragraph.id, "start");
 	}
 	initializeMonaco(editorElem) {
 		return loadMonaco().then((ready) => {
@@ -10027,14 +10055,15 @@ var CodeBlock = class extends Raw {
 			api,
 			readOnly
 		});
+		this.editing = false;
 		this.previewRevision = 0;
 		this.mermaidUrl = config.mermaidUrl;
 		this.data.language = data?.language || "html";
 	}
 	render() {
 		const code = super.render();
-		code.classList.add("monaco-codeblock-wrapper");
-		const wrapper = make$1.element("div", "pw-code-block");
+		this.element = make$1.element("div", "pw-code-block");
+		this.sourcePanel = make$1.element("div", "pw-code-source", { id: make$1.uniqueId("pw-mermaid-source") });
 		const label = make$1.element("label", "pw-code-language");
 		label.append(this.api.i18n.t("Language"));
 		const select = make$1.element("select", this.api.styles.input);
@@ -10048,26 +10077,153 @@ var CodeBlock = class extends Raw {
 			"mermaid"
 		]);
 		this.languageSelect = select;
-		this.updateLanguage();
 		select.disabled = this.readOnly;
 		select.addEventListener("change", () => {
 			this.data.language = select.value;
+			this.editing = this.data.language === "mermaid";
 			this.updateLanguage();
 			this.schedulePreview();
 		});
 		label.append(select);
-		this.preview = make$1.element("div", "pw-mermaid-preview");
-		this.preview.setAttribute("aria-live", "polite");
-		wrapper.append(label, code, this.preview);
+		this.previewError = make$1.element("div", "pw-mermaid-error", {
+			id: make$1.uniqueId("pw-mermaid-error"),
+			role: "alert"
+		});
+		this.previewError.hidden = true;
+		code.setAttribute("aria-describedby", this.previewError.id);
+		this.sourcePanel.append(label, code, this.previewError);
+		this.sourcePanel.addEventListener("input", (event) => {
+			if (event.target instanceof HTMLTextAreaElement && !this.editorInstance) this.schedulePreview();
+		});
+		this.element.addEventListener("keydown", (event) => {
+			if (event.isComposing || this.readOnly) return;
+			if (this.fullscreenDialog?.open && event.key === "Enter" && (event.ctrlKey || event.metaKey) && !event.altKey) this.closeFullscreen();
+			if (event.key !== "Escape" || !this.editing) return;
+			event.preventDefault();
+			event.stopPropagation();
+			if (this.fullscreenDialog?.open) this.closeFullscreen(true);
+			else this.setEditing(false, true);
+		}, { capture: true });
+		const toolbar = make$1.element("div", "pw-mermaid-toolbar");
+		const title = make$1.element("span", "pw-mermaid-title");
+		title.textContent = "Mermaid";
+		this.previewStatus = make$1.element("span", "pw-mermaid-status", { role: "status" });
+		this.editButton = make$1.element("button", "pw-mermaid-edit", {
+			type: "button",
+			"aria-controls": this.sourcePanel.id
+		});
+		this.editButton.hidden = this.readOnly;
+		this.editButton.addEventListener("click", () => this.setEditing(!this.editing, true));
+		this.fullscreenDialog = make$1.element("dialog", "pw-mermaid-fullscreen-dialog", {
+			id: make$1.uniqueId("pw-mermaid-fullscreen"),
+			"aria-label": this.api.i18n.t("Mermaid editor")
+		});
+		this.fullscreenDialog.addEventListener("cancel", (event) => {
+			event.preventDefault();
+			this.closeFullscreen(true);
+		});
+		this.fullscreenDialog.addEventListener("keydown", (event) => {
+			if (event.key !== "Tab" || event.ctrlKey || event.metaKey || event.altKey) return;
+			const wrapBackward = event.shiftKey && globalThis.document.activeElement === this.editButton;
+			const wrapForward = !event.shiftKey && globalThis.document.activeElement === this.preview;
+			if (!wrapBackward && !wrapForward) return;
+			event.preventDefault();
+			event.stopPropagation();
+			if (wrapBackward) this.preview?.focus();
+			else this.editButton?.focus();
+		});
+		this.fullscreenButton = make$1.element("button", "pw-mermaid-fullscreen", {
+			type: "button",
+			"aria-controls": this.fullscreenDialog.id
+		});
+		this.fullscreenButton.addEventListener("click", () => this.toggleFullscreen());
+		this.updateFullscreenButton();
+		toolbar.append(title, this.previewStatus, this.editButton, this.fullscreenButton);
+		this.preview = make$1.element("div", "pw-mermaid-preview", {
+			role: "region",
+			"aria-label": this.api.i18n.t("Diagram preview"),
+			tabindex: "0"
+		});
+		this.preview.addEventListener("keydown", (event) => {
+			if ([
+				"ArrowUp",
+				"ArrowDown",
+				"ArrowLeft",
+				"ArrowRight",
+				"Home",
+				"End",
+				"PageUp",
+				"PageDown"
+			].includes(event.key)) event.stopPropagation();
+		});
+		const body = make$1.element("div", "pw-code-content");
+		body.append(this.sourcePanel, this.preview);
+		this.element.append(toolbar, body, this.fullscreenDialog);
+		this.editing = this.data.language === "mermaid" && !this.data.html.trim() && !this.readOnly;
+		this.updateLanguage();
 		this.schedulePreview();
-		return wrapper;
+		return this.element;
 	}
 	instantiateEditor(element) {
 		const instance = super.instantiateEditor(element);
 		instance.updateOptions({ readOnly: this.readOnly });
 		this.updateLanguage(instance);
+		this.updateSourceAccessibility();
 		this.contentListener = instance.onDidChangeModelContent(() => this.schedulePreview());
 		return instance;
+	}
+	setEditing(editing, focus = false) {
+		this.editing = editing;
+		const mermaid = this.data.language === "mermaid";
+		if (!editing || !mermaid) this.closeFullscreen();
+		if (this.fullscreenButton) this.fullscreenButton.hidden = !mermaid || !editing || this.readOnly;
+		if (this.element) {
+			this.element.dataset.language = this.data.language;
+			this.element.dataset.editing = String(editing);
+		}
+		if (this.sourcePanel) this.sourcePanel.hidden = mermaid && !editing;
+		if (this.preview) this.preview.hidden = !mermaid;
+		if (this.editButton) {
+			this.editButton.textContent = this.api.i18n.t(editing ? "Done" : "Edit diagram");
+			this.editButton.setAttribute("aria-expanded", String(editing));
+		}
+		this.editorInstance?.layout();
+		if (!focus) return;
+		if (!editing) this.editButton?.focus();
+		else if (this.editorInstance) this.editorInstance.focus();
+		else this.wrapper?.querySelector("textarea")?.focus();
+	}
+	toggleFullscreen() {
+		if (!this.editing || this.data.language !== "mermaid" || this.readOnly) return;
+		const dialog = this.fullscreenDialog;
+		if (dialog.open) {
+			this.closeFullscreen(true);
+			return;
+		}
+		dialog.append(this.element.querySelector(".pw-mermaid-toolbar"), this.element.querySelector(".pw-code-content"));
+		dialog.showModal();
+		this.updateFullscreenButton();
+		this.editorInstance?.layout();
+		if (this.editorInstance) this.editorInstance.focus();
+		else this.wrapper?.querySelector("textarea")?.focus();
+	}
+	closeFullscreen(focus = false) {
+		const dialog = this.fullscreenDialog;
+		if (!dialog?.open) return;
+		dialog.before(...Array.from(dialog.children));
+		dialog.close();
+		this.updateFullscreenButton();
+		this.editorInstance?.layout();
+		if (focus) this.fullscreenButton?.focus({ preventScroll: true });
+	}
+	updateFullscreenButton() {
+		const button = this.fullscreenButton;
+		const fullscreen = this.fullscreenDialog.open;
+		const label = this.api.i18n.t(fullscreen ? "Exit fullscreen" : "Enter fullscreen");
+		button.setAttribute("aria-label", label);
+		button.setAttribute("aria-pressed", String(fullscreen));
+		button.title = label;
+		button.replaceChildren(make$1.element("i", ["fa-solid", fullscreen ? "fa-compress" : "fa-expand"], { "aria-hidden": "true" }));
 	}
 	updateLanguage(instance = this.editorInstance) {
 		if (this.wrapper) this.wrapper.dataset.language = this.data.language;
@@ -10075,26 +10231,48 @@ var CodeBlock = class extends Raw {
 			if (!Array.from(this.languageSelect.options).some((option) => option.value === this.data.language)) make$1.option(this.languageSelect, this.data.language);
 			this.languageSelect.value = this.data.language;
 		}
+		const sourceLabel = this.api.i18n.t(this.data.language === "mermaid" ? "Mermaid source" : "Code");
+		this.wrapper?.querySelector(".editorjs-monaco-preview")?.setAttribute("aria-label", sourceLabel);
+		instance?.updateOptions({ ariaLabel: sourceLabel });
 		const model = instance?.getModel();
 		if (model) globalThis.window.monaco?.editor.setModelLanguage(model, this.data.language);
+		this.setEditing(this.editing);
+	}
+	clearPreviewError() {
+		if (this.previewError) {
+			this.previewError.hidden = true;
+			this.previewError.replaceChildren();
+		}
+		if (this.element) delete this.element.dataset.previewError;
+		this.updateSourceAccessibility();
+	}
+	updateSourceAccessibility() {
+		if (!this.previewError) return;
+		const error = this.previewError;
+		this.wrapper?.querySelectorAll("textarea, [role=\"textbox\"]").forEach((input) => {
+			input.setAttribute("aria-describedby", error.id);
+			if (error.hidden) input.removeAttribute("aria-invalid");
+			else input.setAttribute("aria-invalid", "true");
+		});
 	}
 	schedulePreview() {
 		clearTimeout(this.previewTimer);
 		const revision = ++this.previewRevision;
 		if (!this.preview) return;
-		this.preview.hidden = this.data.language !== "mermaid";
 		this.preview.setAttribute("aria-busy", "false");
-		if (this.preview.hidden) {
+		this.clearPreviewError();
+		if (this.data.language !== "mermaid") {
 			this.preview.replaceChildren();
 			return;
 		}
 		const source = this.editorInstance?.getValue() ?? this.data.html;
 		if (!source.trim()) {
 			this.preview.textContent = this.api.i18n.t("Enter Mermaid code to preview the diagram.");
+			this.previewStatus.textContent = "";
 			return;
 		}
 		this.preview.setAttribute("aria-busy", "true");
-		if (!this.preview.querySelector("svg")) this.preview.textContent = this.api.i18n.t("Loading preview…");
+		this.previewStatus.textContent = this.api.i18n.t("Loading preview…");
 		this.previewTimer = setTimeout(() => void this.renderPreview(source, revision), 300);
 	}
 	async renderPreview(source, revision) {
@@ -10107,19 +10285,31 @@ var CodeBlock = class extends Raw {
 			if (revision !== this.previewRevision || !this.preview) return;
 			const diagram = make$1.element("div", ["pw-mermaid", "not-prose"]);
 			diagram.innerHTML = svg;
+			const viewBox = diagram.querySelector("svg")?.getAttribute("viewBox");
+			const width = Number(viewBox?.trim().split(/[\s,]+/)[2]);
+			if (width > 0) diagram.style.setProperty("--pw-mermaid-min-width", `${width * .85}px`);
 			this.preview.replaceChildren(diagram);
-			this.preview.setAttribute("aria-busy", "false");
+			this.clearPreviewError();
+			this.previewStatus.textContent = this.api.i18n.t("Live preview");
 		} catch (error) {
 			if (revision !== this.previewRevision || !this.preview) return;
 			const message = make$1.element("p");
 			message.textContent = this.api.i18n.t("Unable to render the Mermaid diagram.");
 			const details = make$1.element("pre");
 			details.textContent = error instanceof Error ? error.message : String(error);
-			this.preview.replaceChildren(message, details);
-			this.preview.setAttribute("aria-busy", "false");
+			this.previewError.replaceChildren(message, details);
+			this.previewError.hidden = false;
+			this.element.dataset.previewError = "true";
+			this.updateSourceAccessibility();
+			const hasPreview = Boolean(this.preview.querySelector("svg"));
+			this.previewStatus.textContent = this.api.i18n.t(hasPreview ? "Last valid preview" : "Preview unavailable");
+			if (!hasPreview && !this.readOnly) this.setEditing(true);
+		} finally {
+			if (revision === this.previewRevision) this.preview?.setAttribute("aria-busy", "false");
 		}
 	}
 	destroy() {
+		this.closeFullscreen();
 		++this.previewRevision;
 		clearTimeout(this.previewTimer);
 		this.contentListener?.dispose();
@@ -10728,7 +10918,10 @@ var Gallery = class Gallery extends AbstractMediaTool {
 	createNewItem(url = "", caption = "") {
 		const block = make$1.element("div", "cdxcarousel-block");
 		const item = make$1.element("div", "cdxcarousel-item");
-		const leftBtn = make$1.element("div", "cdxcarousel-leftBtn", { style: "padding: 8px" }, MoveLeft_default, () => {
+		const leftBtn = make$1.element("button", "cdxcarousel-leftBtn", {
+			type: "button",
+			"aria-label": this.api.i18n.t("Move image left")
+		}, MoveLeft_default, () => {
 			const parent = block.parentNode;
 			if (!parent) return;
 			const index = Array.from(parent.children).indexOf(block);
@@ -10737,7 +10930,10 @@ var Gallery = class Gallery extends AbstractMediaTool {
 				if (previousSibling) parent.insertBefore(block, previousSibling);
 			}
 		});
-		const rightBtn = make$1.element("div", "cdxcarousel-rightBtn", { style: "padding: 8px" }, MoveRight_default, () => {
+		const rightBtn = make$1.element("button", "cdxcarousel-rightBtn", {
+			type: "button",
+			"aria-label": this.api.i18n.t("Move image right")
+		}, MoveRight_default, () => {
 			const parent = block.parentNode;
 			if (!parent) return;
 			const index = Array.from(parent.children).indexOf(block);
@@ -10746,12 +10942,20 @@ var Gallery = class Gallery extends AbstractMediaTool {
 				if (nextNextSibling) parent.insertBefore(block, nextNextSibling);
 			}
 		});
-		const removeBtn = make$1.element("div", "cdxcarousel-removeBtn", { display: "none" }, Close_default, () => {
+		const removeBtn = make$1.element("button", "cdxcarousel-removeBtn", {
+			type: "button",
+			"aria-label": this.api.i18n.t("Remove the media")
+		}, Close_default, () => {
 			block.remove();
 		});
-		item.appendChild(removeBtn);
-		item.appendChild(leftBtn);
-		item.appendChild(rightBtn);
+		for (const button of [
+			removeBtn,
+			leftBtn,
+			rightBtn
+		]) {
+			if (this.readOnly) button.setAttribute("disabled", "");
+			item.appendChild(button);
+		}
 		block.appendChild(item);
 		if (url) this._createImage(url, item, caption);
 		else {
