@@ -80,6 +80,9 @@ jobs:
       - name: Install root tooling (eslint, typescript)
         run: yarn install --frozen-lockfile
 
+      - name: Test CI performance guard
+        run: python3 -m unittest discover -s .github/scripts -p 'ci_performance_test.py' -v
+
       - name: Install admin-block-editor dependencies
         run: cd packages/admin-block-editor && yarn install --frozen-lockfile
 
@@ -236,10 +239,39 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: editor-${{ matrix.browser }}-${{ matrix.shard }}
+          overwrite: true
           path: |
             packages/admin-block-editor/playwright-report/
             packages/admin-block-editor/test-results/
           retention-days: 14
+
+  ci-performance:
+    name: CI performance
+    needs: [phpstan, js-quality, editor-browsers, native, test, test-mariadb, test-postgresql]
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      actions: read
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Measure and compare CI performance
+        id: performance
+        run: python3 .github/scripts/ci_performance.py
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - name: Save performance reference and history
+        if: ${{ !cancelled() && steps.performance.outputs.artifact-name != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.performance.outputs.artifact-name }}
+          path: ci-performance.json
+          overwrite: true
+          retention-days: 90
 
   native:
     name: Native parity - ${{ matrix.package }}
@@ -388,6 +420,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: phpunit-${{ matrix.node }}
+          overwrite: true
           path: junit-*.xml
           if-no-files-found: ignore
           retention-days: 14
@@ -507,6 +540,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: phpunit-mariadb
+          overwrite: true
           path: junit-*.xml
           if-no-files-found: ignore
           retention-days: 14
@@ -597,6 +631,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: phpunit-postgresql
+          overwrite: true
           path: junit-*.xml
           if-no-files-found: ignore
           retention-days: 14

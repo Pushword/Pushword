@@ -1,0 +1,10 @@
+{
+  "reference": "2026-11-parallel-editor-v1",
+  "calibration_runs": 20,
+  "warning_ratio": 0.10,
+  "blocking_ratio": 0.20,
+  "minimum_blocking_seconds": 30,
+  "confirmation_runs": 3,
+  "trend_runs": 5,
+  "trend_ratio": 0.05
+}
