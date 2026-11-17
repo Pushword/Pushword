@@ -2,6 +2,10 @@ name: Tests
 
 on: [push, pull_request]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   phpstan:
     runs-on: ubuntu-latest
@@ -26,8 +30,7 @@ jobs:
       - name: Install dependencies
         uses: ramsey/composer-install@v3
         with:
-          dependency-versions: highest
-          composer-options: --prefer-dist --prefer-stable --no-interaction
+          composer-options: --prefer-dist --no-interaction
 
       - name: Build container
         # cache:warmup dumps App_KernelDevDebugContainer.xml that phpstan-symfony
@@ -62,6 +65,14 @@ jobs:
         uses: actions/setup-node@v7
         with:
           node-version: 24
+          cache: yarn
+          cache-dependency-path: |
+            yarn.lock
+            packages/admin-block-editor/yarn.lock
+            packages/admin/yarn.lock
+            packages/admin-monaco-editor/yarn.lock
+            packages/quiz/yarn.lock
+            packages/newsletter/yarn.lock
 
       - name: Install root tooling (eslint, typescript)
         run: yarn install --frozen-lockfile
@@ -79,7 +90,7 @@ jobs:
         run: cd packages/admin-block-editor && yarn test
 
       - name: Install quiz dependencies
-        run: cd packages/quiz && yarn install
+        run: cd packages/quiz && yarn install --frozen-lockfile
 
       - name: Quiz runtime tests
         run: cd packages/quiz && yarn test
@@ -102,24 +113,26 @@ jobs:
         run: node --test packages/repurpose/tests/Motion/*.test.mjs
 
       - name: Install admin dependencies
-        run: cd packages/admin && yarn install
+        run: cd packages/admin && yarn install --frozen-lockfile
 
       - name: Admin unit tests
         run: cd packages/admin && yarn test
 
       - name: Install admin-monaco-editor dependencies
-        run: cd packages/admin-monaco-editor && yarn install
+        run: cd packages/admin-monaco-editor && yarn install --frozen-lockfile
 
       - name: Markdown editor unit tests
         run: cd packages/admin-monaco-editor && yarn test
 
   editor-browsers:
-    name: Editor journeys - ${{ matrix.browser }}
+    name: Editor journeys - ${{ matrix.browser }} - ${{ matrix.shard }}/3
     runs-on: ubuntu-latest
     timeout-minutes: 25
     strategy:
       fail-fast: false
       matrix:
+        browser: [chrome, msedge, firefox]
+        shard: [1, 2, 3]
         include:
           # The phone journeys run on the same Chrome binary: one setup serves both.
           - browser: chrome
@@ -136,6 +149,10 @@ jobs:
         uses: actions/setup-node@v7
         with:
           node-version: 24
+          cache: yarn
+          cache-dependency-path: |
+            packages/admin-block-editor/yarn.lock
+            packages/admin-monaco-editor/yarn.lock
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
@@ -145,7 +162,9 @@ jobs:
           extensions: dom, curl, libxml, mbstring, zip, pdo_sqlite, bcmath, intl, gd, exif, iconv, imagick, fileinfo, pcntl
 
       - name: Install PHP dependencies
-        run: composer install --prefer-dist --no-interaction
+        uses: ramsey/composer-install@v3
+        with:
+          composer-options: --prefer-dist --no-interaction
 
       - name: Install editor dependencies
         run: yarn --cwd packages/admin-block-editor install --frozen-lockfile
@@ -169,17 +188,56 @@ jobs:
           yarn --cwd packages/admin-monaco-editor build
 
       - name: Run the shared editor journeys
-        run: yarn --cwd packages/admin-block-editor test:browser ${{ matrix.projects }}
+        # Each runner owns its server and database; keep the page-lock journeys serial within it.
+        run: yarn --cwd packages/admin-block-editor test:browser ${{ matrix.projects }} --shard=${{ matrix.shard }}/3
 
       - name: Upload results, failure screenshots and traces
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v4
         with:
-          name: editor-${{ matrix.browser }}
+          name: editor-${{ matrix.browser }}-${{ matrix.shard }}
           path: |
             packages/admin-block-editor/playwright-report/
             packages/admin-block-editor/test-results/
           retention-days: 14
+
+  native:
+    name: Native parity - ${{ matrix.package }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        package: [core, static-generator]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: 8.5
+          coverage: none
+          extensions: dom, curl, libxml, mbstring, zip, pdo_sqlite, bcmath, intl, gd, exif, iconv, imagick, fileinfo, pcntl
+
+      - name: Install PHP dependencies
+        uses: ramsey/composer-install@v3
+        with:
+          composer-options: --prefer-dist --no-interaction
+
+      - name: Install Rust tooling
+        run: |
+          rustup toolchain install stable --profile minimal --component clippy --component rustfmt
+          rustup default stable
+
+      - name: Cache Rust dependencies and build output
+        uses: Swatinem/rust-cache@v2
+        with:
+          key: ${{ matrix.package }}
+          workspaces: packages/${{ matrix.package }}/rust
+
+      - name: Check Rust and PHP compatibility
+        run: make -C packages/${{ matrix.package }}/rust test
 
   test:
     runs-on: ${{ matrix.os }}
@@ -233,7 +291,11 @@ jobs:
           echo "::add-matcher::${{ runner.tool_cache }}/phpunit.json"
 
       - name: Install dependencies
-        run: composer update --${{ matrix.stability }} --prefer-dist --no-interaction
+        uses: ramsey/composer-install@v3
+        with:
+          # Keep one compatibility leg resolving the latest allowed dependencies.
+          dependency-versions: ${{ matrix.node == 25 && 'highest' || 'locked' }}
+          composer-options: --prefer-dist --no-interaction
 
       - name: Install image, PDF and audio tools
         # A stalled package mirror otherwise holds the job until GitHub's six-hour limit.
@@ -251,20 +313,6 @@ jobs:
 
       - name: Generate Images Cache
         run: cd packages/dev-app && php bin/console pw:image:cache
-
-      - name: Install Rust tooling for optional native parity tests
-        if: matrix.node == 24
-        run: |
-          rustup toolchain install stable --profile minimal --component clippy --component rustfmt
-          rustup default stable
-
-      - name: Check optional Rust minification against PHP
-        if: matrix.node == 24
-        run: make -C packages/static-generator/rust test
-
-      - name: Check Rust content exploration and PHP compatibility boundaries
-        if: matrix.node == 24
-        run: make -C packages/core/rust test
 
       - name: Execute tests
         # The 'serial' group holds tests that need exclusive access to the shared
@@ -362,7 +410,9 @@ jobs:
           echo "::add-matcher::${{ runner.tool_cache }}/phpunit.json"
 
       - name: Install dependencies
-        run: composer update --prefer-stable --prefer-dist --no-interaction
+        uses: ramsey/composer-install@v3
+        with:
+          composer-options: --prefer-dist --no-interaction
 
       - name: Install image, PDF and audio tools
         timeout-minutes: 5
@@ -442,7 +492,9 @@ jobs:
           echo "::add-matcher::${{ runner.tool_cache }}/phpunit.json"
 
       - name: Install dependencies
-        run: composer update --prefer-stable --prefer-dist --no-interaction
+        uses: ramsey/composer-install@v3
+        with:
+          composer-options: --prefer-dist --no-interaction
 
       - name: Install image, PDF and audio tools
         timeout-minutes: 5
