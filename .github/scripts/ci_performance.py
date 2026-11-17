@@ -79,6 +79,7 @@ def job_sample(run, jobs):
     }
     return profile, {
         "run_id": run["id"], "commit": run["head_sha"], "url": run["html_url"],
+        "branch": run.get("head_branch"),
         "job_ids": sorted(job["id"] for job in jobs),
         "metrics": {"longest_job_seconds": max(durations.values()),
                     "runner_seconds": sum(durations.values())},
@@ -135,7 +136,7 @@ def artifact_name(config, profile):
 
 
 def compact(sample):
-    return {key: sample[key] for key in ("run_id", "commit", "url", "job_ids", "metrics")}
+    return {key: sample[key] for key in ("run_id", "commit", "branch", "url", "job_ids", "metrics")}
 
 
 def independent_samples(samples, commit=None):
@@ -162,6 +163,9 @@ def assess(sample, previous, config):
     recent = [*recent, current][-max(config["calibration_runs"], config["trend_runs"]):]
     calibrated = len(baseline) >= config["calibration_runs"]
     confirmations = independent_samples(recent, sample["commit"])[:config["confirmation_runs"]]
+    branch_runs = independent_samples([
+        item for item in recent if sample["branch"] and item.get("branch") == sample["branch"]
+    ])[:config["confirmation_runs"]]
     trend_samples = independent_samples(recent)[:config["trend_runs"]]
     findings = []
     for key in METRICS:
@@ -171,9 +175,11 @@ def assess(sample, previous, config):
         value = sample["metrics"][key]
         trend = median(item["metrics"][key] for item in trend_samples)
         blocking_delta = max(reference * config["blocking_ratio"], config["minimum_blocking_seconds"])
-        confirmed = (calibrated and len(confirmations) == config["confirmation_runs"]
-                     and value - reference > blocking_delta
-                     and median(item["metrics"][key] for item in confirmations) - reference > blocking_delta)
+        same_commit = (len(confirmations) == config["confirmation_runs"]
+                       and median(item["metrics"][key] for item in confirmations) - reference > blocking_delta)
+        persistent = (len(branch_runs) == config["confirmation_runs"]
+                      and all(item["metrics"][key] - reference > blocking_delta for item in branch_runs))
+        confirmed = calibrated and value - reference > blocking_delta and (same_commit or persistent)
         findings.append({
             "metric": key, "reference": reference, "value": value,
             "ratio": value / reference - 1, "trend_ratio": trend / reference - 1,
@@ -194,7 +200,7 @@ def summary(record, previous, findings, config, profile):
     count = len(record["baseline"])
     state = (f"Observation: **{count}/{config['calibration_runs']} independent runs**. Blocking is disabled."
              if count < config["calibration_runs"] else
-             f"Calibrated: **{count} runs**. Blocking requires {config['confirmation_runs']} independent full runs of the same commit.")
+             f"Calibrated: **{count} runs**. Confirmation requires {config['confirmation_runs']} independent runs of one commit, or that many consecutive over-budget runs on one branch.")
     lines = ["## CI performance", "", state, "",
              f"Profile: coverage **{'on' if profile['coverage'] else 'off'}**, Monaco cache **{profile['monaco']}**, **{len(profile['jobs'])} jobs**.",
              "Queue time and this guard's own runtime are excluded. References remain fixed after calibration.", "",
@@ -223,7 +229,7 @@ def summary(record, previous, findings, config, profile):
     for name, count in sorted(record["current"]["counts"].items()):
         before = prior["counts"].get(name, "new") if prior else "—"
         lines.append(f"| {markdown(name)} | {count} | {before} |")
-    lines.extend(["", "To confirm a suspected regression, re-run **all jobs** twice on the same commit. Re-running only this guard cannot confirm it.",
+    lines.extend(["", "To confirm a suspected regression immediately, re-run **all jobs** twice on the same commit. Persistent over-budget runs on the same branch also confirm it. Re-running only this guard cannot confirm it.",
                   "Review `.github/ci-performance-budget.json` to change thresholds or deliberately reset the reference.", ""])
     return "\n".join(lines)
 

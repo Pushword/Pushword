@@ -17,8 +17,10 @@ The policy lives in `ci-performance-budget.json`:
 - Above **5%** for the median of the last five independent runs: a trend warning
   after calibration. This catches gradual drift across commits.
 - Above **20% and 30 seconds**: a failure only after calibration and confirmation
-  by three independent full runs of the **same commit**. The latest run must
-  still exceed the limit, and the median of the three must exceed it too.
+  by three independent full runs of the **same commit**, or by three consecutive
+  over-budget runs on the **same branch**, even across commits. For repeated
+  measurements of one commit, the latest run and the median of the three must
+  exceed the limit. The branch rule requires all three runs to exceed it.
 
 The 30-second floor applies separately to each metric, including cumulative runner
 seconds. These are initial thresholds; inspect the observed variation before
@@ -52,11 +54,13 @@ counts. File durations sum their cases, including cases split across shards; the
 are not wall-clock estimates. Full JUnit and Playwright reports remain available
 in the existing test artifacts.
 
-If the slowdown looks real, re-run **all jobs** twice on the same commit, for
+To confirm a slowdown immediately, re-run **all jobs** twice on the same commit, for
 example with `gh run rerun <run-id>`. There are no automatic reruns. Re-running only
 the guard or a subset of upstream jobs cannot confirm a regression or add a
 calibration sample. Source artifacts are overwritten on full reruns so the guard
 reads the latest reports.
+Ignoring warnings does not disable enforcement: three consecutive comparable
+over-budget runs on the same branch block even when each run tests a new commit.
 
 Once this workflow is on the default branch, make `CI performance` a required
 status check to prevent merging a confirmed regression. A failed upstream test

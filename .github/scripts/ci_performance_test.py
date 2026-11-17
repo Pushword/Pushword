@@ -19,6 +19,7 @@ CONFIG = json.loads((Path(__file__).parents[1] / "ci-performance-budget.json").r
 def sample(number, seconds=300, commit=None):
     return {
         "run_id": number, "commit": commit or f"commit-{number}",
+        "branch": "feature",
         "url": f"https://github.com/Pushword/Pushword/actions/runs/{number}",
         "job_ids": [number * 2, number * 2 + 1],
         "metrics": {"longest_job_seconds": seconds, "runner_seconds": seconds * 10},
@@ -99,10 +100,23 @@ class BudgetTest(unittest.TestCase):
         self.assertFalse(any(finding["blocked"] for finding in findings))
         self.assertEqual(len(observing["baseline"]), 1)
 
-    def test_different_commits_cannot_confirm_each_other(self):
+    def test_different_branches_and_commits_cannot_confirm_each_other(self):
         record = calibrated()
         for number in range(21, 25):
+            current = {**sample(number, 400), "branch": f"branch-{number}"}
+            record, findings = ci.assess(current, record, CONFIG)
+        self.assertFalse(any(finding["blocked"] for finding in findings))
+
+    def test_persistent_branch_regression_blocks_without_manual_reruns(self):
+        record = calibrated()
+        for number in range(21, 24):
             record, findings = ci.assess(sample(number, 400), record, CONFIG)
+            self.assertEqual(any(finding["blocked"] for finding in findings), number == 23)
+
+    def test_a_healthy_run_interrupts_persistent_branch_confirmation(self):
+        record = calibrated()
+        for number, duration in [(21, 400), (22, 310), (23, 400)]:
+            record, findings = ci.assess(sample(number, duration), record, CONFIG)
         self.assertFalse(any(finding["blocked"] for finding in findings))
 
     def test_small_percentage_steps_are_detected_as_a_trend(self):
