@@ -47,6 +47,11 @@ def seconds(start, end):
     return value
 
 
+def latest_jobs(jobs):
+    # Partial reruns retain upstream jobs from older workflow attempts.
+    return list({job["name"]: job for job in sorted(jobs, key=lambda job: job["id"])}.values())
+
+
 def job_sample(run, jobs):
     jobs = [job for job in jobs if job["name"] != GUARD_JOB]
     unsuccessful = [job["name"] for job in jobs if job["conclusion"] != "success"]
@@ -233,7 +238,7 @@ def main():
     config = json.loads(args.config.read_text())
     root = f"repos/{args.repository}/actions"
     run = github(f"{root}/runs/{args.run_id}")
-    jobs = list(github_items(f"{root}/runs/{args.run_id}/jobs", "jobs", filter="latest"))
+    jobs = latest_jobs(github_items(f"{root}/runs/{args.run_id}/jobs", "jobs", filter="all"))
     profile, sample = job_sample(run, jobs)
     name = artifact_name(config, profile)
     artifacts = list(github_items(f"{root}/runs/{args.run_id}/artifacts", "artifacts"))

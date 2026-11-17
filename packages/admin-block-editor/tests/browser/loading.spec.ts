@@ -24,6 +24,8 @@ test.describe('before initialization', () => {
 test('waits for Markdown content before revealing or saving the editor', async ({ editorPage: page }) => {
   await render(page, [{ type: 'paragraph', data: { text: 'Content to preserve' } }])
   await saveAndReload(page)
+  // Finish background Monaco imports before intentionally replacing this document.
+  await page.waitForLoadState('networkidle')
   await page.addInitScript(() => {
     if (sessionStorage.getItem('pw-test-loading-delayed')) return
     sessionStorage.setItem('pw-test-loading-delayed', '1')
@@ -65,6 +67,7 @@ test('waits for Markdown content before revealing or saving the editor', async (
 test('offers a reload after a failed import and preserves the original source', async ({ editorPage: page }) => {
   await render(page, [{ type: 'paragraph', data: { text: 'Original source' } }])
   await saveAndReload(page)
+  await page.waitForLoadState('networkidle')
   const original = await page.locator('textarea[data-editorjs]').inputValue()
   await page.addInitScript(() => {
     if (sessionStorage.getItem('pw-test-loading-failed')) return

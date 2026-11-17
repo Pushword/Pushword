@@ -157,6 +157,13 @@ class BudgetTest(unittest.TestCase):
 
 
 class TimingTest(unittest.TestCase):
+    def test_partial_reruns_keep_unchanged_jobs_and_replace_old_failed_attempts(self):
+        old = {"id": 1, "name": "editor", "conclusion": "failure"}
+        unchanged = {"id": 2, "name": "php", "conclusion": "success"}
+        replacement = {"id": 3, "name": "editor", "conclusion": "success"}
+        guard = {"id": 4, "name": ci.GUARD_JOB, "conclusion": None}
+        self.assertEqual(ci.latest_jobs([guard, replacement, unchanged, old]), [replacement, unchanged, guard])
+
     def test_profiles_follow_actual_cache_and_coverage_step_outcomes(self):
         run = {"id": 1, "head_sha": "abc", "html_url": "https://example.test/1"}
         for states, cache in [(["skipped", "skipped"], "warm"), (["success", "success"], "cold"), (["success", "skipped"], "mixed")]:
@@ -253,7 +260,8 @@ class IntegrationTest(unittest.TestCase):
                 if path == "repos/example/repo/actions/runs/10":
                     return run
                 if path.startswith("repos/example/repo/actions/runs/10/jobs?"):
-                    return {"jobs": [job, {"name": ci.GUARD_JOB, "conclusion": None, "steps": []}]}
+                    self.assertIn("filter=all", path)
+                    return {"jobs": [job, {"id": 101, "name": ci.GUARD_JOB, "conclusion": None, "steps": []}]}
                 if path.startswith("repos/example/repo/actions/runs/10/artifacts?"):
                     return {"artifacts": [{"id": 1, "name": "editor-chrome-1"}]}
                 if path.startswith("repos/example/repo/actions/artifacts?"):
