@@ -186,7 +186,7 @@ export function setupTextSelection(editor: EditorJS, holder: HTMLElement, signal
     const forward = ['ArrowRight', 'ArrowDown', 'End'].includes(event.key)
     const fields = textFields(holder)
     const index = fields.indexOf(field)
-    let next: Point | null = null
+    let next: Point | null
     if (event.key === 'Home' || event.key === 'End') {
       const target = event.ctrlKey || event.metaKey ? fields[forward ? fields.length - 1 : 0]! : field
       next = { node: target, offset: forward ? target.childNodes.length : 0, block: target.closest<HTMLElement>('.ce-block')! }

@@ -164,6 +164,23 @@ it('copies partial list text with nesting, checklist state and line breaks', () 
   ])
 })
 
+it.each([0, 5])('copies an ordered list with its custom numbering starting at %s', start => {
+  const f = fixture([['list', `<ol class="cdx-list" style="counter-reset: item ${start - 1}; --list-counter-type: upper-roman">${item('BEFORE|CUT')}${item('CUT|AFTER')}</ol>`]])
+  const clipboard = f.clipboard(f.range())
+  expect(clipboard['text/plain']).toBe('CUT\nCUT|')
+  expect(clipboard['text/html']).toBe('<ol><li>CUT</li><li>CUT|</li></ol>')
+  expect(JSON.parse(clipboard['application/x-editor-js']!)).toEqual([{
+    tool: 'list',
+    data: {
+      style: 'ordered', meta: { start, counterType: 'upper-roman' },
+      items: [
+        { content: 'CUT', meta: {}, items: [] },
+        { content: 'CUT|', meta: {}, items: [] },
+      ],
+    },
+  }])
+})
+
 it('copies selected table cells as a table without leaking unselected cell text', () => {
   const f = fixture([['paragraph', p('BEFORE|CUT')], ['table', table()]])
   expect(f.clipboard(f.range(0, 1))).toEqual({

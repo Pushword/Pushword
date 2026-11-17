@@ -158,7 +158,8 @@ export function textSelectionClipboard(holder: HTMLElement, range: Range): Recor
     const list = block.querySelector<HTMLElement>('.cdx-list')
     if (list) {
       const lines: string[] = []
-      const style = list.classList.contains('cdx-list-checklist') ? 'checklist' : list.tagName === 'OL' ? 'ordered' : 'unordered'
+      let style = list.tagName === 'OL' ? 'ordered' : 'unordered'
+      if (list.classList.contains('cdx-list-checklist')) style = 'checklist'
       const itemsOf = (wrapper: Element): ListItem[] => Array.from(wrapper.children).flatMap(item => {
         const field = item.querySelector<HTMLElement>(':scope > .cdx-list__item-content')!
         const children = item.querySelector(':scope > .cdx-list__item-children')

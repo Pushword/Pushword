@@ -353,6 +353,47 @@ describe('Mermaid code block', () => {
     expect(element.querySelector('.pw-mermaid')?.textContent).toBe('Latest')
   })
 
+  it('ignores a preview already rendering when the block is destroyed', async () => {
+    let finish: (svg: string) => void = () => {}
+    renderMermaid.mockImplementationOnce(
+      () => new Promise<string>((resolve) => { finish = resolve }),
+    )
+    const { element, tool } = create()
+    await vi.advanceTimersByTimeAsync(300)
+    await vi.dynamicImportSettled()
+    expect(renderMermaid).toHaveBeenCalledOnce()
+    const preview = element.querySelector('.pw-mermaid-preview')!
+    const content = preview.innerHTML
+
+    tool.destroy()
+    finish('<svg><text>Removed diagram</text></svg>')
+    await vi.advanceTimersByTimeAsync(0)
+
+    expect(preview.innerHTML).toBe(content)
+  })
+
+  it('ignores a rejected Mermaid preview after changing language', async () => {
+    let fail: (error: Error) => void = () => {}
+    renderMermaid.mockImplementationOnce(
+      () => new Promise<string>((_resolve, reject) => { fail = reject }),
+    )
+    const { element } = create()
+    await vi.advanceTimersByTimeAsync(300)
+    await vi.dynamicImportSettled()
+    expect(renderMermaid).toHaveBeenCalledOnce()
+    const language = element.querySelector('select')!
+    language.value = 'php'
+    language.dispatchEvent(new Event('change'))
+
+    fail(new Error('Obsolete Mermaid error'))
+    await vi.advanceTimersByTimeAsync(0)
+
+    expect(element.querySelector<HTMLElement>('.pw-mermaid-error')!.hidden).toBe(true)
+    expect(element.dataset.previewError).toBeUndefined()
+    expect(element.querySelector<HTMLElement>('.pw-mermaid-preview')!.hidden).toBe(true)
+    expect(element.querySelector<HTMLElement>('.pw-code-source')!.hidden).toBe(false)
+  })
+
   it('keeps the current diagram visible until the edited preview is ready', async () => {
     const { element } = create()
     await vi.advanceTimersByTimeAsync(300)
