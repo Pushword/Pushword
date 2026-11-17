@@ -58,6 +58,10 @@
 
 .pw-mermaid-edit {
   margin-left: auto;
+}
+
+.pw-mermaid-edit,
+.pw-mermaid-fullscreen {
   flex-shrink: 0;
   padding: 0.375rem 0.75rem;
   border: 1px solid var(--bs-border-color);
@@ -67,11 +71,13 @@
   font: inherit;
 }
 
-.pw-mermaid-edit:hover {
+.pw-mermaid-edit:hover,
+.pw-mermaid-fullscreen:hover {
   background: var(--bs-tertiary-bg);
 }
 
 .pw-mermaid-edit:focus-visible,
+.pw-mermaid-fullscreen:focus-visible,
 .pw-mermaid-preview:focus-visible {
   outline: 2px solid var(--color-primary);
   outline-offset: 2px;
@@ -181,8 +187,86 @@
   }
 }
 
+.pw-mermaid-fullscreen {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.25rem;
+}
+
+html:has(.pw-mermaid-fullscreen-dialog[open]) {
+  overflow: hidden;
+}
+
+.pw-code-block .pw-mermaid-fullscreen-dialog[open] {
+  position: fixed;
+  inset: 0;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  width: 100vw;
+  height: 100dvh;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  padding: 1rem;
+  border: 0;
+  border-radius: 0;
+  background: var(--bs-body-bg);
+  color: var(--bs-body-color);
+  overflow: hidden;
+  container: pw-code-block / inline-size;
+
+  .pw-mermaid-toolbar {
+    flex-shrink: 0;
+  }
+
+  .pw-code-content {
+    display: grid;
+    grid-template-columns: minmax(0, 45fr) minmax(0, 55fr);
+    grid-template-rows: minmax(0, 1fr);
+    flex: 1;
+    min-height: 0;
+  }
+
+  .pw-code-source {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+
+  .pw-code-language,
+  .pw-mermaid-error {
+    flex-shrink: 0;
+  }
+
+  .editorjs-monaco-wrapper {
+    flex: 1;
+    height: 100% !important;
+    min-height: 0;
+    max-height: none;
+  }
+
+  .pw-mermaid-preview {
+    min-height: 0;
+    max-height: none;
+  }
+}
+
+@container pw-code-block (max-width: 40rem) {
+  .pw-code-block .pw-mermaid-fullscreen-dialog[open] .pw-code-content {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(0, 2fr) minmax(0, 3fr);
+  }
+}
+
 @media (pointer: coarse) {
-  .pw-mermaid-edit {
+  .pw-mermaid-edit,
+  .pw-mermaid-fullscreen {
     min-height: 44px;
+  }
+
+  .pw-mermaid-fullscreen {
+    min-width: 44px;
   }
 }

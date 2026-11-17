@@ -149,6 +149,9 @@ final class EditorJsMessagesTest extends TestCase
         self::assertSame('Aperçu en direct', $messages['tools']['codeBlock']['Live preview']);
         self::assertSame('Aperçu du diagramme', $messages['tools']['codeBlock']['Diagram preview']);
         self::assertSame('Aperçu indisponible', $messages['tools']['codeBlock']['Preview unavailable']);
+        self::assertSame('Passer en plein écran', $messages['tools']['codeBlock']['Enter fullscreen']);
+        self::assertSame('Quitter le plein écran', $messages['tools']['codeBlock']['Exit fullscreen']);
+        self::assertSame('Éditeur Mermaid', $messages['tools']['codeBlock']['Mermaid editor']);
         self::assertSame('Ajouter un paragraphe', $messages['ui']['toolbar']['toolbox']['Add paragraph']);
         foreach (['raw', 'codeBlock'] as $tool) {
             self::assertSame('Ajouter un paragraphe avant', $messages['tools'][$tool]['Add paragraph before']);

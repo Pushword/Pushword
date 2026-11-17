@@ -143,6 +143,93 @@ describe('Mermaid code block', () => {
     expect(readOnly.element.querySelector<HTMLElement>('.pw-mermaid-edit')?.hidden).toBe(true)
   })
 
+  it('offers fullscreen only while editing an editable Mermaid block', () => {
+    const { element } = create()
+    const fullscreen = element.querySelector<HTMLButtonElement>('.pw-mermaid-fullscreen')!
+    expect(fullscreen.hidden).toBe(true)
+    element.querySelector<HTMLButtonElement>('.pw-mermaid-edit')!.click()
+    expect(fullscreen.hidden).toBe(false)
+    expect(fullscreen.getAttribute('aria-label')).toBe('Enter fullscreen')
+    expect(fullscreen.getAttribute('aria-pressed')).toBe('false')
+    expect(create('php').element.querySelector<HTMLElement>('.pw-mermaid-fullscreen')!.hidden).toBe(true)
+    expect(create('mermaid', '', true).element.querySelector<HTMLElement>('.pw-mermaid-fullscreen')!.hidden).toBe(true)
+  })
+
+  it('expands the same source and preview, then returns to editing without losing changes', async () => {
+    const { element, tool } = create()
+    await vi.advanceTimersByTimeAsync(0)
+    element.querySelector<HTMLButtonElement>('.pw-mermaid-edit')!.click()
+    const fullscreen = element.querySelector<HTMLButtonElement>('.pw-mermaid-fullscreen')!
+    const dialog = element.querySelector('dialog')!
+    const source = element.querySelector('.pw-code-source')!
+    const preview = element.querySelector('.pw-mermaid-preview')!
+    fullscreen.click()
+    expect(dialog.open).toBe(true)
+    expect(dialog.contains(source)).toBe(true)
+    expect(dialog.contains(preview)).toBe(true)
+    expect(element.contains(source)).toBe(true)
+    expect(fullscreen.getAttribute('aria-label')).toBe('Exit fullscreen')
+    expect(fullscreen.getAttribute('aria-pressed')).toBe('true')
+    monacoEditor.setValue('flowchart LR\n A --> Fullscreen')
+    fullscreen.click()
+    expect(dialog.open).toBe(false)
+    expect(source.parentElement?.parentElement).toBe(element)
+    expect(element.querySelector('.pw-mermaid-preview')).toBe(preview)
+    expect(element.querySelector<HTMLElement>('.pw-code-source')!.hidden).toBe(false)
+    expect(document.activeElement).toBe(fullscreen)
+    expect(fullscreen.getAttribute('aria-pressed')).toBe('false')
+    expect(tool.save()).toEqual({ html: 'flowchart LR\n A --> Fullscreen', language: 'mermaid' })
+  })
+
+  it('leaves fullscreen before folding on Escape and handles native dialog cancellation', () => {
+    const { element } = create()
+    const edit = element.querySelector<HTMLButtonElement>('.pw-mermaid-edit')!
+    const fullscreen = element.querySelector<HTMLButtonElement>('.pw-mermaid-fullscreen')!
+    const dialog = element.querySelector('dialog')!
+    const code = element.querySelector('.editorjs-monaco-wrapper')!
+    edit.click()
+    fullscreen.click()
+    code.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }))
+    expect(dialog.open).toBe(false)
+    expect(edit.getAttribute('aria-expanded')).toBe('true')
+    code.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }))
+    expect(edit.getAttribute('aria-expanded')).toBe('false')
+    edit.click()
+    fullscreen.click()
+    const cancel = new Event('cancel', { cancelable: true })
+    dialog.dispatchEvent(cancel)
+    expect(cancel.defaultPrevented).toBe(true)
+    expect(dialog.open).toBe(false)
+    expect(edit.getAttribute('aria-expanded')).toBe('true')
+  })
+
+  it('cleans up fullscreen when finishing, changing language or destroying the block', () => {
+    const { element, tool } = create()
+    const edit = element.querySelector<HTMLButtonElement>('.pw-mermaid-edit')!
+    const fullscreen = element.querySelector<HTMLButtonElement>('.pw-mermaid-fullscreen')!
+    const dialog = element.querySelector('dialog')!
+    edit.click()
+    fullscreen.click()
+    edit.click()
+    expect(dialog.open).toBe(false)
+    expect(element.querySelector<HTMLElement>('.pw-code-source')!.hidden).toBe(true)
+    edit.click()
+    fullscreen.click()
+    const language = element.querySelector('select')!
+    language.value = 'php'
+    language.dispatchEvent(new Event('change'))
+    expect(dialog.open).toBe(false)
+    expect(fullscreen.hidden).toBe(true)
+    expect(element.querySelector<HTMLElement>('.pw-code-source')!.hidden).toBe(false)
+    language.value = 'mermaid'
+    language.dispatchEvent(new Event('change'))
+    fullscreen.click()
+    expect(dialog.open).toBe(true)
+    tool.destroy()
+    expect(dialog.open).toBe(false)
+    expect(element.querySelector('.pw-code-content')).not.toBeNull()
+  })
+
   it('previews and saves input before Monaco has loaded', async () => {
     vi.stubGlobal('IntersectionObserver', class {
       observe() {}
