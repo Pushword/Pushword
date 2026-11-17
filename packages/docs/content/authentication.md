@@ -55,6 +55,20 @@ Their tokens are:
 - **Time-limited** (1 hour TTL)
 - **Invalidated** when a new magic link is requested
 
+Opening a login link on any device loads a page without consuming it. Its script
+submits a CSRF-protected POST once the page is active and visible; HEAD and GET
+never authenticate. Without JavaScript, the page offers a sign-in button.
+
+If the link is already used or expired, **Receive a sign-in code** starts a new
+email authentication attempt. No code is sent by merely opening the page. The
+second email contains an eight-digit code, valid for ten minutes with five attempts
+across browsers. Requests share the login form's IP/address limits, with at least
+one minute between codes for a link. Only a hash is stored; the code never appears
+in a URL. Successful recovery revokes sessions issued by that link, while preserving
+password/OAuth sessions and sessions issued by other links. A full browser scanner
+can still complete the automatic login before recovery; the code cannot undo access
+that has already occurred. Already signed-in users go straight to their account.
+
 ## OAuth (Any Provider) {id=oauth}
 
 ### Installation

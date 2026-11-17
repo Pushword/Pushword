@@ -108,43 +108,6 @@ final class UserController extends AbstractController
         return $this->redirectToRoute('pushword_login', ['step' => 'password']);
     }
 
-    #[Route('/login/magic/{token}', name: 'pushword_login_magic')]
-    public function magicLogin(
-        string $token,
-        Request $request,
-    ): Response {
-        $decoded = base64_decode($token, true);
-        if (false === $decoded || ! str_contains($decoded, ':')) {
-            $this->addFlash('error', 'magicLinkInvalid');
-
-            return $this->redirectToRoute('pushword_login');
-        }
-
-        [$userId, $plainToken] = explode(':', $decoded, 2);
-        $user = $this->userRepository->find((int) $userId);
-
-        if (! $user instanceof User) {
-            $this->addFlash('error', 'magicLinkInvalid');
-
-            return $this->redirectToRoute('pushword_login');
-        }
-
-        $tokenHash = hash('sha256', $plainToken);
-        $loginToken = $this->tokenRepo->findValidToken($user, $tokenHash, LoginToken::TYPE_LOGIN);
-
-        if (! $loginToken instanceof LoginToken) {
-            $this->addFlash('error', 'magicLinkExpiredOrUsed');
-
-            return $this->redirectToRoute('pushword_login');
-        }
-
-        $loginToken->markUsed();
-        $this->em->flush();
-
-        return $this->userAuthenticator->authenticateUser($user, $this->authenticator, $request)
-            ?? $this->redirectToRoute('pushword_admin');
-    }
-
     #[Route('/login/set-password/{token}', name: 'pushword_login_set_password', methods: ['GET', 'POST'])]
     public function setPassword(
         string $token,

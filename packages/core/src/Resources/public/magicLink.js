@@ -1,0 +1,1 @@
+(function(){var e=document.querySelector(`form[data-magic-login]`),t=!1;function n(){!e||t||document.prerendering||document.visibilityState!==`visible`||(t=!0,e.requestSubmit(e.querySelector(`button[type="submit"]`)))}document.addEventListener(`prerenderingchange`,n),document.addEventListener(`visibilitychange`,n),n()})();

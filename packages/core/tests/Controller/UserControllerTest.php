@@ -152,7 +152,8 @@ final class UserControllerTest extends WebTestCase
         $this->createLoginToken($user, $plainToken, LoginToken::TYPE_LOGIN);
 
         $urlToken = base64_encode($user->id.':'.$plainToken);
-        $this->client->request(Request::METHOD_GET, '/login/magic/'.$urlToken);
+        $crawler = $this->client->request(Request::METHOD_GET, '/login/magic/'.$urlToken);
+        $this->client->submit($crawler->filter('form[data-magic-login]')->form());
 
         // Should redirect to admin after successful login
         self::assertResponseRedirects();

@@ -1,6 +1,15 @@
 {
   "base": "/build/",
   "entryPoints": {
+    "magicLink": {
+      "css": [],
+      "dynamic": [],
+      "js": [
+        "/build/magicLink.js"
+      ],
+      "legacy": false,
+      "preload": []
+    },
     "contextHelp": {
       "css": [
         "/build/contextHelp.css"

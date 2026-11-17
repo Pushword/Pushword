@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pushword\Core\Security;
 
 use LogicException;
+use Pushword\Core\Entity\LoginToken;
 use Pushword\Core\Entity\User;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -19,6 +20,12 @@ use Symfony\Component\Security\Http\Util\TargetPathTrait;
 class MagicLinkAuthenticator extends AbstractAuthenticator
 {
     use TargetPathTrait;
+
+    public const string TOKEN_ID = 'pushword_login_token_id';
+
+    public const string TOKEN_VERSION = 'pushword_login_token_version';
+
+    public const string TOKEN_CONTEXT = 'pushword_login_token_context';
 
     public function __construct(private readonly UrlGeneratorInterface $urlGenerator)
     {
@@ -37,6 +44,13 @@ class MagicLinkAuthenticator extends AbstractAuthenticator
 
     public function onAuthenticationSuccess(Request $request, TokenInterface $token, string $firewallName): ?Response
     {
+        $loginToken = $request->attributes->get(LoginToken::class);
+        if ($loginToken instanceof LoginToken) {
+            $token->setAttribute(self::TOKEN_ID, $loginToken->id);
+            $token->setAttribute(self::TOKEN_VERSION, $loginToken->sessionVersion);
+            $token->setAttribute(self::TOKEN_CONTEXT, $firewallName);
+        }
+
         if (($user = $token->getUser()) instanceof User && $user->requiresPasswordChange()) {
             return new RedirectResponse($this->urlGenerator->generate('pushword_login_change_password'));
         }

@@ -14,6 +14,7 @@ const filesToCopy = [
 ]
 
 const input = {
+  magicLink: resolve(import.meta.dirname, 'src/Resources/assets/magicLink.js'),
   contextHelp: resolve(import.meta.dirname, 'src/Resources/assets/contextHelp.js'),
   app: resolve(import.meta.dirname, '../js-helper/src/app.js'),
   alpine: resolve(import.meta.dirname, '../js-helper/src/alpine.js'),

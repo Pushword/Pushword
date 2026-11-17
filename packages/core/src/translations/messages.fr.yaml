@@ -35,6 +35,20 @@ publish: Publier
 backToLogin: "Retour à la connexion"
 confirmPassword: "Confirmer le mot de passe"
 mainNavigation: "Navigation principale"
+magicLinkCodeEmailExpires: "Ce code expire dans %minutes% minutes et ne peut être utilisé qu'une seule fois."
+magicLinkCodeEmailIntro: 'Saisissez ce code sur la page de connexion :'
+magicLinkCodeEmailSubject: 'Votre code de connexion pour %appName%'
+magicLinkCodeInvalid: "Ce code est incorrect, a expiré ou a atteint sa limite de tentatives. Réessayez ou demandez un nouveau code."
+magicLinkCodeLabel: 'Code à huit chiffres'
+magicLinkCodeRateLimited: 'Trop de demandes de code. Veuillez réessayer plus tard.'
+magicLinkCodeRecoveryIntro: 'Vous pouvez recevoir un code par email pour vous connecter.'
+magicLinkCodeRequest: 'Recevoir un code de connexion'
+magicLinkCodeResend: 'Envoyer un autre code'
+magicLinkCodeSendFailed: "Le code n'a pas pu être envoyé. Veuillez patienter une minute et réessayer."
+magicLinkCodeSent: 'Saisissez le code à huit chiffres envoyé à votre adresse email. Il est valable 10 minutes.'
+magicLinkCodeTitle: 'Saisissez votre code'
+magicLinkConnecting: 'Connexion en cours'
+magicLinkConnectingIntro: 'La connexion se fait automatiquement. Si nécessaire, utilisez le bouton ci-dessous.'
 magicLinkEmailExpires: "Ces liens expireront dans %minutes% minutes."
 magicLinkEmailFooter: "Si vous n'avez pas demandé cet email, ignorez-le."
 magicLinkEmailGreeting: "Bonjour %username%,"
