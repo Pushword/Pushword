@@ -128,6 +128,8 @@ jobs:
     name: Editor journeys - ${{ matrix.browser }} - ${{ matrix.shard }}/3
     runs-on: ubuntu-latest
     timeout-minutes: 25
+    env:
+      PW_EDITOR_WORKERS: 2
     strategy:
       fail-fast: false
       matrix:
@@ -188,7 +190,7 @@ jobs:
           yarn --cwd packages/admin-monaco-editor build
 
       - name: Run the shared editor journeys
-        # Each runner owns its server and database; keep the page-lock journeys serial within it.
+        # Each worker owns its editor page, session and edit lock within the runner.
         run: yarn --cwd packages/admin-block-editor test:browser ${{ matrix.projects }} --shard=${{ matrix.shard }}/3
 
       - name: Upload results, failure screenshots and traces

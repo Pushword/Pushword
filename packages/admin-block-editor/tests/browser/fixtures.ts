@@ -14,9 +14,13 @@ async function waitForEditor(page: Page): Promise<void> {
   })
 }
 
-export const test = base.extend<{ editorPage: Page }, { authState: StorageState }>({
+export const test = base.extend<{ editorPage: Page }, { authState: StorageState; editorUrl: string }>({
+  editorUrl: [async ({}, use, workerInfo) => {
+    const pages: Record<string, string> = JSON.parse(readFileSync(join(directory, 'browser-pages.json'), 'utf8'))
+    await use(pages[`${workerInfo.project.name}:${workerInfo.parallelIndex}`]!)
+  }, { scope: 'worker' }],
   authState: [async ({ browser }, use, workerInfo) => {
-    const statePath = join(directory, `auth-${workerInfo.project.name}.json`)
+    const statePath = join(directory, `auth-${workerInfo.project.name}-${workerInfo.parallelIndex}.json`)
     // A failed test restarts its worker; reuse the login instead of hitting the login throttle.
     if (existsSync(statePath)) {
       await use(JSON.parse(readFileSync(statePath, 'utf8')))
@@ -35,18 +39,17 @@ export const test = base.extend<{ editorPage: Page }, { authState: StorageState 
     await use(state)
   }, { scope: 'worker' }],
   storageState: async ({ authState }, use) => use(authState),
-  editorPage: async ({ page, browser }, use, testInfo) => {
+  editorPage: async ({ page, browser, editorUrl }, use, testInfo) => {
     const errors: string[] = []
     page.on('pageerror', error => errors.push(error.message))
     page.on('console', message => {
       if (message.type() === 'error') errors.push(message.text())
     })
-    const pages: Record<string, string> = JSON.parse(readFileSync(join(directory, 'browser-pages.json'), 'utf8'))
-    // Sequential journeys reuse the same page and must retain its lock ownership.
+    // Each parallel worker owns a page and retains its lock between journeys and restarts.
     await page.addInitScript(tabId => sessionStorage.setItem('pw-edit-lock-tab-id', tabId),
-      `${process.env.TEST_RUN_ID}:${testInfo.project.name}`)
+      `${process.env.TEST_RUN_ID}:${testInfo.project.name}:${testInfo.parallelIndex}`)
     const lockResponse = page.waitForResponse(response => response.url().endsWith('/lock/ping'))
-    await page.goto(pages[testInfo.project.name]!)
+    await page.goto(editorUrl)
     const lockInfo = await (await lockResponse).json()
     expect(lockInfo.isOwner, 'The journey must own the page edit lock').toBe(true)
     await expect(page.locator('#pw-edit-lock-banner')).toBeHidden()
@@ -55,6 +58,7 @@ export const test = base.extend<{ editorPage: Page }, { authState: StorageState 
     await waitForEditor(page)
     testInfo.annotations.push({ type: 'browser version', description: `${testInfo.project.name} ${browser.version()}` })
     testInfo.annotations.push({ type: 'platform', description: await page.evaluate(() => navigator.userAgent) })
+    testInfo.annotations.push({ type: 'worker page', description: editorUrl })
     await use(page)
     expect(errors, 'Browser exceptions and console errors').toEqual([])
   },

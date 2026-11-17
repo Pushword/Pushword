@@ -1,15 +1,10 @@
 import { test, expect, render, saveAndReload } from './fixtures'
 
-import { readFileSync } from 'node:fs'
-import { tmpdir } from 'node:os'
-import { join } from 'node:path'
-
 test.describe('before initialization', () => {
   test.use({ javaScriptEnabled: false })
 
-  test('renders loading feedback before JavaScript runs', async ({ page }, testInfo) => {
-    const pages = JSON.parse(readFileSync(join(tmpdir(), 'com.github.pushword.pushword/tests', process.env.TEST_RUN_ID!, 'browser-pages.json'), 'utf8'))
-    await page.goto(pages[testInfo.project.name])
+  test('renders loading feedback before JavaScript runs', async ({ page, editorUrl }, testInfo) => {
+    await page.goto(editorUrl)
     await expect(page.locator('[data-pw-editor-widget]')).toHaveAttribute('data-pw-editor-state', 'loading')
     await expect(page.getByText('Loading content…', { exact: true })).toBeVisible()
     await expect(page.locator('.editorjs-holder')).toHaveAttribute('inert', '')
