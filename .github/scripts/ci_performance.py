@@ -61,11 +61,15 @@ def job_sample(run, jobs):
               if step["name"] == "Build Monaco and its language workers"]
     if not monaco or any(state not in ("success", "skipped") for state in monaco):
         raise ValueError("Missing Monaco cache profile")
+    cache = "mixed"
+    if all(state == "skipped" for state in monaco):
+        cache = "warm"
+    elif all(state == "success" for state in monaco):
+        cache = "cold"
     profile = {
         "coverage": any(step["name"] == "Merge coverage" and step["conclusion"] == "success"
                         for job in jobs for step in job["steps"]),
-        "monaco": "warm" if all(state == "skipped" for state in monaco)
-        else "cold" if all(state == "success" for state in monaco) else "mixed",
+        "monaco": cache,
         "jobs": sorted(durations),
     }
     return profile, {

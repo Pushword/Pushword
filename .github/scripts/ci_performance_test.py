@@ -157,6 +157,22 @@ class BudgetTest(unittest.TestCase):
 
 
 class TimingTest(unittest.TestCase):
+    def test_profiles_follow_actual_cache_and_coverage_step_outcomes(self):
+        run = {"id": 1, "head_sha": "abc", "html_url": "https://example.test/1"}
+        for states, cache in [(["skipped", "skipped"], "warm"), (["success", "success"], "cold"), (["success", "skipped"], "mixed")]:
+            for coverage in ("success", "skipped"):
+                jobs = [{"id": index, "name": f"editor-{index}", "conclusion": "success",
+                         "started_at": "2026-11-17T00:01:00Z", "completed_at": "2026-11-17T00:02:00Z",
+                         "steps": [{"name": "Build Monaco and its language workers", "conclusion": state,
+                                    "started_at": "2026-11-17T00:01:00Z", "completed_at": "2026-11-17T00:01:01Z"},
+                                   {"name": "Merge coverage", "conclusion": coverage,
+                                    "started_at": "2026-11-17T00:01:01Z", "completed_at": "2026-11-17T00:01:02Z"}]}
+                        for index, state in enumerate(states)]
+                with self.subTest(cache=cache, coverage=coverage):
+                    profile, _ = ci.job_sample(run, jobs)
+                    self.assertEqual(profile["monaco"], cache)
+                    self.assertEqual(profile["coverage"], coverage == "success")
+
     def test_job_runtime_excludes_queue_and_guard(self):
         run = {"id": 1, "head_sha": "abc", "html_url": "https://example.test/1", "created_at": "2026-11-17T00:00:00Z"}
         step = {"name": "Build Monaco and its language workers", "conclusion": "skipped"}
