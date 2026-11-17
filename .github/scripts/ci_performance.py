@@ -264,7 +264,8 @@ def main():
             for key, duration in groups.items():
                 sample["tests"][key] = sample["tests"].get(key, 0) + duration
     previous = {}
-    for artifact in github_items(f"{root}/artifacts", "artifacts", name=name):
+    history = github_items(f"{root}/artifacts", "artifacts", name=name)
+    for artifact in sorted(history, key=lambda item: item["id"], reverse=True):
         origin = artifact["workflow_run"]
         if artifact["expired"] or origin["repository_id"] != origin["head_repository_id"]:
             continue

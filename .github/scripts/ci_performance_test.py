@@ -281,6 +281,7 @@ class IntegrationTest(unittest.TestCase):
                 if path.startswith("repos/example/repo/actions/artifacts?"):
                     self.assertIn(f"name={name}", path)
                     return {"artifacts": [
+                        {"id": 0, "expired": False, "workflow_run": {"repository_id": 1, "head_repository_id": 1}},
                         {"id": 99, "expired": False, "workflow_run": {"repository_id": 1, "head_repository_id": 2}},
                         {"id": 98, "expired": True, "workflow_run": {"repository_id": 1, "head_repository_id": 1}},
                         {"id": 2, "expired": False, "workflow_run": {"repository_id": 1, "head_repository_id": 1}},
@@ -303,7 +304,7 @@ class IntegrationTest(unittest.TestCase):
             self.assertEqual(saved["current"]["metrics"]["longest_job_seconds"], 60)
             self.assertIn("Calibrated", (root / "summary").read_text())
             self.assertIn(name, (root / "outputs").read_text())
-            self.assertFalse(any("/99/zip" in call or "/98/zip" in call for call in calls))
+            self.assertFalse(any(f"/{number}/zip" in call for number in [0, 98, 99] for call in calls))
 
     def test_pagination_does_not_truncate_large_matrices_or_artifact_lists(self):
         with patch.object(ci, "github", side_effect=[{"jobs": list(range(100))}, {"jobs": [100]}]) as api:
