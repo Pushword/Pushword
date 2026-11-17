@@ -46,6 +46,8 @@ jobs:
           composer twigstan-ci
 
       - name: Symfony LSP
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
         run: symfony lsp:check --format=github
 
   js-quality:
