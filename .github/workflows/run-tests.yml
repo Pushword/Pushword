@@ -147,10 +147,10 @@ jobs:
             projects: --project=chrome --project=chrome-mobile
             workers: 2
             shards: 3
-          # Keep nine runners; Edge needs more runners and less contention within each.
+          # Keep nine runners, allocating an extra one to the slower Edge journeys.
           - browser: msedge
             projects: --project=msedge
-            workers: 1
+            workers: 2
             shards: 4
           - browser: firefox
             projects: --project=firefox
@@ -159,7 +159,7 @@ jobs:
           - browser: msedge
             shard: 4
             projects: --project=msedge
-            workers: 1
+            workers: 2
             shards: 4
     steps:
       - name: Checkout
