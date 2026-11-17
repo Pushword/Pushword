@@ -1,0 +1,68 @@
+{% extends view('/user/layout.html.twig') %}
+
+{% block title %}
+  {%- if connecting -%}
+    {{ 'magicLinkConnecting'|trans }}
+  {%- elseif hasCode -%}
+    {{ 'magicLinkCodeTitle'|trans }}
+  {%- else -%}
+    {{ 'magicLinkRecoveryTitle'|trans }}
+  {%- endif -%}
+{% endblock %}
+
+{% block auth_intro %}
+  <p{% if hasCode or connecting %} role="status"{% endif %} class="text-sm leading-relaxed text-center text-gray-600">
+    {% if connecting %}
+      {{ 'magicLinkConnectingIntro'|trans }}
+    {% elseif hasCode %}
+      {{ 'magicLinkCodeSent'|trans }}
+    {% else %}
+      {{ 'magicLinkCodeRecoveryIntro'|trans }}
+    {% endif %}
+  </p>
+{% endblock %}
+
+{% block main_content %}
+<div class="space-y-6">
+  {% set codeError = hasCode and error == 'magicLinkCodeInvalid' %}
+  {% if error and not codeError %}
+    <p role="alert" id="magic-login-error" class="p-4 text-sm leading-relaxed text-red-800 bg-red-50 rounded-md">{{ error|trans }}</p>
+  {% endif %}
+
+  {% if connecting %}
+    <form method="post"{% if autoConnect %} data-magic-login{% endif %} class="space-y-6">
+      <input type="hidden" name="_csrf_token" value="{{ csrf_token('magic_login') }}">
+      <button type="submit" name="action" value="connect" class="flex items-center justify-center w-full px-4 py-2 text-sm font-medium text-white border border-transparent rounded-md pw-auth-action focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary">{{ 'magicLinkLoginButton'|trans }}</button>
+    </form>
+  {% else %}
+    {% if hasCode %}
+      <form method="post" class="space-y-6">
+        <input type="hidden" name="_csrf_token" value="{{ csrf_token('magic_login') }}">
+        <div class="space-y-2">
+          <label for="loginCode" class="block text-sm font-medium text-gray-900">{{ 'magicLinkCodeLabel'|trans }}</label>
+          <input type="text" id="loginCode" name="code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{8}" minlength="8" maxlength="8" required autofocus
+                 class="block w-full px-3 py-3 font-mono text-2xl tracking-widest text-center text-gray-900 tabular-nums border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2"
+                 aria-describedby="magic-login-code-help{% if codeError %} magic-login-code-error{% endif %}"{% if codeError %} aria-invalid="true"{% endif %}>
+          {% if codeError %}
+            <p role="alert" id="magic-login-code-error" class="text-sm leading-relaxed text-red-800">{{ error|trans }}</p>
+          {% endif %}
+          <p id="magic-login-code-help" class="text-sm leading-relaxed text-gray-600">{{ 'magicLinkCodeHelp'|trans }}</p>
+        </div>
+        <button type="submit" name="action" value="verify_code" class="flex items-center justify-center w-full px-4 py-2 text-sm font-medium text-white border border-transparent rounded-md pw-auth-action focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary">{{ 'securityLoginLabelButton'|trans }}</button>
+      </form>
+    {% endif %}
+    <form method="post" class="text-center">
+      <input type="hidden" name="_csrf_token" value="{{ csrf_token('magic_login') }}">
+      {% if hasCode %}<p class="text-sm text-gray-600">{{ 'magicLinkCodeNotReceived'|trans }}</p>{% endif %}
+      <button type="submit" name="action" value="request_code" data-magic-resend data-resend-seconds="{{ resendAfter }}" class="inline-flex min-h-11 items-center justify-center px-4 py-2 text-sm font-medium rounded-md {{ hasCode ? 'text-primary hover:underline disabled:no-underline' : 'w-full text-white pw-auth-action' }} focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary">{{ (hasCode ? 'magicLinkCodeResend' : 'magicLinkCodeRequest')|trans }}</button>
+      <p data-magic-resend-status data-wait-message="{{ 'magicLinkCodeResendWait'|trans({'%seconds%': '{seconds}'}) }}" class="text-sm leading-relaxed text-gray-600"{% if resendAfter == 0 %} hidden{% endif %}>{{ 'magicLinkCodeResendWait'|trans({'%seconds%': resendAfter}) }}</p>
+    </form>
+  {% endif %}
+  <p class="text-sm text-center"><a href="{{ path('pushword_login') }}" class="text-primary hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded">{{ 'securityLoginChangeEmail'|trans }}</a></p>
+</div>
+{% endblock %}
+
+{% block script %}
+  {{ parent() }}
+  <script src="{{ asset('bundles/pushwordcore/magicLink.js') }}" defer></script>
+{% endblock %}

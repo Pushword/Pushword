@@ -1,5 +1,6 @@
 ---
-title: ''
+title: 'login links offer code recovery; authentication layouts include an introduction block'
+run: 'doctrine:schema:update --force'
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -34,3 +35,16 @@ belongs in the feature doc, which you link to instead.
 
 Several changes land here between two tags: append to the file, do not replace it.
 -->
+
+**Concerns:** `pushword/core`
+
+## Login links and recovery codes
+
+Login links now finish through an automatic POST and offer an emailed recovery code when used or expired; see [Authentication](/authentication#magic-link).
+Run `php bin/console doctrine:schema:update --force` and reinstall bundle assets with `php bin/console assets:install --symlink`.
+**Sites overriding the login-link page:** adapt `/user/magic_login.html.twig` to keep its CSRF forms and automatic sign-in script.
+
+## Authentication form feedback
+
+Incorrect passwords now return to the password step; no configuration change is needed.
+**Custom authentication layouts:** render the `auth_intro` block below the title to keep the login-link instructions visible.

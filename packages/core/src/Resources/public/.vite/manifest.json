@@ -28,5 +28,11 @@
     "css": [
       "contextHelp.css"
     ]
+  },
+  "src/Resources/assets/magicLink.js": {
+    "file": "magicLink.js",
+    "name": "magicLink",
+    "src": "src/Resources/assets/magicLink.js",
+    "isEntry": true
   }
 }

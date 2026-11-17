@@ -76,7 +76,7 @@ test('editor and settings use readable theme colors and bounded diagnostics', as
       data: { text: 'A quoted paragraph.', caption: 'An author', alignment: 'left' },
     },
   ])
-  // The report is offered quietly before any failure, then on an alert surface.
+  // Routine reporting stays quiet; a separate alert emphasizes failures.
   for (const failed of [false, true]) {
     if (failed)
       await page
@@ -170,7 +170,7 @@ test('editor and settings use readable theme colors and bounded diagnostics', as
   await expect
     .poll(() => page.evaluate(() => document.documentElement.scrollWidth))
     .toBeLessThanOrEqual(320)
-  await expect(page.locator('[data-pw-download-diagnostic]')).toBeInViewport()
+  await expect(panel.locator('[data-pw-download-diagnostic]')).toBeInViewport()
 })
 
 test.describe('touch controls', () => {

@@ -21,16 +21,19 @@ $kernel = new Kernel('test', true);
 $kernel->boot();
 $entityManager = $kernel->getContainer()->get('doctrine.orm.default_entity_manager');
 $pages = [];
+$workers = (int) (getenv('PW_EDITOR_WORKERS') ?: 1);
 foreach (['chrome', 'msedge', 'firefox', 'chrome-mobile'] as $browser) {
-    $page = new Page();
-    $page->host = 'admin-block-editor.test';
-    $page->locale = 'en';
-    $page->slug = 'browser-'.$browser;
-    $page->h1 = 'Browser '.$browser;
-    $page->mainContent = '{"blocks":[{"type":"paragraph","data":{"text":"Baseline"}}]}';
-    $entityManager->persist($page);
-    $entityManager->flush();
-    $pages[$browser] = '/admin/page/'.$page->id.'/edit';
+    for ($worker = 0; $worker < $workers; ++$worker) {
+        $page = new Page();
+        $page->host = 'admin-block-editor.test';
+        $page->locale = 'en';
+        $page->slug = 'browser-'.$browser.'-'.$worker;
+        $page->h1 = 'Browser '.$browser.' '.$worker;
+        $page->mainContent = '{"blocks":[{"type":"paragraph","data":{"text":"Baseline"}}]}';
+        $entityManager->persist($page);
+        $entityManager->flush();
+        $pages[$browser.':'.$worker] = '/admin/page/'.$page->id.'/edit';
+    }
 }
 
 $application = new Application($kernel);
@@ -52,7 +55,7 @@ if (false === $publicDirectory) {
     throw new RuntimeException('The dev app public directory is missing.');
 }
 
-$server = new Process([\PHP_BINARY, '-dvariables_order=EGPCS', '-S', '127.0.0.1:9079', '-t', $publicDirectory], $publicDirectory, timeout: null);
+$server = new Process([\PHP_BINARY, '-dopcache.enable_cli=1', '-dvariables_order=EGPCS', '-S', '127.0.0.1:9079', '-t', $publicDirectory], $publicDirectory, timeout: null);
 register_shutdown_function(static function () use ($server, $filesystem, $directory): void {
     $server->stop();
     $filesystem->remove($directory);

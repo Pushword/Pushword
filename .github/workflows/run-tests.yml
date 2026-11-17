@@ -1,6 +1,9 @@
 name: Tests
 
-on: [push, pull_request]
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -77,6 +80,9 @@ jobs:
       - name: Install root tooling (eslint, typescript)
         run: yarn install --frozen-lockfile
 
+      - name: Test CI performance guard
+        run: python3 -m unittest discover -s .github/scripts -p 'ci_performance_test.py' -v
+
       - name: Install admin-block-editor dependencies
         run: cd packages/admin-block-editor && yarn install --frozen-lockfile
 
@@ -125,28 +131,46 @@ jobs:
         run: cd packages/admin-monaco-editor && yarn test
 
   editor-browsers:
-    name: Editor journeys - ${{ matrix.browser }} - ${{ matrix.shard }}/3
+    name: Editor journeys - ${{ matrix.browser }} - ${{ matrix.shard }}/${{ matrix.shards }}
     runs-on: ubuntu-latest
     timeout-minutes: 25
+    env:
+      PW_EDITOR_WORKERS: ${{ matrix.workers }}
     strategy:
       fail-fast: false
       matrix:
         browser: [chrome, msedge, firefox]
         shard: [1, 2, 3]
+        exclude:
+          - browser: firefox
+            shard: 3
         include:
           # The phone journeys run on the same Chrome binary: one setup serves both.
           - browser: chrome
             projects: --project=chrome --project=chrome-mobile
+            workers: 2
+            shards: 3
+          # Keep nine runners, allocating an extra one to the slower Edge journeys.
           - browser: msedge
             projects: --project=msedge
+            workers: 2
+            shards: 4
           - browser: firefox
             projects: --project=firefox
+            workers: 2
+            shards: 2
+          - browser: msedge
+            shard: 4
+            projects: --project=msedge
+            workers: 2
+            shards: 4
     steps:
       - name: Checkout
         uses: actions/checkout@v7
 
       - name: Setup Node.js
         uses: actions/setup-node@v7
+        id: node
         with:
           node-version: 24
           cache: yarn
@@ -182,24 +206,75 @@ jobs:
       - name: Build the editor under test
         run: yarn --cwd packages/admin-block-editor build
 
+      - name: Clear the committed Monaco build
+        run: find packages/admin/src/Resources/public/monaco -mindepth 1 -delete
+
+      - name: Cache the Monaco build
+        id: monaco
+        uses: actions/cache/restore@v6
+        with:
+          path: packages/admin/src/Resources/public/monaco
+          key: monaco-${{ runner.os }}-${{ steps.node.outputs.node-version }}-${{ hashFiles('packages/admin-monaco-editor/*.js', 'packages/admin-monaco-editor/markdown/**', 'packages/admin-monaco-editor/package.json', 'packages/admin-monaco-editor/yarn.lock') }}
+
       - name: Build Monaco and its language workers
+        if: steps.monaco.outputs.cache-hit != 'true'
         run: |
           yarn --cwd packages/admin-monaco-editor install --frozen-lockfile
           yarn --cwd packages/admin-monaco-editor build
 
+      - name: Save the Monaco build
+        # One writer avoids nine parallel uploads of the same build.
+        if: steps.monaco.outputs.cache-hit != 'true' && matrix.browser == 'chrome' && matrix.shard == 1
+        uses: actions/cache/save@v6
+        with:
+          path: packages/admin/src/Resources/public/monaco
+          key: ${{ steps.monaco.outputs.cache-primary-key }}
+
       - name: Run the shared editor journeys
-        # Each runner owns its server and database; keep the page-lock journeys serial within it.
-        run: yarn --cwd packages/admin-block-editor test:browser ${{ matrix.projects }} --shard=${{ matrix.shard }}/3
+        # Each worker owns its editor page, session and edit lock within the runner.
+        run: yarn --cwd packages/admin-block-editor test:browser ${{ matrix.projects }} --shard=${{ matrix.shard }}/${{ matrix.shards }}
 
       - name: Upload results, failure screenshots and traces
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v4
         with:
           name: editor-${{ matrix.browser }}-${{ matrix.shard }}
+          overwrite: true
           path: |
             packages/admin-block-editor/playwright-report/
             packages/admin-block-editor/test-results/
           retention-days: 14
+
+  ci-performance:
+    name: CI performance
+    needs: [phpstan, js-quality, editor-browsers, native, test, test-mariadb, test-postgresql]
+    # A required check must fail on incomplete inputs rather than pass as skipped.
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      actions: read
+      contents: read
+    steps:
+      - name: Checkout
+        if: ${{ always() }}
+        uses: actions/checkout@v7
+
+      - name: Measure and compare CI performance
+        id: performance
+        if: ${{ always() }}
+        run: python3 .github/scripts/ci_performance.py
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - name: Save performance reference and history
+        if: ${{ !cancelled() && steps.performance.outputs.artifact-name != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.performance.outputs.artifact-name }}
+          path: ci-performance.json
+          overwrite: true
+          retention-days: 90
 
   native:
     name: Native parity - ${{ matrix.package }}
@@ -264,8 +339,8 @@ jobs:
     name: P${{ matrix.php }} - N${{ matrix.node }} - ${{ matrix.stability }} - ${{ matrix.os }}
 
     env:
-      # Exactly one leg collects coverage and publishes the README badge data,
-      # and only for pushes to main; every other leg runs the suite bare.
+      # Manual runs benchmark main's coverage workload without publishing its badge.
+      COLLECT_COVERAGE: ${{ (github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch') && matrix.php == '8.5' && matrix.node == '24' }}
       PUBLISH_COVERAGE: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && matrix.php == '8.5' && matrix.node == '24' }}
 
     steps:
@@ -285,7 +360,7 @@ jobs:
           extensions: dom, curl, libxml, mbstring, zip, pdo, sqlite, pdo_sqlite, bcmath, soap, intl, gd, exif, iconv, imagick, fileinfo
           # pcov, not xdebug: the badge only needs line coverage, and xdebug slows
           # the whole suite down several-fold to collect it.
-          coverage: ${{ env.PUBLISH_COVERAGE == 'true' && 'pcov' || 'none' }}
+          coverage: ${{ env.COLLECT_COVERAGE == 'true' && 'pcov' || 'none' }}
           ini-values: pcov.directory=${{ github.workspace }}/packages
 
       - name: Setup problem matchers
@@ -326,9 +401,9 @@ jobs:
         # Every batch dumps its own coverage; merge-coverage.php folds them. Leaving
         # one out reports its tests as covering nothing.
         run: |
-          if [ "$PUBLISH_COVERAGE" = "true" ]; then mkdir cov; COV_PARALLEL="--coverage-php cov/parallel.cov"; COV_SERIAL="--coverage-php cov/serial.cov"; fi
-          vendor/bin/paratest --processes=auto $COV_PARALLEL --exclude-group=panther --exclude-group=benchmark --exclude-group=serial --exclude-group=worker
-          vendor/bin/paratest --processes=1 $COV_SERIAL --group=serial
+          if [ "$COLLECT_COVERAGE" = "true" ]; then mkdir cov; COV_PARALLEL="--coverage-php cov/parallel.cov"; COV_SERIAL="--coverage-php cov/serial.cov"; fi
+          vendor/bin/paratest --processes=auto $COV_PARALLEL --log-junit=junit-parallel.xml --exclude-group=panther --exclude-group=benchmark --exclude-group=serial --exclude-group=worker
+          vendor/bin/paratest --processes=1 $COV_SERIAL --log-junit=junit-serial.xml --group=serial
         env:
           TEST_RUN_ID: ci-${{ github.run_id }}
 
@@ -338,18 +413,30 @@ jobs:
         # redirect maps, media filename index) don't serve stale data after a write in a
         # prior request. A dedicated, named check keeps this non-obvious invariant visible.
         run: |
-          if [ "$PUBLISH_COVERAGE" = "true" ]; then COV_WORKER="--coverage-php cov/worker.cov"; fi
-          vendor/bin/paratest --processes=1 $COV_WORKER --group=worker
+          if [ "$COLLECT_COVERAGE" = "true" ]; then COV_WORKER="--coverage-php cov/worker.cov"; fi
+          vendor/bin/paratest --processes=1 $COV_WORKER --log-junit=junit-worker.xml --group=worker
         env:
           TEST_RUN_ID: ci-${{ github.run_id }}
 
-      - name: Generate coverage badge data
+      - name: Upload PHPUnit timings
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: phpunit-${{ matrix.node }}
+          overwrite: true
+          path: junit-*.xml
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: Merge coverage
         # Merges the three dumps (line-level union — summing per-batch totals would
-        # double-count code hit by more than one batch) and prepares a one-commit
-        # `badges` branch holding the shields.io endpoint JSON the README badge reads.
+        # double-count code hit by more than one batch).
+        if: env.COLLECT_COVERAGE == 'true'
+        run: php -d memory_limit=2G .scripts/merge-coverage.php - coverage.xml cov/*.cov
+
+      - name: Generate coverage badge data
         if: env.PUBLISH_COVERAGE == 'true'
         run: |
-          php -d memory_limit=2G .scripts/merge-coverage.php - coverage.xml cov/*.cov
           mkdir badge
           php .scripts/coverage-badge.php coverage.xml > badge/coverage.json
           cd badge
@@ -437,8 +524,8 @@ jobs:
       - name: Execute tests
         # Serial and worker groups run after the parallel batch — see the SQLite job above.
         run: |
-          vendor/bin/paratest --processes=auto --exclude-group=panther --exclude-group=benchmark --exclude-group=serial --exclude-group=worker --exclude-group=sqlite
-          vendor/bin/paratest --processes=1 --group=serial --exclude-group=sqlite
+          vendor/bin/paratest --processes=auto --log-junit=junit-parallel.xml --exclude-group=panther --exclude-group=benchmark --exclude-group=serial --exclude-group=worker --exclude-group=sqlite
+          vendor/bin/paratest --processes=1 --log-junit=junit-serial.xml --group=serial --exclude-group=sqlite
         env:
           TEST_RUN_ID: ci-mariadb-${{ github.run_id }}
           PUSHWORD_TEST_DATABASE_BASE_URL: "mysql://pushword:pushword@127.0.0.1:3306/pushword_test?serverVersion=11.8.6-MariaDB&charset=utf8mb4"
@@ -446,10 +533,20 @@ jobs:
       - name: Worker-mode safety guard
         # Same guard as the SQLite job: worker tests share a cache.app version
         # counter that parallel workers would race, so they run alone.
-        run: vendor/bin/paratest --processes=1 --group=worker --exclude-group=sqlite
+        run: vendor/bin/paratest --processes=1 --log-junit=junit-worker.xml --group=worker --exclude-group=sqlite
         env:
           TEST_RUN_ID: ci-mariadb-${{ github.run_id }}
           PUSHWORD_TEST_DATABASE_BASE_URL: "mysql://pushword:pushword@127.0.0.1:3306/pushword_test?serverVersion=11.8.6-MariaDB&charset=utf8mb4"
+
+      - name: Upload PHPUnit timings
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: phpunit-mariadb
+          overwrite: true
+          path: junit-*.xml
+          if-no-files-found: ignore
+          retention-days: 14
 
   test-postgresql:
     runs-on: ubuntu-latest
@@ -466,6 +563,7 @@ jobs:
         ports:
           - 5432:5432
         options: >-
+          --tmpfs /var/lib/postgresql/data
           --health-cmd="pg_isready -U pushword -d postgres"
           --health-interval=10s
           --health-timeout=5s
@@ -519,14 +617,24 @@ jobs:
 
       - name: Execute tests
         run: |
-          vendor/bin/paratest --processes=auto --exclude-group=panther --exclude-group=benchmark --exclude-group=serial --exclude-group=worker --exclude-group=sqlite
-          vendor/bin/paratest --processes=1 --group=serial --exclude-group=sqlite
+          vendor/bin/paratest --processes=auto --log-junit=junit-parallel.xml --exclude-group=panther --exclude-group=benchmark --exclude-group=serial --exclude-group=worker --exclude-group=sqlite
+          vendor/bin/paratest --processes=1 --log-junit=junit-serial.xml --group=serial --exclude-group=sqlite
         env:
           TEST_RUN_ID: ci-postgresql-${{ github.run_id }}
           PUSHWORD_TEST_DATABASE_BASE_URL: "postgresql://pushword:pushword@127.0.0.1:5432/pushword_test?serverVersion=17&charset=utf8"
 
       - name: Worker-mode safety guard
-        run: vendor/bin/paratest --processes=1 --group=worker --exclude-group=sqlite
+        run: vendor/bin/paratest --processes=1 --log-junit=junit-worker.xml --group=worker --exclude-group=sqlite
         env:
           TEST_RUN_ID: ci-postgresql-${{ github.run_id }}
           PUSHWORD_TEST_DATABASE_BASE_URL: "postgresql://pushword:pushword@127.0.0.1:5432/pushword_test?serverVersion=17&charset=utf8"
+
+      - name: Upload PHPUnit timings
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: phpunit-postgresql
+          overwrite: true
+          path: junit-*.xml
+          if-no-files-found: ignore
+          retention-days: 14

@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html lang="{{ locale }}">
+<head><meta charset="UTF-8"></head>
+<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #334155;">
+  <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+    <h1>{{ 'magicLinkCodeEmailSubject'|trans({'%appName%': appName}, locale: locale) }}</h1>
+    <p>{{ 'magicLinkCodeEmailIntro'|trans({}, locale: locale) }}</p>
+    <p style="font-size: 32px; font-weight: bold; letter-spacing: 4px;">{{ code }}</p>
+    <p>{{ 'magicLinkCodeEmailExpires'|trans({'%minutes%': expiresInMinutes}, locale: locale) }}</p>
+    <p>{{ 'magicLinkEmailFooter'|trans({}, locale: locale) }}</p>
+  </div>
+</body>
+</html>

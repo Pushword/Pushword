@@ -5,12 +5,13 @@ import { randomUUID } from 'node:crypto'
 process.env.TEST_RUN_ID ??= `editor-${randomUUID()}`
 const windows = Boolean(process.env.PW_EDITOR_WINDOWS)
 const resultsDirectory = windows ? 'test-results-windows' : 'test-results'
+const workers = Number(process.env.PW_EDITOR_WORKERS ?? 1)
 
 export default defineConfig({
   testDir: './tests/browser',
   testMatch: '**/*.spec.ts',
-  fullyParallel: false,
-  workers: 1,
+  fullyParallel: true,
+  workers,
   forbidOnly: !!process.env.CI,
   retries: 0,
   timeout: 120_000,
@@ -70,7 +71,7 @@ export default defineConfig({
   ],
   webServer: {
     command: 'php tests/browser/server.php',
-    env: { APP_ENV: 'test', APP_DEBUG: '1' },
+    env: { APP_ENV: 'test', APP_DEBUG: '1', PW_EDITOR_WORKERS: String(workers) },
     url: 'http://127.0.0.1:9079/login',
     reuseExistingServer: false,
     timeout: 120_000,

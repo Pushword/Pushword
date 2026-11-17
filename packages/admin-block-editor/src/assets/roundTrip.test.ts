@@ -55,13 +55,17 @@ function reserialize(value: unknown): unknown {
  * the one at `index` — and makes the new one current. With `deferredUpdates`,
  * update() fills the block a task later, as Editor.js re-renders it.
  */
-function fakeEditor({ deferredUpdates = false } = {}): { editor: API; blocks: FakeBlock[] } {
+function fakeEditor({ deferredUpdates = false } = {}): { editor: API; blocks: FakeBlock[]; holder: HTMLElement } {
   const blocks: FakeBlock[] = []
+  const holder = document.createElement('div')
+  holder.className = 'editorjs-holder'
+  const wrapper = holder.appendChild(document.createElement('div'))
   let current = -1
   let nextId = 0
   const block = (type: string): FakeBlock => ({ id: `b${nextId++}`, type, data: {}, tunes: {} })
   const tools = { list: List, table: Table, paragraph: Paragraph, image: Image, quiz: Quiz, codeBlock: CodeBlock, raw: Raw }
   const editor = {
+    ui: { nodes: { wrapper } },
     saver: { save: async () => ({ blocks: structuredClone(blocks) }) },
     tools: {
       getBlockTools: () =>
@@ -98,7 +102,7 @@ function fakeEditor({ deferredUpdates = false } = {}): { editor: API; blocks: Fa
     },
   } as unknown as API
 
-  return { editor, blocks }
+  return { editor, blocks, holder }
 }
 
 async function parse(
@@ -248,17 +252,31 @@ describe('untouched blocks', () => {
     expect(blocks.every((block) => Object.keys(block.data).length > 0)).toBe(true)
   })
 
-  it('still open when Editor.js fails to fill one of them', async () => {
+  it('report each failed update while opening the other blocks and preserving every source', async () => {
     const fake = fakeEditor({ deferredUpdates: true })
+    const failures: unknown[] = []
+    fake.holder.addEventListener('pw:editor-error', (event) => {
+      failures.push((event as CustomEvent).detail)
+    })
+    const paragraphError = new Error('paragraph render failed')
+    const tableError = new Error('table render failed')
     const update = fake.editor.blocks.update.bind(fake.editor.blocks)
-    fake.editor.blocks.update = ((id, data, tunes) =>
-      fake.blocks.find((block) => block.id === id)?.type === 'table'
-        ? Promise.reject(new Error('render failed'))
-        : update(id, data, tunes)) as typeof update
+    fake.editor.blocks.update = ((id, data, tunes) => {
+      const type = fake.blocks.find((block) => block.id === id)?.type
+      if (type === 'paragraph') return Promise.reject(paragraphError)
+      if (type === 'table') return Promise.reject(tableError)
+      return update(id, data, tunes)
+    }) as typeof update
 
-    await new EditorJsParseMarkdown(fake.editor, '* one\n* two\n\n| A |\n| --- |\n| 1 |').parseMarkdown()
+    const markdown = 'Intro\n\n* one\n* two\n\n| A |\n| --- |\n| 1 |'
+    await new EditorJsParseMarkdown(fake.editor, markdown).parseMarkdown()
 
-    expect(fake.blocks[0]).toMatchObject({ type: 'list', data: { style: 'unordered' } })
+    expect(fake.blocks[1]).toMatchObject({ type: 'list', data: { style: 'unordered' } })
+    expect(await save(fake.editor, fake.blocks)).toBe(markdown)
+    expect(failures).toEqual([
+      { operation: 'tool', error: paragraphError },
+      { operation: 'tool', error: tableError },
+    ])
   })
 
   it('leave an edited block to its export', async () => {

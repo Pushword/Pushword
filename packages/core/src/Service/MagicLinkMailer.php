@@ -116,6 +116,28 @@ final readonly class MagicLinkMailer
         );
     }
 
+    public function sendLoginCode(LoginToken $token): bool
+    {
+        $code = sprintf('%08d', random_int(0, 99_999_999));
+        $codeHash = password_hash($code, \PASSWORD_DEFAULT);
+        if (! $this->tokenRepo->issueLoginCode($token, $codeHash)) {
+            return false;
+        }
+
+        $appName = $this->apps->get()->getStr('name') ?: $this->apps->get()->getMainHost();
+        $sent = $this->emailSender->sendTemplated(
+            $this->emailSender->resolveEnvelope(toConfigKey: [$token->user->email]),
+            $this->translator->trans('magicLinkCodeEmailSubject', ['%appName%' => $appName], locale: $token->user->locale),
+            '@Pushword/user/email/login_code.html.twig',
+            ['code' => $code, 'appName' => $appName, 'locale' => $token->user->locale, 'expiresInMinutes' => LoginToken::CODE_TTL_SECONDS / 60],
+        );
+        if (! $sent) {
+            $this->tokenRepo->discardLoginCode($token, $codeHash);
+        }
+
+        return $sent;
+    }
+
     /** @param array<string, string> $parameters */
     private function generateLiveUrl(string $route, array $parameters): string
     {

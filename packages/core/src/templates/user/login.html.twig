@@ -9,7 +9,8 @@
   </p>
 {% endif %}
 
-{% for message in app.flashes('error') %}
+{% set flashErrors = app.flashes('error') %}
+{% for message in flashErrors %}
   <div role="alert" id="login-error" class="flex items-center gap-3 p-5 mb-4 text-red-800 bg-red-50 rounded">
     <svg class="w-5 h-5 shrink-0" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z" clip-rule="evenodd"/></svg>
     <span>{{ message|trans }}</span>
@@ -19,7 +20,7 @@
 {% if error %}
   <div role="alert" id="login-auth-error" class="flex items-center gap-3 p-5 mb-4 text-red-800 bg-red-50 rounded">
     <svg class="w-5 h-5 shrink-0" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z" clip-rule="evenodd"/></svg>
-    <span>{{ error.messageKey|trans(error.messageData) }}</span>
+    <span>{{ error.messageKey|trans(error.messageData, 'security') }}</span>
   </div>
 {% endif %}
 
@@ -29,7 +30,7 @@
   <input type="email" id="inputEmail" name="email" value="{{ last_username }}" required autofocus
          class="block w-full px-3 py-2 text-gray-900 placeholder-gray-500 border border-gray-300 rounded-md shadow-xs sm:text-sm focus:outline-hidden focus:ring-primary focus:border-primary"
          placeholder="{{ 'securityLoginEmail'|trans }}"
-         {% if error or app.flashes('error')|length > 0 %}aria-describedby="login-error" aria-invalid="true"{% endif %}>
+         {% if error or flashErrors|length > 0 %}aria-describedby="{{ error ? 'login-auth-error' : 'login-error' }}" aria-invalid="true"{% endif %}>
 
   <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
 
@@ -78,7 +79,7 @@
       <input type="password" id="inputPassword" name="password" required autofocus
              autocomplete="current-password"
              class="block w-full px-3 py-2 pr-10 text-gray-900 placeholder-gray-500 border border-gray-300 rounded-b-md sm:text-sm focus:outline-hidden focus:ring-primary focus:border-primary focus:z-10"
-             placeholder="{{ 'securityLoginPassword'|trans }}">
+             placeholder="{{ 'securityLoginPassword'|trans }}"{% if error %} aria-invalid="true" aria-describedby="login-auth-error"{% endif %}>
       <button type="button"
               class="absolute inset-y-0 right-0 flex items-center px-3 text-gray-500 hover:text-gray-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset"
               aria-label="{{ 'securityLoginTogglePassword'|trans }}"
@@ -93,12 +94,12 @@
 
   <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
 
-  <div class="flex items-center justify-between">
+  <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
     <label class="flex items-center gap-2 text-sm text-gray-900">
       <input type="checkbox" name="_remember_me" value="on" class="w-4 h-4 border-gray-300 rounded text-primary focus:ring-primary" checked>
       {{ 'securityLoginRememberMe'|trans }}
     </label>
-    <div class="flex gap-3">
+    <div class="flex flex-wrap gap-x-5 gap-y-2">
       {% if enable_password_reset|default(false) %}
       <a href="{{ path('pushword_forgot_password') }}" class="text-sm text-primary hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded">{{ 'forgotPasswordLink'|trans }}</a>
       {% endif %}

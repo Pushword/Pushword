@@ -21,6 +21,12 @@ class LoginToken
 
     public const int TTL_SECONDS = 3600; // 1 hour
 
+    public const int CODE_TTL_SECONDS = 600;
+
+    public const int CODE_MAX_ATTEMPTS = 5;
+
+    public const int CODE_RESEND_SECONDS = 60;
+
     #[ORM\Id, ORM\Column(type: Types::INTEGER), ORM\GeneratedValue(strategy: 'AUTO')]
     public private(set) ?int $id = null;
 
@@ -35,6 +41,18 @@ class LoginToken
 
     #[ORM\Column(type: Types::BOOLEAN)]
     public bool $used = false;
+
+    #[ORM\Column(type: Types::STRING, length: 255, nullable: true)]
+    public ?string $loginCodeHash = null;
+
+    #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true)]
+    public ?DateTimeImmutable $loginCodeExpiresAt = null;
+
+    #[ORM\Column(type: Types::INTEGER, options: ['default' => 0])]
+    public int $loginCodeAttempts = 0;
+
+    #[ORM\Column(type: Types::INTEGER, options: ['default' => 0])]
+    public int $sessionVersion = 0;
 
     public function __construct(#[ORM\ManyToOne(targetEntity: User::class)]
         #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
@@ -72,5 +90,12 @@ class LoginToken
         $this->used = true;
 
         return $this;
+    }
+
+    public function hasLoginCode(): bool
+    {
+        return null !== $this->loginCodeHash
+            && $this->loginCodeExpiresAt > new DateTimeImmutable()
+            && $this->loginCodeAttempts < self::CODE_MAX_ATTEMPTS;
     }
 }

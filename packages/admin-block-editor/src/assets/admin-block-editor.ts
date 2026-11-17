@@ -66,13 +66,20 @@ function initializeEditors(): void {
       manager?.toggleEditor()
     }
   })
-  document.addEventListener('keydown', (event) => {
-    if (!event.ctrlKey || event.altKey || event.shiftKey || event.key.toLowerCase() !== 'u') return
-    const widget = (event.target as Element).closest<HTMLElement>('[data-pw-editor-widget]')
-    if (!widget || widget.querySelector('.editorjs-holder[inert]')) return
-    event.preventDefault()
-    event.stopPropagation()
-    editorJsHelper.getModeManager(widget.dataset.pwEditorWidget!)?.toggleMarkdownEditor()
+  window.addEventListener('keydown', (event) => {
+    const target = event.target as Element
+    const widget = target.closest<HTMLElement>('[data-pw-editor-widget]')
+    if (!widget) return
+    if (event.ctrlKey && !event.altKey && !event.shiftKey && event.key.toLowerCase() === 'u') {
+      if (widget.querySelector('.editorjs-holder[inert]')) return
+      event.preventDefault()
+      event.stopPropagation()
+      editorJsHelper.getModeManager(widget.dataset.pwEditorWidget!)?.toggleMarkdownEditor()
+    } else if (target.closest('.pw-editor-modes, .pw-editor-alert, .pw-editor-diagnostics, .pw-editor-status')) {
+      // Editor.js captures document keys against its current block, even when
+      // a control outside its holder has focus. Keep native control behavior.
+      event.stopPropagation()
+    }
   }, { capture: true })
   document.body.addEventListener('keydown', (event) => {
     const target = event.target as HTMLElement

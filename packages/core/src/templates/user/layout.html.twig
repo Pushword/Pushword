@@ -9,9 +9,14 @@
     .pw-user-auth { --pw-auth-action: {{ apps.get().get('css_var:color_primary') is null ? 'oklch(50% 0.134 242.749)' : 'var(--primary)' }}; }
     .pw-auth-action { min-height: 2.75rem; background-color: var(--pw-auth-action); }
     .pw-auth-action:hover { background-color: color-mix(in oklch, var(--pw-auth-action), black 12%); }
+    .pw-auth-action:disabled { color: var(--color-gray-600); background-color: var(--color-gray-200); }
     .pw-auth-action:focus { --tw-ring-color: var(--pw-auth-action); }
-    .pw-user-auth a.text-primary { color: var(--pw-auth-action); }
-    .pw-user-auth a.text-primary:hover { color: color-mix(in oklch, var(--pw-auth-action), black 12%); }
+    .pw-user-auth :is(a, button).text-primary { color: var(--pw-auth-action); }
+    .pw-user-auth :is(a, button).text-primary:hover { color: color-mix(in oklch, var(--pw-auth-action), black 12%); }
+    .pw-user-auth :focus-visible { --tw-ring-color: var(--pw-auth-action); }
+    .pw-user-auth input:focus-visible { border-color: var(--pw-auth-action); outline: 2px solid var(--pw-auth-action); outline-offset: 2px; }
+    .pw-user-auth button:disabled { cursor: not-allowed; }
+    .pw-user-auth button.text-primary:disabled { color: var(--color-gray-500); }
   </style>
 {% endblock %}
 
@@ -19,10 +24,11 @@
 
 <div class="pw-user-auth flex items-center justify-center min-h-screen px-4 py-12 bg-gray-50 sm:px-6 lg:px-8" hx-boost="false">
     <div class="w-full max-w-md space-y-8">
-        <div>
-            <h1 class="mt-6 text-3xl font-bold text-center text-gray-900">
+        <div class="space-y-3">
+            <h1 class="text-2xl font-bold text-center text-gray-900 sm:text-3xl">
                 {{ block('title') }}
             </h1>
+            {% block auth_intro %}{% endblock %}
         </div>
         {% block main_content %}{% endblock %}
     </div>

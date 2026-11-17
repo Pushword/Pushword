@@ -103,6 +103,7 @@ for (const kind of ['campaign', 'automation'] as const) {
       await expect(image).toBeVisible()
     }
     await preview.screenshot({ path: testInfo.outputPath(`${kind}-image.png`) })
+    await page.unrouteAll({ behavior: 'wait' })
   })
 }
 

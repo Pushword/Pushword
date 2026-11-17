@@ -1707,16 +1707,16 @@
         },
         {
             "name": "guzzlehttp/guzzle",
-            "version": "8.5.0",
+            "version": "8.5.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/guzzle/guzzle.git",
-                "reference": "f8aca40edffeae0ec508b92f4594766083c6e203"
+                "reference": "5509cc8494c9016a08801cd328e0559bf356852e"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/guzzle/guzzle/zipball/f8aca40edffeae0ec508b92f4594766083c6e203",
-                "reference": "f8aca40edffeae0ec508b92f4594766083c6e203",
+                "url": "https://api.github.com/repos/guzzle/guzzle/zipball/5509cc8494c9016a08801cd328e0559bf356852e",
+                "reference": "5509cc8494c9016a08801cd328e0559bf356852e",
                 "shasum": ""
             },
             "require": {
@@ -1814,7 +1814,7 @@
             ],
             "support": {
                 "issues": "https://github.com/guzzle/guzzle/issues",
-                "source": "https://github.com/guzzle/guzzle/tree/8.5.0"
+                "source": "https://github.com/guzzle/guzzle/tree/8.5.1"
             },
             "funding": [
                 {
@@ -1830,7 +1830,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2026-11-13T03:12:32+00:00"
+            "time": "2026-11-17T03:22:13+00:00"
         },
         {
             "name": "guzzlehttp/promises",
@@ -4581,16 +4581,16 @@
         },
         {
             "name": "pushword/dev-app",
-            "version": "1.0.113",
+            "version": "1.0.114",
             "source": {
                 "type": "git",
                 "url": "https://github.com/Pushword/dev-app.git",
-                "reference": "ab8f27cf33908998d8e720cbe902bf5df928cedd"
+                "reference": "358ee4f5b7cfcd16030eb2bf258210a1e8185969"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/Pushword/dev-app/zipball/ab8f27cf33908998d8e720cbe902bf5df928cedd",
-                "reference": "ab8f27cf33908998d8e720cbe902bf5df928cedd",
+                "url": "https://api.github.com/repos/Pushword/dev-app/zipball/358ee4f5b7cfcd16030eb2bf258210a1e8185969",
+                "reference": "358ee4f5b7cfcd16030eb2bf258210a1e8185969",
                 "shasum": ""
             },
             "require": {
@@ -4631,7 +4631,7 @@
                     "type": "liberapay"
                 }
             ],
-            "time": "2026-11-14T17:46:14+00:00"
+            "time": "2026-11-17T01:45:38+00:00"
         },
         {
             "name": "sensiolabs/ansi-to-html",

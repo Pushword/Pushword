@@ -193,13 +193,13 @@ test('diagnostic download excludes page text and includes the suggestions experi
     )
   })
   await expect(page.locator('[data-pw-editor-error]')).toBeVisible()
-  await expect(panel).not.toHaveCSS('background-color', 'rgba(0, 0, 0, 0)')
+  await expect(page.locator('[data-pw-editor-error]')).not.toHaveCSS('background-color', 'rgba(0, 0, 0, 0)')
   expect(await panel.evaluate(panel => Boolean(
     document.querySelector('.editorjs-holder')!.compareDocumentPosition(panel) &
       Node.DOCUMENT_POSITION_FOLLOWING,
   ))).toBe(true)
   const downloaded = page.waitForEvent('download')
-  await page.locator('[data-pw-download-diagnostic]').click()
+  await panel.locator('[data-pw-download-diagnostic]').click()
   const download = await downloaded
   expect(download.suggestedFilename()).toBe('pushword-editor-diagnostic.json')
   const path = testInfo.outputPath('diagnostic.json')
