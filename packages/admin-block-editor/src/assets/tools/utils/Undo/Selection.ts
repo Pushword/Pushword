@@ -1,6 +1,6 @@
 import type EditorJS from '@editorjs/editorjs'
 import type { editor, ISelection } from 'monaco-editor'
-import { paragraphSelections } from '../ParagraphSelection'
+import { textSelections } from '../TextSelectionState'
 
 /** Raw and CodeBlock register their embedded editor without exposing Editor.js internals. */
 export const embeddedEditors = new WeakMap<
@@ -8,6 +8,7 @@ export const embeddedEditors = new WeakMap<
   {
     activate: () => Promise<void>
     instance: editor.IStandaloneCodeEditor | undefined
+    getValue?: () => string
   }
 >()
 
@@ -17,11 +18,13 @@ interface Point {
   path: number[]
   offset: number
   textOffset: number
+  edge?: 'before' | 'after'
 }
 
 export interface EditorSelection {
   anchor?: Point
   focus?: Point
+  text?: boolean
   control?: {
     block: string
     field: number
@@ -52,6 +55,13 @@ function point(
   offset: number,
   holder: HTMLElement,
 ): Point | undefined {
+  if (node instanceof Element && node.classList.contains('codex-editor__redactor') && holder.contains(node)) {
+    const next = node.childNodes[offset]
+    const block = next ?? node.childNodes[offset - 1]
+    if (block instanceof HTMLElement && block.matches('.ce-block')) return {
+      block: block.dataset.id!, field: -1, path: [], offset: 0, textOffset: 0, edge: next ? 'before' : 'after',
+    }
+  }
   const element = node instanceof Element ? node : node?.parentElement
   const block = element?.closest<HTMLElement>('.ce-block')
   if (!block || !holder.contains(block) || !node) return undefined
@@ -80,6 +90,12 @@ function point(
 }
 
 export function captureSelection(holder: HTMLElement): EditorSelection | null {
+  const range = textSelections.get(holder)
+  if (range) {
+    const anchor = point(range.startContainer, range.startOffset, holder)
+    const focus = point(range.endContainer, range.endOffset, holder)
+    if (anchor && focus) return { anchor, focus, text: true }
+  }
   const selected = Array.from(
     holder.querySelectorAll<HTMLElement>('.ce-block--selected'),
   ).map((node) => node.dataset.id!)
@@ -129,9 +145,8 @@ export function captureSelection(holder: HTMLElement): EditorSelection | null {
   }
   const selection = window.getSelection()
   if (!selection) return null
-  const range = paragraphSelections.get(holder)
-  const anchor = point(range?.startContainer ?? selection.anchorNode, range?.startOffset ?? selection.anchorOffset, holder)
-  const focus = point(range?.endContainer ?? selection.focusNode, range?.endOffset ?? selection.focusOffset, holder)
+  const anchor = point(selection.anchorNode, selection.anchorOffset, holder)
+  const focus = point(selection.focusNode, selection.focusOffset, holder)
   return anchor && focus ? { anchor, focus } : null
 }
 
@@ -170,6 +185,7 @@ export async function restoreSelection(
   holder: HTMLElement,
   saved: EditorSelection | null,
 ): Promise<void> {
+  textSelections.delete(holder)
   if (!saved) return
   const blockId =
     saved.monaco?.block ?? saved.control?.block ?? saved.focus?.block ?? saved.blocks?.[0]
@@ -246,12 +262,18 @@ export async function restoreSelection(
           : editor.blocks.getBlockByIndex(anchorIndex)
       const anchorField = anchorBlock && fields(anchorBlock.holder)[saved.anchor.field]
       const focusField = fields(block.holder)[saved.focus.field]
-      if (anchorField && focusField) {
-        focusField.focus({ preventScroll: true })
-        const anchor = resolvePoint(anchorField, saved.anchor)
-        const focus = resolvePoint(focusField, saved.focus)
+      const endpoint = (root: HTMLElement, saved: Point): { node: Node; offset: number } | undefined => {
+        if (saved.edge) return { node: root.parentNode!, offset: Array.from(root.parentNode!.childNodes).indexOf(root) + Number(saved.edge === 'after') }
+        const field = fields(root)[saved.field]
+        return field ? resolvePoint(field, saved) : undefined
+      }
+      const anchor = anchorBlock && endpoint(anchorBlock.holder, saved.anchor)
+      const focus = endpoint(block.holder, saved.focus)
+      if (anchor && focus) {
+        ;(focusField ?? anchorField)?.focus({ preventScroll: true })
         const selection = window.getSelection()!
         selection.setBaseAndExtent(anchor.node, anchor.offset, focus.node, focus.offset)
+        if (saved.text) textSelections.set(holder, selection.getRangeAt(0).cloneRange())
         const range = document.createRange()
         range.setStart(focus.node, focus.offset)
         range.collapse(true)

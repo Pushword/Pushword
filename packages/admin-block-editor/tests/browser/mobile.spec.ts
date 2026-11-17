@@ -19,6 +19,32 @@ test('the paragraph plus stays visible and tappable between non-text blocks', as
   await expect(page.locator('.tc-cell')).toHaveText('Keep cell')
 })
 
+test('native touch text selection preserves mixed paragraph and list boundaries through undo', async ({ editorPage: page }) => {
+  await render(page, [
+    { type: 'paragraph', data: { text: 'BEFORE|CUT' } },
+    { type: 'list', data: { style: 'unordered', items: [
+      { content: 'CUT|AFTER', meta: {}, items: [] }, { content: 'OTHER', meta: {}, items: [] },
+    ] } },
+  ])
+  await page.locator('.ce-paragraph').tap()
+  // Represent the range delivered by native selection handles across editing hosts.
+  await page.locator('.ce-paragraph').evaluate(field => {
+    const end = document.querySelector('.cdx-list__item-content')!
+    getSelection()!.setBaseAndExtent(field.firstChild!, 7, end.firstChild!, 4)
+  })
+  await expect.poll(() => page.evaluate(() => CSS.highlights.has('pw-text-selection'))).toBe(true)
+  await page.locator('.ce-paragraph').evaluate(field => field.dispatchEvent(
+    new InputEvent('beforeinput', { inputType: 'deleteContentBackward', bubbles: true, cancelable: true }),
+  ))
+  await expect(page.locator('.ce-paragraph')).toHaveText('BEFORE|')
+  await expect(page.locator('.cdx-list__item-content')).toHaveText(['AFTER', 'OTHER'])
+  await page.locator('.ce-paragraph').evaluate(field => field.dispatchEvent(
+    new InputEvent('beforeinput', { inputType: 'historyUndo', bubbles: true, cancelable: true }),
+  ))
+  await expect(page.locator('.ce-paragraph')).toHaveText('BEFORE|CUT')
+  await expect(page.locator('.cdx-list__item-content')).toHaveText(['CUT|AFTER', 'OTHER'])
+})
+
 test('touch insertion stays in the gutter without expanding text or mixing with block actions', async ({ editorPage: page }, testInfo) => {
   for (const width of [390, 320]) {
     await page.setViewportSize({ width, height: 844 })

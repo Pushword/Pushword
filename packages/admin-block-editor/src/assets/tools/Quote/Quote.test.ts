@@ -37,6 +37,10 @@ describe('a notice chunk goes to Notice, not Quote', () => {
     expect(classify('> Just a quote\n> — <cite>Author</cite>')).toEqual(['quote'])
   })
 
+  it('routes a caption-only blockquote with a formatted empty first line to quote', () => {
+    expect(classify('>\n> — <cite>Author</cite>')).toEqual(['quote'])
+  })
+
   it('routes an escaped marker to quote', () => {
     expect(classify('> \\[!NOTE] this stays a quotation')).toEqual(['quote'])
   })
@@ -72,6 +76,12 @@ function importQuote(markdown: string): QuoteData {
  * turn a quoted `&lt;div&gt;` into a real tag.
  */
 describe('Quote markdown round trip', () => {
+  it('keeps a caption when the selected quote body has been emptied', async () => {
+    const { format } = await import('prettier')
+    const markdown = await format(Quote.exportToMarkdown({ text: '', caption: 'Author' }), { parser: 'markdown' })
+    expect(importQuote(markdown)).toEqual({ text: '', caption: 'Author' })
+  })
+
   it.each([
     ['inline markdown', '> **bold**, _italic_, [a link](/page) and `code`'],
     [

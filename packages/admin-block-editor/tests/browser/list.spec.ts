@@ -116,8 +116,13 @@ const highlighted = [
 async function highlightListAndHeading(page: Page): Promise<void> {
   await page.locator('.cdx-list__item-content').first().click()
   await page.keyboard.press('Home')
-  await page.keyboard.press('Shift+ArrowDown')
-  await page.keyboard.press('Shift+ArrowDown')
+  // Initialize Editor.js' block-selection state independently of precise text selection.
+  for (let i = 0; i < 3; i++) await page.keyboard.press('Control+a')
+  await expect(page.locator('.ce-block--selected')).toHaveCount(4)
+  await page.locator('.ce-block').evaluateAll(blocks => {
+    blocks[0]!.classList.remove('ce-block--selected')
+    blocks[3]!.classList.remove('ce-block--selected')
+  })
   await expect(page.locator('.ce-block--selected')).toHaveCount(2)
 }
 
@@ -151,22 +156,37 @@ const field = (page: Page, text: string) => page.locator('.cdx-list__item-conten
 
 /** The texts of the items painted as selected across a list. */
 function selectedItems(page: Page): Promise<string[]> {
-  return page.evaluate(() => Array.from(CSS.highlights.get('pw-list-items') ?? [], (range) => (range as Range).toString()))
+  return page.evaluate(() => Array.from(CSS.highlights.get('pw-text-selection') ?? [], (range) => (range as Range).toString()).filter(Boolean))
 }
 
 /** Press the mouse at the start of one element and release it over another. */
-async function drag(page: Page, from: Locator, to: Locator): Promise<void> {
-  const start = (await from.boundingBox())!
-  const end = (await to.boundingBox())!
-  await page.mouse.move(start.x + 2, start.y + start.height / 2)
+async function drag(page: Page, from: Locator, to: Locator, startOffset = 0, endOffset?: number): Promise<void> {
+  const position = (locator: Locator, offset?: number) => locator.evaluate((field, offset) => {
+    let left = offset ?? field.textContent!.length
+    const walker = document.createTreeWalker(field, NodeFilter.SHOW_TEXT)
+    while (walker.nextNode()) {
+      if (left <= walker.currentNode.textContent!.length) break
+      left -= walker.currentNode.textContent!.length
+    }
+    const range = document.createRange()
+    const length = walker.currentNode.textContent!.length
+    range.setStart(walker.currentNode, Math.min(left, length - 1))
+    range.setEnd(walker.currentNode, Math.min(left + 1, length))
+    const rect = range.getBoundingClientRect()
+    return { x: left === length ? rect.right - 0.25 : rect.x + 0.25, y: rect.y + rect.height / 2 }
+  }, offset)
+  await from.scrollIntoViewIfNeeded()
+  const start = await position(from, startOffset)
+  const end = await position(to, endOffset)
+  await page.mouse.move(start.x, start.y)
   await page.mouse.down()
-  await page.mouse.move(end.x + end.width / 2, end.y + end.height / 2, { steps: 8 })
+  await page.mouse.move(end.x, end.y, { steps: 20 })
   await page.mouse.up()
 }
 
 const fourItems = list(item('First'), item('Second', [item('Child')]), item('Third'), item('Last'))
 
-test('a drag across items selects them whole, and Ctrl+C copies a line each', async ({ editorPage: page }) => {
+test('a drag covering complete item texts copies a line each', async ({ editorPage: page }) => {
   await render(page, [fourItems])
   await drag(page, field(page, 'First'), field(page, 'Third'))
   await expect.poll(() => selectedItems(page)).toEqual(['First', 'Second', 'Child', 'Third'])
@@ -179,10 +199,14 @@ test('a drag across items selects them whole, and Ctrl+C copies a line each', as
   expect(await selectedItems(page)).toEqual([])
 })
 
-test('Shift+click selects items from the caret\'s, and Delete removes them', async ({ editorPage: page }) => {
+test('Shift+click from the start of an item through the last item removes their selected text', async ({ editorPage: page }) => {
   await render(page, [fourItems])
   await field(page, 'Second').click()
-  await field(page, 'Last').click({ modifiers: ['Shift'] })
+  await page.keyboard.press('Home')
+  const last = (await field(page, 'Last').boundingBox())!
+  await page.keyboard.down('Shift')
+  await page.mouse.click(last.x + last.width - 1, last.y + last.height / 2)
+  await page.keyboard.up('Shift')
   await expect.poll(() => selectedItems(page)).toEqual(['Second', 'Child', 'Third', 'Last'])
   await page.keyboard.press('Delete')
   await expect.poll(() => outline(page)).toEqual(['First'])
@@ -214,9 +238,12 @@ test('items selected by a drag and copied paste into another list at their level
   await expect.poll(() => outline(page)).toEqual(['Parent', '  Child', 'Other', 'Target', 'Parent', '  Child'])
 })
 
-test('a drag carried on into another block still selects whole blocks', async ({ editorPage: page }) => {
+test('a drag continued into a paragraph preserves both unselected text boundaries', async ({ editorPage: page }) => {
   await render(page, [list(item('First'), item('Second')), { type: 'paragraph', data: { text: 'After.' } }])
-  await drag(page, field(page, 'First'), page.locator('.ce-paragraph'))
-  await expect(page.locator('.ce-block--selected')).toHaveCount(2)
+  await drag(page, field(page, 'First'), page.locator('.ce-paragraph'), 2, 2)
+  await expect(page.locator('.ce-block--selected')).toHaveCount(0)
+  await page.keyboard.press('Backspace')
+  await expect.poll(() => outline(page)).toEqual(['Fi'])
+  await expect(page.locator('.ce-paragraph')).toHaveText('ter.')
   expect(await selectedItems(page)).toEqual([])
 })

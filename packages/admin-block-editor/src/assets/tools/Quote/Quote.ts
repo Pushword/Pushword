@@ -10,11 +10,11 @@ export interface QuoteData extends BlockToolData {
 
 export default class Quote extends QuoteTool {
   static exportToMarkdown(data: QuoteData, tunes?: BlockTuneData): string {
-    if (!data || !data.text) {
+    if (!data || (!data.text && !data.caption)) {
       return ''
     }
 
-    const lines = MarkdownUtils.htmlLines(data.text).map((line) => line.trim())
+    const lines = MarkdownUtils.htmlLines(data.text ?? '').map((line) => line.trim())
 
     // Handle caption if present
     if (data.caption) {
@@ -63,6 +63,6 @@ export default class Quote extends QuoteTool {
   }
 
   static isItMarkdownExported(markdown: string): boolean {
-    return markdown.startsWith('> ')
+    return /^>(?:[ \t\r\n]|$)/.test(markdown)
   }
 }

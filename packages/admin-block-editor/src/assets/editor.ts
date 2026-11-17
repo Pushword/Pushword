@@ -30,7 +30,7 @@ import HyperlinkTune from './tools/HyperlinkTune/HyperlinkTune'
 import PasteLink from './tools/Hyperlink/PasteLink'
 import ClipboardManager, { setupBlockCut } from './tools/utils/ClipboardManager'
 import { setupBlockSelection } from './tools/utils/BlockSelection'
-import { setupParagraphSelection } from './tools/utils/ParagraphSelection'
+import { setupTextSelection } from './tools/utils/TextSelection'
 import { setupBlankBlockDeletion } from './tools/utils/BlankBlockDeletion'
 import { setupBlockInsertion } from './tools/utils/BlockInsertion'
 import { setupEditorPopovers } from './tools/utils/editorPopovers'
@@ -246,7 +246,7 @@ export class editorJs {
             editorListeners.abort()
             destroy()
           }
-          setupParagraphSelection(editor, document.getElementById(config.holder!)!, editorListeners.signal)
+          setupTextSelection(editor, document.getElementById(config.holder!)!, editorListeners.signal)
           new PasteLink({ editor })
           new ClipboardManager({ editor })
           setupBlockCut(editor, document.getElementById(config.holder!)!, editorListeners.signal)

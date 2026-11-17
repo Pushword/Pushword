@@ -188,16 +188,15 @@ export default class Image extends AbstractMediaTool {
   }
 
   public save(block: HTMLElement): ImageData {
-    // Extraire le nom du média et le caption
     if (!this.media) {
       return { media: '', caption: '' }
     }
     return {
       media: this.media,
       caption:
-        this.nodes.caption.textContent?.trim() ||
-        block.querySelector('.image-tool__caption')?.textContent?.trim() ||
-        this.data.caption ||
+        this.nodes.caption.textContent?.trim() ??
+        block.querySelector('.image-tool__caption')?.textContent?.trim() ??
+        this.data.caption ??
         '',
     }
   }

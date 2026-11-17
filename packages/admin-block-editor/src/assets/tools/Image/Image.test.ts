@@ -103,6 +103,13 @@ describe('Image – removing the media', () => {
     expect(tool.save(wrapper)).toEqual({ media: 'other.jpg', caption: '' })
   })
 
+  it('saves an emptied caption without restoring the original text', () => {
+    const tool = imageWith('photo.jpg')
+    const wrapper = tool.render()
+    tool.nodes.caption.textContent = ''
+    expect(tool.save(wrapper)).toEqual({ media: 'photo.jpg', caption: '' })
+  })
+
   it('does not submit the admin form it is rendered inside', () => {
     const tool = imageWith('photo.jpg')
 

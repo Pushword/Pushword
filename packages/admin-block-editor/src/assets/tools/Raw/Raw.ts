@@ -88,6 +88,7 @@ export default class Raw extends BaseTool {
     const embedded = {
       instance: undefined as editor.IStandaloneCodeEditor | undefined,
       activate,
+      getValue: () => this.editorInstance?.getValue() ?? this.data.html,
     }
     embeddedEditors.set(this.wrapper, embedded)
     preview.addEventListener('focus', () => {

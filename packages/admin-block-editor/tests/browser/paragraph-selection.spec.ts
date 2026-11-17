@@ -27,7 +27,7 @@ async function dragText(page: Page, start: number, end: number, backward = false
   await page.mouse.move(points[1].x, points[1].y, { steps: 30 })
   await page.mouse.up()
   await expect(page.locator('.ce-block--selected')).toHaveCount(0)
-  await expect.poll(() => page.evaluate(() => CSS.highlights.has('pw-paragraph-selection'))).toBe(true)
+  await expect.poll(() => page.evaluate(() => CSS.highlights.has('pw-text-selection'))).toBe(true)
 }
 
 for (const backward of [false, true]) {
@@ -98,7 +98,7 @@ test('clicking after a paragraph selection returns to ordinary text editing', as
   await page.keyboard.press('End')
   await page.keyboard.type('!')
   await expect(page.locator('.ce-paragraph')).toHaveText(['First paragraph', 'Second paragraph!'])
-  await expect.poll(() => page.evaluate(() => CSS.highlights.has('pw-paragraph-selection'))).toBe(false)
+  await expect.poll(() => page.evaluate(() => CSS.highlights.has('pw-text-selection'))).toBe(false)
 })
 
 test('dragging from a short paragraph reaches text beneath the inline toolbar', async ({ editorPage: page }) => {
@@ -169,7 +169,7 @@ for (const key of ['ArrowLeft', 'ArrowRight', 'Escape']) {
     await expect(page.locator('.ce-paragraph')).toHaveText(key === 'ArrowRight'
       ? ['First paragraph', 'Second! paragraph']
       : ['!First paragraph', 'Second paragraph'])
-    await expect.poll(() => page.evaluate(() => CSS.highlights.has('pw-paragraph-selection'))).toBe(false)
+    await expect.poll(() => page.evaluate(() => CSS.highlights.has('pw-text-selection'))).toBe(false)
   })
 }
 

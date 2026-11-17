@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import type { editor as MonacoEditor } from 'monaco-editor'
 import { captureSelection, embeddedEditors, restoreSelection } from './Selection'
-import { paragraphSelections } from '../ParagraphSelection'
+import { textSelections } from '../TextSelectionState'
 
 let holder: HTMLElement
 let editor: any
@@ -22,27 +22,50 @@ beforeEach(() => {
   }
 })
 afterEach(() => {
-  paragraphSelections.delete(holder)
+  textSelections.delete(holder)
   document.body.replaceChildren()
   vi.restoreAllMocks()
 })
 
 it('captures both highlighted paragraph endpoints while native input keeps a collapsed caret', async () => {
   const fields = holder.querySelectorAll('[contenteditable]')
-  const first = fields[0].firstChild!
-  const last = fields[1].firstChild!
+  const first = fields[0]!.firstChild!
+  const last = fields[1]!.firstChild!
   const range = document.createRange()
   range.setStart(first, 2)
   range.setEnd(last, 3)
-  paragraphSelections.set(holder, range)
+  textSelections.set(holder, range)
   getSelection()!.collapse(first, 2)
   const saved = captureSelection(holder)
-  paragraphSelections.delete(holder)
+  textSelections.delete(holder)
   await restoreSelection(editor, holder, saved)
   expect(getSelection()!.anchorNode).toBe(first)
   expect(getSelection()!.anchorOffset).toBe(2)
   expect(getSelection()!.focusNode).toBe(last)
   expect(getSelection()!.focusOffset).toBe(3)
+})
+
+it.each(['before', 'after'] as const)('restores an atomic block %s edge after block indices change', async (edge) => {
+  holder.classList.add('codex-editor__redactor')
+  const first = holder.querySelector('[contenteditable]')!.firstChild!
+  const last = holder.lastElementChild!
+  const range = document.createRange()
+  range.setStart(first, 2)
+  range.setEnd(holder, edge === 'before' ? 1 : 2)
+  textSelections.set(holder, range)
+  const saved = captureSelection(holder)!
+  expect(saved.focus).toMatchObject({ block: 'b', edge })
+
+  holder.prepend(document.createElement('div'))
+  textSelections.delete(holder)
+  getSelection()!.removeAllRanges()
+  await restoreSelection(editor, holder, saved)
+
+  const restored = textSelections.get(holder)!
+  expect(restored.startContainer).toBe(first)
+  expect(restored.startOffset).toBe(2)
+  expect(restored.endContainer).toBe(holder)
+  expect(restored.endOffset).toBe(Array.from(holder.childNodes).indexOf(last) + Number(edge === 'after'))
 })
 
 it('restores a backward selection across inline elements and blocks', async () => {
