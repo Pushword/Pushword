@@ -1,6 +1,6 @@
 ---
-title: 'Editor Hidden Super Power - Cheatsheet Pushword'
-h1: 'Editor Hidden Super Power<br><small>and Markdown Cheatsheet</small>'
+title: 'Markdown cheatsheet'
+h1: 'Markdown cheatsheet'
 publishedAt: '2025-12-21 21:55'
 prose: ' '
 raw: true
@@ -12,7 +12,8 @@ main_content_filters: twig
         <div class="p-3 prose dark:prose-light max-w-none">
             <h1>{{ pw(page).h1|raw }}</h1>
 
-After installing the [admin](/extension/admin), you will be able to read this doc directly from your Pushword installation at `/admin/markdown-cheatsheet`.
+Open this cheatsheet in your [admin](/extension/admin) at `/admin/markdown-cheatsheet`.
+For block controls, text selection and diagrams, see [Using the block editor](/extension/admin-block-editor#usage).
 
 </div>
     </div>

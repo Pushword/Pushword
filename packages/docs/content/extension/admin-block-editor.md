@@ -99,6 +99,37 @@ The older `window.pagesUriList` array of paths still works, without titles.
 
 ## Usage
 
+The editor shows a loading message until the page content is ready. Editing and
+source controls become available together. If loading fails, use **Reload page**.
+
+### Insert a paragraph
+
+Use the **Add paragraph** button between blocks. It appears on hover or keyboard
+focus on desktop, and stays visible on touch screens.
+
+Raw HTML and Code blocks also offer **Add paragraph before** and **Add paragraph
+after** in their settings. While editing code, use `Ctrl+Enter` to insert after the
+block, or `Ctrl+Shift+Enter` to insert before it (`Cmd` on macOS). Plain `Enter`
+adds a line to the code.
+
+### Select across blocks
+
+Drag across text fields, or extend a selection with `Shift+click` or `Shift+Arrow`.
+Selections can span paragraphs, headings, lists, quotes, captions and table cells.
+Copy or cut preserves the selected text; typing replaces it, keeping text outside
+the selection. Fully selected image, code and other non-text blocks are included.
+Undo restores the edit and selection.
+
+### Edit a Mermaid diagram
+
+A Code block with language **Mermaid** displays its diagram by default. Choose
+**Edit diagram** to edit the source beside a live preview, then **Done** to return
+to reading. **Enter fullscreen** expands the editing workspace; **Exit fullscreen**
+or `Escape` returns to inline editing. A second `Escape` returns to reading.
+
+If the source contains an error, the editor keeps the last valid preview and shows
+an error message. Saving stores the Mermaid source.
+
 ### Reporting an editor problem
 
 Open **Report a problem** below the editor, reproduce the issue, then download the
