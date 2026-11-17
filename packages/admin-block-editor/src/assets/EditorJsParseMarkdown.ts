@@ -82,7 +82,8 @@ export class EditorJsParseMarkdown {
     await this.editorJsInstance.blocks.clear()
 
     const inserted: BlockAPI[] = []
-    const editor = this.importApi(inserted)
+    const updates: Promise<unknown>[] = []
+    const editor = this.importApi(inserted, updates)
     const sources = BlockSources.reset(this.editorJsInstance)
     const nesting = new GroupNesting()
     for (const chunk of MarkdownUtils.chunkMarkdown(this.markdown)) {
@@ -98,6 +99,11 @@ export class EditorJsParseMarkdown {
 
     // Establish the imported value before an author's first edit. Some tools
     // render form controls without firing an initial block-changed event.
+    // Tools insert an empty block and fill it through blocks.update(), which
+    // settles later: a baseline taken before would hold empty lists and tables,
+    // and every block it misjudges as edited loses its source on save. One
+    // failed update must not stop the page from opening, as before this wait.
+    await Promise.allSettled(updates)
     const baseline = await this.editorJsInstance.saver.save()
     await new EditorJsExportMarkdown(this.editorJsInstance, baseline).exportToMarkdown()
   }
@@ -107,9 +113,10 @@ export class EditorJsParseMarkdown {
    * the first one in place of the empty paragraph `blocks.clear()` leaves — or
    * every page opens on a blank line above its content. Deleting that paragraph
    * afterwards would not do: `blocks.delete()` moves the caret into the editor,
-   * and the page scrolls to it.
+   * and the page scrolls to it. It also keeps each `blocks.update()` the tools
+   * fire without awaiting, so the parse can wait for the blocks to hold their data.
    */
-  private importApi(inserted: BlockAPI[]): API {
+  private importApi(inserted: BlockAPI[], updates: Promise<unknown>[]): API {
     const blocks = this.editorJsInstance.blocks
     const insert: API['blocks']['insert'] = (
       type,
@@ -128,9 +135,17 @@ export class EditorJsParseMarkdown {
 
       return block
     }
+    const update: API['blocks']['update'] = (id, data, tunes) => {
+      const updated = blocks.update(id, data, tunes)
+      updates.push(Promise.resolve(updated))
+
+      return updated
+    }
 
     return Object.create(this.editorJsInstance, {
-      blocks: { value: Object.create(blocks, { insert: { value: insert } }) },
+      blocks: {
+        value: Object.create(blocks, { insert: { value: insert }, update: { value: update } }),
+      },
     })
   }
 }

@@ -148,3 +148,18 @@ for (const mode of ['markdown', 'json']) {
     await expect(child).toHaveText('Child')
   })
 }
+
+test('editing one block saves the untouched list and table back as written', async ({ editorPage: page }) => {
+  const list = '- Rubrique « Apport », vraiment ?\n- Deux'
+  const table = '| Départs | Coût |\n| --- | --- |\n| 1 | <span data-value="cost 1">850 €</span> |'
+  const markdown = `Intro\n\n${list}\n\n${table}`
+  const exported = await page.evaluate(async markdown => {
+    const holder = document.querySelector<HTMLElement>('.editorjs-holder')!
+    const editor = window.editors[holder.id]
+    await new window.EditorJsParseMarkdown(editor, markdown).parseMarkdown()
+    // The edit lands in a block that holds its rendered data.
+    await editor.blocks.update(editor.blocks.getBlockByIndex(0)!.id, { text: 'Intro edited' })
+    return new window.EditorJsExportMarkdown(editor, await editor.saver.save()).exportToMarkdown()
+  }, markdown)
+  expect(exported).toBe(`Intro edited\n\n${list}\n\n${table}`)
+})
