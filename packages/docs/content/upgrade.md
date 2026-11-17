@@ -16,6 +16,7 @@ Package names omit `pushword/`; `js-helper` is the npm package
 
 | Version | Packages | What changed |
 | --- | --- | --- |
+| [1.0.116](/upgrade/1.0.116) | `core` | login links offer code recovery; authentication layouts include an introduction block — run `doctrine:schema:update --force`, then `assets:install --symlink` |
 | [1.0.113](/upgrade/1.0.113) | `core` `static-generator` | optional on-demand image generation with a local disk budget |
 | [1.0.112](/upgrade/1.0.112) | `core` `twigstan` | twig analysis reports guarded access on always-null values; doctrine uses the schema editor API |
 | [1.0.110](/upgrade/1.0.110) | `core` `dev-app` | update the Docker base image to FrankenPHP 1.13.5 |
