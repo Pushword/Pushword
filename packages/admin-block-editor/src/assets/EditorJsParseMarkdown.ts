@@ -4,6 +4,7 @@ import { ToolInterface } from './tools/Abstract/ToolInterface'
 import { MarkdownUtils } from './tools/utils/MarkdownUtils'
 import { BlockSources } from './BlockSources'
 import EditorJsExportMarkdown from './EditorJsExportMarkdown'
+import { reportEditorError } from './EditorDiagnostics'
 import { GroupNesting } from './tools/Group/GroupNesting'
 import { GroupRegistry } from './tools/Group/GroupRegistry'
 import GroupStart from './tools/Group/GroupStart'
@@ -102,8 +103,16 @@ export class EditorJsParseMarkdown {
     // Tools insert an empty block and fill it through blocks.update(), which
     // settles later: a baseline taken before would hold empty lists and tables,
     // and every block it misjudges as edited loses its source on save. One
-    // failed update must not stop the page from opening, as before this wait.
-    await Promise.allSettled(updates)
+    // failed update must not stop the page from opening, but must stay visible.
+    for (const result of await Promise.allSettled(updates)) {
+      if (result.status === 'rejected') {
+        reportEditorError(
+          this.editorJsInstance.ui.nodes.wrapper.closest('.editorjs-holder'),
+          'tool',
+          result.reason,
+        )
+      }
+    }
     const baseline = await this.editorJsInstance.saver.save()
     await new EditorJsExportMarkdown(this.editorJsInstance, baseline).exportToMarkdown()
   }

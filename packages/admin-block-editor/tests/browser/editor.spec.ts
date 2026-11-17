@@ -163,3 +163,26 @@ test('editing one block saves the untouched list and table back as written', asy
   }, markdown)
   expect(exported).toBe(`Intro edited\n\n${list}\n\n${table}`)
 })
+
+test('a failed block import shows an error while keeping the source and the other blocks', async ({ editorPage: page }) => {
+  const markdown = '* one\n* two\n\n| A |\n| --- |\n| 1 |'
+  const exported = await page.evaluate(async markdown => {
+    const holder = document.querySelector<HTMLElement>('.editorjs-holder')!
+    const editor = window.editors[holder.id]
+    const update = editor.blocks.update
+    editor.blocks.update = (id: string, data: unknown, tunes: unknown) =>
+      editor.blocks.getById(id).name === 'table'
+        ? Promise.reject(new Error('table render failed'))
+        : update.call(editor.blocks, id, data, tunes)
+    try {
+      await new window.EditorJsParseMarkdown(editor, markdown).parseMarkdown()
+      return await new window.EditorJsExportMarkdown(editor, await editor.saver.save()).exportToMarkdown()
+    } finally {
+      editor.blocks.update = update
+    }
+  }, markdown)
+
+  await expect(page.locator('[data-pw-editor-error]')).toBeVisible()
+  await expect(page.locator('.cdx-list__item-content')).toHaveText(['one', 'two'])
+  expect(exported).toBe(markdown)
+})
