@@ -42,8 +42,11 @@ export default class PasteLink {
         if (parentAnchor) return
 
         // Do we have an URL in the clipboard to create a link ?
-        const text = this.getClipboardText(event)
-        if (!isSafeLinkUrl(text)) return
+        const text = this.getClipboardText(event).trim()
+        if (
+          !/^(?:https?:\/\/|mailto:|tel:|\/|\.{1,2}\/|#|\?)\S*$/i.test(text) ||
+          !isSafeLinkUrl(text)
+        ) return
 
         event.preventDefault()
         event.stopPropagation()
@@ -64,7 +67,7 @@ export default class PasteLink {
   }
 
   private getClipboardText(event: ClipboardEvent): string {
-    // @ts-ignore windows 11 clipboardData
+    // @ts-expect-error Legacy clipboardData is not declared on Window.
     return (event.clipboardData || window.clipboardData)?.getData('text') || ''
 
     // const text = await window.navigator.clipboard.readText()
