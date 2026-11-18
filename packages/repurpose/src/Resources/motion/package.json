@@ -10,6 +10,6 @@
     "still": "node src/run.mjs still"
   },
   "dependencies": {
-    "hyperframes": "0.9.58"
+    "hyperframes": "0.9.65"
   }
 }
