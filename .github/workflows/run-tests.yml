@@ -110,8 +110,8 @@ jobs:
         # A stalled package mirror otherwise holds the job until GitHub's six-hour limit.
         timeout-minutes: 5
         run: |
-          # Use the runner's official HTTPS mirrors instead of the slow Azure mirror.
-          sudo sed -i '/azure\.archive\.ubuntu\.com/d' /etc/apt/apt-mirrors.txt
+          # Keep the official HTTPS mirrors; regional HTTP mirrors can stall downloads.
+          sudo sed -i '\|^http://|d' /etc/apt/apt-mirrors.txt
           sudo apt-get update
           sudo apt-get install -y ffmpeg
 
@@ -199,8 +199,8 @@ jobs:
         if: matrix.browser == 'firefox'
         timeout-minutes: 5
         run: |
-          # Playwright also installs Ubuntu packages; use the same mirrors as the PHP jobs.
-          sudo sed -i '/azure\.archive\.ubuntu\.com/d' /etc/apt/apt-mirrors.txt
+          # Playwright also installs Ubuntu packages; keep the official HTTPS mirrors.
+          sudo sed -i '\|^http://|d' /etc/apt/apt-mirrors.txt
           yarn --cwd packages/admin-block-editor playwright install --with-deps firefox
 
       - name: Build the editor under test
@@ -379,8 +379,8 @@ jobs:
         # A stalled package mirror otherwise holds the job until GitHub's six-hour limit.
         timeout-minutes: 5
         run: |
-          # Use the runner's official HTTPS mirrors instead of the slow Azure mirror.
-          sudo sed -i '/azure\.archive\.ubuntu\.com/d' /etc/apt/apt-mirrors.txt
+          # Keep the official HTTPS mirrors; regional HTTP mirrors can stall downloads.
+          sudo sed -i '\|^http://|d' /etc/apt/apt-mirrors.txt
           sudo apt-get update
           sudo apt-get install -y ghostscript qpdf ffmpeg
 
@@ -507,7 +507,8 @@ jobs:
       - name: Install image, PDF and audio tools
         timeout-minutes: 5
         run: |
-          sudo sed -i '/azure\.archive\.ubuntu\.com/d' /etc/apt/apt-mirrors.txt
+          # Keep the official HTTPS mirrors; regional HTTP mirrors can stall downloads.
+          sudo sed -i '\|^http://|d' /etc/apt/apt-mirrors.txt
           sudo apt-get update
           sudo apt-get install -y ghostscript qpdf ffmpeg
 
@@ -600,7 +601,8 @@ jobs:
       - name: Install image, PDF and audio tools
         timeout-minutes: 5
         run: |
-          sudo sed -i '/azure\.archive\.ubuntu\.com/d' /etc/apt/apt-mirrors.txt
+          # Keep the official HTTPS mirrors; regional HTTP mirrors can stall downloads.
+          sudo sed -i '\|^http://|d' /etc/apt/apt-mirrors.txt
           sudo apt-get update
           sudo apt-get install -y ghostscript qpdf ffmpeg
 
