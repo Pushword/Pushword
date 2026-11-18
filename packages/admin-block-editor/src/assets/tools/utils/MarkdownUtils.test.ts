@@ -172,6 +172,59 @@ describe('MarkdownUtils.convertInlineMarkdownToHtml', () => {
     )
   })
 
+  it.each(['.link-btn-outline', 'class="link-btn-outline"'])(
+    'imports the mailto button style from {%s}',
+    (attributes) => {
+      const href = 'mailto:bonjour@originguide.org?subject=Candidature%20spontan%C3%A9e'
+      expect(convert(`[Envoyer une candidature spontanée](${href}){${attributes}}`)).toBe(
+        `<a href="${href}" class="link-btn-outline">Envoyer une candidature spontanée</a>`,
+      )
+    },
+  )
+
+  it.each([
+    '.link-btn-outline .wide',
+    '.link-btn-outline.wide',
+    '.link-btn-outline class="wide"',
+    'class="link-btn-outline" .wide',
+    ".link-btn-outline class='wide'",
+    '.link-btn-outline class=wide',
+  ])('merges the link classes in {%s}', (attributes) => {
+    expect(convert(`[a](/b){${attributes}}`)).toBe(
+      '<a href="/b" class="link-btn-outline wide">a</a>',
+    )
+  })
+
+  it('keeps dots in attribute values separate from shorthand classes', () => {
+    const html = convert(
+      '#[a](/b "T"){.link-btn-outline target="_blank" data-label=".literal class=wide" data-url=example.org}',
+    )
+    const anchor = document.createElement('div')
+    anchor.innerHTML = html
+    const link = anchor.querySelector('a')!
+    expect(link.className).toBe('link-btn-outline')
+    expect(link.getAttribute('rel')).toBe('obfuscate')
+    expect(link.getAttribute('target')).toBe('_blank')
+    expect(link.getAttribute('title')).toBe('T')
+    expect(link.getAttribute('data-label')).toBe('.literal class=wide')
+    expect(link.getAttribute('data-url')).toBe('example.org')
+  })
+
+  it('keeps shorthand link classes after editing and reimporting', () => {
+    const html = convert('[a](/b){.link-btn-outline .md:w-auto}')
+    const markdown = MarkdownUtils.convertInlineHtmlToMarkdown(`${html} corrigé`)
+    expect(markdown).toBe('[a](/b){class="link-btn-outline md:w-auto"} corrigé')
+    expect(convert(markdown)).toBe(`${html} corrigé`)
+  })
+
+  it('escapes class names without double-encoding existing class entities', () => {
+    const container = document.createElement('div')
+    container.innerHTML = convert('[a](/b){.link-btn-outline class="wide&amp;compact" .has"quote}')
+    const link = container.querySelector('a')!
+    expect(link.className).toBe('link-btn-outline wide&compact has"quote')
+    expect(link.getAttributeNames()).toEqual(['href', 'class'])
+  })
+
   it('keeps an image inside a link as markdown text in the anchor', () => {
     expect(convert('Voir [![a_b](x_y.png)](/page) ici')).toBe(
       'Voir <a href="/page">![a_b](x_y.png)</a> ici',

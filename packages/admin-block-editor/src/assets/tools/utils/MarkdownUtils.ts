@@ -898,7 +898,31 @@ export class MarkdownUtils {
     const attributes = [`href="${href}"`]
     if (title !== undefined) attributes.push(`title="${title}"`)
     if (isObfuscated) attributes.push('rel="obfuscate"')
-    if (attrsString) attributes.push(attrsString)
+    if (attrsString) {
+      const classes: string[] = []
+      // Read whole attribute values first: a dot inside one is not a class shorthand.
+      const extras = attrsString.replace(
+        /([\w:-]+)\s*=\s*("[^"]*"|'[^']*'|[^\s]+)|\.(-?[_a-z][^\s.}]*)/gi,
+        (
+          attribute: string,
+          name: string | undefined,
+          value: string | undefined,
+          className: string | undefined,
+        ) => {
+          if (className !== undefined) {
+            classes.push(className)
+            return ''
+          }
+          if (name?.toLowerCase() === 'class') {
+            classes.push(he.decode(value!.replace(/^["']|["']$/g, '')))
+            return ''
+          }
+          return attribute
+        },
+      ).trim()
+      if (extras) attributes.push(extras)
+      if (classes.length) attributes.push(`class="${he.escape(classes.join(' '))}"`)
+    }
 
     return `<a ${attributes.join(' ')}>`
   }
