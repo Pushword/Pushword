@@ -27,6 +27,9 @@ class LoginToken
 
     public const int CODE_RESEND_SECONDS = 60;
 
+    /** How long after the link was sent its page still issues and accepts email codes. */
+    public const int RECOVERY_TTL_SECONDS = 86_400;
+
     #[ORM\Id, ORM\Column(type: Types::INTEGER), ORM\GeneratedValue(strategy: 'AUTO')]
     public private(set) ?int $id = null;
 
@@ -83,6 +86,11 @@ class LoginToken
     public function isValid(): bool
     {
         return ! $this->used && $this->expiresAt > new DateTimeImmutable();
+    }
+
+    public function isRecoveryExpired(): bool
+    {
+        return $this->createdAt->modify('+'.self::RECOVERY_TTL_SECONDS.' seconds') <= new DateTimeImmutable();
     }
 
     public function markUsed(): self

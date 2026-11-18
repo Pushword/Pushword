@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pushword\Core\Tests\Entity;
 
+use DateTimeImmutable;
 use PHPUnit\Framework\TestCase;
 use Pushword\Core\Entity\LoginToken;
 use Pushword\Core\Entity\User;
@@ -74,5 +75,17 @@ final class LoginTokenTest extends TestCase
 
         $diff = $token->expiresAt->getTimestamp() - $token->createdAt->getTimestamp();
         self::assertSame(3600, $diff);
+    }
+
+    public function testRecoveryExpiresOneDayAfterTheLinkWasSent(): void
+    {
+        $token = new LoginToken(new User());
+        self::assertFalse($token->isRecoveryExpired());
+
+        $token->createdAt = new DateTimeImmutable('-'.(LoginToken::RECOVERY_TTL_SECONDS - 60).' seconds');
+        self::assertFalse($token->isRecoveryExpired());
+
+        $token->createdAt = new DateTimeImmutable('-'.LoginToken::RECOVERY_TTL_SECONDS.' seconds');
+        self::assertTrue($token->isRecoveryExpired());
     }
 }

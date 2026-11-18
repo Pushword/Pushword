@@ -51,6 +51,12 @@ final class MagicLoginController extends AbstractController
             return $this->redirectToRoute($user->requiresPasswordChange() ? 'pushword_login_change_password' : 'pushword_admin');
         }
 
+        if ($loginToken->isRecoveryExpired()) {
+            $this->addFlash('error', 'magicLinkExpiredOrUsed');
+
+            return $this->redirectToRoute('pushword_login');
+        }
+
         $error = null;
         $status = Response::HTTP_OK;
         if ($request->isMethod('POST')) {
