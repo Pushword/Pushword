@@ -4,8 +4,11 @@ declare(strict_types=1);
 
 namespace Pushword\Admin\Tests\Controller;
 
+use DateTime;
+use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\Attributes\Group;
 use Pushword\Admin\Tests\AbstractAdminTestClass;
+use Pushword\Core\Entity\Page;
 use Pushword\Core\Repository\PageRepository;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -13,9 +16,40 @@ use Symfony\Component\HttpFoundation\Response;
 #[Group('integration')]
 final class PageCloneTest extends AbstractAdminTestClass
 {
+    /** @var list<Page> */
+    private array $recentPages = [];
+
+    protected function tearDown(): void
+    {
+        $em = self::getContainer()->get(EntityManagerInterface::class);
+        foreach ($this->recentPages as $recentPage) {
+            $page = $em->find(Page::class, $recentPage->id);
+            if ($page instanceof Page) {
+                $em->remove($page);
+            }
+        }
+
+        $em->flush();
+        parent::tearDown();
+    }
+
     public function testClonePage(): void
     {
         $client = $this->loginUser();
+
+        // The clone target need not be among the ten most recently edited pages.
+        $em = self::getContainer()->get(EntityManagerInterface::class);
+        for ($i = 0; $i < 11; ++$i) {
+            $recentPage = new Page();
+            $recentPage->h1 = 'Recent page '.$i;
+            $recentPage->slug = 'clone-pagination-'.$i;
+            $recentPage->host = 'localhost.dev';
+            $recentPage->updatedAt = new DateTime('2999-12-31');
+            $em->persist($recentPage);
+            $this->recentPages[] = $recentPage;
+        }
+
+        $em->flush();
 
         /** @var PageRepository $pageRepo */
         $pageRepo = self::getContainer()->get(PageRepository::class);
@@ -23,9 +57,14 @@ final class PageCloneTest extends AbstractAdminTestClass
         self::assertNotNull($page, 'Fixture page "homepage" must exist');
 
         $path = self::getContainer()->get('router')->generate('admin_page_clone_page', ['entityId' => $page->id]);
-        $crawler = $client->request(Request::METHOD_GET, $this->generateAdminUrl('admin_page_list'));
-        self::assertCount(1, $crawler->filter('.pw-page-actions .dropdown-menu form[action$="'.$path.'"] button.dropdown-item'));
-        $token = $crawler->filter('form[action$="'.$path.'"] input[name="_token"]')->attr('value');
+        $crawler = $client->request(Request::METHOD_GET, $this->generateAdminUrl('admin_page_list', [
+            'filter' => [
+                'slug' => ['comparison' => '=', 'value' => $page->slug],
+                'host' => ['comparison' => '=', 'value' => $page->host],
+            ],
+        ]));
+        self::assertCount(1, $crawler->filter('.pw-page-actions .dropdown-menu form[action*="'.$path.'?"] button.dropdown-item'));
+        $token = $crawler->filter('form[action*="'.$path.'?"] input[name="_token"]')->attr('value');
         self::assertNotNull($token);
 
         $client->request(Request::METHOD_GET, $path);
