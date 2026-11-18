@@ -36,8 +36,12 @@ Forms are fetched by their own request, so they work on cached and static pages:
 <p>An invitation to <button data-src-live="..." data-target="parent">register</button></p>
 
 {# Rendered server-side #}
-{{ render(controller('Pushword\\Conversation\\Controller\\ConversationFormController::show', {type: 'newsletter'})) }}
+{{ render(controller('Pushword\\Conversation\\Controller\\ConversationFormController::show', {type: 'newsletter', referring: 'footer'})) }}
 ```
+
+A server-side form carries a [signed action](#spam-protection) valid one day. On a page
+cached or generated for longer, its first post is refused and the form comes back with a
+fresh action: prefer `data-live` there.
 
 `data-live` and `data-src-live` are handled by `liveBlock()` from
 [@pushword/js-helper](https://github.com/Pushword/js-helper) (already called by its `app.js`).
