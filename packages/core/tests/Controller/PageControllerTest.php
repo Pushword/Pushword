@@ -438,6 +438,37 @@ final class PageControllerTest extends KernelTestCase
         $em->flush();
     }
 
+    public function testYearsSinceShortcodesResolveInPublicPage(): void
+    {
+        $page = new Page();
+        $page->slug = 'years-since-shortcode-test';
+        $page->host = 'localhost.dev';
+        $page->locale = 'en';
+        $page->createdAt = new DateTime();
+        $page->updatedAt = new DateTime();
+        $page->h1 = 'Experience: yearsSince(2014) years';
+        $page->setSearchExcerpt('Association: yearsSince(2014-01-01) years');
+        $page->mainContent = 'yearsSince(2014) / yearsSince(2014-01-01) years';
+
+        $em = self::getContainer()->get(EntityManagerInterface::class);
+        $em->persist($page);
+        $em->flush();
+
+        try {
+            $response = $this->getPageController()->show(Request::create('/'.$page->slug), $page->slug);
+            $content = (string) $response->getContent();
+            $years = (int) date('Y') - 2014;
+
+            self::assertSame(Response::HTTP_OK, $response->getStatusCode());
+            self::assertStringNotContainsString('yearsSince(', $content);
+            self::assertStringContainsString('Experience: '.$years.' years', $content);
+            self::assertStringContainsString('content="Association: '.$years.' years"', $content);
+            self::assertStringContainsString($years.' / '.$years.' years', $content);
+        } finally {
+            $this->removePage($page);
+        }
+    }
+
     public function testCustomCanonicalOverridesCanonical(): void
     {
         $content = $this->renderPage('custom-canonical-test', customCanonical: 'https://example.tld/master-page');

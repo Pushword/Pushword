@@ -11,8 +11,8 @@ use League\CommonMark\Parser\InlineParserContext;
 use Pushword\Core\Component\EntityFilter\Filter\Date;
 
 /**
- * Parse les shortcodes date dans le markdown.
- * Syntax: date(Y), date(M), date(S), date(W), etc.
+ * Parse date and elapsed-year shortcodes in Markdown.
+ * Syntax: date(Y), date(M), yearsSince(2014), yearsSince(2014-06-15), etc.
  */
 final readonly class DateShortcodeParser implements InlineParserInterface
 {
@@ -24,7 +24,7 @@ final readonly class DateShortcodeParser implements InlineParserInterface
 
     public function getMatchDefinition(): InlineParserMatch
     {
-        return InlineParserMatch::string('date(');
+        return InlineParserMatch::regex('date\(|\byearsSince\(');
     }
 
     public function parse(InlineParserContext $inlineContext): bool
@@ -33,10 +33,10 @@ final readonly class DateShortcodeParser implements InlineParserInterface
 
         $initialState = $cursor->saveState();
 
-        $cursor->advanceBy(5);
+        $cursor->advanceBy($inlineContext->getFullMatchLength());
 
-        $format = $cursor->match('/^([^)]+)/');
-        if (null === $format) {
+        $argument = $cursor->match('/^([^)]+)/');
+        if (null === $argument) {
             $cursor->restoreState($initialState);
 
             return false;
@@ -50,10 +50,10 @@ final readonly class DateShortcodeParser implements InlineParserInterface
 
         $cursor->advanceBy(1);
 
-        $shortcode = 'date('.$format.')';
-        $dateString = $this->dateFilter->convertDateShortCode($shortcode, $this->locale);
+        $shortcode = $inlineContext->getFullMatch().$argument.')';
+        $replacement = $this->dateFilter->convertDateShortCode($shortcode, $this->locale);
 
-        $inlineContext->getContainer()->appendChild(new Text($dateString));
+        $inlineContext->getContainer()->appendChild(new Text($replacement));
 
         return true;
     }

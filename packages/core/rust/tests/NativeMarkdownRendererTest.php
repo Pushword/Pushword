@@ -106,6 +106,21 @@ final class NativeMarkdownRendererTest extends KernelTestCase
         $native->reset();
     }
 
+    public function testYearsSinceShortcodesFallBackToPhp(): void
+    {
+        self::bootKernel();
+        self::getContainer()->get(SiteRegistry::class)->switchSite('localhost.dev');
+        $native = $this->parser(self::BINARY);
+        $sources = ['yearsSince(2014) years', 'Plain paragraph.', 'yearsSince(2014-01-01) years'];
+
+        self::assertSame([null, "<p>Plain paragraph.</p>\n", null], $native->renderNativeMany($sources));
+        foreach ([$sources[0], $sources[2]] as $source) {
+            self::assertSame('<p>'.((int) date('Y') - 2014).' years</p>', trim($native->transform($source)));
+        }
+
+        $native->reset();
+    }
+
     public function testPhoneLocaleUsesDistinctNativeCacheEntries(): void
     {
         self::bootKernel();

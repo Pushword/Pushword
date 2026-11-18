@@ -86,6 +86,7 @@ final class TempestMarkdownRendererTest extends TestCase
         yield 'phone uses Pushword' => ['01 23 45 67 89', null];
         yield 'international phone uses Pushword' => ['+33 7 81 32 36 55', null];
         yield 'date uses Pushword' => ['date(Y)', null];
+        yield 'elapsed years use Pushword' => ['yearsSince(2014)', null];
         yield 'attributed list' => ["{id=programme}\n- Etape", "<ul id=\"programme\">\n<li>Etape</li>\n</ul>\n"];
         yield 'leading hash heading id' => ["{#programme}\n## Une marche facile", "<h2 id=\"programme\">Une marche facile</h2>\n"];
         yield 'leading hash paragraph id' => ["{#programme}\nUne marche facile", "<p id=\"programme\">Une marche facile</p>\n"];

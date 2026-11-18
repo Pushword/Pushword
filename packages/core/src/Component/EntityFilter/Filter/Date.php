@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pushword\Core\Component\EntityFilter\Filter;
 
+use DateTimeImmutable;
 use Exception;
 use IntlDateFormatter;
 use Pushword\Core\Component\EntityFilter\Attribute\AsFilter;
@@ -62,7 +63,25 @@ class Date implements FilterInterface
 
         $string = preg_replace('/date\([\'"]?%?e[\'"]?\)/i', (string) $intlDateFormatter->format(time()), $string);
 
+        $string = preg_replace_callback('/\byearsSince\((\d{4}(?:-\d{2}-\d{2})?)\)/', $this->getYearsSince(...), $string);
+
         return \is_string($string) ? $string : throw new Exception();
+    }
+
+    /** @param array<int|string, string> $match */
+    private function getYearsSince(array $match): string
+    {
+        $today = new DateTimeImmutable('today');
+        if (4 === \strlen($match[1])) {
+            return (string) ((int) $today->format('Y') - (int) $match[1]);
+        }
+
+        $start = DateTimeImmutable::createFromFormat('!Y-m-d', $match[1]);
+        if (false === $start || $start->format('Y-m-d') !== $match[1]) {
+            return $match[0];
+        }
+
+        return (string) (int) $start->diff($today)->format('%r%y');
     }
 
     private function getWinterYear(): string

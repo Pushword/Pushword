@@ -185,4 +185,25 @@ final class MarkdownParserCacheTest extends KernelTestCase
         self::assertSame($first, $second);
         self::assertNotSame([], $pool->getValues(), 'date() content is cached too (slight staleness is acceptable)');
     }
+
+    public function testYearsSinceShortcodeRefreshesDaily(): void
+    {
+        $pool = new ArrayAdapter();
+        $parser = $this->buildParser($pool);
+        $markdown = 'Experience: yearsSince(2014) years';
+        $version = MarkdownCacheVersion::get().'y';
+        $yesterday = $pool->getItem('pw_md.'.hash('xxh3', $version.date('Y-m-d', strtotime('-1 day')).'|'.$markdown));
+        $yesterday->set('OUTDATED');
+
+        $pool->save($yesterday);
+
+        self::assertSame('<p>Experience: '.((int) date('Y') - 2014).' years</p>', trim($parser->transform($markdown)));
+
+        $today = $pool->getItem('pw_md.'.hash('xxh3', $version.date('Y-m-d').'|'.$markdown));
+        self::assertTrue($today->isHit());
+        $today->set('CACHED');
+        $pool->save($today);
+
+        self::assertSame('CACHED', $parser->transform($markdown));
+    }
 }

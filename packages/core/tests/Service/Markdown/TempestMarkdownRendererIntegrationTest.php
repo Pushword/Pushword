@@ -106,6 +106,9 @@ final class TempestMarkdownRendererIntegrationTest extends KernelTestCase
         yield 'encoded email' => ['Écrivez à bonjour@example.com.'];
         yield 'phone' => ['Appelez le 07 69 44 78 66.'];
         yield 'date shortcode' => ['Rendez-vous en date(Y).'];
+        yield 'elapsed-year shortcodes' => ['Experience: yearsSince(2014) / yearsSince(2014-06-15) years.'];
+        yield 'elapsed-year shortcode in code' => ['`yearsSince(2014)` / yearsSince(2014)'];
+        yield 'elapsed-year shortcode in a list' => ["- yearsSince(2014) years\n- yearsSince(2014-06-15) years"];
         yield 'short notice' => ["> [!faq] Une question ?\n>\n> Une réponse courte."];
         yield 'leading notice attributes' => ["{#disclosure .text-sm}\n> [!note] Titled\n> body"];
         yield 'notice without title' => ["> [!note]\n> body"];

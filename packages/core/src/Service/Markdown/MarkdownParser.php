@@ -38,7 +38,7 @@ class MarkdownParser implements ResetInterface
      * Bump when the renderer configuration changes in a way that
      * alters output, to invalidate previously cached fragments.
      */
-    private const int CACHE_VERSION = 39;
+    private const int CACHE_VERSION = 40;
 
     private const int NATIVE_CACHE_VERSION = 3;
 
@@ -111,6 +111,11 @@ class MarkdownParser implements ResetInterface
         $pending = [];
         $keys = [];
         foreach ($texts as $index => $text) {
+            // The native renderer does not expand elapsed-year shortcodes.
+            if (str_contains($text, 'yearsSince(')) {
+                continue;
+            }
+
             $hash = hash('xxh3', $this->cacheKeyVersion($text).'|'.$text);
             $keys[$index] = 'pw_mdn'.self::NATIVE_CACHE_VERSION.'.'.$hash;
 
@@ -223,8 +228,9 @@ class MarkdownParser implements ResetInterface
      * page lists, galleries) is already baked into $text and thus into the cache
      * key. The only convert-time dependency left is media (image rendering),
      * covered by the media version token — but only for fragments that actually
-     * contain a Markdown image (see cacheKeyVersion()). date() shortcodes are
-     * cached as-is: the slight staleness is acceptable and the fragment refreshes
+     * contain a Markdown image (see cacheKeyVersion()). yearsSince() fragments
+     * refresh daily so an anniversary does not require saving the page. date()
+     * shortcodes are cached as-is: the slight staleness is acceptable and the fragment refreshes
      * whenever the page is saved or (for image fragments) the media version bumps.
      *
      * Baking the rendered output into the key is also why **a Twig function callable
@@ -360,6 +366,10 @@ class MarkdownParser implements ResetInterface
 
         if ($phone) {
             $version .= 'l'.$this->apps->getLocale();
+        }
+
+        if (str_contains($text, 'yearsSince(')) {
+            $version .= 'y'.date('Y-m-d');
         }
 
         return $version;

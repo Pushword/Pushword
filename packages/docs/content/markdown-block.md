@@ -34,6 +34,25 @@ Two filters expose the parser in templates:
 
 Both filters mark their output HTML-safe and pass raw inline HTML through as-is.
 
+### Years since a year or date
+
+Write `yearsSince(2014)` or `yearsSince(2014-06-15)` directly in page content:
+
+```markdown
+We have yearsSince(2014) years of experience.
+Our association is yearsSince(2014-06-15) years old.
+```
+
+A year alone subtracts the starting year from the current year and changes on
+January 1. A full date uses `YYYY-MM-DD` and counts completed years, changing on
+each anniversary. Only the number is generated; keep the unit and its translation
+in the content. Future values produce negative completed years; invalid dates stay
+as written. Inline code and fenced code blocks stay literal.
+
+The shortcode also works in page titles and descriptions through the date filter.
+Markdown fragments containing it refresh daily. Pages served as static HTML or
+through a full-page cache must be regenerated to show the updated number.
+
 ## Groups
 
 Consecutive blocks can be wrapped in a single `<div>` by placing an opening and a

@@ -314,6 +314,27 @@ final class MarkdownExtensionTest extends KernelTestCase
         self::assertStringNotContainsString('date(W)', $result);
     }
 
+    public function testYearsSinceShortcodes(): void
+    {
+        $parser = $this->getMarkdownParser();
+        $source = 'yearsSince(2014) / yearsSince(2014-01-01) years';
+        $years = (int) date('Y') - 2014;
+        $expected = $years.' / '.$years.' years';
+
+        self::assertSame('<p>'.$expected.'</p>', trim($parser->transform($source)));
+        self::assertSame($expected, $parser->transformInline($source));
+
+        // Attributes on emphasis force CommonMark instead of Tempest.
+        $fallback = $parser->transform('**Experience**{.a .b}: '.$source);
+        self::assertStringContainsString($expected, $fallback);
+        self::assertStringNotContainsString('yearsSince(', $fallback);
+        self::assertSame(
+            '<code>yearsSince(2014)</code> / '.$years,
+            $parser->transformInline('`yearsSince(2014)` / yearsSince(2014)')
+        );
+        self::assertStringContainsString('yearsSince(2014)', $parser->transform("```text\nyearsSince(2014)\n```"));
+    }
+
     // ===== Tests du colspan dans les tableaux =====
 
     public function testColspanInThead(): void
