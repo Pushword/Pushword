@@ -264,10 +264,10 @@ really are the same language are variants, not translations — see
 
 ## Date shortcodes
 
-`date(Y)`, `date(M)`, `date(S)`, `date(Y+1)`… are resolved by the markdown parser in
-the content and by the `Date` entity filter in the fields read through `pw(page)`. A
-shortcode still readable in the rendered HTML therefore means the text got there
-without crossing either — a raw `page.title` in a template, a meta tag, an `alt`, a
+[Date shortcodes](/markdown-block#date-shortcodes) such as `date(Y)` or `date(Y+1)` are
+resolved by the markdown parser in the content and by the `Date` entity filter in the
+fields read through `pw(page)`. A shortcode still readable in the rendered HTML
+therefore means the text got there without crossing either — a raw `page.title` in a template, a meta tag, an `alt`, a
 custom property printed as-is. Visitors see the literal `date(Y)`:
 
 ```
@@ -280,8 +280,9 @@ per page.
 
 Two places are exempt, because the shortcode is not content there: a `<code>` or
 `<pre>` block, which documents the syntax, and a `<script>` or `<style>` block, where
-`new Date(y)` is JavaScript. Only the codes the filter knows are looked for, so a
-typo like `date(d)` is not reported — it is not a shortcode either.
+`new Date(y)` is JavaScript. Only the `date()` codes the filter knows are looked for, so
+a typo like `date(d)` is not reported — it is not a shortcode either. `yearsSince()` is
+not checked.
 
 ## TODO comments
 
