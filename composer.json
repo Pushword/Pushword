@@ -65,6 +65,7 @@
     "league/flysystem-bundle": "^3.6",
     "league/oauth2-google": "^5",
     "loupe/loupe": "^1.0",
+    "loupe/matcher": "^0.4",
     "nette/utils": "^4.0",
     "pagerfanta/twig": "^4.1",
     "piedweb/linksimprover": "^0.2.2",

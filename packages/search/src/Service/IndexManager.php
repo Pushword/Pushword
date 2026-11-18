@@ -8,6 +8,7 @@ use Doctrine\DBAL\Exception\DriverException;
 use Loupe\Loupe\Configuration as LoupeConfiguration;
 use Loupe\Loupe\Loupe;
 use Loupe\Loupe\LoupeFactory;
+use Loupe\Matcher\Tokenizer\Normalizer\Normalizer;
 use PDO;
 use Psr\Log\LoggerInterface;
 use Pushword\Core\Site\SiteRegistry;
@@ -109,6 +110,16 @@ final class IndexManager
         }
     }
 
+    /**
+     * Upsert one document — incremental path.
+     *
+     * @param array<string, mixed> $document
+     */
+    public function addDocument(string $host, array $document): void
+    {
+        $this->getLoupe($host)->addDocument($this->prepareForIndex($document));
+    }
+
     public function getIndexPath(string $host): string
     {
         return $this->indexDir.'/'.$this->sanitizeHost($host);
@@ -133,8 +144,26 @@ final class IndexManager
         $loupe->deleteAllDocuments();
 
         if ([] !== $documents) {
-            $loupe->addDocuments($documents);
+            $loupe->addDocuments(array_map($this->prepareForIndex(...), $documents));
         }
+    }
+
+    /**
+     * Filterable values stay verbatim: a filter compares them as stored.
+     *
+     * @param array<string, mixed> $document
+     *
+     * @return array<string, mixed>
+     */
+    private function prepareForIndex(array $document): array
+    {
+        foreach (array_diff($this->searchableAttributes, $this->filterableAttributes) as $attribute) {
+            if (\is_string($document[$attribute] ?? null)) {
+                $document[$attribute] = FrenchElision::markForIndex($document[$attribute]);
+            }
+        }
+
+        return $document;
     }
 
     /**
@@ -192,11 +221,31 @@ final class IndexManager
 
     private function buildConfiguration(string $host): LoupeConfiguration
     {
+        $site = $this->siteRegistry->get($host);
+
         return LoupeConfiguration::create()
             ->withPrimaryKey('id')
             ->withSearchableAttributes($this->searchableAttributes)
             ->withFilterableAttributes($this->filterableAttributes)
-            ->withLanguages($this->siteRegistry->get($host)->getLocales());
+            ->withLanguages($site->getLocales())
+            ->withStopWords($this->foldStopWords($site->getStringList('search_stop_words')));
+    }
+
+    /**
+     * Loupe matches stop words against folded query terms (`Été` → `ete`) but
+     * stores the list verbatim, so an accented or capitalised entry would never
+     * match. Fold the entries the same way.
+     *
+     * @param string[] $stopWords
+     *
+     * @return list<string>
+     */
+    private function foldStopWords(array $stopWords): array
+    {
+        $normalizer = new Normalizer();
+        $folded = array_map(static fn (string $word): string => $normalizer->normalize(trim($word)), $stopWords);
+
+        return array_values(array_unique(array_filter($folded, static fn (string $word): bool => '' !== $word)));
     }
 
     private function sanitizeHost(string $host): string

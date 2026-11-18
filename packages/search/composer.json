@@ -18,7 +18,8 @@
   ],
   "require": {
     "pushword/core": "*",
-    "loupe/loupe": "^1.0"
+    "loupe/loupe": "^1.0",
+    "loupe/matcher": "^0.4"
   },
   "suggest": {
     "pushword/admin": "Manage pages, media and users from an EasyAdmin-based back-office.",

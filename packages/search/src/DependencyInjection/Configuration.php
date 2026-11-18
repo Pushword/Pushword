@@ -9,12 +9,21 @@ use Symfony\Component\Config\Definition\ConfigurationInterface;
 
 class Configuration implements ConfigurationInterface
 {
+    /**
+     * @var string[]
+     */
+    final public const array DEFAULT_APP_FALLBACK = [
+        'search_stop_words',
+        'search_matching_strategy',
+    ];
+
     public function getConfigTreeBuilder(): TreeBuilder
     {
         $treeBuilder = new TreeBuilder('search');
 
         $treeBuilder->getRootNode()
             ->children()
+                ->variableNode('app_fallback_properties')->defaultValue(self::DEFAULT_APP_FALLBACK)->cannotBeEmpty()->end()
                 ->scalarNode('index_dir')
                     ->defaultValue('%kernel.project_dir%/var/search')
                     ->info('Local directory holding one Loupe index per host.')
@@ -31,6 +40,15 @@ class Configuration implements ConfigurationInterface
                     ->scalarPrototype()->end()
                     ->defaultValue(['host', 'locale', 'tags'])
                     ->info('Attributes usable in search filters and facets. Add custom fields (e.g. productCode, difficulty, price) contributed via SearchDocumentEvent.')
+                ->end()
+                ->arrayNode('search_stop_words')
+                    ->scalarPrototype()->end()
+                    ->info('Query words ignored while other words remain (e.g. de, la, les). Compared without case or accents. Overridable per app.')
+                ->end()
+                ->enumNode('search_matching_strategy')
+                    ->values(['any', 'all'])
+                    ->defaultValue('any')
+                    ->info('any: a page matching one query word is a hit, ranked by how many it matches. all: every query word must match. Overridable per app.')
                 ->end()
                 ->booleanNode('incremental')
                     ->defaultTrue()

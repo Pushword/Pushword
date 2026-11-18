@@ -1,5 +1,6 @@
 ---
-title: 'page saves invalidate their cache before redirecting'
+title: 'page saves invalidate their cache before redirecting; search finds French words behind an elision, after an index rebuild'
+run: pw:search:index
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -35,8 +36,16 @@ belongs in the feature doc, which you link to instead.
 Several changes land here between two tags: append to the file, do not replace it.
 -->
 
-**Concerns:** `pushword/static-generator`
+**Concerns:** `pushword/search`, `pushword/static-generator`
 
 ## Saved pages are immediately current
 
 With `cache: static`, page saves now invalidate the old HTML and compressed files before redirecting, even when Messenger refreshes are asynchronous. Requests use PHP until the worker rebuilds the cache. Publication holds and bulk imports preserve their files. No configuration change is required. See [Page Cache](/extension/page-cache).
+
+## Search splits French elisions
+
+`acompte` now finds "l’acompte", and `l’acompte` finds "un acompte". Until the index is
+rebuilt, a query with an elision misses the pages indexed before the upgrade: run
+`pw:search:index` (`pw:static` rebuilds on its own). New optional settings,
+`search_stop_words` and `search_matching_strategy`, keep a word like "de" from listing
+every page ([Search](/extension/search#french-text-and-natural-questions)).

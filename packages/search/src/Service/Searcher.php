@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pushword\Search\Service;
 
 use Loupe\Loupe\SearchParameters;
+use Pushword\Core\Site\SiteRegistry;
 
 /**
  * Queries a host's Loupe index. Cheap enough to run server-side even on
@@ -14,6 +15,7 @@ final readonly class Searcher
 {
     public function __construct(
         private IndexManager $indexManager,
+        private SiteRegistry $siteRegistry,
         private int $resultsPerPage,
     ) {
     }
@@ -36,7 +38,8 @@ final readonly class Searcher
         }
 
         $parameters = SearchParameters::create()
-            ->withQuery($query)
+            ->withQuery(FrenchElision::stripFromQuery($query))
+            ->withMatchingStrategy($this->siteRegistry->get($host)->getStr('search_matching_strategy', 'any'))
             ->withAttributesToRetrieve(['*'])
             ->withAttributesToHighlight(['title', 'content'])
             ->withAttributesToCrop(['content' => 40])
@@ -48,7 +51,7 @@ final readonly class Searcher
         $result = $this->indexManager->getLoupe($host)->search($parameters);
 
         return [
-            'hits' => $this->stripRawContent(array_values($result->getHits())),
+            'hits' => $this->presentHits(array_values($result->getHits())),
             'facets' => $result->getFacetDistribution(),
             'query' => $query,
             'totalHits' => $result->getTotalHits(),
@@ -60,16 +63,23 @@ final readonly class Searcher
     /**
      * The full page body is retrieved only so Loupe can produce the cropped
      * `_formatted.content` snippet; the raw value is dead weight in the payload
-     * (no consumer reads `hit.content`), so drop it before returning.
+     * (no consumer reads `hit.content`), so drop it before returning. Stored
+     * values carry the word boundaries of FrenchElision, which never reach a
+     * reader.
      *
      * @param list<array<string, mixed>> $hits
      *
      * @return list<array<string, mixed>>
      */
-    private function stripRawContent(array $hits): array
+    private function presentHits(array $hits): array
     {
         foreach ($hits as &$hit) {
             unset($hit['content']);
+            array_walk_recursive($hit, static function (mixed &$value): void {
+                if (\is_string($value)) {
+                    $value = FrenchElision::unmark($value);
+                }
+            });
         }
 
         return $hits;

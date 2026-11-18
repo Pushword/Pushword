@@ -83,6 +83,38 @@ OOM, interrupted deploy) can leave `loupe.db` damaged (`26 file is not a databas
 log warning — at open time when the file head is torn, during a reindex otherwise. An
 index reset at open time comes back **empty**: run `pw:search:index`.
 
+## French text and natural questions
+
+French elisions are split off the word they precede: `acompte`, `l'acompte` and
+`l’acompte` all find both "l’acompte" and "un acompte", whatever the case or accents.
+Loupe keeps `l’acompte` as one word, so Pushword inserts an invisible word boundary
+(U+200B) after the particle (`c d j l m n s t qu jusqu lorsqu puisqu quoiqu`) in
+searchable values, and drops the particle from the query. Hits come back as written,
+with the word itself highlighted. Values of attributes that are also filterable (`tags`)
+stay verbatim, so filters still compare the exact value. Query the index through
+`Searcher` rather than Loupe directly: it prepares the query and cleans the hits.
+
+By default, a page matching any query word is a hit, ranked by how many it matches: a
+question such as "comment fonctionne l’acompte ?" also lists every page containing
+"comment" or "de". Two settings narrow it, globally or per app:
+
+- `search_stop_words` — words left out of a query while other words remain. Compared
+  without case or accents (`À` covers `a`). Keep to function words: "été" is also a
+  noun.
+- `search_matching_strategy` — `any` (default) or `all`. `all` requires every word:
+  right for short keyword searches, too strict for most questions.
+
+```yaml
+# config/packages/pushword.yaml
+pushword:
+  apps:
+    - hosts: [example.fr]
+      search_stop_words: [le, la, les, de, des, du, un, une, et, à, au, aux, en, pour, comment]
+```
+
+Run `pw:search:index` after changing `search_stop_words`; otherwise Loupe rebuilds the
+index during the next page save.
+
 ## Configuration
 
 ```yaml
@@ -90,6 +122,8 @@ index reset at open time comes back **empty**: run `pw:search:index`.
 search:
   index_dir: '%kernel.project_dir%/var/search' # one Loupe index per host
   results_per_page: 20
+  search_stop_words: []          # query words to ignore, overridable per app
+  search_matching_strategy: any  # any | all, overridable per app
   incremental: true       # reindex a page on save/delete (Messenger)
   index_on_static: true   # build the index during pw:static
   static_mode: both       # endpoint | json | both

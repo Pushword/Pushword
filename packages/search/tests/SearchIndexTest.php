@@ -104,6 +104,34 @@ final class SearchIndexTest extends KernelTestCase
         }
     }
 
+    /** A page already indexed and then set to noindex leaves the index on save. */
+    public function testPageSetToNoindexLeavesTheIndexOnSave(): void
+    {
+        self::bootKernel();
+        $container = self::getContainer();
+        $em = $container->get(EntityManagerInterface::class);
+        $searcher = $container->get(Searcher::class);
+
+        $nonce = 'unidx'.bin2hex(random_bytes(4));
+        $page = $this->createPage($nonce);
+        $em->persist($page);
+        $em->flush();
+
+        $pageId = $page->id;
+
+        try {
+            self::assertContains($pageId, array_column($searcher->search(self::HOST, $nonce)['hits'], 'id'));
+
+            $page->metaRobots = 'noindex,nofollow';
+            $em->flush();
+
+            self::assertNotContains($pageId, array_column($searcher->search(self::HOST, $nonce)['hits'], 'id'));
+        } finally {
+            $em->remove($page);
+            $em->flush();
+        }
+    }
+
     public function testLocaleFilterNarrowsResults(): void
     {
         self::bootKernel();
@@ -278,6 +306,13 @@ final class SearchIndexTest extends KernelTestCase
                 $page->id,
                 array_column($searcher->search(self::HOST, "l'aventure".$nonce)['hits'], 'id'),
                 'Straight-apostrophe query missed the curly-indexed page'
+            );
+
+            // The word on its own finds it too: the elision is split off.
+            self::assertContains(
+                $page->id,
+                array_column($searcher->search(self::HOST, 'aventure'.$nonce)['hits'], 'id'),
+                'Bare-word query missed the elided word'
             );
         } finally {
             $em->remove($page);

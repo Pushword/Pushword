@@ -89,11 +89,9 @@ final readonly class Indexer
         // The incremental path runs inside a live request/flush: render through
         // the page's own host context (Manager + canonical URL both key off
         // $page->host) without mutating the global current-site state.
-        $loupe = $this->indexManager->getLoupe($page->host);
-
         if (! $page->isIndexable()) {
             if (null !== $page->id) {
-                $loupe->deleteDocument($page->id);
+                $this->indexManager->getLoupe($page->host)->deleteDocument($page->id);
             }
 
             return;
@@ -113,7 +111,7 @@ final readonly class Indexer
             return;
         }
 
-        $loupe->addDocument($document);
+        $this->indexManager->addDocument($page->host, $document);
     }
 
     public function removePage(int $pageId, string $host): void
