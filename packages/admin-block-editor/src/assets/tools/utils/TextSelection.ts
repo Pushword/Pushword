@@ -186,7 +186,13 @@ export function setupTextSelection(editor: EditorJS, holder: HTMLElement, signal
     select(start, end)
   }
   document.addEventListener('mousemove', event => { if (event.buttons === 1) extend(event) }, options)
-  document.addEventListener('mouseup', event => { extend(event); dragging = null }, { signal })
+  document.addEventListener('mouseup', event => {
+    if (!dragging) return
+    extend(event)
+    dragging = null
+    // The final mousemove may already have consumed Editor.js's selectionchange debounce.
+    if (!selectedRange() && selectedRange(true)) editor.inlineToolbar.open()
+  }, { signal })
 
   const replace = (text: string): void => {
     const range = selectedRange()

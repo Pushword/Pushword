@@ -16,7 +16,7 @@ beforeEach(() => {
   vi.stubGlobal('CSS', { highlights })
   Object.defineProperty(document, 'caretPositionFromPoint', { configurable: true, value: vi.fn() })
   const blocks = () => Array.from(holder.querySelectorAll<HTMLElement>('.ce-block'))
-  editor = { readOnly: { isEnabled: false }, inlineToolbar: { close: vi.fn() },
+  editor = { readOnly: { isEnabled: false }, inlineToolbar: { close: vi.fn(), open: vi.fn() },
     blocks: { getBlockIndex: (id: string) => blocks().findIndex(block => block.dataset.id === id),
       getBlockByIndex: (index: number) => ({ name: blocks()[index]!.dataset.id === 'p' ? 'paragraph' : 'list' }),
       delete: vi.fn((index: number) => blocks()[index]!.remove()), insert: vi.fn() }, caret: { setToBlock: vi.fn() } }
@@ -156,4 +156,43 @@ it('does not highlight an image block when only its entire caption is selected',
   document.dispatchEvent(new Event('selectionchange'))
   expect(holder.querySelector('.pw-text-selection-block')).toBeNull()
   expect(getSelection()!.toString()).toBe('BEFORE|CUT')
+})
+
+it.each(['deux mots', 'deux mots '])('opens the inline toolbar on mouseup after selecting "%s"', text => {
+  const field = holder.querySelector<HTMLElement>('.ce-paragraph')!
+  field.textContent = 'deux mots après'
+  field.focus()
+  vi.mocked(document.caretPositionFromPoint)
+    .mockReturnValueOnce({ offsetNode: field.firstChild!, offset: 0 } as CaretPosition)
+    .mockReturnValue({ offsetNode: field.firstChild!, offset: text.length } as CaretPosition)
+  field.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, button: 0 }))
+  getSelection()!.setBaseAndExtent(field.firstChild!, 0, field.firstChild!, text.length)
+  field.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }))
+  expect(editor.inlineToolbar.open).toHaveBeenCalledOnce()
+  expect(getSelection()!.toString()).toBe(text)
+})
+
+it('does not open the inline toolbar after a collapsed click or an unrelated mouseup', () => {
+  const field = holder.querySelector<HTMLElement>('.ce-paragraph')!
+  field.focus()
+  vi.mocked(document.caretPositionFromPoint).mockReturnValue({ offsetNode: field.firstChild!, offset: 0 } as CaretPosition)
+  field.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, button: 0 }))
+  getSelection()!.collapse(field.firstChild!, 0)
+  field.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }))
+  getSelection()!.selectAllChildren(field)
+  document.body.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }))
+  expect(editor.inlineToolbar.open).not.toHaveBeenCalled()
+})
+
+it('keeps the inline toolbar closed after releasing a cross-field selection', () => {
+  const first = holder.querySelector<HTMLElement>('.ce-paragraph')!
+  const last = holder.querySelector<HTMLElement>('.cdx-list__item-content')!
+  vi.mocked(document.caretPositionFromPoint)
+    .mockReturnValueOnce({ offsetNode: first.firstChild!, offset: 7 } as CaretPosition)
+    .mockReturnValue({ offsetNode: last.firstChild!, offset: 4 } as CaretPosition)
+  first.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, button: 0 }))
+  last.dispatchEvent(new MouseEvent('mousemove', { bubbles: true, buttons: 1, cancelable: true }))
+  last.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }))
+  expect(textSelections.has(holder)).toBe(true)
+  expect(editor.inlineToolbar.open).not.toHaveBeenCalled()
 })
