@@ -108,8 +108,9 @@ framework:
     conversation_submit: { limit: 5 } # sliding_window over 1 hour by default
 ```
 
-The per-site limit on every POST above still applies. Both messages are validator
-translations: override them in your `validators.<locale>.yaml`.
+The per-site limit on every POST above still applies. Both messages are errors on the
+whole form, so a template override must render `form_errors(conversation)`; they are
+validator translations, overridden in your `validators.<locale>.yaml`.
 
 ## Published comments
 
