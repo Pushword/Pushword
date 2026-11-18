@@ -26,7 +26,13 @@ Enabling `cache: static` changes three things for that app:
 
 1. The static-generator writes to `public/cache/{host}/` instead of `static/{host}/`.
 2. A `cache` checkbox appears on every page's "State" fieldset in the admin (default: on). Disable it for pages with server-side dynamic content (forms posting to PHP, live counters, etc.).
-3. Saving a page fires a `PageCacheRefreshMessage` via Messenger that regenerates that single page's cached file. Deleting a page removes it.
+3. Saving a page removes its old cached file and compressed variants before the response, then fires a `PageCacheRefreshMessage` via Messenger to rebuild them. Until that job finishes, requests fall through to PHP and show the saved content. Deleting a page removes its cache.
+
+Invalidation runs after the database flush, so the admin's save-and-return redirect
+does not depend on Messenger worker availability. A revision check serializes each
+page's final file writes with invalidation: a render started before a newer save
+cannot restore the obsolete HTML or compressed files. Publication holds and bulk
+imports preserve their existing files.
 
 ## Staleness beyond page saves: the render epoch
 
@@ -51,8 +57,8 @@ What bumps the epoch:
 For that last row: metadata renders elsewhere (title, h1, name, slug, parent,
 publication date, weight, locale, main image, host) always counts, and a content
 edit counts only when it adds or removes an internal link (the link graph feeds
-`linked_slugs`, `exclude_linked`, `contains_link_to`). A plain prose edit stays
-on the instant single-page path and never triggers a sweep.
+`linked_slugs`, `exclude_linked`, `contains_link_to`). A plain prose edit only
+invalidates and refreshes that page and never triggers a sweep.
 
 A bump queues one `HostCacheRefreshMessage` per affected cache-mode host,
 dispatched at `kernel.terminate` (after the response) with a 60s `DelayStamp` so

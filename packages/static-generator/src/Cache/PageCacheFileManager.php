@@ -22,6 +22,7 @@ readonly class PageCacheFileManager
     public function __construct(
         private StaticAppGenerator $staticAppGenerator,
         private SiteRegistry $apps,
+        private PageCachePublication $publication,
     ) {
         $this->filesystem = new Filesystem();
     }
@@ -50,6 +51,20 @@ readonly class PageCacheFileManager
     }
 
     public function delete(Page $page): void
+    {
+        // Keep an in-flight render of a removed or uncacheable page from publishing.
+        $this->publication->invalidate($page, fn () => $this->removeFiles($page));
+    }
+
+    public function invalidate(Page $page, ?Page $previous = null): void
+    {
+        $this->delete($page);
+        if ($previous instanceof Page) {
+            $this->delete($previous);
+        }
+    }
+
+    private function removeFiles(Page $page): void
     {
         $path = $this->resolvePath($page);
         if (null === $path) {

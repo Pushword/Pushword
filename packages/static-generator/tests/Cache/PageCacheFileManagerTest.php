@@ -7,8 +7,12 @@ namespace Pushword\StaticGenerator\Tests\Cache;
 use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\Group;
 use Pushword\Core\Entity\Page;
+use Pushword\Core\Site\SiteRegistry;
 use Pushword\StaticGenerator\Cache\PageCacheFileManager;
+use Pushword\StaticGenerator\Generator\CompressionAlgorithm;
+use Pushword\StaticGenerator\StaticAppGenerator;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
+use Symfony\Component\Filesystem\Filesystem;
 
 #[Group('integration')]
 final class PageCacheFileManagerTest extends KernelTestCase
@@ -39,5 +43,32 @@ final class PageCacheFileManagerTest extends KernelTestCase
 
         $page->slug = '404';
         self::assertFalse($fileManager->isCacheable($page));
+    }
+
+    public function testInvalidationRemovesBothPathsAndTheirCompressedFiles(): void
+    {
+        self::bootKernel();
+        $page = new Page();
+        $page->host = 'localhost.dev';
+        $page->slug = 'old-path';
+
+        $previous = clone $page;
+        $page->slug = 'new-path';
+        $site = self::getContainer()->get(SiteRegistry::class)->get('localhost.dev');
+        $directory = self::getContainer()->get(StaticAppGenerator::class)->getCacheDir($site);
+        $filesystem = new Filesystem();
+
+        foreach (['old-path', 'new-path'] as $slug) {
+            foreach (CompressionAlgorithm::fileSuffixes() as $suffix) {
+                $filesystem->dumpFile($directory.'/'.$slug.'.html'.$suffix, 'stale');
+            }
+        }
+
+        self::getContainer()->get(PageCacheFileManager::class)->invalidate($page, $previous);
+        foreach (['old-path', 'new-path'] as $slug) {
+            foreach (CompressionAlgorithm::fileSuffixes() as $suffix) {
+                self::assertFileDoesNotExist($directory.'/'.$slug.'.html'.$suffix);
+            }
+        }
     }
 }

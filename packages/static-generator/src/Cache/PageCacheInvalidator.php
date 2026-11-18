@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pushword\StaticGenerator\Cache;
 
 use DateTimeInterface;
+use Doctrine\Bundle\DoctrineBundle\Attribute\AsDoctrineListener;
 use Doctrine\Bundle\DoctrineBundle\Attribute\AsEntityListener;
 use Doctrine\ORM\Event\PreUpdateEventArgs;
 use Doctrine\ORM\Events;
@@ -23,7 +24,7 @@ use Symfony\Contracts\Service\ResetInterface;
 /**
  * Two reactions to a Page write:
  *
- * - Refresh the page's own cached file (cache-mode hosts only, instant).
+ * - Invalidate the page's own cached file before returning, then queue its refresh.
  * - Bump the host render epoch when the change can alter *other* pages' output
  *   (listings, navs, feeds, breadcrumbs). The bump feeds every consumer of the
  *   epoch: the sweep message for cache-mode hosts, cron `pw:static --incremental`
@@ -38,6 +39,7 @@ use Symfony\Contracts\Service\ResetInterface;
 #[AsEntityListener(event: Events::preUpdate, entity: Page::class)]
 #[AsEntityListener(event: Events::postUpdate, entity: Page::class)]
 #[AsEntityListener(event: Events::preRemove, entity: Page::class)]
+#[AsDoctrineListener(event: Events::postFlush)]
 final class PageCacheInvalidator implements ResetInterface
 {
     /**
@@ -49,13 +51,22 @@ final class PageCacheInvalidator implements ResetInterface
     ];
 
     /**
-     * Relevance is decided in preUpdate (the changeset is gone by postUpdate) and
-     * acted on in postUpdate (never act inside the flush). Worker mode: reset()
-     * drains entries a failed flush would leave behind.
+     * Listing relevance is decided in preUpdate and bumps the epoch in postUpdate.
+     * File invalidation waits for postFlush. Worker mode: reset() drains entries
+     * a failed flush would leave behind.
      *
      * @var array<int, true>
      */
     private array $pendingListingRelevant = [];
+
+    /** @var array<int, array{Page, ?Page}> */
+    private array $pendingRefreshes = [];
+
+    /** @var list<Page> */
+    private array $pendingRemovals = [];
+
+    /** @var array<int, Page> */
+    private array $previousPaths = [];
 
     public function __construct(
         private readonly MessageBusInterface $bus,
@@ -78,6 +89,20 @@ final class PageCacheInvalidator implements ResetInterface
 
     public function preUpdate(Page $page, PreUpdateEventArgs $preUpdateEventArgs): void
     {
+        if ($preUpdateEventArgs->hasChangedField('slug') || $preUpdateEventArgs->hasChangedField('host')) {
+            $previous = clone $page;
+            foreach (['slug', 'host'] as $field) {
+                if ($preUpdateEventArgs->hasChangedField($field)) {
+                    $oldValue = $preUpdateEventArgs->getOldValue($field);
+                    if (null === $oldValue || \is_string($oldValue)) {
+                        $previous->{$field} = $oldValue;
+                    }
+                }
+            }
+
+            $this->previousPaths[spl_object_id($page)] = $previous;
+        }
+
         if ($this->isListingRelevant($page, $preUpdateEventArgs->getEntityChangeSet())) {
             $this->pendingListingRelevant[spl_object_id($page)] = true;
         }
@@ -85,9 +110,9 @@ final class PageCacheInvalidator implements ResetInterface
 
     public function postUpdate(Page $page): void
     {
-        $this->queueRefresh($page);
-
         $objectId = spl_object_id($page);
+        $this->queueRefresh($page, $this->previousPaths[$objectId] ?? null);
+        unset($this->previousPaths[$objectId]);
         $relevant = isset($this->pendingListingRelevant[$objectId]);
         unset($this->pendingListingRelevant[$objectId]);
 
@@ -101,7 +126,7 @@ final class PageCacheInvalidator implements ResetInterface
         // Suppressed = a bulk import owns the files (`--force` deletes every
         // page before re-importing it — its output must survive that reset).
         if (! $this->suppressor->isSuppressed() && $this->isCacheSite($page)) {
-            $this->fileManager->delete($page);
+            $this->pendingRemovals[] = clone $page;
         }
 
         // Every listing that displayed the page must drop it.
@@ -113,6 +138,31 @@ final class PageCacheInvalidator implements ResetInterface
     public function reset(): void
     {
         $this->pendingListingRelevant = [];
+        $this->pendingRefreshes = [];
+        $this->pendingRemovals = [];
+        $this->previousPaths = [];
+    }
+
+    public function postFlush(): void
+    {
+        // No rendering or cache writes inside the transaction. Invalidate before
+        // dispatch so both sync handlers and an idle async queue behave correctly.
+        $pending = $this->pendingRefreshes;
+        $removed = $this->pendingRemovals;
+        $this->pendingRefreshes = [];
+        $this->pendingRemovals = [];
+
+        foreach ($removed as $page) {
+            $this->fileManager->delete($page);
+        }
+
+        foreach ($pending as [$page, $previous]) {
+            $this->fileManager->invalidate($page, $previous);
+
+            if ($this->isCacheSite($page) && null !== $page->id) {
+                $this->bus->dispatch(new PageCacheRefreshMessage($page->id));
+            }
+        }
     }
 
     /**
@@ -143,19 +193,17 @@ final class PageCacheInvalidator implements ResetInterface
         return false;
     }
 
-    private function queueRefresh(Page $page): void
+    private function queueRefresh(Page $page, ?Page $previous = null): void
     {
-        if ($this->suppressor->isSuppressed() || ! $this->isCacheSite($page) || null === $page->id) {
+        if ($this->suppressor->isSuppressed() || $page->holdPublicationAt instanceof DateTimeInterface || null === $page->id) {
             return;
         }
 
-        // Held pages keep their current static file; releasing the hold (set back
-        // to null) is itself an update that re-enables the refresh.
-        if ($page->holdPublicationAt instanceof DateTimeInterface) {
+        if (! $this->isCacheSite($page) && (! $previous instanceof Page || ! $this->isCacheSite($previous))) {
             return;
         }
 
-        $this->bus->dispatch(new PageCacheRefreshMessage($page->id));
+        $this->pendingRefreshes[spl_object_id($page)] = [$page, $previous];
     }
 
     private function isCacheSite(Page $page): bool

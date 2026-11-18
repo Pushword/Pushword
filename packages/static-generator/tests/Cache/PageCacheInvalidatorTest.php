@@ -62,6 +62,8 @@ final class PageCacheInvalidatorTest extends TestCase
         $this->fileManager->expects($this->never())->method('delete');
 
         $invalidator->postPersist($page);
+
+        $invalidator->postFlush();
     }
 
     public function testPostUpdateDispatchesMessageForCacheSite(): void
@@ -75,6 +77,8 @@ final class PageCacheInvalidatorTest extends TestCase
         $this->fileManager->expects($this->never())->method('delete');
 
         $invalidator->postUpdate($page);
+
+        $invalidator->postFlush();
     }
 
     public function testNoDispatchWhenSiteIsNotCacheMode(): void
@@ -86,7 +90,10 @@ final class PageCacheInvalidatorTest extends TestCase
         $this->fileManager->expects($this->never())->method('delete');
 
         $invalidator->postPersist($page);
+
+        $invalidator->postFlush();
         $invalidator->postUpdate($page);
+        $invalidator->postFlush();
     }
 
     public function testNoDispatchWhenSiteUnknown(): void
@@ -98,6 +105,8 @@ final class PageCacheInvalidatorTest extends TestCase
         $this->fileManager->expects($this->never())->method('delete');
 
         $invalidator->postPersist($page);
+
+        $invalidator->postFlush();
     }
 
     public function testNoDispatchWhenSuppressed(): void
@@ -110,7 +119,9 @@ final class PageCacheInvalidatorTest extends TestCase
 
         $this->suppressor->suppress(static function () use ($invalidator, $page): void {
             $invalidator->postPersist($page);
+            $invalidator->postFlush();
             $invalidator->postUpdate($page);
+            $invalidator->postFlush();
         });
     }
 
@@ -126,6 +137,8 @@ final class PageCacheInvalidatorTest extends TestCase
         $this->fileManager->expects($this->never())->method('delete');
 
         $invalidator->postUpdate($page);
+
+        $invalidator->postFlush();
     }
 
     public function testNoDispatchWhenPageIdIsNull(): void
@@ -139,6 +152,8 @@ final class PageCacheInvalidatorTest extends TestCase
         $this->fileManager->expects($this->never())->method('delete');
 
         $invalidator->postPersist($page);
+
+        $invalidator->postFlush();
     }
 
     // --- preRemove ---
@@ -148,10 +163,12 @@ final class PageCacheInvalidatorTest extends TestCase
         $page = $this->makePersistedPage('localhost.dev');
         $invalidator = $this->makeInvalidator(host: 'localhost.dev', cacheMode: 'static');
 
-        $this->fileManager->expects($this->once())->method('delete')->with($page);
+        $this->fileManager->expects($this->once())->method('delete')->with(self::callback(static fn (Page $removed): bool => 'localhost.dev' === $removed->host && '' === $removed->slug));
         $this->bus->expects($this->never())->method('dispatch');
 
         $invalidator->preRemove($page);
+
+        $invalidator->postFlush();
     }
 
     public function testPreRemoveSkipsWhenNotCacheMode(): void
@@ -163,6 +180,8 @@ final class PageCacheInvalidatorTest extends TestCase
         $this->bus->expects($this->never())->method('dispatch');
 
         $invalidator->preRemove($page);
+
+        $invalidator->postFlush();
     }
 
     public function testSuppressedRemoveSkipsFileDeleteButBumps(): void
@@ -190,6 +209,8 @@ final class PageCacheInvalidatorTest extends TestCase
         $this->renderEpoch->expects($this->once())->method('bump')->with('localhost.dev');
 
         $invalidator->postPersist($page);
+
+        $invalidator->postFlush();
     }
 
     public function testPersistingADraftDoesNotBump(): void
@@ -201,6 +222,8 @@ final class PageCacheInvalidatorTest extends TestCase
         $this->renderEpoch->expects($this->never())->method('bump');
 
         $invalidator->postPersist($page);
+
+        $invalidator->postFlush();
     }
 
     public function testMetadataChangeOnPublishedPageBumps(): void
@@ -213,6 +236,7 @@ final class PageCacheInvalidatorTest extends TestCase
 
         $invalidator->preUpdate($page, $this->makePreUpdateArgs($page, ['title' => ['Old', 'New']]));
         $invalidator->postUpdate($page);
+        $invalidator->postFlush();
     }
 
     public function testBumpHappensEvenWhenTheHostIsNotCacheMode(): void
@@ -227,6 +251,7 @@ final class PageCacheInvalidatorTest extends TestCase
 
         $invalidator->preUpdate($page, $this->makePreUpdateArgs($page, ['slug' => ['old-slug', 'new-slug']]));
         $invalidator->postUpdate($page);
+        $invalidator->postFlush();
     }
 
     public function testProseOnlyContentEditDoesNotBump(): void
@@ -240,6 +265,7 @@ final class PageCacheInvalidatorTest extends TestCase
         $changeSet = ['mainContent' => ['Some text with a [link](/about).', 'Rewritten text, same [link](/about).']];
         $invalidator->preUpdate($page, $this->makePreUpdateArgs($page, $changeSet));
         $invalidator->postUpdate($page);
+        $invalidator->postFlush();
     }
 
     public function testContentEditChangingTheLinkSetBumps(): void
@@ -253,6 +279,7 @@ final class PageCacheInvalidatorTest extends TestCase
         $changeSet = ['mainContent' => ['No links here.', 'Now with a [link](/about).']];
         $invalidator->preUpdate($page, $this->makePreUpdateArgs($page, $changeSet));
         $invalidator->postUpdate($page);
+        $invalidator->postFlush();
     }
 
     public function testDraftMetadataChangeDoesNotBump(): void
@@ -265,6 +292,7 @@ final class PageCacheInvalidatorTest extends TestCase
 
         $invalidator->preUpdate($page, $this->makePreUpdateArgs($page, ['title' => ['Old', 'New']]));
         $invalidator->postUpdate($page);
+        $invalidator->postFlush();
     }
 
     public function testUnpublishingBumps(): void
@@ -279,6 +307,7 @@ final class PageCacheInvalidatorTest extends TestCase
 
         $invalidator->preUpdate($page, $this->makePreUpdateArgs($page, ['publishedAt' => [new DateTime('-1 day'), null]]));
         $invalidator->postUpdate($page);
+        $invalidator->postFlush();
     }
 
     public function testSuppressedPersistBumpsWithoutDispatching(): void
@@ -307,6 +336,7 @@ final class PageCacheInvalidatorTest extends TestCase
         $this->suppressor->suppress(static function () use ($invalidator, $page, $preUpdateArgs): void {
             $invalidator->preUpdate($page, $preUpdateArgs);
             $invalidator->postUpdate($page);
+            $invalidator->postFlush();
         });
     }
 
@@ -315,10 +345,12 @@ final class PageCacheInvalidatorTest extends TestCase
         $page = $this->makePersistedPage('localhost.dev', published: true);
         $invalidator = $this->makeInvalidator(host: 'localhost.dev', cacheMode: 'static');
 
-        $this->fileManager->expects($this->once())->method('delete')->with($page);
+        $this->fileManager->expects($this->once())->method('delete')->with(self::callback(static fn (Page $removed): bool => 'localhost.dev' === $removed->host && '' === $removed->slug));
         $this->renderEpoch->expects($this->once())->method('bump')->with('localhost.dev');
 
         $invalidator->preRemove($page);
+
+        $invalidator->postFlush();
     }
 
     public function testRemovingADraftDeletesWithoutBump(): void
@@ -326,10 +358,12 @@ final class PageCacheInvalidatorTest extends TestCase
         $page = $this->makePersistedPage('localhost.dev');
         $invalidator = $this->makeInvalidator(host: 'localhost.dev', cacheMode: 'static');
 
-        $this->fileManager->expects($this->once())->method('delete')->with($page);
+        $this->fileManager->expects($this->once())->method('delete')->with(self::callback(static fn (Page $removed): bool => 'localhost.dev' === $removed->host && '' === $removed->slug));
         $this->renderEpoch->expects($this->never())->method('bump');
 
         $invalidator->preRemove($page);
+
+        $invalidator->postFlush();
     }
 
     public function testResetDrainsPendingRelevance(): void
@@ -343,6 +377,72 @@ final class PageCacheInvalidatorTest extends TestCase
         $invalidator->preUpdate($page, $this->makePreUpdateArgs($page, ['title' => ['Old', 'New']]));
         $invalidator->reset();
         $invalidator->postUpdate($page);
+        $invalidator->postFlush();
+    }
+
+    public function testInvalidationWaitsForFlushAndPrecedesDispatch(): void
+    {
+        $page = $this->makePersistedPage('localhost.dev');
+        $invalidator = $this->makeInvalidator(host: 'localhost.dev', cacheMode: 'static');
+        $invalidated = false;
+        $this->fileManager->expects($this->once())->method('invalidate')->with($page, null)
+            ->willReturnCallback(static function () use (&$invalidated): void {
+                $invalidated = true;
+            });
+        $this->bus->expects($this->once())->method('dispatch')
+            ->willReturnCallback(static function (object $message) use (&$invalidated): Envelope {
+                self::assertTrue($invalidated, 'A synchronous handler must run after invalidation.');
+
+                return new Envelope($message);
+            });
+
+        $invalidator->postUpdate($page);
+        self::assertFalse($invalidated, 'A failed flush must leave the cache untouched.');
+        $invalidator->postFlush();
+    }
+
+    public function testResetDiscardsAnUnflushedRefresh(): void
+    {
+        $page = $this->makePersistedPage('localhost.dev');
+        $invalidator = $this->makeInvalidator(host: 'localhost.dev', cacheMode: 'static');
+        $this->fileManager->expects($this->never())->method('invalidate');
+        $this->bus->expects($this->never())->method('dispatch');
+
+        $invalidator->postUpdate($page);
+        $invalidator->reset();
+        $invalidator->postFlush();
+    }
+
+    public function testSlugChangesInvalidateTheOldPathToo(): void
+    {
+        $page = $this->makePersistedPage('localhost.dev');
+        $page->slug = 'new-path';
+
+        $invalidator = $this->makeInvalidator(host: 'localhost.dev', cacheMode: 'static');
+        $this->fileManager->expects($this->once())->method('invalidate')->with(
+            $page,
+            self::callback(static fn (Page $previous): bool => 'old-path' === $previous->slug && $previous->host === $page->host),
+        );
+        $this->bus->method('dispatch')->willReturn(new Envelope(new PageCacheRefreshMessage(42)));
+
+        $invalidator->preUpdate($page, $this->makePreUpdateArgs($page, ['slug' => ['old-path', 'new-path']]));
+        $invalidator->postUpdate($page);
+        $invalidator->postFlush();
+    }
+
+    public function testMovingAwayFromACacheSiteStillInvalidatesThePreviousPath(): void
+    {
+        $page = $this->makePersistedPage('dynamic.host');
+        $invalidator = $this->makeInvalidator(host: 'localhost.dev', cacheMode: 'static');
+        $this->fileManager->expects($this->once())->method('invalidate')->with(
+            $page,
+            self::callback(static fn (Page $previous): bool => 'localhost.dev' === $previous->host),
+        );
+        $this->bus->expects($this->never())->method('dispatch');
+
+        $invalidator->preUpdate($page, $this->makePreUpdateArgs($page, ['host' => ['localhost.dev', 'dynamic.host']]));
+        $invalidator->postUpdate($page);
+        $invalidator->postFlush();
     }
 
     // --- helpers ---

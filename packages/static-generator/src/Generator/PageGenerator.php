@@ -11,6 +11,7 @@ use Psr\Log\LoggerInterface;
 use Pushword\Admin\PushwordAdminBundle;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Utils\PathGuard;
+use Pushword\StaticGenerator\Cache\PageCachePublication;
 
 use function Safe\preg_match;
 
@@ -35,6 +36,9 @@ class PageGenerator extends AbstractGenerator
 
     #[Required]
     public HtmlMinification $htmlMinification;
+
+    #[Required]
+    public PageCachePublication $cachePublication;
 
     public function setPreviousStaticDir(?string $directory): void
     {
@@ -131,6 +135,9 @@ class PageGenerator extends AbstractGenerator
 
     protected function saveAsStatic(string $liveUri, string $destination, ?Page $page = null, bool $feed = false): void
     {
+        $revision = $page instanceof Page && 'static' === $this->app->getStr('cache', 'none')
+            ? $this->cachePublication->revision($page)
+            : null;
         $stopwatch = $this->staticAppGenerator->getStopwatch();
 
         $request = Request::create($liveUri);
@@ -222,13 +229,26 @@ class PageGenerator extends AbstractGenerator
             return;
         }
 
-        $stopwatch?->start('file.write');
-        $this->filesystem->dumpFile($destination, $content);
-        $stopwatch?->stop('file.write');
+        $write = function () use ($stopwatch, $destination, $content, $isHtml, $revision): void {
+            $stopwatch?->start('file.write');
+            $this->filesystem->dumpFile($destination, $content);
+            $stopwatch?->stop('file.write');
 
-        // Generate compressed sidecars for static content
-        if ($isHtml || str_contains($destination, '.xml')) {
-            $this->generateCompressedSidecars($destination);
+            if ($isHtml || str_contains($destination, '.xml')) {
+                $this->generateCompressedSidecars($destination);
+            }
+
+            // An async compressor must finish under the publication lock too:
+            // otherwise it could recreate an old sidecar after invalidation.
+            if (null !== $revision) {
+                $this->finishCompression();
+            }
+        };
+
+        if (null !== $revision) {
+            $this->cachePublication->publish($page, $revision, $write);
+        } else {
+            $write();
         }
     }
 

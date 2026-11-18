@@ -1,5 +1,5 @@
 ---
-title: ''
+title: 'page saves invalidate their cache before redirecting'
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -34,3 +34,9 @@ belongs in the feature doc, which you link to instead.
 
 Several changes land here between two tags: append to the file, do not replace it.
 -->
+
+**Concerns:** `pushword/static-generator`
+
+## Saved pages are immediately current
+
+With `cache: static`, page saves now invalidate the old HTML and compressed files before redirecting, even when Messenger refreshes are asynchronous. Requests use PHP until the worker rebuilds the cache. Publication holds and bulk imports preserve their files. No configuration change is required. See [Page Cache](/extension/page-cache).
