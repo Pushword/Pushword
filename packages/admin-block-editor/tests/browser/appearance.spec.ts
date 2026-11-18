@@ -14,6 +14,7 @@ test('block text keeps readable contrast in light and dark admin themes', async 
     { type: 'groupEnd', data: {} },
     { type: 'card_list', data: { items: [{ title: 'Card title', description: 'Card description' }] } },
   ])
+  await expect(page.locator('.image-tool__caption')).toBeVisible()
   for (const theme of ['light', 'dark']) {
     await page.evaluate(theme => {
       document.body.classList.toggle('ea-light-scheme', theme === 'light')

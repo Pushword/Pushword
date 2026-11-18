@@ -124,6 +124,7 @@ export async function expectInsertionPreservesLayout(page: Page): Promise<void> 
 }
 
 export async function saveAndReload(page: Page): Promise<void> {
+  await page.evaluate(() => document.fonts.ready)
   const formUrl = page.url()
   const response = page.waitForResponse(response =>
     response.request().method() === 'POST' && response.url() === formUrl,
