@@ -98,7 +98,9 @@ and imports are left alone.
   condition for its notification, sent now or [later](#delay-one-message-notification).
   Form loads, invalid forms, steps without an email (the first step of `ms_message`) and
   later steps (the newsletter name) cost nothing, and a failed delivery is not refunded.
-  Over the quota, the form comes back with `conversationSubmissionRateLimited`.
+  A duplicate (same content and email within ten minutes) is shown as sent but not saved,
+  and still costs one. Over the quota, the form comes back with
+  `conversationSubmissionRateLimited`.
 
 ```yaml
 framework:
