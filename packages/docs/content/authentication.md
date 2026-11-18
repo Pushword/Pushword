@@ -53,13 +53,16 @@ Their tokens are:
 - **Hashed** (SHA-256) in database
 - **Single-use** (marked as used after consumption)
 - **Time-limited** (1 hour TTL)
-- **Invalidated** when a new magic link is requested
+- **Superseded** when a new magic link is requested
+
+A used, expired or superseded link never works again, except that a login link still
+offers code recovery (below).
 
 Opening a login link on any device loads a page without consuming it. Its script
 submits a CSRF-protected POST once the page is active and visible; HEAD and GET
 never authenticate. Without JavaScript, the page offers a sign-in button.
 
-If the link is already used or expired, **Receive a sign-in code** starts a new
+If the link is used, expired or superseded, **Receive a sign-in code** starts a new
 email authentication attempt. No code is sent by merely opening the page. The
 second email contains an eight-digit code, valid for ten minutes with five attempts
 across browsers. Requests share the login form's IP/address limits, with at least
