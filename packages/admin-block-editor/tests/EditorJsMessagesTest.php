@@ -36,6 +36,8 @@ final class EditorJsMessagesTest extends TestCase
             'editorConvertTo' => 'Convertir en',
             'editorConvertToGallery' => 'Convertir en galerie',
             'editorConvertToImage' => 'Convertir en image',
+            'editorLinkEdit' => 'Modifier',
+            'editorLinkRemove' => 'Retirer le lien',
             'editorMermaidError' => 'Impossible d’afficher le diagramme Mermaid.',
             'editorObfuscate' => 'Obfusquer',
             'editorMoveImageLeft' => 'Déplacer l’image à gauche',
@@ -110,6 +112,8 @@ final class EditorJsMessagesTest extends TestCase
         $messages = $this->messages();
 
         self::assertSame('Obfusquer', $messages['tools']['link']['Obfuscate']);
+        self::assertSame('Modifier', $messages['tools']['link']['Edit link']);
+        self::assertSame('Retirer le lien', $messages['tools']['link']['Remove link']);
         self::assertArrayHasKey('New tab', $messages['tools']['link']);
         // The link panel's own design labels, the ones the widget declares.
         self::assertArrayHasKey('Button', $messages['tools']['link']);

@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { afterEach, describe, it, expect, vi } from 'vitest'
 import { API } from '@editorjs/editorjs'
 import Hyperlink from './Hyperlink'
 import { MarkdownUtils } from '../utils/MarkdownUtils'
@@ -147,6 +147,64 @@ describe('Hyperlink.updateActionValues', () => {
 
     const values = Array.from(selects(wrapper).rel.options).map((option) => option.value)
     expect(values).not.toContain('me')
+  })
+})
+
+describe('Hyperlink text selection', () => {
+  afterEach(() => document.body.replaceChildren())
+
+  function selected() {
+    document.body.innerHTML = '<p contenteditable="true"><a href="/page">example mon texte sélectionné suite</a></p>'
+    const link = document.querySelector('a')!
+    const text = link.firstChild!
+    getSelection()!.setBaseAndExtent(text, 8, text, 29)
+    const api = stubApi()
+    api.selection = {
+      findParentTag: () => document.querySelector('a'),
+      expandToTag: vi.fn(),
+    } as unknown as API['selection']
+    api.inlineToolbar = { close: vi.fn(), open: vi.fn() }
+    const tool = new Hyperlink({ api })
+    tool.render()
+    const wrapper = tool.renderActions()
+    document.body.append(wrapper)
+    return { tool, link, api, wrapper }
+  }
+
+  it('detects a link without expanding its selected text or focusing its URL field', async () => {
+    const { tool, api, wrapper } = selected()
+    document.querySelector('p')!.focus()
+    const active = document.activeElement
+    expect(tool.checkState()).toBe(false)
+    await new Promise(resolve => setTimeout(resolve, 0))
+    expect(getSelection()!.toString()).toBe('mon texte sélectionné')
+    expect(document.activeElement).toBe(active)
+    expect(wrapper.querySelector('input')).not.toBe(document.activeElement)
+    expect(api.selection.expandToTag).not.toHaveBeenCalled()
+  })
+
+  it('edits the whole link address while restoring only the original selected words', () => {
+    const { tool, link, api, wrapper } = selected()
+    tool.surround(getSelection()!.getRangeAt(0))
+    expect(document.activeElement).toBe(urlInputOf(wrapper))
+    urlInputOf(wrapper).value = '/other'
+    tool.updateLink()
+    tool.closeActions()
+    expect(link.getAttribute('href')).toBe('/other')
+    expect(link.textContent).toBe('example mon texte sélectionné suite')
+    expect(getSelection()!.toString()).toBe('mon texte sélectionné')
+    expect(api.selection.expandToTag).not.toHaveBeenCalled()
+  })
+
+  it('does not reuse an earlier link for a selection spanning two identical anchors', () => {
+    const { tool } = selected()
+    tool.checkState()
+    document.querySelector('p')!.innerHTML = '<a href="/one">same</a> and <a href="/two">same</a>'
+    const links = document.querySelectorAll('a')
+    getSelection()!.setBaseAndExtent(links[0]!.firstChild!, 0, links[1]!.firstChild!, 4)
+    expect(tool.checkState()).toBe(false)
+    expect(getSelection()!.toString()).toBe('same and same')
+    expect(document.querySelector('button')?.classList.contains('ce-inline-tool--active')).toBeFalsy()
   })
 })
 

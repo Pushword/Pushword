@@ -881,6 +881,21 @@ describe('ClipboardManager – handlePaste routing', () => {
     expect(insert).toHaveBeenCalledWith('**bold**')
   })
 
+  it('keeps pasted formatting but drops the incoming anchor inside an existing link', () => {
+    const editable = caretInBlock()
+    editable.setAttribute('contenteditable', 'true')
+    editable.innerHTML = '<a href="/destination">before selected after</a>'
+    const text = editable.querySelector('a')!.firstChild!
+    getSelection()!.setBaseAndExtent(text, 7, text, 15)
+    document.execCommand = vi.fn(() => true)
+    const event = pasteEvent('[**copied**](/source)', '<a href="/source"><b>copied</b></a>')
+
+    cm.handlePaste(event)
+
+    expect(event.preventDefault).toHaveBeenCalledOnce()
+    expect(document.execCommand).toHaveBeenCalledWith('insertHTML', false, '<b>copied</b>')
+  })
+
   it('does not create blocks when pasting inside a table cell', () => {
     const block = buildTableBlock({ rows: [['A', 'B']], heading: true })
     const content = document.createElement('div')

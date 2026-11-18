@@ -378,6 +378,33 @@ test('the outline and media picker open and close by touch', async ({
   await expect(modal).toBeHidden()
 })
 
+test('compact link actions preserve touch selection and expose editing on a narrow screen', async ({ editorPage: page }) => {
+  await page.setViewportSize({ width: 320, height: 850 })
+  await render(page, [{ type: 'paragraph', data: { text: 'Avant <a href="/original">example mon texte sélectionné suite</a> après.' } }])
+  const field = page.locator('.ce-paragraph')
+  await field.tap()
+  // Native touch selection can cancel the pointer gesture before delivering its range.
+  await field.dispatchEvent('pointerdown', { pointerType: 'touch' })
+  await field.dispatchEvent('pointercancel', { pointerType: 'touch' })
+  await field.locator('a').evaluate(anchor => {
+    getSelection()!.setBaseAndExtent(anchor.firstChild!, 8, anchor.firstChild!, 29)
+  })
+  const context = page.locator('.pw-link-context')
+  await expect(context).toBeVisible()
+  await insideViewport(context)
+  await expect.poll(() => page.evaluate(() => getSelection()?.toString())).toBe('mon texte sélectionné')
+  await expect(field).toBeFocused()
+  await context.getByRole('button', { name: 'Edit link', exact: true }).tap()
+  const url = context.getByRole('combobox', { name: 'Page or URL' })
+  await expect(url).toBeFocused()
+  await insideViewport(context)
+  await url.fill('/nouveau')
+  await url.press('Enter')
+  await expect(field.locator('a')).toHaveAttribute('href', '/nouveau')
+  await expect.poll(() => page.evaluate(() => getSelection()?.toString())).toBe('mon texte sélectionné')
+  await expect(context).toBeHidden()
+})
+
 test('Mermaid editing keeps a compact live preview and a tappable Done button', async ({ editorPage: page }) => {
   await render(page, [
     { type: 'codeBlock', data: { html: 'flowchart LR\nA[Before] --> B[After]', language: 'mermaid' } },

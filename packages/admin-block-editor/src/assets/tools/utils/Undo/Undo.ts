@@ -397,7 +397,7 @@ export class Undo {
       !(
         target instanceof HTMLInputElement && ['checkbox', 'radio'].includes(target.type)
       ) &&
-      target.closest('.ce-inline-toolbar') !== null
+      target.closest('.ce-inline-toolbar, .pw-link-context') !== null
     )
   }
 }

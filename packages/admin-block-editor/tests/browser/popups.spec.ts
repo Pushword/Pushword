@@ -60,6 +60,7 @@ test('the URL preview opens a new tab without changing the edited link', async (
     selection.addRange(range)
   })
   await paragraph.dispatchEvent('mouseup')
+  await page.locator('.pw-link-context').getByRole('button', { name: 'Edit link', exact: true }).click()
   const options = page.locator('.link-options-wrapper')
   await expect(options).toBeVisible()
   await options.locator('select').first().focus()

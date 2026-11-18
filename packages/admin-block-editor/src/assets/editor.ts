@@ -28,6 +28,7 @@ import Gallery from './tools/Gallery/Gallery'
 import AlignementTune from './tools/AlignementTune/AlignementTune'
 import HyperlinkTune from './tools/HyperlinkTune/HyperlinkTune'
 import PasteLink from './tools/Hyperlink/PasteLink'
+import { setupLinkContext } from './tools/Hyperlink/LinkContext'
 import ClipboardManager, { setupBlockCut } from './tools/utils/ClipboardManager'
 import { setupBlockSelection } from './tools/utils/BlockSelection'
 import { setupTextSelection } from './tools/utils/TextSelection'
@@ -253,6 +254,16 @@ export class editorJs {
           }
           setupTextSelection(editor, document.getElementById(config.holder!)!, editorListeners.signal)
           setupPlainTextPaste(editor, document.getElementById(config.holder!)!, editorListeners.signal)
+          const link = Object.entries(config.tools ?? {}).find(([, tool]) => tool.class === Hyperlink)
+          if (link) {
+            setupLinkContext(
+              editor,
+              document.getElementById(config.holder!)!,
+              link[1].config,
+              { ...config.i18n?.messages?.tools?.[link[0]], Link: config.i18n?.messages?.toolNames?.Link ?? 'Link' },
+              editorListeners.signal,
+            )
+          }
           new PasteLink({ editor })
           new ClipboardManager({ editor })
           setupBlockCut(editor, document.getElementById(config.holder!)!, editorListeners.signal)

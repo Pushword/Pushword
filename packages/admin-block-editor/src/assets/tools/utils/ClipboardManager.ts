@@ -7,6 +7,7 @@ import { GroupNesting } from '../Group/GroupNesting'
 import { reportEditorError } from '../../EditorDiagnostics'
 import type { PastedItem } from '../List/List'
 import { replaceSelectedBlocks } from './BlockSelection'
+import { selectedLink } from '../Hyperlink/selectedLink'
 
 /** A Word list paragraph: `mso-list:l0 level2 lfo1` in its style. */
 const WORD_LIST_LEVEL = /mso-list:\s*l\d+\s+level(\d+)/i
@@ -440,6 +441,9 @@ export default class ClipboardManager {
                 const api = this.editor as unknown as API
                 const block = api.blocks.getById(blockContent.closest<HTMLElement>('.ce-block')!.dataset.id!)!
                 const tool = this.editorjsTools.find(tool => tool.name === block.name)!
+                // Pasted inline formatting belongs to the destination link; an
+                // incoming anchor would split it or introduce a nested link.
+                if (selectedLink()) fragment.querySelectorAll('a').forEach(link => link.replaceWith(...link.childNodes))
                 const html = api.sanitizer.clean(fragment.innerHTML, tool.baseSanitizeConfig)
                 event.preventDefault()
                 event.stopPropagation()

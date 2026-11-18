@@ -60,6 +60,8 @@ void (async () => {
     const position = { clientX: rect.left + rect.width / 2, clientY: rect.top + rect.height / 2 }
     button.dispatchEvent(new PointerEvent('pointerdown', { ...position, bubbles: true }))
     button.dispatchEvent(new MouseEvent('mousedown', { ...position, bubbles: true, cancelable: true }))
+    button.dispatchEvent(new PointerEvent('pointerup', { ...position, bubbles: true }))
+    button.dispatchEvent(new MouseEvent('mouseup', { ...position, bubbles: true }))
     button.click()
     await pause()
   }
@@ -180,7 +182,8 @@ void (async () => {
   })
 
   const address = async (value) => {
-    const input = holder.querySelector('.link-options__url')
+    if (!document.querySelector('.link-options__url')) await key('k')
+    const input = document.querySelector('.link-options__url')
     input.focus()
     input.value = value
     input.dispatchEvent(new Event('input', { bubbles: true }))
@@ -222,7 +225,9 @@ void (async () => {
       'Address redo failed',
     )
     await select()
-    await tool('link')
+    await wait(() => document.querySelector('.pw-link-context:not([hidden])'))
+    document.querySelector('.pw-link-context__summary button:last-child').click()
+    await pause()
     check(!field().querySelector('a'), 'Unlink failed')
     await key('z')
     check(
@@ -266,6 +271,7 @@ void (async () => {
       [2, 'class', 'link-btn'],
     ]) {
       await select()
+      await tool('link')
       const before = html()
       const control = controls()[index]
       control.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }))

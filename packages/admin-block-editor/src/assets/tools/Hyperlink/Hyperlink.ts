@@ -1,12 +1,13 @@
 import SelectionUtils from './Selection'
 import make from '../utils/make'
 import { unwrapTag } from '../utils/inlineTag'
-import { IconLink, IconUnlink } from '@codexteam/icons'
+import { IconLink } from '@codexteam/icons'
 import { API } from '@editorjs/editorjs'
 import './Hyperlink.css'
 
 import PageLinkSuggestions, { PageLink } from './PageLinkSuggestions'
 import { isSafeLinkUrl } from './safeLinkUrl'
+import { selectedLink } from './selectedLink'
 
 interface HyperlinkNodes {
   wrapper: HTMLElement | null
@@ -201,25 +202,10 @@ export default class Hyperlink {
   }
 
   checkState(): boolean {
-    const anchorTag = this.anchorTag || this.api.selection.findParentTag('A')
-
-    if (!anchorTag) {
-      this.showUnlink(false)
-      return false
-    }
-
-    if (!anchorTag.innerText.includes(window.getSelection()?.toString() || '')) {
-      this.showUnlink(true)
-      return false
-    }
-
-    this.showUnlink()
-    this.anchorTag = anchorTag
-    this.openActions()
-    this.updateActionValues(anchorTag)
-    setTimeout(() => this.nodes.input!.focus(), 0)
-
-    return true
+    if (!this.inputOpened) this.anchorTag = selectedLink()
+    this.nodes.button?.classList.toggle(this.api.styles.inlineToolButtonActive, !!this.anchorTag)
+    // Editor.js interprets true as a request to open the full link form.
+    return this.inputOpened
   }
 
   surround(range: Range | null): void {
@@ -230,11 +216,10 @@ export default class Hyperlink {
 
     if (this.inputOpened) this.selection.restore()
 
-    const termWrapper = this.api.selection.findParentTag('A') || this.anchorTag
+    const termWrapper = selectedLink()
 
     if (termWrapper) {
-      this.unlink(termWrapper)
-      this.closeActions()
+      this.edit(termWrapper)
       return
     }
 
@@ -244,14 +229,11 @@ export default class Hyperlink {
     this.openActions(true)
   }
 
-  showUnlink(showUnlink = true): void {
-    if (showUnlink) {
-      this.nodes.button?.classList.add(this.api.styles.inlineToolButtonActive)
-      this.nodes.button!.innerHTML = IconUnlink
-      return
-    }
-    this.nodes.button!.innerHTML = IconLink
-    this.nodes.button?.classList.remove(this.api.styles.inlineToolButtonActive)
+  edit(anchor: HTMLElement): void {
+    this.anchorTag = anchor
+    this.selection.save()
+    this.updateActionValues(anchor)
+    this.openActions(true)
   }
 
   updateActionValues(anchorTag: HTMLElement): void {
@@ -331,10 +313,6 @@ export default class Hyperlink {
 
   openActions(needFocus = false): void {
     this.nodes.wrapper!.style.display = 'block'
-    if (this.anchorTag) {
-      this.api.selection.expandToTag(this.anchorTag)
-      this.selection.save()
-    }
     if (needFocus) {
       this.nodes.input!.focus()
     }
@@ -343,7 +321,6 @@ export default class Hyperlink {
 
   closeActions(): void {
     this.selection.restore()
-    this.selection.collapseToEnd()
 
     const value = this.nodes.input!.value || ''
     if (!value.trim()) this.unlink(this.anchorTag)

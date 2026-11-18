@@ -1,3 +1,65 @@
+.pw-link-context {
+  position: fixed;
+  z-index: 1060;
+  width: max-content;
+  max-width: calc(100vw - 16px);
+  max-height: calc(100dvh - 16px);
+  overflow-y: auto;
+  color: var(--text-color, #1d202b);
+  background: var(--bs-body-bg, #fdfdfd);
+  border: 1px solid var(--border-color, #cbd5e1);
+  border-radius: var(--pw-radius-sm, 4px);
+  box-shadow: 0 4px 12px rgb(0 0 0 / 12%);
+  font-size: 13px;
+}
+
+.pw-link-context [hidden],
+.pw-link-context[hidden] {
+  display: none;
+}
+
+.pw-link-context__summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+}
+
+.pw-link-context__address {
+  min-width: 0;
+  max-width: 16rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pw-link-context__summary button {
+  flex-shrink: 0;
+  border: 0;
+  border-radius: 3px;
+  padding: 5px 6px;
+  background: var(--gray-100, #f1f5f9);
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.pw-link-context :is(button, a, input, select):focus-visible {
+  outline: 2px solid var(--focus-ring-color, #0284c7);
+  outline-offset: 2px;
+}
+
+.pw-link-context > .link-options-wrapper {
+  width: min(28rem, calc(100vw - 16px));
+  border-top: 0;
+}
+
+@media (pointer: coarse) {
+  .pw-link-context__summary button {
+    min-height: 44px;
+  }
+}
+
 .link-options-wrapper {
   outline: none;
   border: 0;

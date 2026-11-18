@@ -35,9 +35,7 @@ export default class PasteLink {
         if (!selectedNode || !(selectedNode as Element).closest('.ce-block__content'))
           return
 
-        // Are we in a link ?
-        // normally, it's not possible because if you select an a, it's opening the related toolbar
-
+        // Replacing text inside a link keeps its existing destination.
         const parentAnchor = this.editor.selection.findParentTag('A')
         if (parentAnchor) return
 

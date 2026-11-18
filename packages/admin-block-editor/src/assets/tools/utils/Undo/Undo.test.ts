@@ -473,15 +473,19 @@ it('reinitializes history without carrying edits from a replaced document', asyn
   expect(f.all()[0]!.data.text).toBe('original!')
 })
 
-it.each(['<input value="/draft">', '<textarea>/draft</textarea>'])(
-  'leaves inline toolbar draft history native for %s',
-  async (control) => {
+it.each([
+  ['ce-inline-toolbar', '<input value="/draft">'],
+  ['ce-inline-toolbar', '<textarea>/draft</textarea>'],
+  ['pw-link-context', '<input value="/draft">'],
+])(
+  'leaves %s draft history native for %s',
+  async (className, control) => {
     const f = fixture()
     await f.undo.initialize()
     f.type('!')
     await f.undo.flush()
     const toolbar = document.createElement('div')
-    toolbar.className = 'ce-inline-toolbar'
+    toolbar.className = className
     toolbar.innerHTML = control
     f.holder.append(toolbar)
     const input = toolbar.querySelector<HTMLInputElement | HTMLTextAreaElement>(
