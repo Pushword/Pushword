@@ -230,8 +230,10 @@ class MarkdownParser implements ResetInterface
      * covered by the media version token — but only for fragments that actually
      * contain a Markdown image (see cacheKeyVersion()). yearsSince() fragments
      * refresh daily so an anniversary does not require saving the page. date()
-     * shortcodes are cached as-is: the slight staleness is acceptable and the fragment refreshes
-     * whenever the page is saved or (for image fragments) the media version bumps.
+     * shortcodes are cached as-is: the key hashes the text, so a fragment keeps its
+     * date until that text changes, the pool entry expires (MARKDOWN_CACHE_LIFETIME
+     * in PushwordCoreExtension) or, for image fragments, the media version bumps.
+     * That staleness is accepted.
      *
      * Baking the rendered output into the key is also why **a Twig function callable
      * from a page body has to be deterministic**: draw an id from random(), and every
