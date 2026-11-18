@@ -3,10 +3,15 @@ import { replaceTextSelection, textSelectionClipboard } from './TextSelectionCon
 import { fieldRange, selectedBlocks, textFieldAt, textFields, textSelections, wholeBlockSelected } from './TextSelectionState'
 
 const HIGHLIGHT = 'pw-text-selection'
+const SELECTED_BLOCK = 'pw-text-selection-block'
 interface Point { node: Node; offset: number; block: HTMLElement; atomic?: boolean }
 
 function blockPoint(block: HTMLElement, after: boolean): Point {
   return { node: block.parentNode!, offset: Array.from(block.parentNode!.childNodes).indexOf(block) + Number(after), block, atomic: true }
+}
+
+function fieldEdge(field: HTMLElement, end: boolean): Point {
+  return { node: field, offset: end ? field.childNodes.length : 0, block: field.closest<HTMLElement>('.ce-block')! }
 }
 
 export function setupTextSelection(editor: EditorJS, holder: HTMLElement, signal: AbortSignal): void {
@@ -34,20 +39,24 @@ export function setupTextSelection(editor: EditorJS, holder: HTMLElement, signal
     const last = textFieldAt(range.endContainer, holder)
     return first && last && (includeSingleField || first !== last) ? range : null
   }
-  const paint = (): void => {
+  const unpaint = (): void => {
     if (highlight && CSS.highlights.get(HIGHLIGHT) === highlight) CSS.highlights.delete(HIGHLIGHT)
-    holder.querySelectorAll('.pw-text-selection-block').forEach(block => block.classList.remove('pw-text-selection-block'))
+    highlight = null
+    holder.querySelectorAll(`.${SELECTED_BLOCK}`).forEach(block => block.classList.remove(SELECTED_BLOCK))
+  }
+  const paint = (): void => {
+    unpaint()
     const range = selectedRange(true)
-    if (!range) { highlight = null; return }
+    if (!range) return
     if (textSelections.has(holder)) {
       highlight = new Highlight(...textFields(holder).filter(field => range.intersectsNode(field)).map(field => fieldRange(field, range)))
       CSS.highlights.set(HIGHLIGHT, highlight)
-    } else highlight = null
+    }
     for (const block of selectedBlocks(holder, range)) {
       const fields = textFields(block)
       const coversText = fields.length > 0 && !block.querySelector('img, .editorjs-monaco-wrapper, .pw-mermaid-preview') &&
         fields.every(field => range.intersectsNode(field) && fieldRange(field, range).toString() === field.textContent)
-      if (wholeBlockSelected(block, range) || coversText) block.classList.add('pw-text-selection-block')
+      if (wholeBlockSelected(block, range) || coversText) block.classList.add(SELECTED_BLOCK)
     }
   }
   const clear = (): void => {
@@ -118,13 +127,17 @@ export function setupTextSelection(editor: EditorJS, holder: HTMLElement, signal
   }, options)
   signal.addEventListener('abort', () => {
     textSelections.delete(holder)
-    if (highlight && CSS.highlights.get(HIGHLIGHT) === highlight) CSS.highlights.delete(HIGHLIGHT)
-    holder.querySelectorAll('.pw-text-selection-block').forEach(block => block.classList.remove('pw-text-selection-block'))
+    unpaint()
   }, { once: true })
 
   const cursorPoint = (event: MouseEvent): Point | null => {
     const caret = document.caretPositionFromPoint(event.clientX, event.clientY)
     return caret ? point(caret.offsetNode, caret.offset) : null
+  }
+  /** The caret at height `y` in a field, `x` clamped into its box so a margin still lands on its text. */
+  const caretInField = (field: HTMLElement, box: DOMRect, x: number, y: number): Point | null => {
+    const caret = document.caretPositionFromPoint(Math.max(box.left + 1, Math.min(x, box.right - 1)), y)
+    return caret && field.contains(caret.offsetNode) ? point(caret.offsetNode, caret.offset) : null
   }
   holder.addEventListener('mousedown', event => {
     dragging = null
@@ -163,12 +176,8 @@ export function setupTextSelection(editor: EditorJS, holder: HTMLElement, signal
       if (fields.length) {
         const field = fields.find(field => event.clientY < field.getBoundingClientRect().bottom) ?? fields[fields.length - 1]!
         const box = field.getBoundingClientRect()
-        if (event.clientY <= box.top || event.clientY >= box.bottom) {
-          end = { node: field, offset: event.clientY <= box.top ? 0 : field.childNodes.length, block: target }
-        } else {
-          const caret = document.caretPositionFromPoint(Math.max(box.left + 1, Math.min(event.clientX, box.right - 1)), event.clientY)
-          if (caret && field.contains(caret.offsetNode)) end = point(caret.offsetNode, caret.offset)
-        }
+        if (event.clientY <= box.top || event.clientY >= box.bottom) end = fieldEdge(field, event.clientY > box.top)
+        else end = caretInField(field, box, event.clientX, event.clientY)
       } else if (target !== dragging.block) {
         const forward = Boolean(dragging.block.compareDocumentPosition(target) & Node.DOCUMENT_POSITION_FOLLOWING)
         end = blockPoint(target, forward)
@@ -215,7 +224,7 @@ export function setupTextSelection(editor: EditorJS, holder: HTMLElement, signal
     let next: Point | null
     if (event.key === 'Home' || event.key === 'End') {
       const target = event.ctrlKey || event.metaKey ? fields[forward ? fields.length - 1 : 0]! : field
-      next = { node: target, offset: forward ? target.childNodes.length : 0, block: target.closest<HTMLElement>('.ce-block')! }
+      next = fieldEdge(target, forward)
     } else {
       const caret = document.createRange()
       caret.setStart(current.node, current.offset)
@@ -238,10 +247,8 @@ export function setupTextSelection(editor: EditorJS, holder: HTMLElement, signal
           adjacent.scrollIntoView({ block: 'nearest' })
           const box = adjacent.getBoundingClientRect()
           const line = parseFloat(getComputedStyle(adjacent).lineHeight) || rect.height
-          const hit = vertical ? document.caretPositionFromPoint(Math.max(box.left + 1, Math.min(rect.x, box.right - 1)),
-            forward ? box.top + line / 2 : box.bottom - line / 2) : null
-          next = hit && adjacent.contains(hit.offsetNode) ? point(hit.offsetNode, hit.offset) :
-            { node: adjacent, offset: forward ? 0 : adjacent.childNodes.length, block: adjacent.closest<HTMLElement>('.ce-block')! }
+          const hit = vertical ? caretInField(adjacent, box, rect.x, forward ? box.top + line / 2 : box.bottom - line / 2) : null
+          next = hit ?? fieldEdge(adjacent, !forward)
         }
       }
     }

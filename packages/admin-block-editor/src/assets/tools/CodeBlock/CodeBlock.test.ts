@@ -165,6 +165,7 @@ describe('Mermaid code block', () => {
     const preview = element.querySelector('.pw-mermaid-preview')!
     fullscreen.click()
     expect(dialog.open).toBe(true)
+    expect(monacoEditor.focus).toHaveBeenCalledTimes(2)
     expect(dialog.contains(source)).toBe(true)
     expect(dialog.contains(preview)).toBe(true)
     expect(element.contains(source)).toBe(true)

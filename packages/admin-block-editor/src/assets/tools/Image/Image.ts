@@ -168,7 +168,7 @@ export default class Image extends AbstractMediaTool {
         closeOnActivate: true,
         onActivate: () => {
           if (!this.media) return
-          return this.replaceBlock('gallery', { items: [this.save(this.nodes.wrapper)] })
+          return this.replaceBlock('gallery', { items: [this.save()] })
         },
       },
     ]
@@ -187,18 +187,12 @@ export default class Image extends AbstractMediaTool {
     return wrapper
   }
 
-  public save(block: HTMLElement): ImageData {
+  public save(): ImageData {
     if (!this.media) {
       return { media: '', caption: '' }
     }
-    return {
-      media: this.media,
-      caption:
-        this.nodes.caption.textContent?.trim() ??
-        block.querySelector('.image-tool__caption')?.textContent?.trim() ??
-        this.data.caption ??
-        '',
-    }
+    // The caption node always exists, attached or not: an emptied caption stays empty.
+    return { media: this.media, caption: this.nodes.caption.textContent?.trim() ?? '' }
   }
 
   public validate(): boolean {

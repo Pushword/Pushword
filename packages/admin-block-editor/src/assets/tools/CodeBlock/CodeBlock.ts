@@ -167,13 +167,14 @@ export default class CodeBlock extends Raw {
     }
     this.editorInstance?.layout()
     if (!focus) return
-    if (!editing) {
-      this.editButton?.focus()
-    } else if (this.editorInstance) {
-      this.editorInstance.focus()
-    } else {
-      this.wrapper?.querySelector('textarea')?.focus()
-    }
+    if (editing) this.focusSource()
+    else this.editButton?.focus()
+  }
+
+  /** Monaco once it has loaded, its textarea fallback until then. */
+  private focusSource(): void {
+    if (this.editorInstance) this.editorInstance.focus()
+    else this.wrapper?.querySelector('textarea')?.focus()
   }
 
   private toggleFullscreen(): void {
@@ -191,8 +192,7 @@ export default class CodeBlock extends Raw {
     dialog.showModal()
     this.updateFullscreenButton()
     this.editorInstance?.layout()
-    if (this.editorInstance) this.editorInstance.focus()
-    else this.wrapper?.querySelector('textarea')?.focus()
+    this.focusSource()
   }
 
   private closeFullscreen(focus = false): void {

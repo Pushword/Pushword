@@ -62,7 +62,7 @@ describe('Image – removing the media', () => {
     tool.nodes.imageEl!.dispatchEvent(new Event('load'))
 
     expect(wrapper.querySelector('.image-tool__caption')).toBe(caption)
-    expect(tool.save(wrapper)).toEqual({ media: 'second.jpg', caption: 'Edited caption' })
+    expect(tool.save()).toEqual({ media: 'second.jpg', caption: 'Edited caption' })
     expect(tool.validate()).toBe(true)
     caption.dispatchEvent(new Event('input'))
     expect(input).toHaveBeenCalledTimes(2)
@@ -77,7 +77,7 @@ describe('Image – removing the media', () => {
 
     deleteButtonOf(wrapper).click()
 
-    expect(tool.save(wrapper).media).toBe('')
+    expect(tool.save().media).toBe('')
     expect(wrapper.classList.contains('image-tool--empty')).toBe(true)
     expect(wrapper.querySelector('img')).toBeNull()
   })
@@ -89,7 +89,7 @@ describe('Image – removing the media', () => {
     deleteButtonOf(wrapper).click()
     tool.onUpload({ success: true, file: { media: 'other.jpg' } })
 
-    expect(tool.save(wrapper)).toEqual({ media: 'other.jpg', caption: 'A caption' })
+    expect(tool.save()).toEqual({ media: 'other.jpg', caption: 'A caption' })
   })
 
   it('keeps a deliberately cleared caption when another media is picked', () => {
@@ -100,14 +100,14 @@ describe('Image – removing the media', () => {
     deleteButtonOf(wrapper).click()
     tool.onUpload({ success: true, file: { media: 'other.jpg' } })
 
-    expect(tool.save(wrapper)).toEqual({ media: 'other.jpg', caption: '' })
+    expect(tool.save()).toEqual({ media: 'other.jpg', caption: '' })
   })
 
   it('saves an emptied caption without restoring the original text', () => {
     const tool = imageWith('photo.jpg')
-    const wrapper = tool.render()
+    tool.render()
     tool.nodes.caption.textContent = ''
-    expect(tool.save(wrapper)).toEqual({ media: 'photo.jpg', caption: '' })
+    expect(tool.save()).toEqual({ media: 'photo.jpg', caption: '' })
   })
 
   it('does not submit the admin form it is rendered inside', () => {
@@ -211,16 +211,16 @@ describe('Image – an upload', () => {
     tool.onUpload({ success: true, file: { media: 'photo.jpg' } })
 
     expect(wrapper.querySelector('img')?.getAttribute('src')).toBe('/media/md/photo.jpg')
-    expect(tool.save(wrapper)).toEqual({ media: 'photo.jpg', caption: 'A caption' })
+    expect(tool.save()).toEqual({ media: 'photo.jpg', caption: 'A caption' })
   })
 
   it('takes its caption from the name the answer gives', () => {
     const tool = imageWith('')
-    const wrapper = tool.render()
+    tool.render()
 
     tool.onUpload({ success: true, file: { media: 'photo.jpg', name: 'A photo' } })
 
-    expect(tool.save(wrapper)).toEqual({ media: 'photo.jpg', caption: 'A photo' })
+    expect(tool.save()).toEqual({ media: 'photo.jpg', caption: 'A photo' })
   })
 })
 
@@ -252,7 +252,7 @@ describe('Image – a renamed media', () => {
     img.dispatchEvent(new Event('error'))
 
     await vi.waitFor(() => expect(img.getAttribute('src')).toBe('/media/md/new-name.jpg'))
-    expect(tool.save(wrapper).media).toBe('new-name.jpg')
+    expect(tool.save().media).toBe('new-name.jpg')
   })
 })
 

@@ -86,6 +86,16 @@ it('releases its stored selection, highlight and handlers when the editor is des
   expect(field.textContent).toBe('BEFORE|CUT')
 })
 
+it('removes its whole-block highlight when the editor is destroyed', () => {
+  const field = holder.querySelector<HTMLElement>('.ce-paragraph')!
+  field.focus()
+  getSelection()!.selectAllChildren(field)
+  document.dispatchEvent(new Event('selectionchange'))
+  expect(field.closest('.ce-block')!.classList.contains('pw-text-selection-block')).toBe(true)
+  listeners.abort()
+  expect(holder.querySelector('.pw-text-selection-block')).toBeNull()
+})
+
 it('clears a range before a click outside the editor', () => {
   select()
   document.body.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }))
