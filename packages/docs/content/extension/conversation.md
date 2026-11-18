@@ -76,6 +76,39 @@ query string. A **homepage** form's `referring` ends in `/` (empty slug), so a r
 gets rewritten in flight. Set `false` only where no homepage carries a form, or where the
 proxied paths are exempt from that redirect.
 
+### Spam protection
+
+Every form the `pushword_conversation` route serves gets three checks, whether it is a
+built-in type or yours, built from `initForm()` or straight on `FormType`. Admin forms
+and imports are left alone.
+
+- **Honeypot**: a hidden, unmapped `homepage` field. When it is filled, the form is
+  redisplayed with `conversationSubmissionRejected`; nothing is saved or sent. A field
+  of your own named `homepage` replaces the trap.
+- **Signed action**: the form action carries `_expiration` and `_hash`, signed with
+  `kernel.secret`, valid one day. A post must use the action of a form fetched for the
+  same host, type, referring page, locale, workflow and step. No session or cookie is
+  involved, so it works from static pages and other domains. It stops scripts that post
+  without fetching a form; it is not CSRF protection, since anyone can fetch a form and
+  reuse its action until it expires. Cross-site posts are refused by the origin check
+  above. An expired form comes back with the visitor's input and a fresh action. Render
+  the `<form>` tag with `form_start()` (or `conversation.vars.action`).
+- **Quota**: 10 accepted messages per IP per hour, shared by every host and form. A
+  message counts once, when a valid submission first gives it a valid author email, the
+  condition for its notification, sent now or [later](#delay-one-message-notification).
+  Form loads, invalid forms, steps without an email (the first step of `ms_message`) and
+  later steps (the newsletter name) cost nothing, and a failed delivery is not refunded.
+  Over the quota, the form comes back with `conversationSubmissionRateLimited`.
+
+```yaml
+framework:
+  rate_limiter:
+    conversation_submit: { limit: 5 } # sliding_window over 1 hour by default
+```
+
+The per-site limit on every POST above still applies. Both messages are validator
+translations: override them in your `validators.<locale>.yaml`.
+
 ## Published comments
 
 ```twig

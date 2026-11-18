@@ -75,9 +75,18 @@ class NewMessageMailNotifier
         return $result;
     }
 
+    /**
+     * Only a message whose author left an address to reply to is notified one by one.
+     * The public form quota is spent on the same condition.
+     */
+    public static function hasReplyAddress(Message $message): bool
+    {
+        return false !== filter_var($message->authorEmail, \FILTER_VALIDATE_EMAIL);
+    }
+
     public function prePersist(Message $message): void
     {
-        if ($this->importContext->isImporting() || false === filter_var($message->authorEmail, \FILTER_VALIDATE_EMAIL)) {
+        if ($this->importContext->isImporting() || ! self::hasReplyAddress($message)) {
             return;
         }
 
@@ -97,7 +106,7 @@ class NewMessageMailNotifier
             return;
         } // we send notification only for message sent by not logged people
 
-        if (false === filter_var($message->authorEmail, \FILTER_VALIDATE_EMAIL)) {
+        if (! self::hasReplyAddress($message)) {
             return; // no valid email, so nothing to reply, no notification.
         }
 
@@ -110,7 +119,7 @@ class NewMessageMailNotifier
             return;
         }
 
-        if (false === filter_var($message->authorEmail, \FILTER_VALIDATE_EMAIL)) {
+        if (! self::hasReplyAddress($message)) {
             // $this->send();
 
             return;

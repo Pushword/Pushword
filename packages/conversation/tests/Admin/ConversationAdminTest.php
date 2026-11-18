@@ -9,6 +9,7 @@ use PHPUnit\Framework\Attributes\Group;
 use Pushword\Admin\Tests\AbstractAdminTestClass;
 use Pushword\Conversation\Entity\Message;
 use Pushword\Conversation\Entity\Review;
+use Pushword\Conversation\Form\Extension\SpamProtectionExtension;
 use Symfony\Component\HttpFoundation\Request;
 
 #[Group('integration')]
@@ -27,6 +28,8 @@ final class ConversationAdminTest extends AbstractAdminTestClass
             foreach ($actions as $action) {
                 $client->request(Request::METHOD_GET, '/admin/'.$controller.$action);
                 self::assertResponseIsSuccessful();
+                // Public-form spam protection stays off admin forms.
+                self::assertSelectorNotExists('input[name$="['.SpamProtectionExtension::HONEYPOT.']"]');
             }
         }
     }

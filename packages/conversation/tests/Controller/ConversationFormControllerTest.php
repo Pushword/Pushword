@@ -356,9 +356,12 @@ final class ConversationFormControllerTest extends WebTestCase
     {
         $client = self::createClient();
         $content = 'Cross-origin message '.uniqid();
+        // Both posts use the signed action of a fetched form: only their origin differs.
+        $action = (string) $client->request(Request::METHOD_GET, '/conversation/message/test?host=localhost.dev')
+            ->filter('[name="form"]')->attr('action');
         $postFrom = static fn (string $origin): mixed => $client->request(
             Request::METHOD_POST,
-            '/conversation/message/test?host=localhost.dev',
+            $action,
             ['form' => ['authorEmail' => 'cross-origin@example.tld', 'authorName' => 'Test', 'content' => $content]],
             server: ['HTTP_ORIGIN' => $origin, 'REMOTE_ADDR' => '192.0.2.52'],
         );

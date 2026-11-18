@@ -1,5 +1,5 @@
 ---
-title: ''
+title: 'public conversation forms get a honeypot, a signed action and a quota of accepted messages'
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -34,3 +34,13 @@ belongs in the feature doc, which you link to instead.
 
 Several changes land here between two tags: append to the file, do not replace it.
 -->
+
+**Concerns:** `pushword/conversation`
+
+## Conversation forms are protected against spam
+
+Public conversation forms carry a hidden `homepage` honeypot and a signed, expiring
+action, and accept 10 messages per IP per hour (`framework.rate_limiter.conversation_submit`).
+**Sites that write the conversation `<form>` tag by hand or run their own spam extension
+on these forms:** render it with `form_start()` and remove the extension. See
+[spam protection](/extension/conversation#spam-protection).

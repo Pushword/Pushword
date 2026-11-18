@@ -1,2 +1,4 @@
 conversationContentShort: 'Your message seems too short.'
 conversationEmailInvalid: 'Invalid email address'
+conversationSubmissionRateLimited: 'Too many messages were sent from your connection. Please try again later.'
+conversationSubmissionRejected: 'Your message could not be sent. Please try again.'
