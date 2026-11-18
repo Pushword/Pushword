@@ -121,6 +121,27 @@ final class ConvertJsonToMarkdownCommandTest extends KernelTestCase
         self::assertMatchesRegularExpression('/\|\s*:-+:\s*\|/', $content, 'center-aligned column');
     }
 
+    /** Guards the committed converter build against drifting behind the List tool sources. */
+    public function testEmptyListItemKeepsItsMarker(): void
+    {
+        $kernel = self::createKernel();
+        $application = new Application($kernel);
+
+        $json = '{"blocks":[{"type":"list","data":{"style":"unordered","items":[{"content":"One","items":[]},{"content":"","items":[]}]}}]}';
+        $pageId = $this->createTestPage('empty-list-item', 'Empty List Item', $json);
+
+        $commandTester = new CommandTester($application->find('pw:json-to-markdown'));
+        $commandTester->execute(['--page-id' => (string) $pageId]);
+        self::assertSame(0, $commandTester->getStatusCode());
+
+        $em = self::getContainer()->get('doctrine.orm.default_entity_manager');
+        $em->clear();
+
+        $page = $em->getRepository(Page::class)->find($pageId);
+        self::assertNotNull($page);
+        self::assertSame("- One\n- <!-- -->", $page->mainContent);
+    }
+
     public function testNoJsonPages(): void
     {
         $kernel = self::createKernel();

@@ -3939,6 +3939,14 @@ var invalidReferenceCodePoints = /* @__PURE__ */ new Set([
 // node_modules/he/src/he.mjs
 /*! https://mths.be/he by @mathias | MIT license */
 var regexEscape = /["&'<>`]/g;
+var escapeMap = /* @__PURE__ */ new Map([
+	["\"", "&quot;"],
+	["&", "&amp;"],
+	["'", "&#x27;"],
+	["<", "&lt;"],
+	[">", "&gt;"],
+	["`", "&#x60;"]
+]);
 var regexInvalidEntity = /&#(?:[xX][^a-fA-F0-9]|[^0-9xX])/;
 var has = (object, propertyName) => Object.hasOwn(object, propertyName);
 var merge = (options, defaults) => {
@@ -4041,6 +4049,11 @@ var decode = (html, options) => {
 decode.options = {
 	isAttributeValue: false,
 	strict: false
+};
+var escape = (string) => {
+	return string.replace(regexEscape, ($0) => {
+		return escapeMap.get($0);
+	});
 };
 // node_modules/jsonrepair/lib/esm/utils/JSONRepairError.js
 var JSONRepairError = class extends Error {
@@ -5417,7 +5430,22 @@ var MarkdownUtils = class MarkdownUtils {
 		const attributes = [`href="${href}"`];
 		if (title !== void 0) attributes.push(`title="${title}"`);
 		if (isObfuscated) attributes.push("rel=\"obfuscate\"");
-		if (attrsString) attributes.push(attrsString);
+		if (attrsString) {
+			const classes = [];
+			const extras = attrsString.replace(/([\w:-]+)\s*=\s*("[^"]*"|'[^']*'|[^\s]+)|\.(-?[_a-z][^\s.}]*)/gi, (attribute, name, value, className) => {
+				if (className !== void 0) {
+					classes.push(className);
+					return "";
+				}
+				if (name?.toLowerCase() === "class") {
+					classes.push(decode(value.replace(/^["']|["']$/g, "")));
+					return "";
+				}
+				return attribute;
+			}).trim();
+			if (extras) attributes.push(extras);
+			if (classes.length) attributes.push(`class="${escape(classes.join(" "))}"`);
+		}
 		return `<a ${attributes.join(" ")}>`;
 	}
 	/**
@@ -8229,7 +8257,8 @@ var Raw = class extends BaseTool {
 		};
 		const embedded = {
 			instance: void 0,
-			activate
+			activate,
+			getValue: () => this.editorInstance?.getValue() ?? this.data.html
 		};
 		embeddedEditors.set(this.wrapper, embedded);
 		preview.addEventListener("focus", () => {
@@ -8337,8 +8366,7 @@ var Raw = class extends BaseTool {
 var HARD_BREAK_END = /(?: {2,}|\\)$/;
 var ITEM = ".cdx-list__item";
 var ITEM_CONTENT = ".cdx-list__item-content";
-/** The CSS highlight painting the items selected across a list. */
-var SELECTED_ITEMS = "pw-list-items";
+var EMPTY_ITEM = "<!-- -->";
 function html(fragment) {
 	if (!fragment.textContent?.trim() && !fragment.querySelector(":not(br)")) return "";
 	const container = globalThis.document.createElement("div");
@@ -8349,13 +8377,6 @@ function textLength(content) {
 	const template = globalThis.document.createElement("template");
 	template.innerHTML = content;
 	return template.content.textContent?.length ?? 0;
-}
-/** An item's text on one line, a line break only where it holds a <br>. */
-function plainText(content) {
-	const template = globalThis.document.createElement("template");
-	template.innerHTML = content.replace(/\n/g, " ");
-	template.content.querySelectorAll("br").forEach((br) => br.replaceWith("\n"));
-	return template.content.textContent ?? "";
 }
 function placeCaret(field, offset) {
 	field.focus();
@@ -8390,8 +8411,6 @@ function caretAtEnd(field) {
 var List = class List extends G$1 {
 	constructor(params) {
 		super(params);
-		this.itemSelection = null;
-		this.dragListeners = new AbortController();
 		this.blockApi = params.block;
 		this.isReadOnly = params.readOnly;
 	}
@@ -8403,178 +8422,8 @@ var List = class List extends G$1 {
 		if (this.isReadOnly) return element;
 		queueMicrotask(() => {
 			this.blockApi.holder.addEventListener("keydown", (event) => this.deleteForward(event), true);
-			this.blockApi.holder.addEventListener("mousedown", (event) => this.selectItemsWithMouse(event), true);
 		});
 		return element;
-	}
-	destroy() {
-		this.clearItemSelection();
-		this.dragListeners.abort();
-	}
-	/** The item of this list holding the node, when the node sits in that part of it. */
-	itemAt(node, part = ITEM) {
-		if (!(node instanceof Node)) return null;
-		const item = (node instanceof Element ? node : node.parentElement)?.closest(part)?.closest(ITEM);
-		return item && this.tabulator.listWrapper.contains(item) ? item : null;
-	}
-	/**
-	* Each item is a field of its own, and a browser keeps a selection inside
-	* the field it started in. Dragging from an item onto others, or a
-	* Shift+click away from the caret's item, selects whole items instead, the
-	* way Editor.js selects whole blocks once a drag crosses into another one.
-	*/
-	selectItemsWithMouse(event) {
-		const item = this.itemAt(event.target, ITEM_CONTENT);
-		if (event.button !== 0 || !item || !("highlights" in CSS)) return;
-		if (event.shiftKey) {
-			const anchor = this.itemSelection?.anchor ?? this.itemAt(globalThis.window.getSelection()?.anchorNode ?? null, ITEM_CONTENT);
-			if (!anchor || anchor === item) return;
-			event.preventDefault();
-			this.selectItems(anchor, item);
-			return;
-		}
-		this.dragListeners.abort();
-		const drag = this.dragListeners = new AbortController();
-		const options = { signal: drag.signal };
-		globalThis.document.addEventListener("mouseover", ({ target }) => {
-			const over = this.itemAt(target);
-			if (over && (over !== item || this.itemSelection)) this.selectItems(item, over);
-			else if (!over && !this.blockApi.holder.contains(target)) this.clearItemSelection();
-		}, options);
-		const dropTextSelection = () => {
-			const selection = globalThis.window.getSelection();
-			if (this.itemSelection && selection.rangeCount > 0) selection.removeAllRanges();
-		};
-		globalThis.document.addEventListener("selectionchange", dropTextSelection, options);
-		globalThis.document.addEventListener("mouseup", () => {
-			dropTextSelection();
-			drag.abort();
-		}, options);
-	}
-	/**
-	* Painted through the CSS Highlight API: a class on the items would be a
-	* change to the block for Editor.js, and a selection a change to the page.
-	*/
-	selectItems(anchor, focus) {
-		globalThis.window.getSelection()?.removeAllRanges();
-		this.itemSelection = {
-			anchor,
-			focus,
-			listeners: this.itemSelection?.listeners ?? this.listenToSelectedItems()
-		};
-		const [start, end] = this.selectedItems();
-		const items = Array.from(this.tabulator.listWrapper.querySelectorAll(ITEM)).slice(start, end + 1);
-		CSS.highlights.set(SELECTED_ITEMS, new Highlight(...items.map((selected) => {
-			const range = globalThis.document.createRange();
-			range.selectNodeContents(selected.querySelector(ITEM_CONTENT));
-			return range;
-		})));
-	}
-	/** On the window, in the capture phase: selected items own the keys and the clipboard before anything else. */
-	listenToSelectedItems() {
-		const listeners = new AbortController();
-		const options = {
-			capture: true,
-			signal: listeners.signal
-		};
-		globalThis.window.addEventListener("keydown", (event) => this.selectedItemsKey(event), options);
-		globalThis.window.addEventListener("copy", (event) => this.copySelectedItems(event), options);
-		globalThis.window.addEventListener("cut", (event) => this.copySelectedItems(event), options);
-		globalThis.window.addEventListener("paste", () => this.replaceSelectedItems(""), options);
-		globalThis.window.addEventListener("mousedown", (event) => {
-			if (!event.shiftKey || !this.itemAt(event.target, ITEM_CONTENT)) this.clearItemSelection();
-		}, options);
-		return listeners;
-	}
-	clearItemSelection() {
-		if (!this.itemSelection) return;
-		this.itemSelection.listeners.abort();
-		this.itemSelection = null;
-		CSS.highlights.delete(SELECTED_ITEMS);
-	}
-	/** Flat indices of the first and last selected items. */
-	selectedItems() {
-		const items = Array.from(this.tabulator.listWrapper.querySelectorAll(ITEM));
-		const ends = [items.indexOf(this.itemSelection.anchor), items.indexOf(this.itemSelection.focus)];
-		return [Math.min(...ends), Math.max(...ends)];
-	}
-	/**
-	* Delete, Backspace and typing act on the selected items, as on selected
-	* blocks; any other key acts on a caret, put back at the end of the item
-	* the selection reached.
-	*/
-	selectedItemsKey(event) {
-		if (event.isComposing || [
-			"Shift",
-			"Control",
-			"Alt",
-			"AltGraph",
-			"Meta"
-		].includes(event.key)) return;
-		if (event.ctrlKey || event.metaKey) {
-			if ([
-				"c",
-				"x",
-				"v"
-			].includes(event.key.toLowerCase())) return;
-		} else if (event.key === "Delete" || event.key === "Backspace" || event.key.length === 1 && !event.altKey) {
-			event.preventDefault();
-			event.stopImmediatePropagation();
-			this.replaceSelectedItems(event.key.length === 1 ? event.key : null);
-			return;
-		}
-		const field = this.itemSelection.focus.querySelector(ITEM_CONTENT);
-		this.clearItemSelection();
-		placeCaret(field, field.textContent?.length ?? 0);
-	}
-	/**
-	* Copy the selected items, their levels relative to the first: a line
-	* each as plain text, a list as HTML, and Editor.js' own block data, which
-	* a paste into another list item reads levels included.
-	*/
-	copySelectedItems(event) {
-		if (!event.clipboardData) return;
-		const [start, end] = this.selectedItems();
-		const data = this.tabulator.save();
-		const flat = List.nestable(List.flatten(data.items, 0).slice(start, end + 1));
-		const items = List.nest(flat);
-		event.clipboardData.setData("text/plain", flat.map(({ content }) => plainText(content)).join("\n"));
-		event.clipboardData.setData("text/html", List.itemsHtml(items, data.style === "ordered" ? "ol" : "ul"));
-		event.clipboardData.setData("application/x-editor-js", JSON.stringify([{
-			tool: this.blockApi.name,
-			data: {
-				...data,
-				items
-			}
-		}]));
-		event.preventDefault();
-		event.stopImmediatePropagation();
-		if (event.type === "cut") this.replaceSelectedItems(null);
-	}
-	/**
-	* Remove the selected items, or put one item holding the text in their
-	* place, the caret after it. Children whose parent went keep their
-	* siblings, under the nearest item above.
-	*/
-	replaceSelectedItems(text) {
-		const [start, end] = this.selectedItems();
-		this.clearItemSelection();
-		const data = this.tabulator.save();
-		const flat = List.flatten(data.items, 0);
-		const [first] = flat.splice(start, end - start + 1);
-		if (text !== null || flat.length === 0) {
-			const span = globalThis.document.createElement("span");
-			span.textContent = text ?? "";
-			flat.splice(start, 0, {
-				content: span.innerHTML,
-				meta: List.newItemMeta(data.style),
-				depth: first.depth
-			});
-		}
-		const items = this.renderItems(List.nestable(flat)).querySelectorAll(ITEM);
-		const index = Math.min(start, items.length - 1);
-		const field = items[index].querySelector(ITEM_CONTENT);
-		placeCaret(field, index === start ? text?.length ?? 0 : field.textContent?.length ?? 0);
 	}
 	/**
 	* Delete at the end of an item brings the next one up, as a word processor
@@ -8667,10 +8516,6 @@ var List = class List extends G$1 {
 			};
 		});
 	}
-	static itemsHtml(items, tag) {
-		const children = (item) => item.items.length > 0 ? List.itemsHtml(item.items, tag) : "";
-		return `<${tag}>${items.map((item) => `<li>${item.content}${children(item)}</li>`).join("")}</${tag}>`;
-	}
 	static flatten(items, depth) {
 		return items.flatMap((item) => [{
 			content: item.content ?? "",
@@ -8720,7 +8565,7 @@ var List = class List extends G$1 {
 		items.forEach((item, index) => {
 			const marker = List._marker(style, item, index);
 			const content = typeof item === "string" ? item : item.content ?? "";
-			const text = MarkdownUtils.convertInlineHtmlToMarkdown(MarkdownUtils.htmlLines(content).join("  \n"));
+			const text = MarkdownUtils.convertInlineHtmlToMarkdown(MarkdownUtils.htmlLines(content).join("  \n")) || EMPTY_ITEM;
 			const textIndent = indent + " ".repeat(marker.length + 1);
 			markdown += `${indent}${marker} ${text.replace(/\n/g, "\n" + textIndent)}\n`;
 			if (item.items && item.items.length > 0) {
@@ -8769,7 +8614,7 @@ var List = class List extends G$1 {
 				meta["checked"] = checkboxMatch[1].toLowerCase() === "x";
 				rawContent = checkboxMatch[2];
 			}
-			const content = MarkdownUtils.convertInlineMarkdownToHtml(rawContent);
+			const content = rawContent === EMPTY_ITEM ? "" : MarkdownUtils.convertInlineMarkdownToHtml(rawContent);
 			if (isOrdered === null) isOrdered = isCurrentOrdered;
 			else if (isOrdered !== isCurrentOrdered) return Raw.importFromMarkdown(editor, markdown);
 			const leadingSpaces = line.length - line.trimStart().length;
@@ -9964,8 +9809,8 @@ var m = class m {
 // src/assets/tools/Quote/Quote.ts
 var Quote = class extends m {
 	static exportToMarkdown(data, tunes) {
-		if (!data || !data.text) return "";
-		const lines = MarkdownUtils.htmlLines(data.text).map((line) => line.trim());
+		if (!data || !data.text && !data.caption) return "";
+		const lines = MarkdownUtils.htmlLines(data.text ?? "").map((line) => line.trim());
 		if (data.caption) lines.push(`— <cite>${data.caption}</cite>`);
 		return MarkdownUtils.addAttributes(MarkdownUtils.toBlockquote(lines), tunes);
 	}
@@ -9993,7 +9838,7 @@ var Quote = class extends m {
 		}, tunes);
 	}
 	static isItMarkdownExported(markdown) {
-		return markdown.startsWith("> ");
+		return /^>(?:[ \t\r\n]|$)/.test(markdown);
 	}
 };
 // src/assets/tools/utils/make.ts
@@ -10189,8 +10034,12 @@ var CodeBlock = class extends Raw {
 		}
 		this.editorInstance?.layout();
 		if (!focus) return;
-		if (!editing) this.editButton?.focus();
-		else if (this.editorInstance) this.editorInstance.focus();
+		if (editing) this.focusSource();
+		else this.editButton?.focus();
+	}
+	/** Monaco once it has loaded, its textarea fallback until then. */
+	focusSource() {
+		if (this.editorInstance) this.editorInstance.focus();
 		else this.wrapper?.querySelector("textarea")?.focus();
 	}
 	toggleFullscreen() {
@@ -10204,8 +10053,7 @@ var CodeBlock = class extends Raw {
 		dialog.showModal();
 		this.updateFullscreenButton();
 		this.editorInstance?.layout();
-		if (this.editorInstance) this.editorInstance.focus();
-		else this.wrapper?.querySelector("textarea")?.focus();
+		this.focusSource();
 	}
 	closeFullscreen(focus = false) {
 		const dialog = this.fullscreenDialog;
@@ -10709,7 +10557,7 @@ var Image = class Image extends AbstractMediaTool {
 			closeOnActivate: true,
 			onActivate: () => {
 				if (!this.media) return;
-				return this.replaceBlock("gallery", { items: [this.save(this.nodes.wrapper)] });
+				return this.replaceBlock("gallery", { items: [this.save()] });
 			}
 		}];
 	}
@@ -10722,14 +10570,14 @@ var Image = class Image extends AbstractMediaTool {
 		this.fillImage();
 		return wrapper;
 	}
-	save(block) {
+	save() {
 		if (!this.media) return {
 			media: "",
 			caption: ""
 		};
 		return {
 			media: this.media,
-			caption: this.nodes.caption.textContent?.trim() || block.querySelector(".image-tool__caption")?.textContent?.trim() || this.data.caption || ""
+			caption: this.nodes.caption.textContent?.trim() ?? ""
 		};
 	}
 	validate() {
@@ -11525,7 +11373,7 @@ function throttled(delay, fn) {
 	};
 }
 // src/assets/tools/Table/table.ts
-var CSS$1 = {
+var CSS = {
 	wrapper: "tc-wrap",
 	wrapperReadOnly: "tc-wrap--readonly",
 	table: "tc-table",
@@ -11598,11 +11446,11 @@ var Table = class {
 		* Global click listener allows to delegate clicks on some elements
 		*/
 		this.documentClicked = (event) => {
-			const clickedInsideTable = event.target.closest(`.${CSS$1.table}`) !== null;
-			const outsideTableClicked = event.target.closest(`.${CSS$1.wrapper}`) === null;
+			const clickedInsideTable = event.target.closest(`.${CSS.table}`) !== null;
+			const outsideTableClicked = event.target.closest(`.${CSS.wrapper}`) === null;
 			if (clickedInsideTable || outsideTableClicked) this.hideToolboxes();
-			const clickedOnAddRowButton = event.target.closest(`.${CSS$1.addRow}`);
-			const clickedOnAddColumnButton = event.target.closest(`.${CSS$1.addColumn}`);
+			const clickedOnAddRowButton = event.target.closest(`.${CSS.addRow}`);
+			const clickedOnAddColumnButton = event.target.closest(`.${CSS.addColumn}`);
 			/**
 			* Also, check if clicked in current table, not other (because documentClicked bound to the whole document)
 			*/
@@ -11821,7 +11669,7 @@ var Table = class {
 	* @returns {Element}
 	*/
 	getRowFirstCell(row) {
-		return row.querySelector(`.${CSS$1.cell}:first-child`);
+		return row.querySelector(`.${CSS.cell}:first-child`);
 	}
 	/**
 	* Set the sell's content by row and column numbers
@@ -11863,8 +11711,8 @@ var Table = class {
 				if (firstCell && setFocus) focus(firstCell);
 			}
 		}
-		const addColButton = this.wrapper.querySelector(`.${CSS$1.addColumn}`);
-		if (this.config?.maxCols && this.numberOfColumns > this.config.maxCols - 1 && addColButton) addColButton.classList.add(CSS$1.addColumnDisabled);
+		const addColButton = this.wrapper.querySelector(`.${CSS.addColumn}`);
+		if (this.config?.maxCols && this.numberOfColumns > this.config.maxCols - 1 && addColButton) addColButton.classList.add(CSS.addColumnDisabled);
 		const alignmentInsertAt = columnIndex > 0 && columnIndex <= numberOfColumns ? columnIndex - 1 : numberOfColumns;
 		this.columnAlignments.splice(alignmentInsertAt, 0, "");
 		this.applyColumnAlignments();
@@ -11880,7 +11728,7 @@ var Table = class {
 	*/
 	addRow(index = -1, setFocus = false) {
 		let insertedRow;
-		const rowElem = make("div", CSS$1.row);
+		const rowElem = make("div", CSS.row);
 		if (this.tunes.withHeadings) this.removeHeadingAttrFromFirstRow();
 		/**
 		* We remember the number of columns, because it is calculated
@@ -11899,8 +11747,8 @@ var Table = class {
 		if (this.tunes.withHeadings) this.addHeadingAttrToFirstRow();
 		const insertedRowFirstCell = this.getRowFirstCell(insertedRow);
 		if (insertedRowFirstCell && setFocus) focus(insertedRowFirstCell);
-		const addRowButton = this.wrapper.querySelector(`.${CSS$1.addRow}`);
-		if (this.config && this.config.maxRows && this.numberOfRows >= this.config.maxRows && addRowButton) addRowButton.classList.add(CSS$1.addRowDisabled);
+		const addRowButton = this.wrapper.querySelector(`.${CSS.addRow}`);
+		if (this.config && this.config.maxRows && this.numberOfRows >= this.config.maxRows && addRowButton) addRowButton.classList.add(CSS.addRowDisabled);
 		this.applyColumnAlignments();
 		return insertedRow;
 	}
@@ -11915,8 +11763,8 @@ var Table = class {
 			if (!cell) return;
 			cell.remove();
 		}
-		const addColButton = this.wrapper.querySelector(`.${CSS$1.addColumn}`);
-		if (addColButton) addColButton.classList.remove(CSS$1.addColumnDisabled);
+		const addColButton = this.wrapper.querySelector(`.${CSS.addColumn}`);
+		if (addColButton) addColButton.classList.remove(CSS.addColumnDisabled);
 		this.columnAlignments.splice(index - 1, 1);
 		this.applyColumnAlignments();
 		this.updateColspanMarkers();
@@ -11928,8 +11776,8 @@ var Table = class {
 	*/
 	deleteRow(index) {
 		this.getRow(index).remove();
-		const addRowButton = this.wrapper.querySelector(`.${CSS$1.addRow}`);
-		if (addRowButton) addRowButton.classList.remove(CSS$1.addRowDisabled);
+		const addRowButton = this.wrapper.querySelector(`.${CSS.addRow}`);
+		if (addRowButton) addRowButton.classList.remove(CSS.addRowDisabled);
 		this.addHeadingAttrToFirstRow();
 	}
 	/**
@@ -11939,15 +11787,15 @@ var Table = class {
 	* @returns {HTMLElement} wrapper - where all buttons for a table and the table itself will be
 	*/
 	createTableWrapper() {
-		this.wrapper = make("div", CSS$1.wrapper);
-		this.table = make("div", CSS$1.table);
-		if (this.readOnly) this.wrapper.classList.add(CSS$1.wrapperReadOnly);
+		this.wrapper = make("div", CSS.wrapper);
+		this.table = make("div", CSS.table);
+		if (this.readOnly) this.wrapper.classList.add(CSS.wrapperReadOnly);
 		this.wrapper.appendChild(this.toolboxRow.element);
 		this.wrapper.appendChild(this.toolboxColumn.element);
 		this.wrapper.appendChild(this.table);
 		if (!this.readOnly) {
-			const addColumnButton = make("div", CSS$1.addColumn, { innerHTML: o1 });
-			const addRowButton = make("div", CSS$1.addRow, { innerHTML: o1 });
+			const addColumnButton = make("div", CSS.addColumn, { innerHTML: o1 });
+			const addRowButton = make("div", CSS.addRow, { innerHTML: o1 });
 			this.wrapper.appendChild(addColumnButton);
 			this.wrapper.appendChild(addRowButton);
 		}
@@ -11981,14 +11829,14 @@ var Table = class {
 		const columnCount = this.config.maxCols ? Math.min(cols, this.config.maxCols) : cols;
 		const fragment = globalThis.document.createDocumentFragment();
 		for (let i = 0; i < rowCount; i++) {
-			const row = make("div", CSS$1.row);
+			const row = make("div", CSS.row);
 			this.fillRow(row, columnCount);
 			fragment.appendChild(row);
 		}
 		this.table.appendChild(fragment);
 		this.columnAlignments = Array(columnCount).fill("");
-		this.wrapper.querySelector(`.${CSS$1.addRow}`)?.classList.toggle(CSS$1.addRowDisabled, rowCount >= (this.config.maxRows || Infinity));
-		this.wrapper.querySelector(`.${CSS$1.addColumn}`)?.classList.toggle(CSS$1.addColumnDisabled, columnCount >= (this.config.maxCols || Infinity));
+		this.wrapper.querySelector(`.${CSS.addRow}`)?.classList.toggle(CSS.addRowDisabled, rowCount >= (this.config.maxRows || Infinity));
+		this.wrapper.querySelector(`.${CSS.addColumn}`)?.classList.toggle(CSS.addColumnDisabled, columnCount >= (this.config.maxCols || Infinity));
 	}
 	/**
 	* Fills the table with data passed to the constructor
@@ -12024,11 +11872,11 @@ var Table = class {
 	updateColspanMarkers() {
 		if (!this.table) return;
 		this.table.style.setProperty("--table-cols", String(this.numberOfColumns));
-		this.table.querySelectorAll(`.${CSS$1.row}`).forEach((row) => {
-			const cells = Array.from(row.querySelectorAll(`.${CSS$1.cell}`));
+		this.table.querySelectorAll(`.${CSS.row}`).forEach((row) => {
+			const cells = Array.from(row.querySelectorAll(`.${CSS.cell}`));
 			cells.forEach((cell, index) => {
 				const isMarker = index > 0 && cell.textContent.trim() === "->";
-				cell.classList.toggle(CSS$1.cellColspan, isMarker);
+				cell.classList.toggle(CSS.cellColspan, isMarker);
 				cell.style.gridColumnStart = String(index + 1);
 				if (isMarker) {
 					cell.style.gridColumnEnd = "";
@@ -12091,7 +11939,7 @@ var Table = class {
 	* @return {Element}
 	*/
 	createCell() {
-		return make("div", CSS$1.cell, { contentEditable: !this.readOnly });
+		return make("div", CSS.cell, { contentEditable: !this.readOnly });
 	}
 	/**
 	* Get number of rows in the table
@@ -12163,8 +12011,8 @@ var Table = class {
 		const cell = event.target;
 		const row = this.getRowByCell(cell);
 		this.focusedCell = {
-			row: Array.from(this.table.querySelectorAll(`.${CSS$1.row}`)).indexOf(row) + 1,
-			column: Array.from(row.querySelectorAll(`.${CSS$1.cell}`)).indexOf(cell) + 1
+			row: Array.from(this.table.querySelectorAll(`.${CSS.row}`)).indexOf(row) + 1,
+			column: Array.from(row.querySelectorAll(`.${CSS.cell}`)).indexOf(cell) + 1
 		};
 	}
 	/**
@@ -12251,10 +12099,10 @@ var Table = class {
 	setHeadingsSetting(withHeadings) {
 		this.tunes.withHeadings = withHeadings;
 		if (withHeadings) {
-			this.table.classList.add(CSS$1.withHeadings);
+			this.table.classList.add(CSS.withHeadings);
 			this.addHeadingAttrToFirstRow();
 		} else {
-			this.table.classList.remove(CSS$1.withHeadings);
+			this.table.classList.remove(CSS.withHeadings);
 			this.removeHeadingAttrFromFirstRow();
 		}
 	}
@@ -12285,7 +12133,7 @@ var Table = class {
 		const row = this.getRow(index);
 		if (row) {
 			this.selectedRow = index;
-			row.classList.add(CSS$1.rowSelected);
+			row.classList.add(CSS.rowSelected);
 		}
 	}
 	/**
@@ -12293,8 +12141,8 @@ var Table = class {
 	*/
 	unselectRow() {
 		if (this.selectedRow <= 0) return;
-		const row = this.table.querySelector(`.${CSS$1.rowSelected}`);
-		if (row) row.classList.remove(CSS$1.rowSelected);
+		const row = this.table.querySelector(`.${CSS.rowSelected}`);
+		if (row) row.classList.remove(CSS.rowSelected);
 		this.selectedRow = 0;
 	}
 	/**
@@ -12305,7 +12153,7 @@ var Table = class {
 	selectColumn(index) {
 		for (let i = 1; i <= this.numberOfRows; i++) {
 			const cell = this.getCell(i, index);
-			if (cell) cell.classList.add(CSS$1.cellSelected);
+			if (cell) cell.classList.add(CSS.cellSelected);
 		}
 		this.selectedColumn = index;
 	}
@@ -12314,9 +12162,9 @@ var Table = class {
 	*/
 	unselectColumn() {
 		if (this.selectedColumn <= 0) return;
-		const cells = this.table.querySelectorAll(`.${CSS$1.cellSelected}`);
+		const cells = this.table.querySelectorAll(`.${CSS.cellSelected}`);
 		Array.from(cells).forEach((column) => {
-			column.classList.remove(CSS$1.cellSelected);
+			column.classList.remove(CSS.cellSelected);
 		});
 		this.selectedColumn = 0;
 	}
