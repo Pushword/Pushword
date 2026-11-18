@@ -9,6 +9,7 @@ use Exception;
 use Pushword\Conversation\Entity\Message;
 use Pushword\Conversation\Form\ConversationFormInterface;
 use Pushword\Conversation\Repository\MessageRepository;
+use Pushword\Conversation\Service\ClientNetwork;
 use Pushword\Core\Site\SiteRegistry;
 use ReflectionClass;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -125,7 +126,7 @@ final class ConversationFormController extends AbstractController
         // limiter: a hostile page cannot spend its visitors' submission quota.
         if ($request->isMethod(Request::METHOD_POST)) {
             $limit = $this->anonymousContentLimiter
-                ->create(($request->getClientIp() ?? 'unknown').':'.$this->apps->get()->getMainHost())
+                ->create(ClientNetwork::of($request->getClientIp()).':'.$this->apps->get()->getMainHost())
                 ->consume();
             if (! $limit->isAccepted()) {
                 $retryAfter = max(1, $limit->getRetryAfter()->getTimestamp() - time());

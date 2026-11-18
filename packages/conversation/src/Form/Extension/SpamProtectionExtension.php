@@ -8,6 +8,7 @@ use DateInterval;
 use Override;
 use Pushword\Conversation\Controller\ConversationFormController;
 use Pushword\Conversation\Entity\Message;
+use Pushword\Conversation\Service\ClientNetwork;
 use Pushword\Conversation\Service\NewMessageMailNotifier;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Form\AbstractTypeExtension;
@@ -39,8 +40,8 @@ use Symfony\Contracts\Translation\TranslatorInterface;
  *   so it survives a static page or another domain embedding the form. It is an
  *   anti-automation check, not CSRF protection: anyone may fetch a form and replay its
  *   action until it expires. Cross-site posts are refused by ConversationCorsListener.
- * - A quota on accepted messages per IP, shared by every host and form, spent when a
- *   valid submission first gives a message an address the team is notified at.
+ * - A quota on accepted messages per ClientNetwork, shared by every host and form, spent
+ *   when a valid submission first gives a message an address the team is notified at.
  */
 final class SpamProtectionExtension extends AbstractTypeExtension
 {
@@ -126,7 +127,7 @@ final class SpamProtectionExtension extends AbstractTypeExtension
 
         // Spent before the notification is sent or queued, and never refunded: the quota
         // counts accepted messages, not delivered emails.
-        if (! $this->limiter->create($request->getClientIp() ?? 'unknown')->consume()->isAccepted()) {
+        if (! $this->limiter->create(ClientNetwork::of($request->getClientIp()))->consume()->isAccepted()) {
             $form->addError(new FormError($this->translator->trans('conversationSubmissionRateLimited', domain: 'validators')));
         }
     }

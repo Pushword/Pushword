@@ -10,6 +10,7 @@ use PHPUnit\Framework\Attributes\Group;
 use Pushword\Conversation\Controller\ConversationFormController;
 use Pushword\Conversation\Entity\Message;
 use Pushword\Conversation\Form\Extension\SpamProtectionExtension;
+use Pushword\Conversation\Service\ClientNetwork;
 use Pushword\Conversation\Tests\Form\Fixtures\HomepageFieldMessageForm;
 use Pushword\Conversation\Tests\Form\Fixtures\SiteBuiltDelayedMessageForm;
 use Pushword\Core\Site\SiteRegistry;
@@ -20,7 +21,7 @@ use Symfony\Component\DomCrawler\Crawler;
 use Symfony\Component\Form\Extension\Core\Type\FormType;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\UriSigner;
-use Symfony\Component\RateLimiter\RateLimiterFactoryInterface;
+use Symfony\Component\RateLimiter\LimiterInterface;
 
 #[Group('integration')]
 final class ConversationSpamProtectionTest extends WebTestCase
@@ -185,7 +186,7 @@ final class ConversationSpamProtectionTest extends WebTestCase
 
     public function testSpentQuotaRefusesNewMessagesOnEveryHostFromThatIpOnly(): void
     {
-        $this->limiter()->create($this->ip)->consume(self::QUOTA);
+        $this->quota()->consume(self::QUOTA);
 
         foreach (['localhost.dev', 'pushword.piedweb.com'] as $host) {
             $email = 'over-quota-'.uniqid().'@example.org';
@@ -217,14 +218,34 @@ final class ConversationSpamProtectionTest extends WebTestCase
         self::assertNotNull($this->findMessage($email));
     }
 
+    public function testOneIpv6NetworkSharesTheQuota(): void
+    {
+        $this->client->setServerParameter('REMOTE_ADDR', '2001:db8:57:1::1');
+        for ($sent = 1; $sent <= self::QUOTA; ++$sent) {
+            $this->submit('message', $this->messageFields('message', 'network-'.uniqid().'@example.org', 'Message '.uniqid()));
+        }
+
+        // An IPv6 visitor holds a whole /64: another address of it is the same visitor.
+        $this->client->setServerParameter('REMOTE_ADDR', '2001:db8:57:1:ffff:ffff:ffff:ffff');
+        $email = 'same-network-'.uniqid().'@example.org';
+        $this->submit('message', $this->messageFields('message', $email, 'One more message.'));
+        self::assertSelectorTextContains('[role="alert"]', self::RATE_LIMITED);
+        self::assertNull($this->findMessage($email));
+
+        $this->client->setServerParameter('REMOTE_ADDR', '2001:db8:57:2::1');
+        $email = 'next-network-'.uniqid().'@example.org';
+        $this->submit('message', $this->messageFields('message', $email, 'One more message.'));
+        self::assertNotNull($this->findMessage($email));
+    }
+
     public function testARefusedMessageGoesThroughUnchangedOnceTheQuotaRecovers(): void
     {
-        $this->limiter()->create($this->ip)->consume(self::QUOTA);
+        $this->quota()->consume(self::QUOTA);
         $email = 'retry-'.uniqid().'@example.org';
         $crawler = $this->submit('message', $this->messageFields('message', $email, 'A message sent again later.'));
         self::assertSelectorTextContains('[role="alert"]', self::RATE_LIMITED);
 
-        $this->limiter()->create($this->ip)->reset();
+        $this->quota()->reset();
         $this->submitForm($crawler, []);
 
         // Saved and notified, not mistaken for a duplicate of the refused attempt.
@@ -241,7 +262,7 @@ final class ConversationSpamProtectionTest extends WebTestCase
         $this->client->request(Request::METHOD_POST, $this->unsigned($form->getUri()), $form->getPhpValues());
         self::assertSelectorTextContains('[role="alert"]', "Votre message n'a pas pu être envoyé.");
 
-        $this->limiter()->create($this->ip)->consume(self::QUOTA);
+        $this->quota()->consume(self::QUOTA);
         $this->client->submit($form);
         self::assertSelectorTextContains('[role="alert"]', 'Trop de messages ont été envoyés depuis votre connexion.');
     }
@@ -257,11 +278,11 @@ final class ConversationSpamProtectionTest extends WebTestCase
         $this->client->request(Request::METHOD_POST, $this->unsigned($form->getUri()), $form->getPhpValues());
         self::assertSelectorTextContains('[role="alert"]', self::REJECTED);
 
-        $this->limiter()->create($this->ip)->consume(self::QUOTA);
+        $this->quota()->consume(self::QUOTA);
         $this->client->submit($form);
         self::assertSelectorTextContains('[role="alert"]', self::RATE_LIMITED);
 
-        $this->limiter()->create($this->ip)->reset();
+        $this->quota()->reset();
         $nameStep = $this->client->submit($form)->filter('[name="form"]')->form(['form[authorName]' => 'Camille']);
         $this->client->request(Request::METHOD_POST, $this->unsigned($nameStep->getUri()), $nameStep->getPhpValues());
         self::assertSelectorTextContains('[role="alert"]', self::REJECTED);
@@ -404,12 +425,12 @@ final class ConversationSpamProtectionTest extends WebTestCase
 
     private function remainingQuota(): int
     {
-        return $this->limiter()->create($this->ip)->consume(0)->getRemainingTokens();
+        return $this->quota()->consume(0)->getRemainingTokens();
     }
 
-    private function limiter(): RateLimiterFactoryInterface
+    private function quota(): LimiterInterface
     {
-        return self::getContainer()->get('limiter.conversation_submit');
+        return self::getContainer()->get('limiter.conversation_submit')->create(ClientNetwork::of($this->ip));
     }
 
     private function signer(): UriSigner
@@ -419,6 +440,7 @@ final class ConversationSpamProtectionTest extends WebTestCase
 
     private function newIp(): string
     {
-        return \sprintf('2001:db8::%x:%x', random_int(1, 0xFFFF), random_int(1, 0xFFFF));
+        // A /64 of its own: the quota counts an IPv6 visitor by network.
+        return \sprintf('2001:db8:%x:%x::1', random_int(1, 0xFFFF), random_int(1, 0xFFFF));
     }
 }

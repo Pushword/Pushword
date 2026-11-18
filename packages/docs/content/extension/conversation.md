@@ -60,10 +60,10 @@ host. That request is cross-origin: allow the static origins in
 `conversation:`), and expect the visited host's cookies not to reach the handler.
 
 Any other origin gets a 403 before its posts count against the visitor's submission limit
-(20 per hour per IP and site). An allowed origin gets the CORS headers on every answer,
-refusals included, so the page sees a 404 or a 429 instead of a network error: the form
-fires `live-block-forbidden` with `{status, url, retryAfter}`, where `retryAfter` is the
-429's `Retry-After` header (`null` otherwise).
+(20 per hour per site and IPv4 address or IPv6 /64). An allowed origin gets the CORS
+headers on every answer, refusals included, so the page sees a 404 or a 429 instead of a
+network error: the form fires `live-block-forbidden` with `{status, url, retryAfter}`,
+where `retryAfter` is the 429's `Retry-After` header (`null` otherwise).
 
 If the static host proxies `/conversation/*` to PHP itself, make the URL relative (per
 site, or globally):
@@ -97,9 +97,10 @@ and imports are left alone.
   reuse its action until it expires. Cross-site posts are refused by the origin check
   above. An expired form comes back with the visitor's input and a fresh action. Render
   the `<form>` tag with `form_start()` (or `conversation.vars.action`).
-- **Quota**: 10 accepted messages per IP per hour, shared by every host and form. A
-  message counts once, when a valid submission first gives it a valid author email, the
-  condition for its notification, sent now or [later](#delay-one-message-notification).
+- **Quota**: 10 accepted messages per hour per IPv4 address or IPv6 /64, shared by every
+  host and form. A message counts once, when a valid submission first gives it a valid
+  author email, the condition for its notification, sent now or
+  [later](#delay-one-message-notification).
   Form loads, invalid forms, steps without an email (the first step of `ms_message`) and
   later steps (the newsletter name) cost nothing, and a failed delivery is not refunded.
   A duplicate (same content and email within ten minutes) is shown as sent but not saved,

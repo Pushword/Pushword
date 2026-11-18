@@ -440,6 +440,23 @@ final class ConversationFormControllerTest extends WebTestCase
         self::assertResponseIsSuccessful();
     }
 
+    public function testOneIpv6NetworkSharesTheSubmissionLimit(): void
+    {
+        $client = self::createClient();
+        $url = '/conversation/message/test?host=localhost.dev';
+
+        for ($attempt = 1; $attempt <= self::SUBMISSION_LIMIT; ++$attempt) {
+            $client->request(Request::METHOD_POST, $url, server: ['REMOTE_ADDR' => '2001:db8:56:1::1']);
+        }
+
+        // An IPv6 visitor holds a whole /64: another address of it is the same visitor.
+        $client->request(Request::METHOD_POST, $url, server: ['REMOTE_ADDR' => '2001:db8:56:1:ffff:ffff:ffff:ffff']);
+        self::assertResponseStatusCodeSame(Response::HTTP_TOO_MANY_REQUESTS);
+
+        $client->request(Request::METHOD_POST, $url, server: ['REMOTE_ADDR' => '2001:db8:56:2::1']);
+        self::assertResponseIsSuccessful();
+    }
+
     /** @return iterable<string, array{string}> */
     public static function notFoundProvider(): iterable
     {
