@@ -116,6 +116,15 @@ after** in their settings. While editing code, use `Ctrl+Enter` to insert after 
 block, or `Ctrl+Shift+Enter` to insert before it (`Cmd` on macOS). Plain `Enter`
 adds a line to the code.
 
+### Paste text
+
+Use `Ctrl+Shift+V` (`Cmd+Shift+V` on macOS) to insert plain text at the cursor or
+replace selected text without importing Markdown or creating blocks. Formatting
+characters such as `-` stay literal.
+
+With normal paste, a URL pasted over selected text turns that text into a link.
+Ordinary text replaces the selection.
+
 ### Select across blocks
 
 Drag across text fields, or extend a selection with `Shift+click` or `Shift+Arrow`.
