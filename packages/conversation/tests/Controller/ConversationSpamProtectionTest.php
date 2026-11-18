@@ -244,6 +244,27 @@ final class ConversationSpamProtectionTest extends WebTestCase
         self::assertSelectorTextContains('[role="alert"]', 'Trop de messages ont été envoyés depuis votre connexion.');
     }
 
+    public function testNewsletterShowsRefusalsBelowItsInlineRow(): void
+    {
+        $crawler = $this->client->request(Request::METHOD_GET, $this->url('newsletter'));
+        $form = $crawler->filter('[name="form"]')->form(['form[authorEmail]' => 'not-an-email']);
+        $this->client->submit($form);
+        self::assertSelectorNotExists('[role="alert"]', 'a field error keeps the red border only');
+
+        $form->setValues(['form[authorEmail]' => 'newsletter-'.uniqid().'@example.org']);
+        $this->client->request(Request::METHOD_POST, $this->unsigned($form->getUri()), $form->getPhpValues());
+        self::assertSelectorTextContains('[role="alert"]', self::REJECTED);
+
+        $this->limiter()->create($this->ip)->consume(self::QUOTA);
+        $this->client->submit($form);
+        self::assertSelectorTextContains('[role="alert"]', self::RATE_LIMITED);
+
+        $this->limiter()->create($this->ip)->reset();
+        $nameStep = $this->client->submit($form)->filter('[name="form"]')->form(['form[authorName]' => 'Camille']);
+        $this->client->request(Request::METHOD_POST, $this->unsigned($nameStep->getUri()), $nameStep->getPhpValues());
+        self::assertSelectorTextContains('[role="alert"]', self::REJECTED);
+    }
+
     public function testACrossOriginPageSubmitsWithoutAnyCookie(): void
     {
         $this->client->setServerParameter('HTTP_ORIGIN', 'https://static.localhost.dev');

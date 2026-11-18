@@ -27,5 +27,9 @@
 
 {% block after %}
     </div>
+    {# The inline row has no room for errors: refusals on the whole form go below it. #}
+    {% if conversation.vars.errors is not empty %}
+        <div class="mt-1 text-sm text-red-700" role="alert">{{ form_errors(conversation) }}</div>
+    {% endif %}
 </div>
 {% endblock %}
