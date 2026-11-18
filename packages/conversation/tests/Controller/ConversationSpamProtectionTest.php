@@ -231,6 +231,19 @@ final class ConversationSpamProtectionTest extends WebTestCase
         self::assertNotNull($this->findMessage($email));
     }
 
+    public function testRefusalsAnswerInTheFormLocale(): void
+    {
+        $form = $this->client->request(Request::METHOD_GET, $this->url('message', locale: 'fr'))
+            ->filter('[name="form"]')->form($this->messageFields('message', 'fr-'.uniqid().'@example.org', 'Une question sur le séjour.'));
+
+        $this->client->request(Request::METHOD_POST, $this->unsigned($form->getUri()), $form->getPhpValues());
+        self::assertSelectorTextContains('[role="alert"]', "Votre message n'a pas pu être envoyé.");
+
+        $this->limiter()->create($this->ip)->consume(self::QUOTA);
+        $this->client->submit($form);
+        self::assertSelectorTextContains('[role="alert"]', 'Trop de messages ont été envoyés depuis votre connexion.');
+    }
+
     public function testACrossOriginPageSubmitsWithoutAnyCookie(): void
     {
         $this->client->setServerParameter('HTTP_ORIGIN', 'https://static.localhost.dev');
@@ -264,9 +277,9 @@ final class ConversationSpamProtectionTest extends WebTestCase
         self::assertNotNull($this->findMessage($email));
     }
 
-    private function url(string $type, string $host = 'localhost.dev'): string
+    private function url(string $type, string $host = 'localhost.dev', string $locale = 'en'): string
     {
-        return '/conversation/'.$type.'/test?host='.$host.'&locale=en';
+        return '/conversation/'.$type.'/test?host='.$host.'&locale='.$locale;
     }
 
     /** @return array<string, string> */
