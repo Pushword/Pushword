@@ -7,6 +7,7 @@ namespace Pushword\Conversation\Tests\Controller;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
+use Pushword\Conversation\Controller\ConversationFormController;
 use Pushword\Conversation\Entity\Message;
 use Pushword\Conversation\Form\Extension\SpamProtectionExtension;
 use Pushword\Conversation\Tests\Form\Fixtures\HomepageFieldMessageForm;
@@ -16,6 +17,7 @@ use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\MailerAssertionsTrait;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\DomCrawler\Crawler;
+use Symfony\Component\Form\Extension\Core\Type\FormType;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\UriSigner;
 use Symfony\Component\RateLimiter\RateLimiterFactoryInterface;
@@ -265,6 +267,34 @@ final class ConversationSpamProtectionTest extends WebTestCase
         self::assertSelectorTextContains('[role="alert"]', self::REJECTED);
     }
 
+    public function testAFormRenderedServerSideAcceptsItsVisitorAndCarriesTheTraps(): void
+    {
+        $crawler = new Crawler($this->renderInPage(['type' => 'newsletter', 'referring' => 'footer']), 'https://localhost.dev/');
+        $email = 'embedded-'.uniqid().'@example.org';
+        $this->client->submit($crawler->filter('[name="form"]')->form(['form[authorEmail]' => $email]));
+
+        self::assertSelectorNotExists('[role="alert"]');
+        self::assertEmailCount(1);
+        self::assertNotNull($this->findMessage($email));
+        self::assertSame(self::QUOTA - 1, $this->remainingQuota());
+        self::assertCount(1, $crawler->filter('[hidden] input[name="form['.SpamProtectionExtension::HONEYPOT.']"]'));
+        self::assertTrue($this->signer()->check((string) $crawler->filter('[name="form"]')->attr('action')));
+    }
+
+    public function testOnlyTheConversationControllerGetsTheTraps(): void
+    {
+        $requestStack = self::getContainer()->get('request_stack');
+        $controllers = [ConversationFormController::class.'::show' => true, 'App\\Controller\\OtherController::show' => false];
+
+        foreach ($controllers as $controller => $guarded) {
+            $requestStack->push(new Request(attributes: ['_controller' => $controller]));
+            $form = self::getContainer()->get('form.factory')->create(FormType::class, new Message());
+            $requestStack->pop();
+
+            self::assertSame($guarded, $form->has(SpamProtectionExtension::HONEYPOT), $controller);
+        }
+    }
+
     public function testACrossOriginPageSubmitsWithoutAnyCookie(): void
     {
         $this->client->setServerParameter('HTTP_ORIGIN', 'https://static.localhost.dev');
@@ -296,6 +326,25 @@ final class ConversationSpamProtectionTest extends WebTestCase
         self::assertSelectorNotExists('[name="form"]');
         self::assertEmailCount(1);
         self::assertNotNull($this->findMessage($email));
+    }
+
+    /**
+     * Renders the form the way a site template embeds it, through an inline sub-request.
+     *
+     * @param array<string, string> $attributes
+     */
+    private function renderInPage(array $attributes): string
+    {
+        $requestStack = self::getContainer()->get('request_stack');
+        $requestStack->push(Request::create('https://localhost.dev/'));
+
+        try {
+            return self::getContainer()->get('twig')
+                ->createTemplate('{{ render(controller(controller, attributes)) }}')
+                ->render(['controller' => ConversationFormController::class.'::show', 'attributes' => $attributes]);
+        } finally {
+            $requestStack->pop();
+        }
     }
 
     private function url(string $type, string $host = 'localhost.dev', string $locale = 'en'): string

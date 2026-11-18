@@ -6,6 +6,7 @@ namespace Pushword\Conversation\Form\Extension;
 
 use DateInterval;
 use Override;
+use Pushword\Conversation\Controller\ConversationFormController;
 use Pushword\Conversation\Entity\Message;
 use Pushword\Conversation\Service\NewMessageMailNotifier;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
@@ -26,8 +27,10 @@ use Symfony\Component\Validator\Constraints\Blank;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
- * Guards every message form the public conversation route serves, whichever class
- * builds it: forms from initForm() and forms a site builds on FormType alike.
+ * Guards every message form the public conversation controller serves, whichever class
+ * builds it: forms from initForm() and forms a site builds on FormType alike. It knows
+ * the request by its controller, not its route: a template embedding the form with
+ * render(controller()) runs it in a sub-request that has no route.
  *
  * - A hidden honeypot field. Its constraint travels with it, so a site field that
  *   takes the same name replaces the trap instead of rejecting real visitors.
@@ -42,6 +45,8 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 final class SpamProtectionExtension extends AbstractTypeExtension
 {
     public const string HONEYPOT = 'homepage';
+
+    private const string CONTROLLER = ConversationFormController::class.'::show';
 
     /** A form left open in a tab still submits; a scraped action is not a lasting key. */
     private const string ACTION_LIFETIME = 'P1D';
@@ -132,7 +137,7 @@ final class SpamProtectionExtension extends AbstractTypeExtension
         $request = $this->requestStack->getCurrentRequest();
         $dataClass = $options['data_class'] ?? null;
 
-        if (! $request instanceof Request || 'pushword_conversation' !== $request->attributes->get('_route')
+        if (! $request instanceof Request || self::CONTROLLER !== $request->attributes->get('_controller')
             || ! \is_string($dataClass) || ! is_a($dataClass, Message::class, true)) {
             return null;
         }
