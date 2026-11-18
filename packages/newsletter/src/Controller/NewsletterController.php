@@ -8,6 +8,7 @@ use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Cache\CacheItemPoolInterface;
 use Pushword\Core\Site\SiteRegistry;
+use Pushword\Core\Utils\ClientNetwork;
 use Pushword\Newsletter\Entity\Audience;
 use Pushword\Newsletter\Entity\Contact;
 use Pushword\Newsletter\Entity\DeliveryMessage;
@@ -423,7 +424,7 @@ final class NewsletterController extends AbstractController
      */
     private function withinRateLimit(Request $request): bool
     {
-        $item = $this->cache->getItem('pushword_newsletter_subscribe_'.md5((string) $request->getClientIp()));
+        $item = $this->cache->getItem('pushword_newsletter_subscribe_'.md5(ClientNetwork::of($request->getClientIp())));
         $count = $item->isHit() && \is_int($item->get()) ? $item->get() : 0;
 
         if ($count >= self::RATE_LIMIT) {

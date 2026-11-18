@@ -10,7 +10,7 @@ use PHPUnit\Framework\Attributes\Group;
 use Pushword\Conversation\Controller\ConversationFormController;
 use Pushword\Conversation\Entity\Message;
 use Pushword\Conversation\Form\Extension\SpamProtectionExtension;
-use Pushword\Conversation\Service\ClientNetwork;
+use Pushword\Core\Utils\ClientNetwork;
 use Pushword\Conversation\Tests\Form\Fixtures\HomepageFieldMessageForm;
 use Pushword\Conversation\Tests\Form\Fixtures\SiteBuiltDelayedMessageForm;
 use Pushword\Core\Site\SiteRegistry;

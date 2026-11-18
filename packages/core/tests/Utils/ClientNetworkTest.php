@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Pushword\Conversation\Tests\Service;
+namespace Pushword\Core\Tests\Utils;
 
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
-use Pushword\Conversation\Service\ClientNetwork;
+use Pushword\Core\Utils\ClientNetwork;
 
 final class ClientNetworkTest extends TestCase
 {

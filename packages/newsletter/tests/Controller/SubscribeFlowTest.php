@@ -387,6 +387,19 @@ final class SubscribeFlowTest extends AbstractNewsletterTestCase
         self::assertNull($this->repository()->findOneByEmail($audience, 'flood10@example.tld'));
     }
 
+    public function testTheRateLimitCountsAnIpv6NetworkAsOneClient(): void
+    {
+        $audience = $this->createAudience();
+
+        for ($i = 0; $i <= 10; ++$i) {
+            $this->client->setServerParameter('REMOTE_ADDR', '2001:db8:7:4::'.dechex($i + 1));
+            $this->post($audience->slug, ['email' => 'network-flood'.$i.'@example.tld']);
+        }
+
+        self::assertSame(Response::HTTP_TOO_MANY_REQUESTS, $this->client->getResponse()->getStatusCode());
+        self::assertNull($this->repository()->findOneByEmail($audience, 'network-flood10@example.tld'));
+    }
+
     /** Clicking the link in the mail is the whole opt-out: nothing left to confirm. */
     public function testAClickUnsubscribesOnTheSpot(): void
     {

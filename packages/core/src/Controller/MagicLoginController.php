@@ -10,6 +10,7 @@ use Pushword\Core\Entity\User;
 use Pushword\Core\Repository\LoginTokenRepository;
 use Pushword\Core\Security\MagicLinkAuthenticator;
 use Pushword\Core\Service\MagicLinkMailer;
+use Pushword\Core\Utils\ClientNetwork;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\Request;
@@ -112,7 +113,7 @@ final class MagicLoginController extends AbstractController
 
     private function canSendCode(Request $request, User $user): bool
     {
-        $ipAccepted = $this->ipLimiter->create($request->getClientIp() ?? 'unknown')->consume()->isAccepted();
+        $ipAccepted = $this->ipLimiter->create(ClientNetwork::of($request->getClientIp()))->consume()->isAccepted();
         $addressAccepted = $this->addressLimiter->create(hash('sha256', strtolower(trim($user->email))))->consume()->isAccepted();
 
         return $ipAccepted && $addressAccepted;

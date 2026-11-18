@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Pushword\Conversation\Service;
+namespace Pushword\Core\Utils;
 
 use Symfony\Component\HttpFoundation\IpUtils;
 
 /**
- * Who the conversation limiters count: an IPv4 address, or the /64 network of an IPv6
+ * Who an anti-abuse limiter counts: an IPv4 address, or the /64 network of an IPv6
  * one. An IPv6 visitor is usually given a whole /64, so counting each address apart
  * would let it rotate past any limit.
  */

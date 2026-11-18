@@ -1,5 +1,5 @@
 ---
-title: ''
+title: 'login throttling is set under framework.rate_limiter and counts an IPv6 /64 as one client'
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -34,3 +34,13 @@ belongs in the feature doc, which you link to instead.
 
 Several changes land here between two tags: append to the file, do not replace it.
 -->
+
+**Concerns:** `pushword/core`
+
+## Login throttling moves to framework.rate_limiter
+
+Every anti-abuse limit now counts an IPv6 /64 as one client. The login form's throttling
+uses Pushword's limiter, so `login_throttling.max_attempts` and `interval` no longer apply.
+**Sites that tuned them in their security config:** set
+`framework.rate_limiter.login_throttling_account` and `login_throttling_network` instead
+([limits](/authentication)).

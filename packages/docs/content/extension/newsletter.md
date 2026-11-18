@@ -1952,7 +1952,7 @@ not be sent (often a typo in the address), `429` the rate limit.
 
 To expect while testing:
 
-- **Ten subscriptions per IP per hour.** The endpoint is public, cross-origin and
+- **Ten subscriptions per hour per IPv4 address or IPv6 /64.** The endpoint is public, cross-origin and
   sends mail; without a ceiling it would deliver confirmation mails to any
   address an attacker chooses.
 - **One confirmation mail per address and list every ten minutes, five a day.**

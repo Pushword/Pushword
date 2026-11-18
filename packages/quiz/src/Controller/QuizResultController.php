@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pushword\Quiz\Controller;
 
 use Doctrine\ORM\EntityManagerInterface;
+use Pushword\Core\Utils\ClientNetwork;
 use Pushword\Quiz\Entity\QuizResult;
 use Pushword\Quiz\Event\QuizCompletedEvent;
 use Pushword\Quiz\Repository\QuizResultRepository;
@@ -77,7 +78,7 @@ final class QuizResultController extends AbstractController
         }
 
         $limit = $this->anonymousContentLimiter
-            ->create(($request->getClientIp() ?? 'unknown').':'.$host.':quiz')
+            ->create(ClientNetwork::of($request->getClientIp()).':'.$host.':quiz')
             ->consume();
         if (! $limit->isAccepted()) {
             $retryAfter = max(1, $limit->getRetryAfter()->getTimestamp() - time());

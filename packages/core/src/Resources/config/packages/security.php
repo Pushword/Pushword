@@ -7,6 +7,7 @@ use Pushword\Admin\Controller\MediaCrudController;
 use Pushword\Admin\Controller\PageCrudController;
 use Pushword\Api\Security\ApiTokenAuthenticator;
 use Pushword\Core\Security\LoginFormAuthenticator;
+use Pushword\Core\Security\LoginRateLimiter;
 use Pushword\Core\Security\OAuthAuthenticator;
 use Pushword\Flat\Controller\Api\ContentSnapshotApiController;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
@@ -61,8 +62,7 @@ return static function (ContainerConfigurator $containerConfigurator): void {
         'custom_authenticators' => $authenticators,
         'entry_point' => LoginFormAuthenticator::class,
         'login_throttling' => [
-            'max_attempts' => 5,
-            'interval' => '15 minutes',
+            'limiter' => LoginRateLimiter::class,
         ],
         'logout' => [
             'path' => 'pushword_logout',

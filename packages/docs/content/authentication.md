@@ -14,6 +14,13 @@ Three login methods: password, magic link (passwordless) and OAuth (60+ provider
 
 The response is identical for unknown addresses, so the form does not reveal which accounts exist. If OAuth is configured, provider buttons also appear on the login page.
 
+Rate limits, per 15 minutes; a client is an IPv4 address or an IPv6 /64:
+
+| Step | Limit | `framework.rate_limiter` |
+| --- | --- | --- |
+| Email step, magic links and codes | 20 per client, 5 per email address | `login_email`, `login_address` |
+| Password attempts | 5 per account and client, 25 per client | `login_throttling_account`, `login_throttling_network` |
+
 ## User Management with Flat Files {id=users-yaml}
 
 Users can be defined in `config/users.yaml` and synced to the database by the [flat extension](/extension/flat#user-sync), to version-control who has access.

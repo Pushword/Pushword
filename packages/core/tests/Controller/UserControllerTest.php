@@ -138,6 +138,19 @@ final class UserControllerTest extends WebTestCase
         }
     }
 
+    public function testEmailStepCountsAnIpv6NetworkAsOneClient(): void
+    {
+        self::getContainer()->get('limiter.login_email')->create('2001:db8:7:2::')->consume(20);
+        $server = ['REMOTE_ADDR' => '2001:db8:7:2::5'];
+
+        $crawler = $this->client->request(Request::METHOD_GET, '/login', server: $server);
+        $form = $crawler->filter('form')->form();
+        $form['email'] = 'ipv6-network@example.tld';
+        $this->client->submit($form, serverParameters: $server);
+
+        self::assertSame(Response::HTTP_TOO_MANY_REQUESTS, $this->client->getResponse()->getStatusCode());
+    }
+
     public function testMagicLoginWithInvalidToken(): void
     {
         $this->client->request(Request::METHOD_GET, '/login/magic/invalid-token');
@@ -164,6 +177,31 @@ final class UserControllerTest extends WebTestCase
         self::assertSelectorExists('#inputPassword[aria-invalid="true"][aria-describedby="login-auth-error"]');
         self::assertSelectorExists('#login-auth-error[role="alert"]');
         self::assertSelectorNotExists('input[name="password"][value]');
+    }
+
+    public function testPasswordStepIsThrottledPerNetworkAndAccount(): void
+    {
+        $email = 'password-throttled@example.tld';
+        $this->createTestUser($email, 'correctPassword123');
+        $server = ['REMOTE_ADDR' => '2001:db8:7:3::1'];
+        $crawler = $this->client->request(Request::METHOD_GET, '/login', server: $server);
+        $form = $crawler->filter('form')->form();
+        $form['email'] = $email;
+        $this->client->submit($form, serverParameters: $server);
+        $crawler = $this->client->followRedirect();
+
+        for ($attempt = 1; $attempt <= 6; ++$attempt) {
+            // Each attempt comes from another address of the same /64
+            $server = ['REMOTE_ADDR' => '2001:db8:7:3::'.$attempt];
+            $form = $crawler->filter('form')->form();
+            $form['password'] = 'incorrectPassword';
+            $this->client->submit($form, serverParameters: $server);
+            $crawler = $this->client->followRedirect();
+            self::assertSelectorTextContains(
+                '#login-auth-error',
+                6 === $attempt ? 'Too many failed login attempts' : 'Invalid credentials',
+            );
+        }
     }
 
     public function testEmailCsrfErrorHasAnExistingAccessibleDescription(): void

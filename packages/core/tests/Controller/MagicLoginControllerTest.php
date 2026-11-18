@@ -257,6 +257,17 @@ final class MagicLoginControllerTest extends WebTestCase
         self::assertResponseRedirects();
     }
 
+    public function testCodeRequestsCountAnIpv6NetworkAsOneClient(): void
+    {
+        $this->markUsed();
+        self::getContainer()->get('limiter.login_email')->create('2001:db8:7:1::')->consume(20);
+        $this->client->setServerParameter('REMOTE_ADDR', '2001:db8:7:1::99');
+        $crawler = $this->client->request('GET', $this->url);
+        $this->client->submit($crawler->filter('button[value="request_code"]')->form());
+        self::assertResponseStatusCodeSame(429);
+        self::assertEmailCount(0);
+    }
+
     public function testCodeRequestsAlsoUseTheIpLimit(): void
     {
         $this->markUsed();

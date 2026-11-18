@@ -93,6 +93,21 @@ final class QuizResultControllerTest extends WebTestCase
         self::assertSame(Response::HTTP_TOO_MANY_REQUESTS, $client->getResponse()->getStatusCode());
     }
 
+    public function testRateLimitCountsAnIpv6NetworkAsOneClient(): void
+    {
+        $client = self::createClient();
+
+        for ($attempt = 1; $attempt <= 21; ++$attempt) {
+            $this->post(
+                $client,
+                ['quiz' => 'rate-limited-network-quiz', 'score' => 50],
+                clientIp: '2001:db8:7:3::'.dechex($attempt),
+            );
+        }
+
+        self::assertSame(Response::HTTP_TOO_MANY_REQUESTS, $client->getResponse()->getStatusCode());
+    }
+
     public function testRecordsProfileAttemptsAndComputesShare(): void
     {
         $client = self::createClient();

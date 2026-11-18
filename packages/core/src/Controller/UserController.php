@@ -13,6 +13,7 @@ use Pushword\Core\Repository\LoginTokenRepository;
 use Pushword\Core\Repository\UserRepository;
 use Pushword\Core\Security\MagicLinkAuthenticator;
 use Pushword\Core\Service\MagicLinkMailer;
+use Pushword\Core\Utils\ClientNetwork;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\RedirectResponse;
@@ -279,7 +280,7 @@ final class UserController extends AbstractController
     private function consumeEmailLimit(Request $request, string $email): void
     {
         $limiters = [
-            $this->loginEmailLimiter->create($request->getClientIp() ?? 'unknown'),
+            $this->loginEmailLimiter->create(ClientNetwork::of($request->getClientIp())),
             $this->loginAddressLimiter->create(hash('sha256', strtolower(trim($email)))),
         ];
 

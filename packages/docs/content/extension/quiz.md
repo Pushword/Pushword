@@ -300,7 +300,7 @@ personality test. The body is `{ quiz, score }` (a percentage) or
 `{ quiz, result }` (a profile key), plus the required `signature` the renderer
 prints into the quiz config — an HMAC of the host and quiz slug on the kernel
 secret, so only quizzes the site rendered are recorded (`403` otherwise) — and
-optional `answers` (`[{q, a}]`). The endpoint is rate-limited per IP (`429`) and stores no PII:
+optional `answers` (`[{q, a}]`). The endpoint is rate-limited per IPv4 address or IPv6 /64 (`429`) and stores no PII:
 answers are never persisted.
 
 Listen to `Pushword\Quiz\Event\QuizCompletedEvent` to act on an attempt — host,

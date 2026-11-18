@@ -31,6 +31,19 @@ return static function (ContainerConfigurator $containerConfigurator): void {
                 'limit' => 5,
                 'interval' => '15 minutes',
             ],
+            // Login form throttling (LoginRateLimiter): Symfony's defaults for
+            // max_attempts 5, counted per account and client network, and five times
+            // that per client network.
+            'login_throttling_account' => [
+                'policy' => 'fixed_window',
+                'limit' => 5,
+                'interval' => '15 minutes',
+            ],
+            'login_throttling_network' => [
+                'policy' => 'fixed_window',
+                'limit' => 25,
+                'interval' => '15 minutes',
+            ],
         ],
     ]);
 };
