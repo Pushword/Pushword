@@ -23,7 +23,7 @@ export function setupTextSelection(editor: EditorJS, holder: HTMLElement, signal
     return node && block instanceof HTMLElement && block.matches('.ce-block') && holder.contains(block)
       ? { node, offset, block, atomic: true } : null
   }
-  const selectedRange = (): Range | null => {
+  const selectedRange = (includeSingleField = false): Range | null => {
     if (editor.readOnly.isEnabled) return null
     const stored = textSelections.get(holder)
     if (stored && !stored.collapsed && holder.contains(stored.startContainer) && holder.contains(stored.endContainer)) return stored
@@ -32,17 +32,22 @@ export function setupTextSelection(editor: EditorJS, holder: HTMLElement, signal
     const range = native.getRangeAt(0)
     const first = textFieldAt(range.startContainer, holder)
     const last = textFieldAt(range.endContainer, holder)
-    return first && last && first !== last ? range : null
+    return first && last && (includeSingleField || first !== last) ? range : null
   }
   const paint = (): void => {
     if (highlight && CSS.highlights.get(HIGHLIGHT) === highlight) CSS.highlights.delete(HIGHLIGHT)
     holder.querySelectorAll('.pw-text-selection-block').forEach(block => block.classList.remove('pw-text-selection-block'))
-    const range = selectedRange()
+    const range = selectedRange(true)
     if (!range) { highlight = null; return }
-    highlight = new Highlight(...textFields(holder).filter(field => range.intersectsNode(field)).map(field => fieldRange(field, range)))
-    CSS.highlights.set(HIGHLIGHT, highlight)
+    if (textSelections.has(holder)) {
+      highlight = new Highlight(...textFields(holder).filter(field => range.intersectsNode(field)).map(field => fieldRange(field, range)))
+      CSS.highlights.set(HIGHLIGHT, highlight)
+    } else highlight = null
     for (const block of selectedBlocks(holder, range)) {
-      if (wholeBlockSelected(block, range) || textFields(block).length === 0) block.classList.add('pw-text-selection-block')
+      const fields = textFields(block)
+      const coversText = fields.length > 0 && !block.querySelector('img, .editorjs-monaco-wrapper, .pw-mermaid-preview') &&
+        fields.every(field => range.intersectsNode(field) && fieldRange(field, range).toString() === field.textContent)
+      if (wholeBlockSelected(block, range) || coversText) block.classList.add('pw-text-selection-block')
     }
   }
   const clear = (): void => {
@@ -88,6 +93,9 @@ export function setupTextSelection(editor: EditorJS, holder: HTMLElement, signal
 
   document.addEventListener('selectionchange', () => {
     if (editor.readOnly.isEnabled) { clear(); return }
+    // Native dragging stays confined to the anchor's editing host. Mouse coordinates
+    // own the cross-host range until release; native selection events must not replace it.
+    if (dragging) { paint(); return }
     const selection = window.getSelection()
     if (!selection) return
     const first = point(selection.anchorNode, selection.anchorOffset)
@@ -150,9 +158,21 @@ export function setupTextSelection(editor: EditorJS, holder: HTMLElement, signal
     editor.inlineToolbar.close()
     let end = cursorPoint(event)
     const target = (event.target as Element).closest<HTMLElement>('.ce-block')
-    if (!end && target && holder.contains(target) && target !== dragging.block) {
-      const forward = Boolean(dragging.block.compareDocumentPosition(target) & Node.DOCUMENT_POSITION_FOLLOWING)
-      end = blockPoint(target, forward)
+    if (!end && target && holder.contains(target)) {
+      const fields = textFields(target)
+      if (fields.length) {
+        const field = fields.find(field => event.clientY < field.getBoundingClientRect().bottom) ?? fields[fields.length - 1]!
+        const box = field.getBoundingClientRect()
+        if (event.clientY <= box.top || event.clientY >= box.bottom) {
+          end = { node: field, offset: event.clientY <= box.top ? 0 : field.childNodes.length, block: target }
+        } else {
+          const caret = document.caretPositionFromPoint(Math.max(box.left + 1, Math.min(event.clientX, box.right - 1)), event.clientY)
+          if (caret && field.contains(caret.offsetNode)) end = point(caret.offsetNode, caret.offset)
+        }
+      } else if (target !== dragging.block) {
+        const forward = Boolean(dragging.block.compareDocumentPosition(target) & Node.DOCUMENT_POSITION_FOLLOWING)
+        end = blockPoint(target, forward)
+      }
     }
     if (!end) return
     if (dragging.atomic && end.block === dragging.block) return

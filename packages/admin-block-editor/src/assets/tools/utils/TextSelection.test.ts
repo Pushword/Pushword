@@ -14,6 +14,7 @@ beforeEach(() => {
   highlights = new Map()
   vi.stubGlobal('Highlight', class extends Set<Range> { constructor(...ranges: Range[]) { super(ranges) } })
   vi.stubGlobal('CSS', { highlights })
+  Object.defineProperty(document, 'caretPositionFromPoint', { configurable: true, value: vi.fn() })
   const blocks = () => Array.from(holder.querySelectorAll<HTMLElement>('.ce-block'))
   editor = { readOnly: { isEnabled: false }, inlineToolbar: { close: vi.fn() },
     blocks: { getBlockIndex: (id: string) => blocks().findIndex(block => block.dataset.id === id),
@@ -26,6 +27,7 @@ beforeEach(() => {
 afterEach(() => {
   listeners.abort()
   vi.unstubAllGlobals()
+  Reflect.deleteProperty(document, 'caretPositionFromPoint')
   document.body.replaceChildren()
 })
 
@@ -85,4 +87,73 @@ it('clears a range before a click outside the editor', () => {
   document.body.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }))
   expect(textSelections.has(holder)).toBe(false)
   expect(highlights.has('pw-text-selection')).toBe(false)
+})
+
+it('highlights all text in a paragraph as a block, including formatted endpoints', () => {
+  const field = holder.querySelector<HTMLElement>('.ce-paragraph')!
+  field.innerHTML = '<b>Before</b> selected <i>after</i>'
+  field.focus()
+  getSelection()!.setBaseAndExtent(field.querySelector('b')!.firstChild!, 0, field.querySelector('i')!.firstChild!, 5)
+  document.dispatchEvent(new Event('selectionchange'))
+  expect(field.closest('.ce-block')!.classList.contains('pw-text-selection-block')).toBe(true)
+  expect(textSelections.has(holder)).toBe(false)
+  expect(getSelection()!.toString()).toBe('Before selected after')
+  getSelection()!.setBaseAndExtent(field.querySelector('b')!.firstChild!, 1, field.querySelector('i')!.firstChild!, 5)
+  document.dispatchEvent(new Event('selectionchange'))
+  expect(field.closest('.ce-block')!.classList.contains('pw-text-selection-block')).toBe(false)
+})
+
+it('keeps the pointer range when native dragging reports a range confined to the first field', () => {
+  const first = holder.querySelector<HTMLElement>('.ce-paragraph')!
+  const last = holder.querySelector<HTMLElement>('.cdx-list__item-content')!
+  vi.mocked(document.caretPositionFromPoint).mockReturnValueOnce({ offsetNode: first.firstChild!, offset: 7 } as CaretPosition)
+    .mockReturnValue({ offsetNode: last.firstChild!, offset: 4 } as CaretPosition)
+  first.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, button: 0 }))
+  last.dispatchEvent(new MouseEvent('mousemove', { bubbles: true, buttons: 1, cancelable: true }))
+  getSelection()!.setBaseAndExtent(first.firstChild!, 7, first.firstChild!, 10)
+  document.dispatchEvent(new Event('selectionchange'))
+  expect(Array.from(highlights.get('pw-text-selection') ?? [], range => range.toString())).toEqual(['CUT', 'CUT|'])
+  expect(textSelections.get(holder)!.endContainer).toBe(last.firstChild)
+  expect(textSelections.get(holder)!.endOffset).toBe(4)
+})
+
+it('stops at the start of text when dragging over its insertion control', () => {
+  const first = holder.querySelector<HTMLElement>('.ce-paragraph')!
+  const last = holder.querySelector<HTMLElement>('.cdx-list__item-content')!
+  const insertion = document.createElement('div')
+  insertion.className = 'pw-block-insertion'
+  last.closest('.ce-block__content')!.prepend(insertion)
+  vi.spyOn(last, 'getBoundingClientRect').mockReturnValue({ top: 100, bottom: 120 } as DOMRect)
+  vi.mocked(document.caretPositionFromPoint).mockReturnValueOnce({ offsetNode: first.firstChild!, offset: 7 } as CaretPosition)
+    .mockReturnValue({ offsetNode: insertion, offset: 0 } as CaretPosition)
+  first.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, button: 0 }))
+  insertion.dispatchEvent(new MouseEvent('mousemove', { bubbles: true, buttons: 1, clientY: 95, cancelable: true }))
+  expect(Array.from(highlights.get('pw-text-selection')!, range => range.toString())).toEqual(['CUT', ''])
+  expect(holder.querySelector('.pw-text-selection-block')).toBeNull()
+})
+
+it('keeps a precise text endpoint when dragging in the block margin', () => {
+  const first = holder.querySelector<HTMLElement>('.ce-paragraph')!
+  const last = holder.querySelector<HTMLElement>('.cdx-list__item-content')!
+  vi.spyOn(last, 'getBoundingClientRect').mockReturnValue({ top: 100, bottom: 120, left: 100, right: 200 } as DOMRect)
+  const caret = vi.mocked(document.caretPositionFromPoint)
+    .mockReturnValueOnce({ offsetNode: first.firstChild!, offset: 7 } as CaretPosition)
+    .mockReturnValueOnce(null)
+    .mockReturnValue({ offsetNode: last.firstChild!, offset: 4 } as CaretPosition)
+  first.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, button: 0 }))
+  last.closest('.ce-block')!.dispatchEvent(new MouseEvent('mousemove', {
+    bubbles: true, buttons: 1, clientX: 250, clientY: 110, cancelable: true,
+  }))
+  expect(caret).toHaveBeenLastCalledWith(199, 110)
+  expect(Array.from(highlights.get('pw-text-selection')!, range => range.toString())).toEqual(['CUT', 'CUT|'])
+})
+
+it('does not highlight an image block when only its entire caption is selected', () => {
+  const field = holder.querySelector<HTMLElement>('.ce-paragraph')!
+  field.before(document.createElement('img'))
+  field.focus()
+  getSelection()!.selectAllChildren(field)
+  document.dispatchEvent(new Event('selectionchange'))
+  expect(holder.querySelector('.pw-text-selection-block')).toBeNull()
+  expect(getSelection()!.toString()).toBe('BEFORE|CUT')
 })
