@@ -52,8 +52,8 @@ export const test = base.extend<{ editorPage: Page }, { authState: StorageState 
     await use(page)
   },
   authState: [async ({ browser }, use, workerInfo) => {
-    const statePath = join(directory, `auth-${workerInfo.project.name}-${workerInfo.parallelIndex}.json`)
-    // A failed test restarts its worker; reuse the login instead of hitting the login throttle.
+    const statePath = join(directory, `auth-${workerInfo.parallelIndex}.json`)
+    // Sessions work across browsers; reuse each slot's login across projects and worker restarts.
     if (existsSync(statePath)) {
       await use(JSON.parse(readFileSync(statePath, 'utf8')))
       return

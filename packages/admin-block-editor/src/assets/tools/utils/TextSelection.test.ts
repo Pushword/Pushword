@@ -31,6 +31,10 @@ afterEach(() => {
   document.body.replaceChildren()
 })
 
+function caretPosition(offsetNode: Node, offset: number): CaretPosition {
+  return { offsetNode, offset, getClientRect: () => null }
+}
+
 function select(): HTMLElement {
   const field = holder.querySelector<HTMLElement>('.ce-paragraph')!
   field.focus()
@@ -106,8 +110,8 @@ it('highlights all text in a paragraph as a block, including formatted endpoints
 it('keeps the pointer range when native dragging reports a range confined to the first field', () => {
   const first = holder.querySelector<HTMLElement>('.ce-paragraph')!
   const last = holder.querySelector<HTMLElement>('.cdx-list__item-content')!
-  vi.mocked(document.caretPositionFromPoint).mockReturnValueOnce({ offsetNode: first.firstChild!, offset: 7 } as CaretPosition)
-    .mockReturnValue({ offsetNode: last.firstChild!, offset: 4 } as CaretPosition)
+  vi.mocked(document.caretPositionFromPoint).mockReturnValueOnce(caretPosition(first.firstChild!, 7))
+    .mockReturnValue(caretPosition(last.firstChild!, 4))
   first.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, button: 0 }))
   last.dispatchEvent(new MouseEvent('mousemove', { bubbles: true, buttons: 1, cancelable: true }))
   getSelection()!.setBaseAndExtent(first.firstChild!, 7, first.firstChild!, 10)
@@ -124,8 +128,8 @@ it('stops at the start of text when dragging over its insertion control', () => 
   insertion.className = 'pw-block-insertion'
   last.closest('.ce-block__content')!.prepend(insertion)
   vi.spyOn(last, 'getBoundingClientRect').mockReturnValue({ top: 100, bottom: 120 } as DOMRect)
-  vi.mocked(document.caretPositionFromPoint).mockReturnValueOnce({ offsetNode: first.firstChild!, offset: 7 } as CaretPosition)
-    .mockReturnValue({ offsetNode: insertion, offset: 0 } as CaretPosition)
+  vi.mocked(document.caretPositionFromPoint).mockReturnValueOnce(caretPosition(first.firstChild!, 7))
+    .mockReturnValue(caretPosition(insertion, 0))
   first.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, button: 0 }))
   insertion.dispatchEvent(new MouseEvent('mousemove', { bubbles: true, buttons: 1, clientY: 95, cancelable: true }))
   expect(Array.from(highlights.get('pw-text-selection')!, range => range.toString())).toEqual(['CUT', ''])
@@ -137,9 +141,9 @@ it('keeps a precise text endpoint when dragging in the block margin', () => {
   const last = holder.querySelector<HTMLElement>('.cdx-list__item-content')!
   vi.spyOn(last, 'getBoundingClientRect').mockReturnValue({ top: 100, bottom: 120, left: 100, right: 200 } as DOMRect)
   const caret = vi.mocked(document.caretPositionFromPoint)
-    .mockReturnValueOnce({ offsetNode: first.firstChild!, offset: 7 } as CaretPosition)
+    .mockReturnValueOnce(caretPosition(first.firstChild!, 7))
     .mockReturnValueOnce(null)
-    .mockReturnValue({ offsetNode: last.firstChild!, offset: 4 } as CaretPosition)
+    .mockReturnValue(caretPosition(last.firstChild!, 4))
   first.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, button: 0 }))
   last.closest('.ce-block')!.dispatchEvent(new MouseEvent('mousemove', {
     bubbles: true, buttons: 1, clientX: 250, clientY: 110, cancelable: true,
@@ -163,8 +167,8 @@ it.each(['deux mots', 'deux mots '])('opens the inline toolbar on mouseup after 
   field.textContent = 'deux mots après'
   field.focus()
   vi.mocked(document.caretPositionFromPoint)
-    .mockReturnValueOnce({ offsetNode: field.firstChild!, offset: 0 } as CaretPosition)
-    .mockReturnValue({ offsetNode: field.firstChild!, offset: text.length } as CaretPosition)
+    .mockReturnValueOnce(caretPosition(field.firstChild!, 0))
+    .mockReturnValue(caretPosition(field.firstChild!, text.length))
   field.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, button: 0 }))
   getSelection()!.setBaseAndExtent(field.firstChild!, 0, field.firstChild!, text.length)
   field.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }))
@@ -175,7 +179,7 @@ it.each(['deux mots', 'deux mots '])('opens the inline toolbar on mouseup after 
 it('does not open the inline toolbar after a collapsed click or an unrelated mouseup', () => {
   const field = holder.querySelector<HTMLElement>('.ce-paragraph')!
   field.focus()
-  vi.mocked(document.caretPositionFromPoint).mockReturnValue({ offsetNode: field.firstChild!, offset: 0 } as CaretPosition)
+  vi.mocked(document.caretPositionFromPoint).mockReturnValue(caretPosition(field.firstChild!, 0))
   field.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, button: 0 }))
   getSelection()!.collapse(field.firstChild!, 0)
   field.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }))
@@ -188,8 +192,8 @@ it('keeps the inline toolbar closed after releasing a cross-field selection', ()
   const first = holder.querySelector<HTMLElement>('.ce-paragraph')!
   const last = holder.querySelector<HTMLElement>('.cdx-list__item-content')!
   vi.mocked(document.caretPositionFromPoint)
-    .mockReturnValueOnce({ offsetNode: first.firstChild!, offset: 7 } as CaretPosition)
-    .mockReturnValue({ offsetNode: last.firstChild!, offset: 4 } as CaretPosition)
+    .mockReturnValueOnce(caretPosition(first.firstChild!, 7))
+    .mockReturnValue(caretPosition(last.firstChild!, 4))
   first.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, button: 0 }))
   last.dispatchEvent(new MouseEvent('mousemove', { bubbles: true, buttons: 1, cancelable: true }))
   last.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }))
