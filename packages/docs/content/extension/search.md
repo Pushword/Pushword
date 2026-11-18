@@ -69,7 +69,8 @@ the page cache, like the `liveBlock` fragments.
 - **`json`** — the client-side `search.json` fallback (zero PHP), consumed by
   `PushwordSimpleSearch` (shipped in `@pushword/js-helper`). Its fields mirror
   `searchable_attributes`, so the browser ranks `title`/`h1` above the body just
-  like Loupe — minus typo tolerance and stemming;
+  like Loupe, and ignores case, accents, the apostrophe style and French elisions the
+  same way — minus typo tolerance, stemming and stop words;
 - **`both`** (default) — both.
 
 The exported `loupe.db` is checkpointed before it is copied, so it carries its documents

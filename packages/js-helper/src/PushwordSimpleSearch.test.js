@@ -79,6 +79,92 @@ describe('searchDocuments', () => {
   })
 })
 
+describe('searchDocuments on French text', () => {
+  const french = [
+    {
+      title: 'Comment fonctionnent l’acompte et le paiement du solde ?',
+      h1: '',
+      tags: [],
+      content: '',
+    },
+    {
+      title: 'Préparer son sac',
+      h1: '',
+      tags: [],
+      content: 'Un acompte de 30 % est demandé.',
+    },
+    { title: 'Partir d’Été', h1: '', tags: [], content: 'Les sentiers en juillet.' },
+    { title: 'Le matériel de bivouac', h1: '', tags: ['À emporter'], content: '' },
+  ]
+  const titles = (query, options) =>
+    searchDocuments(french, query, options).map((d) => d.title)
+  const ACOMPTE = [
+    'Comment fonctionnent l’acompte et le paiement du solde ?',
+    'Préparer son sac',
+  ]
+
+  it.each([
+    ['bare word', 'acompte'],
+    ['straight apostrophe', "l'acompte"],
+    ['typographic apostrophe', 'l’acompte'],
+    ['upper case', 'L’ACOMPTE'],
+    ['mixed case, straight apostrophe', "L'Acompte"],
+  ])('finds the elided and the bare word: %s', (_, query) => {
+    expect(titles(query)).toEqual(ACOMPTE)
+  })
+
+  it.each([['été'], ['ete'], ['ÉTÉ'], ["d'ete"], ['D’ÉTÉ']])(
+    'ignores accents and case: %s',
+    (query) => {
+      expect(titles(query)).toEqual(['Partir d’Été'])
+    },
+  )
+
+  it('folds array fields such as tags', () => {
+    expect(titles('a emporter')).toEqual(['Le matériel de bivouac'])
+  })
+
+  it('keeps a phrase query literal once the particle is dropped', () => {
+    expect(titles("l'acompte et le ")).toEqual([
+      'Comment fonctionnent l’acompte et le paiement du solde ?',
+    ])
+    expect(titles("l'acompte de ")).toEqual(['Préparer son sac'])
+  })
+
+  it('leaves a particle ending a longer word alone', () => {
+    const today = [{ title: 'Aujourd’hui', h1: '', tags: [], content: '' }]
+    expect(searchDocuments(today, "aujourd'hui").map((d) => d.title)).toEqual([
+      'Aujourd’hui',
+    ])
+    expect(searchDocuments(today, 'hui').map((d) => d.title)).toEqual(['Aujourd’hui'])
+  })
+
+  it('keeps a particle with no word after it', () => {
+    // Dropped, `l'` would leave an empty query matching every page.
+    expect(titles("l'")).toEqual([ACOMPTE[0]])
+    expect(titles("qu'")).toEqual([])
+  })
+
+  it('folds in fuzzy mode too', () => {
+    expect(titles('ete', { fuzzy: true })).toContain('Partir d’Été')
+    expect(titles("l'acmpte", { fuzzy: true })).toEqual(ACOMPTE)
+  })
+
+  it('drops an elided particle in the middle of a multi-word query', () => {
+    expect(titles("fonctionnent l'acompte")).toEqual([ACOMPTE[0]])
+  })
+
+  it('matches exclude patterns against the raw value, not the folded one', () => {
+    expect(titles('acompte', { exclude: ['Un acompte'] })).toEqual([ACOMPTE[0]])
+    expect(titles('acompte', { exclude: ['un acompte'] })).toEqual(ACOMPTE)
+  })
+
+  it('matches a field folded on an earlier search', () => {
+    expect(titles('ete')).toEqual(['Partir d’Été'])
+    expect(titles('sentiers juillet')).toEqual(['Partir d’Été'])
+  })
+})
+
 describe('pushwordSimpleSearch', () => {
   it('renders ranked results into the container from a JSON array', async () => {
     const input = document.createElement('input')

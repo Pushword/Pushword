@@ -10,6 +10,9 @@
  *   search bundle's `searchable_attributes` order.
  * - Hardened field reading: a non-string value (e.g. the `tags` array) is
  *   normalised instead of throwing `str.trim is not a function`.
+ * - Folded matching: case, accents and the apostrophe style are ignored, and a
+ *   French elision is dropped from the query, so `l'ete` finds `l’Été` and
+ *   `l’acompte` finds `un acompte`, as with the Loupe index.
  * - `fetch`-based JSON loading instead of the legacy XMLHttpRequest path.
  *
  * The options stay compatible with simple-jekyll-search, plus `searchableAttributes`.
@@ -37,12 +40,43 @@ const DEFAULTS = {
   onSearch: () => {},
 }
 
+/** French elision particles, as in the search bundle's FrenchElision. */
+const ELISION =
+  /(^|[^\p{L}\p{N}])(?:c|d|j|l|m|n|s|t|qu|jusqu|lorsqu|puisqu|quoiqu)'(?=\p{L})/gu
+
+/** Lower case, no accents, straight apostrophe: `L’Été` → `l'ete`. */
+function fold(text) {
+  return text
+    .normalize('NFD')
+    .replace(/\p{Mn}/gu, '')
+    .replace(/’/g, "'")
+    .toLowerCase()
+}
+
+/** A folded query without its elided particles: `l’acompte` → `acompte`. */
+function prepareQuery(query) {
+  return fold(query).replace(ELISION, '$1')
+}
+
+/** Folded field values, computed once per document: folding costs ~10× lower-casing. */
+const foldedFields = new WeakMap()
+
+function foldedField(doc, attr) {
+  let fields = foldedFields.get(doc)
+  if (!fields) {
+    fields = {}
+    foldedFields.set(doc, fields)
+  }
+  fields[attr] ??= fold(normalize(doc[attr]))
+  return fields[attr]
+}
+
+/** Both strategies receive a folded field and a prepared query. */
 const literalStrategy = {
   /** All query words must appear in the field (a trailing space matches the phrase literally). */
   matches(str, crit) {
     if (!str) return false
-    str = str.toLowerCase()
-    const words = crit.endsWith(' ') ? [crit.toLowerCase()] : crit.trim().toLowerCase().split(' ')
+    const words = crit.endsWith(' ') ? [crit] : crit.trim().split(' ')
     return words.filter((word) => str.indexOf(word) >= 0).length === words.length
   },
 }
@@ -50,7 +84,7 @@ const literalStrategy = {
 const fuzzyStrategy = {
   matches(str, crit) {
     if (!str) return false
-    return fuzzysearch(crit.toLowerCase(), str.toLowerCase())
+    return fuzzysearch(crit, str)
   },
 }
 
@@ -89,6 +123,7 @@ export function searchDocuments(docs, query, options = {}) {
   const opt = { ...DEFAULTS, ...options }
   const strategy = opt.fuzzy ? fuzzyStrategy : literalStrategy
   const weights = weightsFrom(opt.searchableAttributes)
+  const crit = prepareQuery(query)
 
   const scored = []
   for (const doc of docs) {
@@ -96,7 +131,7 @@ export function searchDocuments(docs, query, options = {}) {
     for (const attr of opt.searchableAttributes) {
       const value = normalize(doc[attr])
       if (value === '' || isExcluded(value, opt.exclude)) continue
-      if (strategy.matches(value, query)) score += weights[attr]
+      if (strategy.matches(foldedField(doc, attr), crit)) score += weights[attr]
     }
     if (score > 0) scored.push({ doc, score })
   }

@@ -1,5 +1,5 @@
 ---
-title: 'page saves invalidate their cache before redirecting; search finds French words behind an elision, after an index rebuild'
+title: 'page saves invalidate their cache before redirecting; search finds French words behind an elision, after an index rebuild; client-side search ignores accents and apostrophes'
 run: pw:search:index
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
@@ -36,7 +36,7 @@ belongs in the feature doc, which you link to instead.
 Several changes land here between two tags: append to the file, do not replace it.
 -->
 
-**Concerns:** `pushword/search`, `pushword/static-generator`
+**Concerns:** `pushword/search`, `pushword/static-generator`, `@pushword/js-helper`
 
 ## Saved pages are immediately current
 
@@ -49,3 +49,8 @@ rebuilt, a query with an elision misses the pages indexed before the upgrade: ru
 `pw:search:index` (`pw:static` rebuilds on its own). New optional settings,
 `search_stop_words` and `search_matching_strategy`, keep a word like "de" from listing
 every page ([Search](/extension/search#french-text-and-natural-questions)).
+
+## Client-side search ignores accents and apostrophes
+
+`PushwordSimpleSearch` (the `search.json` fallback) now matches `ete` to "Été" and `l'acompte`
+to "l’acompte" or "un acompte". Update `@pushword/js-helper` and rebuild your assets.
