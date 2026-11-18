@@ -80,6 +80,7 @@ final class ConversationSpamProtectionTest extends WebTestCase
     {
         yield 'filled honeypot' => ['message', 'honeypot'];
         yield 'honeypot sent as a list' => ['message', 'honeypot-list'];
+        yield 'honeypot holding a falsy "0"' => ['message', 'honeypot-zero'];
         yield 'filled honeypot in a site form built on FormType' => ['site-built', 'honeypot'];
         yield 'unsigned action' => ['message', 'unsigned'];
         yield 'action signed for another page' => ['message', 'other-page'];
@@ -100,6 +101,8 @@ final class ConversationSpamProtectionTest extends WebTestCase
             $values['form'][SpamProtectionExtension::HONEYPOT] = 'https://spam.example';
         } elseif ('honeypot-list' === $case) {
             $values['form'][SpamProtectionExtension::HONEYPOT] = ['https://spam.example'];
+        } elseif ('honeypot-zero' === $case) {
+            $values['form'][SpamProtectionExtension::HONEYPOT] = '0';
         } elseif ('unsigned' === $case) {
             $uri = $this->unsigned($uri);
         } elseif ('other-page' === $case) {
@@ -193,15 +196,53 @@ final class ConversationSpamProtectionTest extends WebTestCase
         }
 
         // A step that gives no address still passes: the refusal waits for the one that does.
-        $crawler = $this->submit('ms-message', ['form[content]' => 'A two step message over quota.']);
+        $content = 'A two step message over quota '.uniqid();
+        $crawler = $this->submit('ms-message', ['form[content]' => $content]);
         self::assertSelectorNotExists('[role="alert"]');
         $this->submitForm($crawler, ['form[authorName]' => 'Camille', 'form[authorEmail]' => 'over-quota-'.uniqid().'@example.org']);
         self::assertSelectorTextContains('[role="alert"]', self::RATE_LIMITED);
         self::assertEmailCount(0);
+        // The refused step leaves the saved first step without an identity.
+        $firstStep = $this->findMessageBy(['content' => $content]);
+        self::assertNotNull($firstStep);
+        self::assertSame('', $firstStep->authorEmail);
+        self::assertSame('', $firstStep->authorName);
 
         $this->client->setServerParameter('REMOTE_ADDR', $this->newIp());
         $email = 'other-ip-'.uniqid().'@example.org';
         $this->submit('message', $this->messageFields('message', $email, 'A message from another connection.'));
+        self::assertEmailCount(1);
+        self::assertNotNull($this->findMessage($email));
+    }
+
+    public function testARefusedMessageGoesThroughUnchangedOnceTheQuotaRecovers(): void
+    {
+        $this->limiter()->create($this->ip)->consume(self::QUOTA);
+        $email = 'retry-'.uniqid().'@example.org';
+        $crawler = $this->submit('message', $this->messageFields('message', $email, 'A message sent again later.'));
+        self::assertSelectorTextContains('[role="alert"]', self::RATE_LIMITED);
+
+        $this->limiter()->create($this->ip)->reset();
+        $this->submitForm($crawler, []);
+
+        // Saved and notified, not mistaken for a duplicate of the refused attempt.
+        self::assertSelectorNotExists('[name="form"]');
+        self::assertEmailCount(1);
+        self::assertNotNull($this->findMessage($email));
+    }
+
+    public function testACrossOriginPageSubmitsWithoutAnyCookie(): void
+    {
+        $this->client->setServerParameter('HTTP_ORIGIN', 'https://static.localhost.dev');
+        $crawler = $this->client->request(Request::METHOD_GET, $this->url('message'));
+        self::assertSame([], $this->client->getResponse()->headers->getCookies());
+
+        $this->client->getCookieJar()->clear();
+        $email = 'cross-origin-'.uniqid().'@example.org';
+        $this->submitForm($crawler, $this->messageFields('message', $email, 'A message from a static page.'));
+
+        self::assertResponseHeaderSame('Access-Control-Allow-Origin', 'https://static.localhost.dev');
+        self::assertSelectorNotExists('[name="form"]');
         self::assertEmailCount(1);
         self::assertNotNull($this->findMessage($email));
     }
@@ -262,10 +303,20 @@ final class ConversationSpamProtectionTest extends WebTestCase
 
     private function findMessage(string $email): ?Message
     {
+        return $this->findMessageBy(['authorEmail' => $email]);
+    }
+
+    /**
+     * @param array<string, string> $criteria
+     *
+     * @phpstan-impure
+     */
+    private function findMessageBy(array $criteria): ?Message
+    {
         $em = self::getContainer()->get('doctrine')->getManager();
         $em->clear();
 
-        return $em->getRepository(Message::class)->findOneBy(['authorEmail' => $email]);
+        return $em->getRepository(Message::class)->findOneBy($criteria);
     }
 
     private function remainingQuota(): int
