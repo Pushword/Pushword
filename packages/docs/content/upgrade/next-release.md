@@ -1,6 +1,5 @@
 ---
-title: 'plain-text paste stays inline in the block editor'
-run: 'assets:install --symlink'
+title: ''
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -35,10 +34,3 @@ belongs in the feature doc, which you link to instead.
 
 Several changes land here between two tags: append to the file, do not replace it.
 -->
-
-**Concerns:** `pushword/admin-block-editor`
-
-## Block editor paste and selection
-
-Plain-text paste now stays inline; normal paste links selected text only when the clipboard contains a URL. Text selection and its toolbar also behave more reliably; see [Block editor usage](/extension/admin-block-editor#paste-text).
-Reinstall bundle assets with `php bin/console assets:install --symlink`.
