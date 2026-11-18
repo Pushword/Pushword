@@ -183,6 +183,14 @@ test('an accepted picomatch finding cannot hide another advisory or critical fin
   }
 })
 
+test('each reviewed advisory is only accepted through its own paths', () => {
+  const swapped = [
+    { ...advisory, data: { ...advisory.data, resolution: picomatchAdvisory.data.resolution } },
+    { ...picomatchAdvisory, data: { ...picomatchAdvisory.data, resolution: advisory.data.resolution } },
+  ]
+  for (const finding of swapped) assert.equal(evaluate([finding, summary]), 1)
+})
+
 test('accepted picomatch findings still require a complete report', () => {
   assert.equal(evaluate([picomatchAdvisory]), 1)
 })

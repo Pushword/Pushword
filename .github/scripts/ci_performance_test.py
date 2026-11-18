@@ -21,7 +21,6 @@ def sample(number, seconds=300, commit=None):
         "run_id": number, "commit": commit or f"commit-{number}",
         "branch": "feature",
         "url": f"https://github.com/Pushword/Pushword/actions/runs/{number}",
-        "job_ids": [number * 2, number * 2 + 1],
         "executions": [f"execution-{number}-a", f"execution-{number}-b"],
         "metrics": {"longest_job_seconds": seconds, "runner_seconds": seconds * 10},
         "jobs": {"browser": seconds}, "steps": {"browser / tests": seconds},
@@ -81,17 +80,13 @@ class BudgetTest(unittest.TestCase):
 
     def test_a_guard_only_rerun_neither_calibrates_nor_confirms(self):
         record = calibrated()
-        for attempt in range(4):
-            current = sample(21, 400, "regression")
-            current["job_ids"] = [attempt * 1000, attempt * 1000 + 1]
-            record, findings = ci.assess(current, record, CONFIG)
+        for _ in range(4):
+            record, findings = ci.assess(sample(21, 400, "regression"), record, CONFIG)
         self.assertFalse(any(finding["blocked"] for finding in findings))
         self.assertEqual(len(record["recent"]), 20)
         observing = {}
-        for attempt in range(4):
-            current = sample(1)
-            current["job_ids"] = [attempt * 1000, attempt * 1000 + 1]
-            observing, _ = ci.assess(current, observing, CONFIG)
+        for _ in range(4):
+            observing, _ = ci.assess(sample(1), observing, CONFIG)
         self.assertEqual(len(observing["baseline"]), 1)
 
     def test_partial_reruns_do_not_confirm_old_measurements(self):
@@ -117,6 +112,12 @@ class BudgetTest(unittest.TestCase):
         for number in range(21, 24):
             record, findings = ci.assess(sample(number, 400), record, CONFIG)
             self.assertEqual(any(finding["blocked"] for finding in findings), number == 23)
+
+    def test_runs_without_a_branch_cannot_confirm_each_other(self):
+        record = calibrated()
+        for number in range(21, 24):
+            record, findings = ci.assess({**sample(number, 400), "branch": None}, record, CONFIG)
+        self.assertFalse(any(finding["blocked"] for finding in findings))
 
     def test_a_healthy_run_interrupts_persistent_branch_confirmation(self):
         record = calibrated()
@@ -183,7 +184,6 @@ class TimingTest(unittest.TestCase):
                "steps": [{"name": "Build Monaco and its language workers", "conclusion": "skipped"}]}
         _, original = ci.job_sample(run, [job])
         _, clone = ci.job_sample(run, [{**job, "id": 11}])
-        self.assertNotEqual(original["job_ids"], clone["job_ids"])
         self.assertEqual(original["executions"], clone["executions"])
         record, _ = ci.assess(original, {}, CONFIG)
         record, _ = ci.assess(clone, record, CONFIG)
@@ -227,7 +227,7 @@ class TimingTest(unittest.TestCase):
         job = {"id": 1, "name": "editor", "conclusion": "success", "started_at": "2026-11-17T00:02:00Z", "completed_at": "2026-11-17T00:03:00Z", "steps": [step]}
         profile, current = ci.job_sample(run, [job, {"name": ci.GUARD_JOB, "conclusion": None}])
         self.assertEqual(current["metrics"], {"longest_job_seconds": 60, "runner_seconds": 60})
-        self.assertEqual(current["job_ids"], [1])
+        self.assertEqual(current["jobs"], {"editor": 60})
         self.assertEqual(profile["monaco"], "warm")
 
     def test_failed_upstream_and_negative_durations_cannot_be_measured(self):
@@ -332,6 +332,77 @@ class IntegrationTest(unittest.TestCase):
             self.assertIn("Calibrated", (root / "summary").read_text())
             self.assertIn(name, (root / "outputs").read_text())
             self.assertFalse(any(f"/{number}/zip" in call for number in [0, 98, 99] for call in calls))
+
+    def run_cli(self, history, test_artifacts=1):
+        """Run main() against fake history {artifact id: stored record}; returns (exit code, stdout, fetched artifact ids)."""
+        with TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "config.json").write_text(json.dumps(CONFIG))
+            report = {"suites": [{"specs": [{"file": "a.spec.ts", "tests": [{
+                "projectName": "chrome", "results": [{"status": "passed", "duration": 1000}]}]}]}]}
+            step = {"name": "Upload results, failure screenshots and traces", "conclusion": "success",
+                    "started_at": "2026-11-17T00:01:59Z", "completed_at": "2026-11-17T00:02:00Z"}
+            job = {"id": 100, "name": "editor", "conclusion": "success",
+                   "started_at": "2026-11-17T00:01:00Z", "completed_at": "2026-11-17T00:02:00Z",
+                   "steps": [{"name": "Build Monaco and its language workers", "conclusion": "skipped"}, step]}
+            run = {"id": 10, "head_sha": "current", "html_url": "https://example.test/10"}
+            fetched = []
+
+            def fake_github(path, binary=False):
+                if path == "repos/e/r/actions/runs/10":
+                    return run
+                if path.startswith("repos/e/r/actions/runs/10/jobs?"):
+                    return {"jobs": [job]}
+                if path.startswith("repos/e/r/actions/runs/10/artifacts?"):
+                    return {"artifacts": [{"id": 1, "name": "editor-chrome-1"}][:test_artifacts]}
+                if path.startswith("repos/e/r/actions/artifacts?"):
+                    return {"artifacts": [{"id": number, "expired": False,
+                                           "workflow_run": {"repository_id": 1, "head_repository_id": 1}}
+                                          for number in history]}
+                if path == "repos/e/r/actions/artifacts/1/zip":
+                    return archive({"results.json": json.dumps(report)})
+                number = int(path.split("/")[-2])
+                fetched.append(number)
+                return archive({"ci-performance.json": json.dumps(history[number])})
+
+            argv = ["ci_performance.py", "--repository", "e/r", "--run-id", "10",
+                    "--config", str(root / "config.json"), "--output", str(root / "out.json")]
+            output = StringIO()
+            with patch.object(ci, "github", side_effect=fake_github), patch("sys.argv", argv), \
+                    patch.dict(os.environ, {}, clear=True), redirect_stdout(output):
+                status = ci.main()
+            return status, output.getvalue(), fetched
+
+    def stored(self, profile, run_id, reference=None):
+        return {**calibrated(), "profile": profile, "config": {**CONFIG, "reference": reference or CONFIG["reference"]},
+                "current": sample(run_id)}
+
+    def test_reference_is_the_newest_artifact_matching_profile_and_reference(self):
+        profile = {"coverage": False, "monaco": "warm", "jobs": ["editor"]}
+        history = {5: self.stored(profile, 305, "old-reference"),
+                   4: self.stored({**profile, "monaco": "cold"}, 304),
+                   3: self.stored(profile, 303), 2: self.stored(profile, 302)}
+        _, text, fetched = self.run_cli(history)
+        self.assertEqual(fetched, [5, 4, 3])
+        self.assertIn("Compared with [303]", text)
+        _, text, fetched = self.run_cli({5: history[5], 4: history[4]})
+        self.assertEqual(fetched, [5, 4])
+        self.assertIn("First measurement", text)
+
+    def test_a_confirmed_regression_fails_the_check_with_an_error_annotation(self):
+        record = {}
+        for number in range(1, CONFIG["calibration_runs"] + 1):
+            record, _ = ci.assess(sample(number, 10), record, CONFIG)
+        for number in (21, 22):
+            record, _ = ci.assess(sample(number, 60, "current"), record, CONFIG)
+        profile = {"coverage": False, "monaco": "warm", "jobs": ["editor"]}
+        status, text, _ = self.run_cli({2: {**record, "profile": profile, "config": CONFIG}})
+        self.assertEqual(status, 1)
+        self.assertIn("::error title=CI performance::Longest job", text)
+
+    def test_missing_test_artifacts_make_the_measurement_incomplete(self):
+        with self.assertRaisesRegex(ValueError, "Expected 1 test artifacts, found 0"):
+            self.run_cli({}, test_artifacts=0)
 
     def test_pagination_does_not_truncate_large_matrices_or_artifact_lists(self):
         with patch.object(ci, "github", side_effect=[{"jobs": list(range(100))}, {"jobs": [100]}]) as api:

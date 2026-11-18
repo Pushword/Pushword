@@ -68,14 +68,15 @@ def job_sample(run, jobs):
         f"{job['name']} / {step['name']}": seconds(step["started_at"], step["completed_at"])
         for job in jobs for step in job["steps"] if step["conclusion"] == "success"
     }
-    monaco = [step["conclusion"] for job in jobs for step in job["steps"]
-              if step["name"] == "Build Monaco and its language workers"]
-    if not monaco or any(state not in ("success", "skipped") for state in monaco):
+    monaco = {step["conclusion"] for job in jobs for step in job["steps"]
+              if step["name"] == "Build Monaco and its language workers"}
+    if not monaco or not monaco <= {"success", "skipped"}:
         raise ValueError("Missing Monaco cache profile")
-    cache = "mixed"
-    if all(state == "skipped" for state in monaco):
+    if len(monaco) > 1:
+        cache = "mixed"
+    elif monaco == {"skipped"}:
         cache = "warm"
-    elif all(state == "success" for state in monaco):
+    else:
         cache = "cold"
     profile = {
         "coverage": any(step["name"] == "Merge coverage" and step["conclusion"] == "success"
@@ -86,7 +87,6 @@ def job_sample(run, jobs):
     return profile, {
         "run_id": run["id"], "commit": run["head_sha"], "url": run["html_url"],
         "branch": run.get("head_branch"),
-        "job_ids": sorted(job["id"] for job in jobs),
         "executions": sorted(execution_key(run["id"], job) for job in jobs),
         "metrics": {"longest_job_seconds": max(durations.values()),
                     "runner_seconds": sum(durations.values())},
@@ -143,7 +143,7 @@ def artifact_name(config, profile):
 
 
 def compact(sample):
-    return {key: sample[key] for key in ("run_id", "commit", "branch", "url", "job_ids", "executions", "metrics")}
+    return {key: sample[key] for key in ("run_id", "commit", "branch", "url", "executions", "metrics")}
 
 
 def independent_samples(samples, commit=None):
@@ -161,12 +161,11 @@ def assess(sample, previous, config):
     baseline = list(previous.get("baseline", []))
     recent = [item for item in previous.get("recent", []) if item["executions"] != sample["executions"]]
     current = compact(sample)
-    if len(baseline) < config["calibration_runs"] and not any(
-        item["executions"] == current["executions"] for item in baseline
+    # Only independent full runs contribute to calibration.
+    if len(baseline) < config["calibration_runs"] and all(
+        set(item["executions"]).isdisjoint(current["executions"]) for item in baseline
     ):
-        # Only independent full runs contribute to calibration.
-        if all(set(item["executions"]).isdisjoint(current["executions"]) for item in baseline):
-            baseline.append(current)
+        baseline.append(current)
     recent = [*recent, current][-max(config["calibration_runs"], config["trend_runs"]):]
     calibrated = len(baseline) >= config["calibration_runs"]
     confirmations = independent_samples(recent, sample["commit"])[:config["confirmation_runs"]]
@@ -216,9 +215,9 @@ def summary(record, previous, findings, config, profile):
         lines.append(f"| {METRICS[finding['metric']]} | {finding['reference']:.1f}s | {finding['value']:.1f}s | {finding['ratio']:+.1%} | {finding['trend_ratio']:+.1%} |")
     for finding in findings:
         if finding["blocked"]:
-            lines.extend(["", f"**BLOCKED:** confirmed regression in {METRICS[finding['metric']] }."])
+            lines.extend(["", f"**BLOCKED:** confirmed regression in {METRICS[finding['metric']]}."])
         elif finding["warning"] or finding["trend_warning"]:
-            lines.extend(["", f"**WARNING:** regression signal in {METRICS[finding['metric']] }."])
+            lines.extend(["", f"**WARNING:** regression signal in {METRICS[finding['metric']]}."])
     lines.extend(["", "### Largest changes since the previous comparable run", ""])
     prior = previous.get("current")
     if prior:
@@ -233,9 +232,9 @@ def summary(record, previous, findings, config, profile):
     else:
         lines.append("First measurement for this profile; no comparable previous run yet.")
     lines.extend(["", "### Executed test cases", "", "| Report | Passed | Previous |", "|---|---:|---:|"])
-    for name, count in sorted(record["current"]["counts"].items()):
+    for name, passed in sorted(record["current"]["counts"].items()):
         before = prior["counts"].get(name, "new") if prior else "—"
-        lines.append(f"| {markdown(name)} | {count} | {before} |")
+        lines.append(f"| {markdown(name)} | {passed} | {before} |")
     lines.extend(["", "To confirm a suspected regression immediately, re-run **all jobs** twice on the same commit. Persistent over-budget runs on the same branch also confirm it. Re-running only this guard cannot confirm it.",
                   "Review `.github/ci-performance-budget.json` to change thresholds or deliberately reset the reference.", ""])
     return "\n".join(lines)

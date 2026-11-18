@@ -40,11 +40,11 @@ Histories are shared between repository branches with the same profile. The guar
 only needs `actions: read` and `contents: read`; it never dispatches workflows or
 executes downloaded artifacts.
 
-Every run retains `ci-performance-<profile hash>` for 90 days. It contains the
-calibration reference, the last 20 measurements, current step and test-file
-timings, and actual passed-case counts. A subsequent run carries the reference
-forward even after its original artifacts expire. If all history for a profile
-expires or is deleted, calibration restarts visibly.
+Every measured run retains `ci-performance-<hash of profile and reference>` for
+90 days. It contains the calibration reference, the last 20 measurements, current
+step and test-file timings, and actual passed-case counts. A subsequent run
+carries the reference forward even after its original artifacts expire. If all
+history for a profile expires or is deleted, calibration restarts visibly.
 
 ## Investigating a warning
 
@@ -58,17 +58,14 @@ To confirm a slowdown immediately, re-run **all jobs** twice on the same commit,
 example with `gh run rerun <run-id>`. There are no automatic reruns. Re-running only
 the guard or a subset of upstream jobs cannot confirm a regression or add a
 calibration sample. Source artifacts are overwritten on full reruns so the guard
-reads the latest reports.
-GitHub can assign new IDs to jobs it has not re-executed. Independence uses the
-workflow run ID, job name, and actual start/end timestamps instead of job IDs.
-Ignoring warnings does not disable enforcement: three consecutive comparable
-over-budget runs on the same branch block even when each run tests a new commit.
+reads the latest reports. GitHub can assign new IDs to jobs it has not re-executed,
+so independence uses the workflow run ID, job name, and actual start/end timestamps
+instead of job IDs.
 
-Once this workflow is on the default branch, make `CI performance` a required
-status check to prevent merging a confirmed regression. A failed upstream test
-also fails this job instead of producing a performance comparison.
-The guard runs even when upstream jobs fail or are cancelled: a skipped required
-check would otherwise be accepted by branch protection without a measurement.
+`CI performance` is a required status check on `main`. It runs even when upstream
+jobs fail or are cancelled, and then fails without a performance comparison: a
+skipped required check would otherwise be accepted by branch protection without a
+measurement.
 
 ## Local verification
 
