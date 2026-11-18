@@ -14,6 +14,42 @@ async function copySource(page: Page, richText = false): Promise<void> {
   await page.bringToFront()
 }
 
+for (const backward of [false, true]) {
+  test(`Ctrl+Shift+V replaces a selection across paragraphs dragged ${backward ? 'backward' : 'forward'}`, async ({ editorPage: page }) => {
+    const paragraphs = ['Before selected', 'selected after']
+    await render(page, paragraphs.map(text => ({ type: 'paragraph', data: { text } })))
+    await copySource(page)
+    const points = await page.locator('.ce-paragraph').evaluateAll(fields => fields.map((field, index) => {
+      const range = document.createRange()
+      range.setStart(field.firstChild!, index === 0 ? 'Before '.length : 'selected'.length)
+      range.setEnd(field.firstChild!, range.startOffset + 1)
+      const box = range.getBoundingClientRect()
+      return { x: box.x + 0.25, y: box.y + box.height / 2 }
+    }))
+    if (backward) points.reverse()
+    await page.mouse.move(points[0]!.x, points[0]!.y)
+    await page.mouse.down()
+    await page.mouse.move(points[1]!.x, points[1]!.y, { steps: 30 })
+    await page.mouse.up()
+    await expect.poll(() => page.evaluate(() => CSS.highlights.has('pw-text-selection'))).toBe(true)
+
+    await page.keyboard.press('Control+Shift+v')
+
+    const expected = `Before ${text} after`
+    await expect(page.locator('.ce-paragraph')).toHaveText([expected])
+    await expect.poll(() => page.evaluate(() => CSS.highlights.has('pw-text-selection'))).toBe(false)
+    await page.keyboard.type('!')
+    await expect(page.locator('.ce-paragraph')).toHaveText(`Before ${text}! after`)
+    await page.keyboard.press('Control+z')
+    await page.keyboard.press('Control+z')
+    await expect(page.locator('.ce-paragraph')).toHaveText(paragraphs)
+    await page.keyboard.press('Control+Shift+z')
+    await expect(page.locator('.ce-paragraph')).toHaveText([expected])
+    await saveAndReload(page)
+    await expect(page.locator('.ce-paragraph')).toHaveText([expected])
+  })
+}
+
 for (const richText of [false, true]) {
   test(`Ctrl+Shift+V keeps ${richText ? 'HTML' : 'plain text'} list syntax inside a heading`, async ({ editorPage: page }) => {
     await render(page, [{ type: 'header', data: { text: 'Before replace after', level: 2 } }])

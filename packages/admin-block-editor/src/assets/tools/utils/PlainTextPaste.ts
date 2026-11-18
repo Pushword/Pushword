@@ -1,4 +1,6 @@
 import type EditorJS from '@editorjs/editorjs'
+import { replaceTextSelection } from './TextSelectionContent'
+import { textSelections } from './TextSelectionState'
 
 /** Keep Ctrl/Cmd+Shift+V literal, before Markdown and link paste handlers run. */
 export function setupPlainTextPaste(editor: EditorJS, holder: HTMLElement, signal: AbortSignal): void {
@@ -28,7 +30,13 @@ export function setupPlainTextPaste(editor: EditorJS, holder: HTMLElement, signa
 
     event.preventDefault()
     event.stopImmediatePropagation()
-    // insertText replaces the range and preserves native caret and undo behaviour.
-    document.execCommand('insertText', false, event.clipboardData.getData('text/plain'))
+    const text = event.clipboardData.getData('text/plain')
+    const range = textSelections.get(holder)
+    if (range) {
+      replaceTextSelection(editor, holder, range, text)
+      return
+    }
+    // insertText replaces a native range and preserves its caret and undo behaviour.
+    document.execCommand('insertText', false, text)
   }, options)
 }

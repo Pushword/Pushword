@@ -2,6 +2,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type EditorJS from '@editorjs/editorjs'
 import { setupPlainTextPaste } from './PlainTextPaste'
+import { textSelections } from './TextSelectionState'
 
 describe('plain text paste', () => {
   let controller: AbortController
@@ -114,6 +115,30 @@ describe('plain text paste', () => {
     shortcut()
     controller.abort()
     expect(paste().defaultPrevented).toBe(false)
+    expect(insert).not.toHaveBeenCalled()
+  })
+
+  it('replaces a stored selection across paragraphs when pasting plain text', () => {
+    holder.innerHTML = ['Before selected', 'selected after'].map((text, index) =>
+      `<div class="ce-block" data-id="${index}"><div class="ce-block__content"><div contenteditable="true" class="ce-paragraph">${text}</div></div></div>`).join('')
+    const blocks = () => Array.from(holder.querySelectorAll<HTMLElement>('.ce-block'))
+    editor.blocks = {
+      getBlockIndex: (id: string) => blocks().findIndex(block => block.dataset.id === id),
+      getBlockByIndex: () => ({ name: 'paragraph' }),
+      delete: (index: number) => blocks()[index]!.remove(),
+    } as unknown as EditorJS['blocks']
+    const fields = holder.querySelectorAll<HTMLElement>('.ce-paragraph')
+    const range = document.createRange()
+    range.setStart(fields[0]!.firstChild!, 'Before '.length)
+    range.setEnd(fields[1]!.firstChild!, 'selected'.length)
+    textSelections.set(holder, range)
+    window.getSelection()!.collapse(range.startContainer, range.startOffset)
+    shortcut(fields[0]!)
+
+    expect(paste(fields[0]!, '<literal> - pasted').defaultPrevented).toBe(true)
+    expect(Array.from(holder.querySelectorAll('.ce-paragraph'), field => field.textContent)).toEqual(['Before <literal> - pasted after'])
+    expect(holder.querySelector('literal')).toBeNull()
+    expect(textSelections.has(holder)).toBe(false)
     expect(insert).not.toHaveBeenCalled()
   })
 })
