@@ -117,7 +117,7 @@ final readonly class TempestParsedMarkdownRenderer
         }
 
         $inlineCode = [];
-        if (str_contains($source, '`') && (str_contains($source, 'date(') || str_contains($source, 'yearsSince(') || str_contains($source, '@') || 1 === preg_match('/\b0[1-9](?:[ .-]?\d{2}){4}\b/', $source))) {
+        if (str_contains($source, '`') && (str_contains($source, 'date(') || str_contains($source, 'yearsSince(') || str_contains($source, 'durationSince(') || str_contains($source, '@') || 1 === preg_match('/\b0[1-9](?:[ .-]?\d{2}){4}\b/', $source))) {
             $source = preg_replace_callback('/`+[^`\r\n]*`+/', static function (array $match) use (&$inlineCode): string {
                 $inlineCode[] = $match[0];
 
@@ -128,7 +128,7 @@ final readonly class TempestParsedMarkdownRenderer
             }
         }
 
-        if (str_contains($source, 'date(') || str_contains($source, 'yearsSince(')) {
+        if (str_contains($source, 'date(') || str_contains($source, 'yearsSince(') || str_contains($source, 'durationSince(')) {
             if (! $this->dateFilter instanceof Date) {
                 return null;
             }

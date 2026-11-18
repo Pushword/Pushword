@@ -4,17 +4,20 @@ declare(strict_types=1);
 
 namespace Pushword\Core\Tests\Service;
 
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
 use Pushword\Core\Repository\MediaRepository;
 use Pushword\Core\Service\LinkProvider;
 use Pushword\Core\Service\Markdown\MarkdownParser;
 use Pushword\Core\Site\SiteRegistry;
+use Pushword\Core\Template\TemplateResolver;
 use Pushword\Core\Tests\Support\MarkdownCacheVersion;
 use Pushword\Core\Twig\MediaExtension;
 use RuntimeException;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Cache\Adapter\ArrayAdapter;
 use Symfony\Component\Cache\CacheItem;
+use Symfony\Component\DependencyInjection\ParameterBag\ParameterBag;
 use Twig\Environment as Twig;
 
 /**
@@ -205,5 +208,41 @@ final class MarkdownParserCacheTest extends KernelTestCase
         $pool->save($today);
 
         self::assertSame('CACHED', $parser->transform($markdown));
+    }
+
+    /** @return iterable<string, array{bool}> */
+    public static function renderModes(): iterable
+    {
+        yield 'block' => [false];
+        yield 'inline' => [true];
+    }
+
+    #[DataProvider('renderModes')]
+    public function testDurationSinceShortcodeRefreshesDailyAndSeparatesLocales(bool $inline): void
+    {
+        self::bootKernel();
+        $container = self::getContainer();
+        $pool = new ArrayAdapter();
+        $markdown = 'durationSince(2014-01-01)';
+        $years = (int) date('Y') - 2014;
+        $prefix = $inline ? 'pw_mdi.' : 'pw_md.';
+
+        foreach (['fr' => $years.' ans', 'en' => $years.' years'] as $locale => $expected) {
+            $apps = new SiteRegistry(['example.test' => ['locale' => $locale]], $container->get(TemplateResolver::class), new ParameterBag());
+            $parser = new MarkdownParser($container->get(LinkProvider::class), $container->get(MediaExtension::class), $apps, $container->get(Twig::class), $pool);
+            $version = MarkdownCacheVersion::get().'l'.$locale.'y';
+            $yesterday = $pool->getItem($prefix.hash('xxh3', $version.date('Y-m-d', strtotime('-1 day')).'|'.$markdown));
+            $yesterday->set('OUTDATED');
+            $pool->save($yesterday);
+
+            self::assertSame($inline ? $expected : '<p>'.$expected.'</p>', trim($inline ? $parser->transformInline($markdown) : $parser->transform($markdown)));
+
+            $today = $pool->getItem($prefix.hash('xxh3', $version.date('Y-m-d').'|'.$markdown));
+            self::assertTrue($today->isHit());
+            $today->set('CACHED '.$locale);
+            $pool->save($today);
+
+            self::assertSame('CACHED '.$locale, $inline ? $parser->transformInline($markdown) : $parser->transform($markdown));
+        }
     }
 }

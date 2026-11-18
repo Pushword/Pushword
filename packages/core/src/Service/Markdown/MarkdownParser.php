@@ -38,7 +38,7 @@ class MarkdownParser implements ResetInterface
      * Bump when the renderer configuration changes in a way that
      * alters output, to invalidate previously cached fragments.
      */
-    private const int CACHE_VERSION = 40;
+    private const int CACHE_VERSION = 41;
 
     private const int NATIVE_CACHE_VERSION = 3;
 
@@ -111,8 +111,8 @@ class MarkdownParser implements ResetInterface
         $pending = [];
         $keys = [];
         foreach ($texts as $index => $text) {
-            // The native renderer does not expand elapsed-year shortcodes.
-            if (str_contains($text, 'yearsSince(')) {
+            // The native renderer does not expand elapsed-time shortcodes.
+            if (str_contains($text, 'yearsSince(') || str_contains($text, 'durationSince(')) {
                 continue;
             }
 
@@ -228,7 +228,7 @@ class MarkdownParser implements ResetInterface
      * page lists, galleries) is already baked into $text and thus into the cache
      * key. The only convert-time dependency left is media (image rendering),
      * covered by the media version token — but only for fragments that actually
-     * contain a Markdown image (see cacheKeyVersion()). yearsSince() fragments
+     * contain a Markdown image (see cacheKeyVersion()). Elapsed-time fragments
      * refresh daily so an anniversary does not require saving the page. date()
      * shortcodes are cached as-is: the key hashes the text, so a fragment keeps its
      * date until that text changes, the pool entry expires (MARKDOWN_CACHE_LIFETIME
@@ -370,7 +370,11 @@ class MarkdownParser implements ResetInterface
             $version .= 'l'.$this->apps->getLocale();
         }
 
-        if (str_contains($text, 'yearsSince(')) {
+        if (str_contains($text, 'durationSince(')) {
+            $version .= 'l'.$this->apps->get()->locale;
+        }
+
+        if (str_contains($text, 'yearsSince(') || str_contains($text, 'durationSince(')) {
             $version .= 'y'.date('Y-m-d');
         }
 

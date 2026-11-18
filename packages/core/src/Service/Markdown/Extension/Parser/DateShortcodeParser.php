@@ -11,8 +11,8 @@ use League\CommonMark\Parser\InlineParserContext;
 use Pushword\Core\Component\EntityFilter\Filter\Date;
 
 /**
- * Parse date and elapsed-year shortcodes in Markdown.
- * Syntax: date(Y), date(M), yearsSince(2014), yearsSince(2014-06-15), etc.
+ * Parse date and elapsed-time shortcodes in Markdown.
+ * Syntax: date(Y), yearsSince(2014), durationSince(2014-06-15), etc.
  */
 final readonly class DateShortcodeParser implements InlineParserInterface
 {
@@ -24,7 +24,7 @@ final readonly class DateShortcodeParser implements InlineParserInterface
 
     public function getMatchDefinition(): InlineParserMatch
     {
-        return InlineParserMatch::regex('date\(|\byearsSince\(');
+        return InlineParserMatch::regex('date\(|\b(?:yearsSince|durationSince)\(');
     }
 
     public function parse(InlineParserContext $inlineContext): bool

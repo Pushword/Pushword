@@ -7,6 +7,7 @@ namespace Pushword\Core\Component\EntityFilter\Filter;
 use DateTimeImmutable;
 use Exception;
 use IntlDateFormatter;
+use MessageFormatter;
 use Pushword\Core\Component\EntityFilter\Attribute\AsFilter;
 use Pushword\Core\Component\EntityFilter\Manager;
 use Pushword\Core\Entity\Page;
@@ -63,25 +64,37 @@ class Date implements FilterInterface
 
         $string = preg_replace('/date\([\'"]?%?e[\'"]?\)/i', (string) $intlDateFormatter->format(time()), $string);
 
-        $string = preg_replace_callback('/\byearsSince\((\d{4}(?:-\d{2}-\d{2})?)\)/', $this->getYearsSince(...), $string);
+        $string = preg_replace_callback('/\b(yearsSince|durationSince)\((\d{4}(?:-\d{2}-\d{2})?)\)/', fn (array $match): string => $this->getElapsedTime($match, $locale), $string);
 
         return \is_string($string) ? $string : throw new Exception();
     }
 
     /** @param array<int|string, string> $match */
-    private function getYearsSince(array $match): string
+    private function getElapsedTime(array $match, string $locale): string
     {
         $today = new DateTimeImmutable('today');
-        if (4 === \strlen($match[1])) {
-            return (string) ((int) $today->format('Y') - (int) $match[1]);
+        if ('yearsSince' === $match[1] && 4 === \strlen($match[2])) {
+            return (string) ((int) $today->format('Y') - (int) $match[2]);
         }
 
-        $start = DateTimeImmutable::createFromFormat('!Y-m-d', $match[1]);
-        if (false === $start || $start->format('Y-m-d') !== $match[1]) {
+        $date = 4 === \strlen($match[2]) ? $match[2].'-01-01' : $match[2];
+        $start = DateTimeImmutable::createFromFormat('!Y-m-d', $date);
+        if (false === $start || $start->format('Y-m-d') !== $date) {
             return $match[0];
         }
 
-        return (string) (int) $start->diff($today)->format('%r%y');
+        $interval = $start->diff($today);
+        if ('yearsSince' === $match[1]) {
+            return (string) (int) $interval->format('%r%y');
+        }
+
+        $unit = $interval->y < 2 ? 'month' : 'year';
+        $count = $interval->y < 2 ? $interval->y * 12 + $interval->m : $interval->y;
+        if (1 === $interval->invert) {
+            $count = -$count;
+        }
+
+        return (string) MessageFormatter::formatMessage($locale, '{0, number, ::measure-unit/duration-'.$unit.' unit-width-full-name}', [$count]);
     }
 
     private function getWinterYear(): string

@@ -109,6 +109,9 @@ final class TempestMarkdownRendererIntegrationTest extends KernelTestCase
         yield 'elapsed-year shortcodes' => ['Experience: yearsSince(2014) / yearsSince(2014-06-15) years.'];
         yield 'elapsed-year shortcode in code' => ['`yearsSince(2014)` / yearsSince(2014)'];
         yield 'elapsed-year shortcode in a list' => ["- yearsSince(2014) years\n- yearsSince(2014-06-15) years"];
+        yield 'elapsed-duration shortcodes' => ['Experience: durationSince(2014) / durationSince(2014-06-15).'];
+        yield 'elapsed-duration shortcode in code' => ['`durationSince(2014)` / durationSince(2014)'];
+        yield 'elapsed-duration shortcode in a list' => ["- durationSince(2014)\n- durationSince(2014-06-15)"];
         yield 'short notice' => ["> [!faq] Une question ?\n>\n> Une réponse courte."];
         yield 'leading notice attributes' => ["{#disclosure .text-sm}\n> [!note] Titled\n> body"];
         yield 'notice without title' => ["> [!note]\n> body"];

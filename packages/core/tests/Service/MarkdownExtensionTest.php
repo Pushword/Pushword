@@ -335,6 +335,39 @@ final class MarkdownExtensionTest extends KernelTestCase
         self::assertStringContainsString('yearsSince(2014)', $parser->transform("```text\nyearsSince(2014)\n```"));
     }
 
+    public function testDurationSinceShortcodes(): void
+    {
+        $parser = $this->getMarkdownParser();
+        $source = 'durationSince(2014) / durationSince(2014-01-01)';
+        $years = (int) date('Y') - 2014;
+        $expected = $years.' years / '.$years.' years';
+
+        self::assertSame('<p>'.$expected.'</p>', trim($parser->transform($source)));
+        self::assertSame($expected, $parser->transformInline($source));
+        $fallback = $parser->transform('**Duration**{.a .b}: '.$source);
+        self::assertStringContainsString($expected, $fallback);
+        self::assertStringNotContainsString('durationSince(', $fallback);
+        self::assertSame('<code>durationSince(2014)</code> / '.$years.' years', $parser->transformInline('`durationSince(2014)` / durationSince(2014)'));
+        self::assertStringContainsString('durationSince(2014)', $parser->transform("```text\ndurationSince(2014)\n```"));
+    }
+
+    public function testDurationSinceShortcodesBypassNativeRenderer(): void
+    {
+        self::bootKernel();
+        $container = self::getContainer();
+        $parser = new MarkdownParser(
+            $container->get(LinkProvider::class),
+            $container->get(MediaExtension::class),
+            $container->get(SiteRegistry::class),
+            $container->get(Twig::class),
+            nativeBinary: '/unused-native-renderer',
+        );
+
+        self::assertTrue($parser->hasNativeMarkdown());
+        self::assertSame([null, null], $parser->renderNativeMany(['yearsSince(2014)', 'durationSince(2014-06-15)']));
+        self::assertTrue($parser->hasNativeMarkdown(), 'Elapsed-time shortcodes must not call or disable the native renderer.');
+    }
+
     // ===== Tests du colspan dans les tableaux =====
 
     public function testColspanInThead(): void

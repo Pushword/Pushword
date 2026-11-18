@@ -47,6 +47,7 @@ Write these directly in page content. Names are in the site's locale.
 | `date(S)` | summer season year: the current year until September, the next from October |
 | `date(W)` | winter season year: the current year until March, the next from April |
 | `yearsSince(2014)`, `yearsSince(2014-06-15)` | years elapsed, see below |
+| `durationSince(2014)`, `durationSince(2014-06-15)` | elapsed months below two years, then years, with a localized unit |
 
 They also resolve in titles, descriptions and other fields read through `pw(page)`.
 Inline code and fenced code blocks stay literal. The
@@ -66,8 +67,22 @@ each anniversary. Only the number is generated; keep the unit and its translatio
 in the content. Future values produce negative completed years; invalid dates stay
 as written.
 
-Markdown fragments containing `yearsSince()` refresh daily. Pages served as static HTML or
-through a full-page cache must be regenerated to show the updated number.
+### Duration with an automatic unit
+
+```markdown
+Our association has existed for durationSince(2025-06-15).
+```
+
+`durationSince()` counts completed months while the duration is below two years,
+then completed years from the second anniversary. The number and unit are formatted
+in the site's locale, including plural forms: `1 month`, `18 months`, `2 years` in
+English; `1 mois`, `18 mois`, `2 ans` in French. Do not add a unit after the shortcode.
+A year alone starts on January 1. Future dates produce negative durations; invalid
+dates stay as written.
+
+Markdown fragments containing `yearsSince()` or `durationSince()` refresh daily.
+Pages served as static HTML or through a full-page cache must be regenerated to
+show the updated duration.
 
 ## Groups
 
