@@ -31,6 +31,7 @@ import PasteLink from './tools/Hyperlink/PasteLink'
 import ClipboardManager, { setupBlockCut } from './tools/utils/ClipboardManager'
 import { setupBlockSelection } from './tools/utils/BlockSelection'
 import { setupTextSelection } from './tools/utils/TextSelection'
+import { setupPlainTextPaste } from './tools/utils/PlainTextPaste'
 import { setupBlankBlockDeletion } from './tools/utils/BlankBlockDeletion'
 import { setupBlockInsertion } from './tools/utils/BlockInsertion'
 import { setupEditorPopovers } from './tools/utils/editorPopovers'
@@ -251,6 +252,7 @@ export class editorJs {
             destroy()
           }
           setupTextSelection(editor, document.getElementById(config.holder!)!, editorListeners.signal)
+          setupPlainTextPaste(editor, document.getElementById(config.holder!)!, editorListeners.signal)
           new PasteLink({ editor })
           new ClipboardManager({ editor })
           setupBlockCut(editor, document.getElementById(config.holder!)!, editorListeners.signal)
