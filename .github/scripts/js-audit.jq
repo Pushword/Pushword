@@ -13,12 +13,15 @@ def trusted_build_braces:
     "@pushword/js-helper>vite-plugin-symfony>fast-glob>micromatch>braces"
   ));
 
-# GHSA-fc5q-39xc-vjpf has no patched release (checked 2026-11-18).
-# Exploitation requires an attacker-controlled glob pattern. These measured paths
-# only consume repository-controlled build/test/lint globs (including Sass file
-# watching), never patterns supplied by CMS users. Keep the exact path allowlist;
-# remove it when a patched picomatch is available. Other advisories, new paths and
-# critical severity must still block the audit.
+# GHSA-fc5q-39xc-vjpf is disputed by the maintainer (reviewed 2026-11-18).
+# Snyk revoked its advisory; GitHub still lists it:
+# https://security.snyk.io/vuln/SNYK-JS-PICOMATCH-21248802
+# https://github.com/micromatch/picomatch/issues/247
+# These measured paths only consume repository-controlled build/test/lint globs
+# (including Sass file watching), never patterns supplied by CMS users.
+# Keep the exact path allowlist and reassess if that trust boundary changes.
+# Remove it when GitHub withdraws the advisory or installed versions stop being
+# flagged. Other advisories, new paths and critical severity remain blocking.
 def trusted_build_picomatch:
   .advisory.url == "https://github.com/advisories/GHSA-fc5q-39xc-vjpf"
   and .advisory.module_name == "picomatch"
