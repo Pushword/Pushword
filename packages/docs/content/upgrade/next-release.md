@@ -39,8 +39,8 @@ Several changes land here between two tags: append to the file, do not replace i
 
 ## Conversation forms are protected against spam
 
-Public conversation forms carry a hidden `homepage` honeypot and a signed, expiring
-action, and accept 10 messages per IP per hour (`framework.rate_limiter.conversation_submit`).
-**Sites that write the conversation `<form>` tag by hand or run their own spam extension
-on these forms:** render it with `form_start()` and remove the extension. See
-[spam protection](/extension/conversation#spam-protection).
+Public conversation forms get [spam protection](/extension/conversation#spam-protection):
+a hidden `homepage` honeypot, a signed expiring action and 10 messages per IP per hour
+(`framework.rate_limiter.conversation_submit`); refusals are errors on the whole form.
+**Sites overriding the conversation form templates or running their own spam extension:**
+open the form with `form_start()`, keep `form_errors(conversation)` visible, remove the extension.
