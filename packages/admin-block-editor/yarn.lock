@@ -1513,9 +1513,9 @@ editorjs-drag-drop@^1.1:
   integrity sha512-yOyKZqqZepkdbDQbAw1bZr3mQewkT4a9QgufWW3Aoy1qcTka8uHR01T/dGHqrpyYrF56ykyidPyp0LX79LEHHQ==
 
 electron-to-chromium@^1.5.486:
-  version "1.5.489"
-  resolved "https://registry.yarnpkg.com/electron-to-chromium/-/electron-to-chromium-1.5.489.tgz#4d7be5051f3ea8f29ec0c32fc1ef16b944f3dc8a"
-  integrity sha512-1cF87WItryk9lj5wg5SLsNegUihdkcHuOfrANPpO02y/d2krm1Oc3GjA9KBwlT5o145FTa1bbjdLc7pZnvtnYQ==
+  version "1.5.490"
+  resolved "https://registry.yarnpkg.com/electron-to-chromium/-/electron-to-chromium-1.5.490.tgz#c3ba1cea6989fbead178c8d917ea3fb88677111f"
+  integrity sha512-I0dPyEsiaYAlbGJlr0SdRRGSWk9BpOz8AIo/4f93A6bAGuN3YafmT71rpss72SA05isaAkcAOYcW0F0H48om4Q==
 
 elkjs@^0.12.0:
   version "0.12.1"

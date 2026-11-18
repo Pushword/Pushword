@@ -293,7 +293,7 @@
 
 "@pushword/js-helper@github:Pushword/js-helper":
   version "0.0.139"
-  resolved "https://codeload.github.com/Pushword/js-helper/tar.gz/eadeb4443eab20cd1cf87f24edb63346fcea1d59"
+  resolved "https://codeload.github.com/Pushword/js-helper/tar.gz/988b75d7ee7532f7603bd34a83b6e137ffd246ce"
   dependencies:
     "140.css" "^1.0"
     "@tailwindcss/forms" "^0.5"
