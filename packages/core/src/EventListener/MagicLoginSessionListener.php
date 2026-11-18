@@ -12,6 +12,7 @@ use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpKernel\Event\RequestEvent;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
+use Symfony\Component\Security\Core\Authentication\Token\SwitchUserToken;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 
 final readonly class MagicLoginSessionListener
@@ -33,6 +34,11 @@ final readonly class MagicLoginSessionListener
         }
 
         $token = $this->tokenStorage->getToken();
+        // Impersonation must not hide the link session that started it.
+        if ($token instanceof SwitchUserToken) {
+            $token = $token->getOriginalToken();
+        }
+
         if (! $token instanceof TokenInterface || ! $token->hasAttribute(MagicLinkAuthenticator::TOKEN_ID)) {
             return;
         }

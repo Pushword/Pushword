@@ -315,6 +315,56 @@ final class MagicLoginControllerTest extends WebTestCase
         }
     }
 
+    public function testRecoveryRevokesAScannerSessionThatSwitchedUser(): void
+    {
+        /** @var class-string<User> $userClass */
+        $userClass = self::getContainer()->getParameter('pw.entity_user');
+        $editor = new $userClass();
+        $editor->email = 'magic-switch-'.bin2hex(random_bytes(8)).'@example.tld';
+        $editor->setRoles(['ROLE_EDITOR']);
+
+        $this->em->persist($editor);
+        $this->em->flush();
+
+        try {
+            $this->connect();
+            $this->client->request('GET', '/admin?_switch_user='.urlencode($editor->email));
+            self::assertResponseRedirects('/admin');
+            $scanner = clone $this->client->getCookieJar();
+            $this->client->getCookieJar()->clear();
+            $code = $this->requestCode();
+            $this->submitCode($this->client->getCrawler(), $code);
+            self::assertResponseRedirects();
+
+            $this->useCookies($scanner);
+            $this->client->request('GET', '/admin');
+            self::assertResponseRedirects('/login');
+            $this->client->request('GET', '/_pushword/auth-check');
+            self::assertResponseStatusCodeSame(401);
+        } finally {
+            $stored = $this->em->find($editor::class, $editor->id);
+            if ($stored instanceof User) {
+                $this->em->remove($stored);
+                $this->em->flush();
+            }
+        }
+    }
+
+    public function testAValidLinkCannotRequestACode(): void
+    {
+        $crawler = $this->client->request('GET', $this->url);
+        $this->client->request('POST', $this->url, [
+            '_csrf_token' => $crawler->filter('input[name="_csrf_token"]')->attr('value'),
+            'action' => 'request_code',
+        ]);
+
+        self::assertResponseIsSuccessful();
+        self::assertSelectorExists('button[value="connect"]');
+        self::assertEmailCount(0);
+        self::assertFalse($this->reload()->used);
+        self::assertNull($this->token->loginCodeHash);
+    }
+
     public function testUnknownAndWrongPurposeTokensCannotSendCodes(): void
     {
         $this->token->type = LoginToken::TYPE_SET_PASSWORD;
