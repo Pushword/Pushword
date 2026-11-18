@@ -67,9 +67,17 @@ Composer and JavaScript dependency audits, a repository secret scan, and an SPDX
 build. The Docker workflow also scans the production image for high and critical
 vulnerabilities on relevant changes and every week.
 
-The JavaScript audit blocks high and critical findings, with one exception:
-[GHSA-vfj7-8cjw-p6xm](https://github.com/advisories/GHSA-vfj7-8cjw-p6xm) through
-`vite-plugin-static-copy` and `vite-plugin-symfony`, build tools that only receive
-repository-controlled file patterns (no patched `braces` release exists). It stays
-visible in the output; other paths, advisories and critical findings still fail. Remove
-the exception from `.github/scripts/js-audit.jq` once upstream ships a fix.
+The JavaScript audit blocks high and critical findings, with two exceptions limited to
+listed dependency paths through build, test and lint tools that only receive
+repository-controlled file patterns:
+
+- [GHSA-vfj7-8cjw-p6xm](https://github.com/advisories/GHSA-vfj7-8cjw-p6xm) (`braces`,
+  through `vite-plugin-static-copy` and `vite-plugin-symfony`): no patched release
+  exists. Remove it once upstream ships a fix.
+- [GHSA-fc5q-39xc-vjpf](https://github.com/advisories/GHSA-fc5q-39xc-vjpf)
+  (`picomatch`, through Vite, Vitest, typescript-eslint and Sass file watching): disputed
+  by the maintainer and revoked by Snyk, still listed by GitHub. Remove it when GitHub
+  withdraws the advisory or the installed versions stop being flagged.
+
+Both stay visible in the output; other paths, advisories and critical findings still
+fail. The allowlists live in `.github/scripts/js-audit.jq`.
