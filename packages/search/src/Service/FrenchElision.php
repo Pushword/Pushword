@@ -15,6 +15,16 @@ use function Safe\preg_replace;
  * Loupe has no tokenizer hook, so the split happens on the text itself: indexed
  * values get an invisible word boundary after the particle, and queries drop
  * the particle.
+ *
+ * Temporary: https://github.com/loupe-php/matcher/pull/40 drops the particle in
+ * Loupe's own French tokenizer, at index and query time. Once a loupe/matcher
+ * release ships it:
+ * - require that release;
+ * - delete this class, with its calls in IndexManager::prepareForIndex() and in
+ *   Searcher's query and hits handling;
+ * - add an upgrade note saying indexes need `pw:search:index`.
+ * Keep the separate copy in js-helper's PushwordSimpleSearch: the search.json
+ * fallback has no Loupe.
  */
 final class FrenchElision
 {
