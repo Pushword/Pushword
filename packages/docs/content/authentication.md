@@ -67,7 +67,22 @@ one minute between codes for a link. Only a hash is stored; the code never appea
 in a URL. Successful recovery revokes sessions issued by that link, while preserving
 password/OAuth sessions and sessions issued by other links. A full browser scanner
 can still complete the automatic login before recovery; the code cannot undo access
-that has already occurred. Already signed-in users go straight to their account.
+that has already occurred. Opening a link while already signed in as its account goes
+straight to the admin.
+
+## Password Reset {id=password-reset}
+
+Disabled by default. When enabled, the password step links to `/login/forgot-password`,
+which emails a set-password link (single-use, valid one hour). The page answers the same
+way for unknown addresses and shares the login form's rate limits.
+
+```yaml
+pushword:
+  enable_password_reset: true
+```
+
+An account created with `pw:user:create --require-password-change` can only set a new
+password at `/login/change-password` until it does.
 
 ## OAuth (Any Provider) {id=oauth}
 
