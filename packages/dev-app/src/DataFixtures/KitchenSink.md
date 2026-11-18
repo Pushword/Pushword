@@ -6,6 +6,13 @@ A few example for the editor possibilities. Best to observe this, it’s in admi
 
 See **bold** _italic_ `inline code` #[link](/kitchen-sink){target="_blank"} <mark>marker</mark> ~~strikethrough~~
 
+## Years since a year or date
+
+Write the shortcode directly in page text. Only the number is generated; keep the unit in the content.
+
+- From a year: `yearsSince(2014)` → **yearsSince(2014) years**. Updates on January 1.
+- From a full date: `yearsSince(2014-06-15)` → **yearsSince(2014-06-15) years**. Counts completed years and updates every June 15.
+
 ## Links & Routes
 
 - [Homepage](/)
