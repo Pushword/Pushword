@@ -16,6 +16,7 @@ Package names omit `pushword/`; `js-helper` is the npm package
 
 | Version | Packages | What changed |
 | --- | --- | --- |
+| [1.0.121](/upgrade/1.0.121) | `core` | login throttling is set under framework.rate_limiter and counts an IPv6 /64 as one client |
 | [1.0.120](/upgrade/1.0.120) | `conversation` | public conversation forms get a honeypot, a signed action and a quota of accepted messages |
 | [1.0.117](/upgrade/1.0.117) | `admin-block-editor` | plain-text paste stays inline in the block editor — run `assets:install --symlink` |
 | [1.0.116](/upgrade/1.0.116) | `core` | login links offer code recovery; authentication layouts include an introduction block — run `doctrine:schema:update --force`, then `assets:install --symlink` |
