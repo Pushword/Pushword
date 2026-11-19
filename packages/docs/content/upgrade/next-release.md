@@ -1,8 +1,5 @@
 ---
-title: 'page saves refresh cached content; french search needs reindexing; editor and client-side search assets need updating'
-run:
-  - assets:install --symlink
-  - pw:search:index
+title: ''
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -37,30 +34,3 @@ belongs in the feature doc, which you link to instead.
 
 Several changes land here between two tags: append to the file, do not replace it.
 -->
-
-**Concerns:** `pushword/admin-block-editor`, `pushword/search`, `pushword/static-generator`, `@pushword/js-helper`
-
-## Saved pages are immediately current
-
-With `cache: static`, saving a page immediately invalidates its old cache. Requests
-show the saved content through PHP until the cache rebuilds. No configuration change
-is required. See [Page Cache](/extension/page-cache).
-
-## Search splits French elisions
-
-`acompte` now finds "l’acompte", and `l’acompte` finds "un acompte". Run `pw:search:index`
-to update existing indexes (`pw:static` rebuilds on its own). Optional settings
-`search_stop_words` and `search_matching_strategy` narrow broad queries; see
-[Search](/extension/search#french-text-and-natural-questions).
-
-## Client-side search ignores accents and apostrophes
-
-`PushwordSimpleSearch` (the `search.json` fallback) now matches `ete` to "Été" and `l'acompte`
-to "l’acompte" or "un acompte". Update `@pushword/js-helper` and rebuild your assets.
-
-## Link editing preserves text selection
-
-Existing links show their destination and separate **Edit link** and **Remove link**
-controls, leaving text selection available. Invalid addresses keep the existing link.
-Reinstall bundle assets with `php bin/console assets:install --symlink`.
-See [Block editor usage](/extension/admin-block-editor#insert-a-link).
