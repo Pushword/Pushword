@@ -9,6 +9,7 @@ use PHPUnit\Framework\Attributes\Group;
 use Pushword\Core\Repository\MediaRepository;
 use Pushword\Core\Service\LinkProvider;
 use Pushword\Core\Service\Markdown\MarkdownParser;
+use Pushword\Core\Site\RequestContext;
 use Pushword\Core\Site\SiteRegistry;
 use Pushword\Core\Template\TemplateResolver;
 use Pushword\Core\Tests\Support\MarkdownCacheVersion;
@@ -215,6 +216,35 @@ final class MarkdownParserCacheTest extends KernelTestCase
     {
         yield 'block' => [false];
         yield 'inline' => [true];
+    }
+
+    #[DataProvider('renderModes')]
+    public function testDurationSinceFallbackUsesTheCurrentSitesLocale(bool $inline): void
+    {
+        self::bootKernel();
+        $container = self::getContainer();
+        $apps = new SiteRegistry(
+            ['fr.test' => ['locale' => 'fr'], 'en.test' => ['locale' => 'en']],
+            $container->get(TemplateResolver::class),
+            new ParameterBag(),
+        );
+        $apps->setRequestContext(new RequestContext($apps));
+        $parser = new MarkdownParser(
+            $container->get(LinkProvider::class),
+            $container->get(MediaExtension::class),
+            $apps,
+            $container->get(Twig::class),
+            new ArrayAdapter(),
+        );
+        $markdown = '**Duration**{.a .b}: durationSince(2014-01-01)';
+        $years = (int) date('Y') - 2014;
+
+        foreach (['fr.test' => 'ans', 'en.test' => 'years'] as $host => $unit) {
+            $apps->switchSite($host);
+            $html = $inline ? $parser->transformInline($markdown) : $parser->transform($markdown);
+
+            self::assertStringContainsString('<strong class="a b">Duration</strong>: '.$years.' '.$unit, $html);
+        }
     }
 
     #[DataProvider('renderModes')]

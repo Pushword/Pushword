@@ -38,7 +38,7 @@ class MarkdownParser implements ResetInterface
      * Bump when the renderer configuration changes in a way that
      * alters output, to invalidate previously cached fragments.
      */
-    private const int CACHE_VERSION = 41;
+    private const int CACHE_VERSION = 42;
 
     private const int NATIVE_CACHE_VERSION = 3;
 
@@ -203,7 +203,6 @@ class MarkdownParser implements ResetInterface
         $this->nativeWorker?->reset();
         $this->nativeFailed = false;
         $this->cacheVersion = null;
-        // Built on first fallback, they keep that site's locale for date().
         $this->converter = null;
         $this->inlineConverter = null;
     }

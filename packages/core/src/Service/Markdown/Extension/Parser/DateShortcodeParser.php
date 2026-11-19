@@ -9,6 +9,7 @@ use League\CommonMark\Parser\Inline\InlineParserInterface;
 use League\CommonMark\Parser\Inline\InlineParserMatch;
 use League\CommonMark\Parser\InlineParserContext;
 use Pushword\Core\Component\EntityFilter\Filter\Date;
+use Pushword\Core\Site\SiteRegistry;
 
 /**
  * Parse date and elapsed-time shortcodes in Markdown.
@@ -18,7 +19,7 @@ final readonly class DateShortcodeParser implements InlineParserInterface
 {
     public function __construct(
         private Date $dateFilter,
-        private string $locale,
+        private SiteRegistry $apps,
     ) {
     }
 
@@ -51,7 +52,7 @@ final readonly class DateShortcodeParser implements InlineParserInterface
         $cursor->advanceBy(1);
 
         $shortcode = $inlineContext->getFullMatch().$argument.')';
-        $replacement = $this->dateFilter->convertDateShortCode($shortcode, $this->locale);
+        $replacement = $this->dateFilter->convertDateShortCode($shortcode, $this->apps->get()->locale);
 
         $inlineContext->getContainer()->appendChild(new Text($replacement));
 
