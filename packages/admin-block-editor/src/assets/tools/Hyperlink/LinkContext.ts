@@ -31,7 +31,12 @@ export function setupLinkContext(
   const unlink = document.createElement('button')
   unlink.type = 'button'
   unlink.textContent = labels['Remove link'] ?? 'Remove link'
-  summary.append(address, edit, unlink)
+  const actions = document.createElement('div')
+  actions.className = 'pw-link-context__actions'
+  edit.className = 'pw-link-context__edit'
+  unlink.className = 'pw-link-context__unlink'
+  actions.append(edit, unlink)
+  summary.append(address, actions)
   panel.append(summary)
   holder.append(panel)
 
@@ -62,7 +67,9 @@ export function setupLinkContext(
     const bounds = !editing && range && anchor.contains(range.startContainer)
       ? range.getBoundingClientRect() : anchor.getBoundingClientRect()
     const box = panel.getBoundingClientRect()
-    panel.style.left = `${Math.max(8, Math.min(bounds.left, innerWidth - box.width - 8))}px`
+    // A stable scrollbar gutter is part of innerWidth, but cannot receive clicks.
+    const viewportWidth = document.documentElement.getBoundingClientRect().width
+    panel.style.left = `${Math.max(8, Math.min(bounds.left, viewportWidth - box.width - 8))}px`
     // Keep the summary above the selection; Editor.js' formatting toolbar sits below it.
     const top = bounds.top >= box.height + 8 ? bounds.top - box.height - 8 : bounds.bottom + 8
     panel.style.top = `${Math.max(8, Math.min(top, innerHeight - box.height - 8))}px`

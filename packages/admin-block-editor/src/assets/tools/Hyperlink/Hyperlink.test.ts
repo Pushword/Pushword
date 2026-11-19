@@ -231,7 +231,7 @@ describe('Hyperlink field labels', () => {
 })
 
 describe('Hyperlink URL safety', () => {
-  it('drops a script URL entered in the link field', () => {
+  it('rejects a script URL without removing the existing link', () => {
     const { tool, input } = toolWithActions()
     const link = anchor('<a href="/safe">Safe</a>')
     ;(tool as any).anchorTag = link
@@ -239,7 +239,15 @@ describe('Hyperlink URL safety', () => {
 
     tool.updateLink()
 
-    expect(link.hasAttribute('href')).toBe(false)
+    expect(link.getAttribute('href')).toBe('/safe')
+    expect(input.getAttribute('aria-invalid')).toBe('true')
+    const error = input.closest('.link-options-wrapper')!.querySelector<HTMLElement>('[role="alert"]')!
+    expect(error.hidden).toBe(false)
+
+    input.value = '/valid'
+    tool.updateLink()
+    expect(link.getAttribute('href')).toBe('/valid')
+    expect(input.hasAttribute('aria-invalid')).toBe(false)
   })
 
   it('keeps relative and mailto links', () => {

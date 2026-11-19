@@ -163,10 +163,13 @@ describe('page link suggestions', () => {
     const { search, container, input, key } = setup([])
     await search('')
     expect(input.getAttribute('aria-expanded')).toBe('false')
+    await search('no matching page title')
+    expect(container.querySelector('[role="status"]')!.textContent).toContain('No matching page')
+    expect((container.querySelector('[role="status"]') as HTMLElement).hidden).toBe(false)
     await search('https://example.com/a/very/long/path')
-    expect(container.querySelector('[role="status"]')!.textContent).toContain(
-      'No matching page',
-    )
+    expect((container.querySelector('[role="status"]') as HTMLElement).hidden).toBe(true)
+    expect((container.querySelector('.link-suggestions__preview') as HTMLElement).hidden).toBe(false)
+    expect(container.querySelector('.link-suggestions__preview a')?.getAttribute('href')).toBe('https://example.com/a/very/long/path')
     key('ArrowDown')
     key('Enter')
     expect(input.value).toBe('https://example.com/a/very/long/path')
@@ -175,6 +178,17 @@ describe('page link suggestions', () => {
       input.value,
     )
   })
+
+  it.each(['/internal-route', '#section', '?sort=1', 'mailto:hello@example.org', 'tel:+33123456789'])(
+    'shows the destination preview for %s without requiring a CMS page', async (uri) => {
+      const { search, container, input } = setup([])
+      await search(uri)
+      expect(input.getAttribute('aria-expanded')).toBe('false')
+      expect((container.querySelector('[role="status"]') as HTMLElement).hidden).toBe(true)
+      expect((container.querySelector('.link-suggestions__preview') as HTMLElement).hidden).toBe(false)
+      expect(container.querySelector('.link-suggestions__preview a')?.getAttribute('href')).toBe(uri)
+    },
+  )
 
   it('ranks all candidates before limiting the list and tells the user to refine it', async () => {
     const pages = Array.from({ length: 25 }, (_, index) => ({

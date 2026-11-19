@@ -87,6 +87,9 @@ export default class PageLinkSuggestions {
           page.title.toLowerCase().includes(query),
       )
       .sort((a, b) => rank(a) - rank(b) || a.uri.localeCompare(b.uri))
+    // An explicit address can be valid without belonging to the CMS page list.
+    if (!matches.length && /^(?:https?:\/\/|mailto:|tel:|\/|\.{1,2}\/|#|\?)/i.test(query) &&
+        isSafeLinkUrl(this.input.value.trim())) return
     this.results = matches.slice(0, 20)
     this.list.replaceChildren()
     this.results.forEach((page, index) => {
