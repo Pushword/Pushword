@@ -88,16 +88,13 @@ index reset at open time comes back **empty**: run `pw:search:index`.
 
 French elisions are split off the word they precede: `acompte`, `l'acompte` and
 `l’acompte` all find both "l’acompte" and "un acompte", whatever the case or accents.
-Loupe keeps `l’acompte` as one word, so Pushword inserts an invisible word boundary
-(U+200B) after the particle (`c d j l m n s t qu jusqu lorsqu puisqu quoiqu`) in
-searchable values, and drops the particle from the query. Hits come back as written,
-with the word itself highlighted. Values of attributes that are also filterable (`tags`)
-stay verbatim, so filters still compare the exact value. Query the index through
-`Searcher` rather than Loupe directly: it prepares the query and cleans the hits.
+Results keep the original spelling and highlight the matched word. Filterable
+attributes such as `tags` keep their exact values. In PHP, query through
+`Pushword\Search\Service\Searcher`, which handles this normalization.
 
 By default, a page matching any query word is a hit, ranked by how many it matches: a
-question such as "comment fonctionne l’acompte ?" also lists every page containing
-"comment" or "de". Two settings narrow it, globally or per app:
+question such as "comment fonctionne l’acompte ?" also lists pages containing only
+"comment". Two settings narrow it, globally or per app:
 
 - `search_stop_words` — words left out of a query while other words remain. Compared
   without case or accents (`À` covers `a`). Keep to function words: "été" is also a

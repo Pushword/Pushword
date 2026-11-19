@@ -1,6 +1,8 @@
 ---
-title: 'page saves invalidate their cache before redirecting; search finds French words behind an elision, after an index rebuild; client-side search ignores accents and apostrophes'
-run: pw:search:index
+title: 'page saves refresh cached content; french search needs reindexing; editor and client-side search assets need updating'
+run:
+  - assets:install --symlink
+  - pw:search:index
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -36,21 +38,29 @@ belongs in the feature doc, which you link to instead.
 Several changes land here between two tags: append to the file, do not replace it.
 -->
 
-**Concerns:** `pushword/search`, `pushword/static-generator`, `@pushword/js-helper`
+**Concerns:** `pushword/admin-block-editor`, `pushword/search`, `pushword/static-generator`, `@pushword/js-helper`
 
 ## Saved pages are immediately current
 
-With `cache: static`, page saves now invalidate the old HTML and compressed files before redirecting, even when Messenger refreshes are asynchronous. Requests use PHP until the worker rebuilds the cache. Publication holds and bulk imports preserve their files. No configuration change is required. See [Page Cache](/extension/page-cache).
+With `cache: static`, saving a page immediately invalidates its old cache. Requests
+show the saved content through PHP until the cache rebuilds. No configuration change
+is required. See [Page Cache](/extension/page-cache).
 
 ## Search splits French elisions
 
-`acompte` now finds "l’acompte", and `l’acompte` finds "un acompte". Until the index is
-rebuilt, a query with an elision misses the pages indexed before the upgrade: run
-`pw:search:index` (`pw:static` rebuilds on its own). New optional settings,
-`search_stop_words` and `search_matching_strategy`, keep a word like "de" from listing
-every page ([Search](/extension/search#french-text-and-natural-questions)).
+`acompte` now finds "l’acompte", and `l’acompte` finds "un acompte". Run `pw:search:index`
+to update existing indexes (`pw:static` rebuilds on its own). Optional settings
+`search_stop_words` and `search_matching_strategy` narrow broad queries; see
+[Search](/extension/search#french-text-and-natural-questions).
 
 ## Client-side search ignores accents and apostrophes
 
 `PushwordSimpleSearch` (the `search.json` fallback) now matches `ete` to "Été" and `l'acompte`
 to "l’acompte" or "un acompte". Update `@pushword/js-helper` and rebuild your assets.
+
+## Link editing preserves text selection
+
+Existing links show their destination and separate **Edit link** and **Remove link**
+controls, leaving text selection available. Invalid addresses keep the existing link.
+Reinstall bundle assets with `php bin/console assets:install --symlink`.
+See [Block editor usage](/extension/admin-block-editor#insert-a-link).

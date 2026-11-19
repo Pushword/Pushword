@@ -175,6 +175,11 @@ with exact paths first; refine the search if more than 20 pages match.
 Click a result, or use `↑`/`↓` and `Enter` to choose it. Press `Enter` to confirm a
 typed address. `Escape` closes the suggestions without choosing a page.
 
+Click within an existing link to see its destination, **Edit link** and **Remove
+link**. Text selection stays available inside the link. Choose **Edit link** to
+change its address or options, then **Done** to close the panel. An invalid address
+shows an error and leaves the existing link unchanged.
+
 ### Outline panel
 
 A collapsible left rail lists the blocks in use — in the block editor and in
