@@ -25,6 +25,8 @@ test('a standalone project builds deterministic HyperFrames HTML and escapes tim
     assert.match(html, /data-start="0.75"/);
     const first = await readFile(join(directory, 'compositions/scene-0.html'), 'utf8');
     assert.match(first, /src="..\/public\/title.svg"/);
+    assert.doesNotMatch(first, /\bdata-layer=/, 'private layer markers must not use deprecated HyperFrames attributes');
+    assert.match(first, /data-pushword-layer="title"/);
     assert.match(await readFile(join(directory, 'compositions/scene-1.html'), 'utf8'), /<h1>Custom scene<\/h1>/);
     assert.match(html, /window\.__timelines.Repurpose = player/);
     assert(!html.includes('<script>bad()'));
@@ -43,5 +45,5 @@ test('a standalone project builds deterministic HyperFrames HTML and escapes tim
 
 test('the exported renderer uses only HyperFrames', async () => {
   const pkg = JSON.parse(await readFile(new URL('../../src/Resources/motion/package.json', import.meta.url), 'utf8'));
-  assert.deepEqual(pkg.dependencies, {hyperframes: '0.9.65'});
+  assert.deepEqual(pkg.dependencies, {hyperframes: '0.9.69'});
 });
