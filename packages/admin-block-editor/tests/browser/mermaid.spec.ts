@@ -114,10 +114,13 @@ test('Mermaid keeps tall and wide diagrams readable and reachable by keyboard', 
           if (vertical) node.scrollTop = node.scrollHeight
           else node.scrollLeft = node.scrollWidth
         }, direction === 'TD')
-        const last = (await preview.locator('.node').last().boundingBox())!
-        const end = (await preview.boundingBox())!
-        expect(last.x + last.width).toBeLessThanOrEqual(end.x + end.width)
-        expect(last.y + last.height).toBeLessThanOrEqual(end.y + end.height)
+        // Focusing the preview can still scroll the page; sample both boxes in one frame.
+        await expect.poll(() => preview.evaluate(node => {
+          const nodes = node.querySelectorAll('.node')
+          const last = nodes[nodes.length - 1]!.getBoundingClientRect()
+          const frame = node.getBoundingClientRect()
+          return { right: last.right <= frame.right, bottom: last.bottom <= frame.bottom }
+        })).toEqual({ right: true, bottom: true })
         await page.screenshot({ path: testInfo.outputPath(`mermaid-${direction}-${width}.png`) })
       })
     }
