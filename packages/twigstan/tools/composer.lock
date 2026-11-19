@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "4d86ea3d0f71a73229bbf9c80afa3761",
+    "content-hash": "b1a7686327cfac85612ab7a8b18bb686",
     "packages": [],
     "packages-dev": [
         {
@@ -644,11 +644,11 @@
         },
         {
             "name": "phpstan/phpstan",
-            "version": "2.3.5",
+            "version": "2.3.6",
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/phpstan/phpstan/zipball/645a1bd6bead15fc1b8474137467961d0fa30a79",
-                "reference": "645a1bd6bead15fc1b8474137467961d0fa30a79",
+                "url": "https://api.github.com/repos/phpstan/phpstan/zipball/00cedebb76cc82c1592414fa4f616cefdccda16f",
+                "reference": "00cedebb76cc82c1592414fa4f616cefdccda16f",
                 "shasum": ""
             },
             "require": {
@@ -704,7 +704,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2026-11-03T12:14:22+00:00"
+            "time": "2026-11-15T19:58:26+00:00"
         },
         {
             "name": "psr/container",
@@ -1486,16 +1486,16 @@
         },
         {
             "name": "symfony/polyfill-php85",
-            "version": "v1.43.0",
+            "version": "v1.44.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/polyfill-php85.git",
-                "reference": "86a42cbcc07adc331481a5ab310a4024bfc227f6"
+                "reference": "94c794cb5ba51784bc259f11e9f128593297d8dc"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/polyfill-php85/zipball/86a42cbcc07adc331481a5ab310a4024bfc227f6",
-                "reference": "86a42cbcc07adc331481a5ab310a4024bfc227f6",
+                "url": "https://api.github.com/repos/symfony/polyfill-php85/zipball/94c794cb5ba51784bc259f11e9f128593297d8dc",
+                "reference": "94c794cb5ba51784bc259f11e9f128593297d8dc",
                 "shasum": ""
             },
             "require": {
@@ -1542,7 +1542,7 @@
                 "shim"
             ],
             "support": {
-                "source": "https://github.com/symfony/polyfill-php85/tree/v1.43.0"
+                "source": "https://github.com/symfony/polyfill-php85/tree/v1.44.0"
             },
             "funding": [
                 {
@@ -1562,7 +1562,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2026-09-25T15:46:47+00:00"
+            "time": "2026-10-30T15:20:09+00:00"
         },
         {
             "name": "symfony/process",
@@ -1888,16 +1888,16 @@
         },
         {
             "name": "twigstan/twigstan",
-            "version": "0.2.7",
+            "version": "0.2.8",
             "source": {
                 "type": "git",
                 "url": "https://github.com/twigstan/twigstan.git",
-                "reference": "a3c23e11404687674d928879b01cc26c606bba94"
+                "reference": "d17fcc6fdbe7c006f90f33f1e5d73ee27ce684b4"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/twigstan/twigstan/zipball/a3c23e11404687674d928879b01cc26c606bba94",
-                "reference": "a3c23e11404687674d928879b01cc26c606bba94",
+                "url": "https://api.github.com/repos/twigstan/twigstan/zipball/d17fcc6fdbe7c006f90f33f1e5d73ee27ce684b4",
+                "reference": "d17fcc6fdbe7c006f90f33f1e5d73ee27ce684b4",
                 "shasum": ""
             },
             "require": {
@@ -1925,6 +1925,7 @@
                 "phpstan/phpstan-deprecation-rules": "^2.0",
                 "phpstan/phpstan-strict-rules": "^2.0",
                 "phpstan/phpstan-symfony": "^2.0",
+                "phpstan/tally": "^1.0.1",
                 "phpunit/phpunit": "^11.4",
                 "shipmonk/composer-dependency-analyser": "^1.7",
                 "staabm/phpstan-todo-by": "^0.2",
@@ -1939,7 +1940,7 @@
                 "symfony/security-http": "^6.4 || ^7.1 || ^8.0",
                 "symfony/twig-bridge": "^6.4 || ^7.1 || ^8.0",
                 "symfony/twig-bundle": "^6.4 || ^7.1 || ^8.0",
-                "symfony/ux-twig-component": "^2.20",
+                "symfony/ux-twig-component": "^2.20 || ^3.7",
                 "symfony/var-dumper": "^6.4 || ^7.1 || ^8.0",
                 "ticketswap/phpstan-error-formatter": "^1.0.3",
                 "vincentlanglet/twig-cs-fixer": "^3.1"
@@ -1964,7 +1965,7 @@
             ],
             "support": {
                 "issues": "https://github.com/twigstan/twigstan/issues",
-                "source": "https://github.com/twigstan/twigstan/tree/0.2.7"
+                "source": "https://github.com/twigstan/twigstan/tree/0.2.8"
             },
             "funding": [
                 {
@@ -1972,7 +1973,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2026-11-15T08:45:23+00:00"
+            "time": "2026-11-15T15:08:17+00:00"
         }
     ],
     "aliases": [],

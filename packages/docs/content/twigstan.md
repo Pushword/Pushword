@@ -79,7 +79,7 @@ fragments. There is no baseline or ignored error in this scope.
 
 ## Upstream tooling
 
-The package's isolated tool pins TwigStan 0.2.7, PHPStan 2.3.5 and Twig 3.30.0
+The package's isolated tool pins TwigStan 0.2.8, PHPStan 2.3.6 and Twig 3.30.0
 without local patches. TwigStan includes the inherited parent block context fix
 ([#328](https://github.com/twigstan/twigstan/issues/328)).
 

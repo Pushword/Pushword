@@ -229,6 +229,7 @@ final class MarkdownParserCacheTest extends KernelTestCase
             new ParameterBag(),
         );
         $apps->setRequestContext(new RequestContext($apps));
+
         $parser = new MarkdownParser(
             $container->get(LinkProvider::class),
             $container->get(MediaExtension::class),
