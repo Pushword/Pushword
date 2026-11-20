@@ -381,20 +381,13 @@ class Versionner
     }
 
     /**
-     * Pick the most relevant past version to diff the current entity against for
-     * the admin "review changes" shortcut on the page list.
-     *
-     * - Held page: the newest version that was live (not held) — the last state
-     *   that actually reached production, so the diff shows exactly what the hold
-     *   is keeping back. Falls back to the oldest version when every snapshot was
-     *   itself held.
-     * - Otherwise: the newest snapshot whose content differs from the current
-     *   state (the previous distinct revision). The latest snapshot usually
-     *   mirrors current, so identical ones are skipped.
+     * Pick the previous distinct revision, skipping snapshots that mirror the
+     * current state. When a live baseline is preferred for a held page, use the
+     * newest live snapshot, or the oldest snapshot if they were all held.
      *
      * Returns null when the entity has no stored version.
      */
-    public function pickComparisonVersion(string $type, int|string $id): ?string
+    public function pickComparisonVersion(string $type, int|string $id, bool $preferLiveVersion = true): ?string
     {
         $versions = $this->getVersions($type, $id);
         if ([] === $versions) {
@@ -405,7 +398,7 @@ class Versionner
 
         $current = $this->find($type, $id);
 
-        if ($current instanceof Page && $current->isHoldPublication()) {
+        if ($preferLiveVersion && $current instanceof Page && $current->isHoldPublication()) {
             foreach (array_reverse($versions) as $version) {
                 if (! $this->isHeldSnapshot($type, $id, $version)) {
                     return $version;
