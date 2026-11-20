@@ -73,7 +73,7 @@ final class ControllerTest extends AbstractAdminTestClass
         $editUrl = $router->generate('admin_page_edit', ['entityId' => $pageId]);
         self::assertStringContainsString($editUrl, $listContent, 'list page links back to the page edit screen');
         // The editor column header must render (missing i18n key would blank it).
-        self::assertStringContainsString('<th scope="col">By</th>', $listContent, 'version list exposes the editor column');
+        self::assertSelectorTextContains('thead', 'By');
 
         $loadUrl = $router->generate('admin_version_load', ['type' => 'page', 'id' => $pageId, 'version' => $version]);
         $client->request(Request::METHOD_GET, $loadUrl);
@@ -177,6 +177,11 @@ final class ControllerTest extends AbstractAdminTestClass
         $client->request(Request::METHOD_GET, $this->generateAdminUrl('admin_page_edit', ['id' => $id]));
         $client->clickLink('See history');
         self::assertResponseRedirects($router->generate('admin_version_list', ['type' => 'page', 'id' => $id]));
+        $crawler = $client->followRedirect();
+        self::assertResponseIsSuccessful();
+        self::assertSelectorTextContains('#main', 'No version available.');
+        self::assertSelectorNotExists('#main table');
+        self::assertSame($this->generateAdminUrl('admin_page_edit', ['id' => $id]), $crawler->selectLink('Edit page')->attr('href'));
 
         $em = self::getContainer()->get('doctrine.orm.default_entity_manager');
         $em->remove($em->getRepository(Page::class)->find($id) ?? $page);

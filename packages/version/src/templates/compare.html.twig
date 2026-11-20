@@ -3,90 +3,118 @@
 {% set fieldNames = fields|keys %}
 {% set contentField = fieldNames|first %}
 
-{% block title %}{{ entity.slug }} › {{ 'versionCompare'|trans }}{% endblock %}
+{% block page_title %}{{ entity.slug }} › {{ 'versionCompare'|trans }}{% endblock %}
+
+{% block head_stylesheets %}
+  {{ parent() }}
+  <style>
+    .version-control { min-width: 0; }
+    #version-status:not(:empty) { margin-top: .5rem; }
+    #diff-container { height: clamp(20rem, 48vh, 34rem); }
+    #cp-diff-container { height: 14rem; }
+    .version-field { field-sizing: content; min-height: 3.5rem; }
+  </style>
+{% endblock %}
 
 {% block head_javascript %}
   {{ parent() }}
-  <script src="{{ versionedAsset('/bundles/pushwordadmin/monaco/app.js') }}"></script>
+  <script src="{{ versionedAsset('/bundles/pushwordadmin/monaco/app.js') }}" defer></script>
 {% endblock %}
 
 {% block page_actions %}
-  <a class="btn btn-outline-secondary" href="{{ path('admin_version_list', {type: type, id: entity.id}) }}" aria-label="{{ 'versionBackToList'|trans }}">
-    <i class="fa fa-arrow-left me-1" aria-hidden="true"></i>
+  <a class="btn btn-secondary" href="{{ path('admin_version_list', {type: type, id: entity.id}) }}" title="{{ 'versionBackToList'|trans }}">
+    <i class="fa fa-arrow-left" aria-hidden="true"></i> {{ 'versionVersions'|trans }}
   </a>
-  <form method="post" id="restore-version-form" action="{{ path('admin_version_load', {type: type, id: entity.id, version: versionLeft}) }}" class="d-inline">
-    <input type="hidden" name="_token" value="{{ csrf_token('version_load_' ~ type ~ '_' ~ entity.id) }}">
-    <button type="submit" class="btn btn-warning">
-      <i class="fa fa-undo me-1" aria-hidden="true"></i> {{ 'versionRestoreFull'|trans }}
-    </button>
-  </form>
-  <button type="button" class="btn btn-primary" id="save-changes-btn">
-    <i class="fa fa-save me-1" aria-hidden="true"></i> {{ 'versionSaveChanges'|trans }}
+  <button type="button" class="btn btn-secondary" id="restore-version-btn" data-bs-toggle="modal" data-bs-target="#restore-version-modal">
+    <i class="fa fa-undo" aria-hidden="true"></i> {{ 'versionRestoreFull'|trans }}
+  </button>
+  <button type="button" class="btn btn-primary" id="save-changes-btn" disabled>
+    <i class="fa fa-save" aria-hidden="true"></i> {{ 'versionSaveChanges'|trans }}
   </button>
 {% endblock %}
 
 {% block content_title %}
-  <div style="line-height: 1;">
-    {{ 'versionCompare'|trans }}<br>
-    <span style="font-size:14px"> › {{ entity.slug }}</span>
-  </div>
+  {{ 'versionCompare'|trans }}
+  <span class="d-block small fw-normal text-body-secondary text-break mt-1">{{ entity.slug }}</span>
 {% endblock %}
 
 {% block main %}
-<div class="card shadow-sm mb-3">
-  <div class="card-header">
-    <div class="d-flex flex-wrap align-items-center gap-3">
-      <span class="text-muted text-nowrap"><i class="fa fa-clock-rotate-left me-1" aria-hidden="true"></i> {{ 'versionHistorical'|trans }}</span>
-      <input type="range" class="form-range flex-grow-1" id="version-slider"
-             min="0" max="{{ allVersions|length - 1 }}" step="1"
-             aria-label="{{ 'versionHistorical'|trans }}">
-      <span class="text-nowrap fw-semibold" id="version-left-label" style="font-variant-numeric: tabular-nums;"></span>
-      <span class="text-muted">vs</span>
-      <select id="version-right-select" class="form-select form-select-sm" style="width: auto; max-width: 100%;" aria-label="{{ 'versionCompare'|trans }}">
-        <option value="current" {{ versionRight == 'current' ? 'selected' : '' }}>{{ 'versionCurrent'|trans }}</option>
-        {% for version in allVersions %}
-          <option value="{{ version }}" {{ version == versionRight ? 'selected' : '' }}>{{ version|slice(0, 13) }}</option>
-        {% endfor %}
-      </select>
-    </div>
-  </div>
-
-  <div class="card-body">
-    {% for field, label in fields|filter((label, field) => field != contentField) %}
-      {% set leftValue = attribute(leftEntity, field)|default('') %}
-      {% set rightValue = attribute(rightEntity, field)|default('') %}
-      <div class="row mb-3" data-field-row="{{ field }}">
-        <div class="col-12">
-          <label class="form-label fw-bold" for="field-{{ field }}">{{ label|trans }} <span class="badge bg-warning text-dark" data-field-badge {{ leftValue == rightValue ? 'hidden' : '' }}>{{ 'versionChanged'|trans }}</span></label>
+<div class="card mb-3">
+  <div class="card-body py-3">
+    <div class="row g-3 align-items-start">
+      <div class="col-sm-6 version-control">
+        <div class="d-flex flex-wrap justify-content-between align-items-baseline gap-1 mb-1">
+          <label for="version-slider" class="small fw-semibold">{{ 'versionReference'|trans }}</label>
+          <span id="version-left-label" class="small text-body-secondary" aria-hidden="true"></span>
         </div>
-        <div class="col-6">
-          <input type="text" class="form-control bg-light" id="left-{{ field }}" value="{{ leftValue }}" readonly>
-        </div>
-        <div class="col-6">
-          <input type="text" class="form-control" id="field-{{ field }}" value="{{ rightValue }}">
-        </div>
+        <input type="range" class="form-range" id="version-slider" min="0" max="{{ allVersions|length - 1 }}" step="1" disabled>
       </div>
-    {% endfor %}
+      <div class="col-sm-6 version-control">
+        <label for="version-right-select" class="small fw-semibold mb-1">{{ 'versionCompareTo'|trans }}</label>
+        <select id="version-right-select" class="form-select form-select-sm w-100" disabled>
+          <option value="current" {{ versionRight == 'current' ? 'selected' : '' }}>{{ 'versionCurrent'|trans }}</option>
+          {% for version in allVersions %}
+            <option value="{{ version }}" {{ version == versionRight ? 'selected' : '' }}>{{ version|slice(0, 13) }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+    <p id="version-status" class="small text-body-secondary mb-0" role="status">{{ 'versionLoading'|trans }}</p>
   </div>
 </div>
 
-{# Main content diff #}
-<div class="card shadow-sm">
+<section class="card mb-4" aria-labelledby="version-content-heading">
   <div class="card-header">
-    <label class="form-label fw-bold mb-0">{{ fields[contentField]|trans }}</label>
+    <h2 id="version-content-heading" class="fs-6 fw-semibold mb-0">{{ fields[contentField]|trans }}</h2>
   </div>
-  <div class="card-body p-0">
-    <div id="diff-container" style="height: 500px; width: 100%;"></div>
-  </div>
-</div>
+  <div id="diff-container"></div>
+</section>
 
-{# Custom properties diff (stored as a JSON column, edited here as YAML) #}
-<div class="card shadow-sm mt-3">
-  <div class="card-header">
-    <label class="form-label fw-bold mb-0">{{ 'versionCustomProperties'|trans }}</label>
+<section class="mb-4" aria-labelledby="version-fields-heading">
+  <h2 id="version-fields-heading" class="fs-6 fw-semibold mb-3">{{ 'versionFields'|trans }}</h2>
+  <div class="row g-2 mb-2 small text-body-secondary">
+    <span id="version-reference-field-label" class="col-6">{{ 'versionReference'|trans }}</span>
+    <span id="version-editable-field-label" class="col-6">{{ 'versionEditable'|trans }}</span>
   </div>
-  <div class="card-body p-0">
-    <div id="cp-diff-container" style="height: 220px; width: 100%;"></div>
+  {% for field, label in fields|filter((label, field) => field != contentField) %}
+    {% set leftValue = attribute(leftEntity, field)|default('') %}
+    {% set rightValue = attribute(rightEntity, field)|default('') %}
+    <div class="row g-2 mb-3" data-field-row="{{ field }}">
+      <div class="col-12">
+        <label id="version-label-{{ field }}" class="small fw-semibold" for="field-{{ field }}">{{ label|trans }}</label>
+        <span class="badge text-bg-light" data-field-badge {{ leftValue == rightValue ? 'hidden' : '' }}>{{ 'versionChanged'|trans }}</span>
+      </div>
+      <div class="col-6">
+        <textarea class="form-control form-control-sm version-field bg-body-tertiary" id="left-{{ field }}" rows="2" aria-labelledby="version-label-{{ field }} version-reference-field-label" readonly>{{ leftValue }}</textarea>
+      </div>
+      <div class="col-6">
+        <textarea class="form-control form-control-sm version-field textarea-no-newline" id="field-{{ field }}" rows="2" aria-labelledby="version-label-{{ field }} version-editable-field-label">{{ rightValue }}</textarea>
+      </div>
+    </div>
+  {% endfor %}
+</section>
+
+<section class="card" aria-labelledby="version-properties-heading">
+  <div class="card-header">
+    <h2 id="version-properties-heading" class="fs-6 fw-semibold mb-0">{{ 'versionCustomProperties'|trans }}</h2>
+  </div>
+  <div id="cp-diff-container"></div>
+</section>
+
+<div class="modal" id="restore-version-modal" tabindex="-1" aria-labelledby="restore-version-heading" aria-hidden="true">
+  <div class="modal-dialog">
+    <form class="modal-content" method="post" id="restore-version-form" action="{{ path('admin_version_load', {type: type, id: entity.id, version: versionLeft}) }}">
+      <div class="modal-body">
+        <h2 id="restore-version-heading" class="fs-5">{{ 'versionRestoreFull'|trans }}</h2>
+        <p id="restore-version-label" class="small text-body-secondary"></p>
+        <p class="mb-0">{{ 'versionRestoreDescription'|trans }}</p>
+        <input type="hidden" name="_token" value="{{ csrf_token('version_load_' ~ type ~ '_' ~ entity.id) }}">
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ 'versionCancel'|trans }}</button>
+        <button type="submit" class="btn btn-danger">{{ 'versionRestoreFull'|trans }}</button>
+      </div>
+    </form>
   </div>
 </div>
 
@@ -120,21 +148,50 @@
   const versionRight = {{ versionRight|json_encode|raw }};
   const versionLocale = {{ app.request.locale|json_encode|raw }};
   const versionLabel = window.pwVersionLabel;
+  const labels = {{ {
+    reference: 'versionReference'|trans,
+    editable: 'versionEditable'|trans,
+    loading: 'versionLoading'|trans,
+    loadError: 'versionLoadError'|trans,
+    editorError: 'versionEditorError'|trans,
+  }|json_encode|raw }};
+
+  const slider = document.getElementById('version-slider');
+  const leftLabel = document.getElementById('version-left-label');
+  const rightSelect = document.getElementById('version-right-select');
+  const status = document.getElementById('version-status');
+  const saveButton = document.getElementById('save-changes-btn');
+  const restoreButton = document.getElementById('restore-version-btn');
+  const restoreForm = document.getElementById('restore-version-form');
+  const restoreLabel = document.getElementById('restore-version-label');
+  const compactViewport = matchMedia('(max-width: 575px)');
+  const applied = { left: versionLeft, right: versionRight };
+  const pending = new Map();
 
   let diffEditor = null;
   let cpEditor = null;
+
+  function diffLayoutOptions() {
+    return { compactMode: compactViewport.matches, renderOverviewRuler: !compactViewport.matches };
+  }
 
   function createDiff(containerId, original, modified, language) {
     const settings = window.monacoHelper ? { ...window.monacoHelper.defaultSettings } : {};
 
     const editor = monaco.editor.createDiffEditor(document.getElementById(containerId), {
       ...settings,
+      ...diffLayoutOptions(),
       readOnly: false,
       renderSideBySide: true,
       enableSplitViewResizing: true,
       originalEditable: false,
+      originalAriaLabel: labels.reference,
+      modifiedAriaLabel: labels.editable,
       lineNumbers: 'on',
+      lineNumbersMinChars: 2,
       minimap: { enabled: false },
+      diffWordWrap: 'on',
+      scrollbar: { alwaysConsumeMouseWheel: false },
     });
 
     editor.setModel({
@@ -147,57 +204,52 @@
 
   function initDiffEditor() {
     if (typeof window.monaco === 'undefined') {
-      setTimeout(initDiffEditor, 100);
+      setStatus(labels.editorError, true);
       return;
     }
 
     diffEditor = createDiff('diff-container', leftContent, rightContent, 'markdown');
     cpEditor = createDiff('cp-diff-container', leftCp, rightCp, 'yaml');
-
-    window.addEventListener('resize', () => {
-      diffEditor.layout();
-      cpEditor.layout();
+    compactViewport.addEventListener('change', () => {
+      diffEditor.updateOptions(diffLayoutOptions());
+      cpEditor.updateOptions(diffLayoutOptions());
     });
+
+    slider.disabled = allVersions.length < 2;
+    rightSelect.disabled = false;
+    saveButton.disabled = false;
+    setStatus('');
   }
 
-  // Each version filename is a uniqid(): its first 8 hex chars encode the
-  // Unix timestamp (seconds), so the slider labels are derived client-side.
-  const slider = document.getElementById('version-slider');
-  const leftLabel = document.getElementById('version-left-label');
-  const rightSelect = document.getElementById('version-right-select');
-
-  function versionDate(v) {
-    const sec = parseInt(v.slice(0, 8), 16);
-    return Number.isNaN(sec) ? null : new Date(sec * 1000);
+  function numberedLabel(version, dateLabel) {
+    return '#' + (allVersions.indexOf(version) + 1) + ' · ' + dateLabel;
   }
 
-  // The visible label (shared with the version list via pwVersionLabel) stays
-  // compact; the tooltip and screen-reader text carry the full, unambiguous
-  // timestamp so closely spaced saves never collapse into the same string.
-  function versionTitle(v) {
-    const date = versionDate(v);
-    return null === date ? '' : date.toLocaleString(versionLocale, { dateStyle: 'medium', timeStyle: 'short' });
+  function versionTitle(version) {
+    const sec = parseInt(version.slice(0, 8), 16);
+    const date = new Date(sec * 1000);
+    const label = Number.isNaN(sec) ? version.slice(0, 13) : date.toLocaleString(versionLocale, { dateStyle: 'medium', timeStyle: 'medium' });
+    return numberedLabel(version, label);
   }
 
-  // Mirror the same relative labels (and absolute tooltips) on the right side.
   Array.from(rightSelect.options).forEach(function(opt) {
     if (opt.value !== 'current') {
-      opt.textContent = versionLabel(opt.value);
+      opt.textContent = numberedLabel(opt.value, versionLabel(opt.value));
       opt.title = versionTitle(opt.value);
     }
   });
 
   function syncLabel() {
     const version = allVersions[slider.value];
-    leftLabel.textContent = versionLabel(version);
-    leftLabel.title = versionTitle(version);
-    slider.setAttribute('aria-valuetext', versionTitle(version)); // SR reads the precise date
+    const title = versionTitle(version);
+    leftLabel.textContent = numberedLabel(version, versionLabel(version));
+    leftLabel.title = title;
+    slider.setAttribute('aria-valuetext', title);
   }
 
   // Live scrubbing: fetch a version's fields as JSON and feed them to the
   // existing Monaco models, so the diff updates in place without a reload.
   const dataBase = loadBase + 'data/';
-  const restoreForm = document.getElementById('restore-version-form');
   const versionCache = {};
 
   function inputId(side, field) {
@@ -219,11 +271,13 @@
   versionCache[versionLeft] = readSide('left');
   versionCache[versionRight] = readSide('right');
 
-  function fetchVersion(version) {
-    if (undefined !== versionCache[version]) return Promise.resolve(versionCache[version]);
-    return fetch(dataBase + version, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
-      .then(function(response) { return response.json(); })
-      .then(function(data) { versionCache[version] = data; return data; });
+  async function fetchVersion(version) {
+    if (undefined === versionCache[version]) {
+      const response = await fetch(dataBase + version, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+      if (!response.ok) throw new Error('Version request failed');
+      versionCache[version] = await response.json();
+    }
+    return versionCache[version];
   }
 
   function refreshFieldDiff() {
@@ -237,10 +291,6 @@
   }
 
   function applySide(data, side) {
-    if (null === diffEditor) {
-      setTimeout(function() { applySide(data, side); }, 50); // Monaco not ready yet
-      return;
-    }
     const model = diffEditor.getModel();
     ('left' === side ? model.original : model.modified).setValue(data[contentField] || '');
     const cpModel = cpEditor.getModel();
@@ -252,36 +302,62 @@
     refreshFieldDiff();
   }
 
-  function syncUrl() {
-    history.replaceState(null, '', compareBase + allVersions[slider.value] + '/' + rightSelect.value);
+  function setStatus(message, error = false) {
+    status.classList.toggle('text-danger', error);
+    status.classList.toggle('text-body-secondary', !error);
+    status.textContent = message;
   }
 
-  // Debounce so keyboard arrow-stepping scrubs the label without firing a
-  // request per step, while a mouse release still updates promptly.
-  let scrubTimer = null;
-  function onSliderChange() {
-    if (null !== scrubTimer) clearTimeout(scrubTimer);
-    scrubTimer = setTimeout(function() {
-      const version = allVersions[slider.value];
-      restoreForm.action = loadBase + version;
-      syncUrl();
-      fetchVersion(version).then(function(data) { applySide(data, 'left'); }).catch(function() {});
-    }, 250);
-  }
+  async function changeVersion(side, version) {
+    const request = Symbol();
+    pending.set(side, request);
+    saveButton.disabled = restoreButton.disabled = true;
+    setStatus(labels.loading);
 
-  function onRightChange() {
-    syncUrl();
-    fetchVersion(rightSelect.value).then(function(data) { applySide(data, 'right'); }).catch(function() {});
+    try {
+      // Briefly wait for keyboard scrubbing to settle before requesting a snapshot.
+      if (side === 'left') await new Promise(resolve => setTimeout(resolve, 250));
+      if (pending.get(side) !== request || applied[side] === version) return;
+
+      const data = await fetchVersion(version);
+      if (pending.get(side) !== request) return;
+
+      applySide(data, side);
+      applied[side] = version;
+      history.replaceState(null, '', compareBase + applied.left + '/' + applied.right);
+      restoreForm.action = loadBase + applied.left;
+      restoreLabel.textContent = versionTitle(applied.left);
+    } catch {
+      if (pending.get(side) !== request) return;
+
+      if (side === 'left') {
+        slider.value = allVersions.indexOf(applied.left);
+        syncLabel();
+      } else {
+        rightSelect.value = applied.right;
+      }
+      setStatus(labels.loadError, true);
+    } finally {
+      if (pending.get(side) === request) {
+        pending.delete(side);
+        saveButton.disabled = restoreButton.disabled = pending.size > 0;
+        if (pending.size === 0 && status.textContent === labels.loading) setStatus('');
+      }
+    }
   }
 
   slider.value = Math.max(0, allVersions.indexOf(versionLeft));
   syncLabel();
+  restoreLabel.textContent = versionTitle(versionLeft);
 
   slider.addEventListener('input', syncLabel);
-  slider.addEventListener('change', onSliderChange);
-  rightSelect.addEventListener('change', onRightChange);
+  slider.addEventListener('change', () => changeVersion('left', allVersions[slider.value]));
+  rightSelect.addEventListener('change', () => changeVersion('right', rightSelect.value));
+  document.getElementById('restore-version-modal').addEventListener('shown.bs.modal', function() {
+    restoreForm.querySelector('[data-bs-dismiss="modal"]').focus();
+  });
 
-  document.getElementById('save-changes-btn').addEventListener('click', function() {
+  saveButton.addEventListener('click', function() {
     if (!diffEditor) return;
 
     document.getElementById(contentField + '-hidden').value = diffEditor.getModifiedEditor().getValue();
@@ -290,7 +366,7 @@
     smallFields.forEach(function(field) {
       const input = document.getElementById('field-' + field);
       const hidden = document.getElementById(field + '-hidden');
-      if (input && hidden) hidden.value = input.value;
+      hidden.value = input.value.replace(/[\r\n]/g, '');
     });
 
     document.getElementById('save-form').submit();

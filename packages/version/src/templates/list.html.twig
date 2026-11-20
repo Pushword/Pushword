@@ -1,88 +1,84 @@
 {% extends '@EasyAdmin/page/content.html.twig' %}
 
-{% block title %}{{ entity.slug }} › {{ 'versionVersions'|trans }}{% endblock %}
+{% set editLabel = (type == 'snippet' ? 'versionEditSnippet' : 'versionEditPage')|trans %}
+
+{% block page_title %}{{ entity.slug }} › {{ 'versionVersions'|trans }}{% endblock %}
 
 {% block page_actions %}
+    {% if versions is not empty %}
     <a class="btn btn-secondary" href="{{ editUrl }}">
-        <i class="fa fa-pen-to-square" aria-hidden="true"></i> {{ 'versionEditPage'|trans }}
+        <i class="fa fa-pen-to-square" aria-hidden="true"></i> {{ editLabel }}
     </a>
-    {# ui disabled
-    <a class="btn btn-danger" href="{{ path('admin_version_reset', {type: type, id: entity.id}) }}">
-        <i class="fa fa-trash" aria-hidden="true"></i> {{ 'versionReset'|trans }}
-    </a>
-    #}
+    {% endif %}
 {% endblock %}
 
 {% block content_title %}
-  <div style="line-height: 1;">
-    {{ 'versionVersions'|trans }}<br>
-    <span style="font-size:14px"> › {{ entity.slug }}</span>
-  </div>
+    {{ 'versionVersions'|trans }}
+    <span class="d-block small fw-normal text-body-secondary text-break mt-1">{{ entity.slug }}</span>
 {% endblock %}
 
 {% block main %}
-<div class="card shadow-sm">
+{% if versions is empty %}
+    <div class="card">
+        <div class="card-body py-4 text-center">
+            <p class="mb-3">{{ 'versionNoVersion'|trans }}</p>
+            <a class="btn btn-primary" href="{{ editUrl }}">{{ editLabel }}</a>
+        </div>
+    </div>
+{% else %}
+<div class="card">
     <div class="card-body p-0 table-responsive">
         <table class="table table-hover mb-0">
             <thead class="table-light">
                 <tr>
                     <th scope="col">{{ 'versionTitle'|trans }}</th>
-                    <th scope="col">{{ 'versionDate'|trans }}</th>
-                    <th scope="col">{{ 'versionEditor'|trans }}</th>
-                    <th scope="col">{{ 'versionReason'|trans }}</th>
-                    <th scope="col">{{ 'versionHold'|trans }}</th>
+                    <th scope="col" class="d-none d-lg-table-cell">{{ 'versionDate'|trans }}</th>
+                    <th scope="col" class="d-none d-lg-table-cell">{{ 'versionEditor'|trans }}</th>
+                    <th scope="col" class="d-none d-lg-table-cell">{{ 'versionReason'|trans }}</th>
+                    <th scope="col" class="d-none d-lg-table-cell">{{ 'versionHold'|trans }}</th>
                     <th scope="col" class="text-end">{{ 'versionAction'|trans }}</th>
                 </tr>
             </thead>
             <tbody>
             {% for version, v in versions|reverse(true) %}
+                {% set compareUrl = path('admin_version_compare', {type: type, id: entity.id, versionLeft: version, versionRight: 'current'}) %}
+                {% set editor = editors[version]|default('') %}
+                {% set reason = attribute(v, 'editMessage')|default('') %}
+                {% set isHeld = attribute(v, 'holdPublicationAt')|default(null) %}
+                {% set date %}<span class="text-nowrap">#{{ loop.revindex }} ·</span> <time data-version-id="{{ version }}">{{ version|slice(0, 13) }}</time>{% endset %}
+                {% set hold %}<span class="badge bg-warning text-dark">{{ 'versionHold'|trans }}</span>{% endset %}
                 <tr>
-                    <td>
-                        <a class="pw-list-title" href="{{ path('admin_version_compare', {type: type, id: entity.id, versionLeft: version, versionRight: 'current'}) }}">
+                    <td class="text-break">
+                        <a class="pw-list-title" href="{{ compareUrl }}">
                             {{ attribute(v, 'h1')|default('') ?: (attribute(v, 'title')|default('') ?: v.name|default(v.slug)) }}
                         </a>
+                        <div class="d-lg-none text-body-secondary small mt-1">
+                            <div>{{ date }}</div>
+                            {% if editor %}<div>{{ editor }}</div>{% endif %}
+                            {% if reason %}<div>{{ reason }}</div>{% endif %}
+                            {% if isHeld %}<div class="mt-1">{{ hold }}</div>{% endif %}
+                        </div>
                     </td>
-                    <td class="text-muted">
-                        <time data-version-id="{{ version }}">{{ version|slice(0, 13) }}</time>
-                    </td>
-                    <td class="text-muted">
-                        {% if editors[version]|default(null) %}
-                            {{ editors[version] }}
-                        {% else %}
-                            <span>—</span>
-                        {% endif %}
-                    </td>
-                    <td class="text-muted">
-                        {{ attribute(v, 'editMessage')|default('') ?: '—' }}
-                    </td>
-                    <td>
-                        {% if attribute(v, 'holdPublicationAt')|default(null) %}
-                            <span class="badge bg-warning text-dark">{{ 'versionHold'|trans }}</span>
-                        {% else %}
-                            <span class="text-muted">—</span>
-                        {% endif %}
-                    </td>
+                    <td class="d-none d-lg-table-cell text-body-secondary">{{ date }}</td>
+                    <td class="d-none d-lg-table-cell text-body-secondary">{{ editor ?: '—' }}</td>
+                    <td class="d-none d-lg-table-cell text-body-secondary">{{ reason ?: '—' }}</td>
+                    <td class="d-none d-lg-table-cell text-body-secondary">{{ isHeld ? hold : '—' }}</td>
                     <td class="text-end">
-                        <a href="{{ path('admin_version_compare', {type: type, id: entity.id, versionLeft: version, versionRight: 'current'}) }}" class="btn btn-outline-primary btn-sm px-2 me-1" title="{{ 'versionCompare'|trans }}">
-                            <i class="fa fa-code-compare" aria-hidden="true"></i> {{ 'versionCompare'|trans }}
-                        </a>
-                        <form method="post" action="{{ path('admin_version_load', {type: type, id: entity.id, version: version}) }}" class="d-inline">
-                            <input type="hidden" name="_token" value="{{ csrf_token('version_load_' ~ type ~ '_' ~ entity.id) }}">
-                            <button type="submit" class="btn btn-outline-secondary btn-sm px-2">
-                                <i class="fa fa-edit me-2" aria-hidden="true"></i> {{ 'versionSwitch'|trans }}
-                            </button>
-                        </form>
+                        <div class="d-flex flex-column flex-lg-row align-items-end justify-content-end gap-1 text-nowrap">
+                            <a href="{{ compareUrl }}" class="btn btn-outline-primary btn-sm px-2">{{ 'versionCompare'|trans }}</a>
+                            <form method="post" action="{{ path('admin_version_load', {type: type, id: entity.id, version: version}) }}">
+                                <input type="hidden" name="_token" value="{{ csrf_token('version_load_' ~ type ~ '_' ~ entity.id) }}">
+                                <button type="submit" class="btn btn-outline-secondary btn-sm px-2">{{ 'versionRestore'|trans }}</button>
+                            </form>
+                        </div>
                     </td>
-                </tr>
-            {% else %}
-                <tr>
-                    <td colspan="6" class="text-center text-muted py-4">{{ 'versionNoVersion'|trans }}</td>
                 </tr>
             {% endfor %}
             </tbody>
         </table>
     </div>
 </div>
+{% endif %}
 {% endblock %}
 
 {% block body_javascript %}
