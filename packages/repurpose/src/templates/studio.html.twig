@@ -95,17 +95,23 @@
     .deck::-webkit-scrollbar-thumb { background: var(--line-2); border-radius: 999px; }
     .slide { flex: 0 0 auto; scroll-snap-align: start; }
     .slide figure { margin: 0; }
-    .slide svg { display: block; width: var(--rp-slide-w, {{ feedWidth }}px); height: auto; border-radius: 14px; box-shadow: 0 6px 24px #0000001f; border: 1px solid var(--line); transition: transform .18s, box-shadow .18s; }
+    .slide-canvas { position: relative; transition: transform .18s; }
+    .slide svg { display: block; width: var(--rp-slide-w, {{ feedWidth }}px); height: auto; border-radius: 14px; box-shadow: 0 6px 24px #0000001f; border: 1px solid var(--line); transition: box-shadow .18s; }
     .deck-note { display: flex; align-items: center; gap: .6rem; margin: .1rem 0 0 .25rem; font-size: .72rem; color: var(--muted); }
     .deck-note span { flex: 1; }
     .deck-note input[type=range] { width: 8rem; flex: 0 0 auto; }
-    .slide figure:hover svg { transform: translateY(-3px); box-shadow: 0 12px 32px #0000002e; }
+    .slide figure:hover .slide-canvas { transform: translateY(-3px); }
+    .slide figure:hover svg { box-shadow: 0 12px 32px #0000002e; }
     .slide figcaption { text-align: center; color: var(--muted); font-size: .72rem; margin-top: .5rem; font-variant-numeric: tabular-nums; }
     /* Text blocks are click-to-edit and drag-to-move (the renderer tags them with
        data-rp-edit); dragging a stack field converts it into a free text box. */
     .slide svg g[data-rp-edit] { cursor: grab; touch-action: none; }
     .slide svg g[data-rp-edit]:hover { opacity: .82; }
     .slide svg g[data-rp-edit]:active { cursor: grabbing; }
+    .slide-guides { position: absolute; inset: 1px; overflow: hidden; border-radius: 13px; pointer-events: none; color: oklch(0.82 0.15 215); filter: drop-shadow(0 0 1px oklch(0.26 0.04 230)); }
+    .slide-guides span { position: absolute; }
+    .slide-guide-left { inset-block: 0; border-left: 1px dashed; }
+    .slide-guide-top { inset-inline: 0; border-top: 1px dashed; }
 
     /* Floating inline text editor, opened by clicking a text block on a slide. */
     .text-pop { position: fixed; z-index: 60; width: 19rem; background: var(--panel); border: 1px solid var(--line-2); border-radius: 12px; box-shadow: 0 12px 40px #00000026; padding: .7rem; display: flex; flex-direction: column; gap: .35rem; }
@@ -436,7 +442,7 @@
           <template x-for="(svg, i) in slides" :key="i">
             <div class="slide" @pointerenter="hoverSlide(i)" @pointerleave="hoverSlideLeave()">
               <figure>
-                <div x-html="svg" @click="deckTextClick(i, $event)" @pointerdown="deckTextDown(i, $event)"></div>
+                <div class="slide-canvas" x-html="svg" @click="deckTextClick(i, $event)" @pointerdown="deckTextDown(i, $event)"></div>
                 <figcaption>Slide <span x-text="i + 1"></span> / <span x-text="slides.length"></span></figcaption>
               </figure>
             </div>

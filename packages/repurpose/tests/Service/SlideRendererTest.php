@@ -198,6 +198,7 @@ final class SlideRendererTest extends KernelTestCase
         self::assertTrue($doc->loadXML($svg), 'a split slide yields well-formed SVG');
         self::assertStringContainsString('<rect x="0" y="0" width="1080" height="675" fill="'.SlideRenderer::MISSING_MEDIA_BG.'"', $svg);
         self::assertStringContainsString('<rect x="0" y="675" width="1080" height="675" fill="'.SlideRenderer::MISSING_MEDIA_BG.'"', $svg);
+        self::assertSame(2, substr_count($svg, 'data-rp-guide="image"'));
         self::assertStringNotContainsString('nope-top', $svg);
     }
 
@@ -242,6 +243,8 @@ final class SlideRendererTest extends KernelTestCase
         // The arrow disc + "→" path are drawn when the hint is on, and absent when off.
         self::assertStringContainsString('<circle', $with);
         self::assertStringNotContainsString('<circle', $without);
+        self::assertStringContainsString('<g data-rp-guide="swipe"><circle', $with);
+        self::assertStringNotContainsString('data-rp-guide="swipe"', $without);
     }
 
     /**
@@ -264,6 +267,7 @@ final class SlideRendererTest extends KernelTestCase
         $doc = new DOMDocument();
         self::assertTrue($doc->loadXML($svg), 'the byline yields well-formed SVG');
         // The initials disc anchors the byline when no portrait is configured.
+        self::assertStringContainsString('<g data-rp-guide="creator"><circle', $svg);
         self::assertStringContainsString('>JD</text>', $svg);
         self::assertStringContainsString('Jane Doe', $svg);
         self::assertStringContainsString('Guest editor', $svg);

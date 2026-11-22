@@ -57,6 +57,7 @@ final class MediaResolverTest extends KernelTestCase
             ]), 0);
             self::assertStringContainsString('<image href="data:image/', $svg);
             self::assertStringNotContainsString(SlideRenderer::MISSING_MEDIA_BG, $svg);
+            self::assertStringContainsString('<rect x="0" y="0" width="1080" height="1350" data-rp-guide="image"/></clipPath>', $svg);
         } finally {
             $cache->remove($media);
             $em->remove($media);

@@ -119,13 +119,19 @@ final readonly class SlideRenderer
             'counter' => $this->renderCounter($carousel, $index, $total, $width, $height, $bodyFile, $text, $accent),
             'swipe' => $this->renderSwipe($slide, $width, $height, $text, $accent),
         ];
+        $layers = array_filter($layers, static fn (string $body): bool => '' !== $body);
+        foreach (['creator', 'counter', 'swipe'] as $layer) {
+            if (isset($layers[$layer])) {
+                $layers[$layer] = '<g data-rp-guide="'.$layer.'">'.$layers[$layer].'</g>';
+            }
+        }
 
         $open = static fn (string $fontFaces): string => '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 '.$width.' '.$height.'" '
             .'width="'.$width.'" height="'.$height.'" font-family="rp-body">'
             .'<defs>'.('' === $fontFaces ? '' : '<style>'.$fontFaces.'</style>')
             .'<clipPath id="frame-'.$index.'"><rect width="'.$width.'" height="'.$height.'"/></clipPath></defs>';
 
-        return ['open' => $open, 'fonts' => $fonts, 'layers' => array_filter($layers, static fn (string $body): bool => '' !== $body)];
+        return ['open' => $open, 'fonts' => $fonts, 'layers' => $layers];
     }
 
     /** @return array<string, string> */
@@ -196,15 +202,16 @@ final readonly class SlideRenderer
 
         $path = $this->media->derivativePath($image->media, $placement->filter);
         $dataUri = null === $path ? null : $this->embedder->imageDataUri($path);
+        $cellRect = '<rect x="'.$this->n($fx).'" y="'.$this->n($fy).'" width="'.$this->n($fw).'" height="'.$this->n($fh).'"';
 
         if (null === $dataUri) {
             // A flat placeholder in this cell rather than a broken or blank slide.
-            return '<rect x="'.$this->n($fx).'" y="'.$this->n($fy).'" width="'.$this->n($fw).'" height="'.$this->n($fh).'" fill="'.self::MISSING_MEDIA_BG.'"/>';
+            return $cellRect.' fill="'.self::MISSING_MEDIA_BG.'" data-rp-guide="image"/>';
         }
 
         $clipId = 'frame-'.$index.'-'.$sub;
 
-        return '<clipPath id="'.$clipId.'"><rect x="'.$this->n($fx).'" y="'.$this->n($fy).'" width="'.$this->n($fw).'" height="'.$this->n($fh).'"/></clipPath>'
+        return '<clipPath id="'.$clipId.'">'.$cellRect.' data-rp-guide="image"/></clipPath>'
             .'<g clip-path="url(#'.$clipId.')">'
             .'<image href="'.$dataUri.'" x="'.$this->n($fx + $placement->x).'" y="'.$this->n($fy + $placement->y).'" '
             .'width="'.$this->n($placement->width).'" height="'.$this->n($placement->height).'" '

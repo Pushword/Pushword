@@ -434,7 +434,12 @@
             }
             this.video = nextVideo
             this.selectedVideo = spec.video || ''
-            this.slides = body.slides
+            // Keep the SVG under the pointer until the drag ends.
+            if (this._drag) {
+              this._drag.previewSlides = body.slides
+            } else {
+              this.slides = body.slides
+            }
             this.violations = []
             this.warnings = Array.isArray(body.warnings) ? body.warnings : []
             this.live = { state: 'ok', text: 'preview live' }
@@ -791,7 +796,7 @@
       // re-renders through the normal preview channel. Clamped to the same
       // bounds as the sliders.
       deckTextDown: function (slideIndex, event) {
-        if ('visual' !== this.view || 0 !== event.button) {
+        if (this._drag || 'visual' !== this.view || 0 !== event.button) {
           return
         }
         var block = event.target.closest('[data-rp-edit]')
@@ -826,6 +831,7 @@
           width: t ? Number(t.width) || 0.84 : geom.width,
           block: block,
           slideIndex: slideIndex,
+          pointerId: event.pointerId,
           moved: false,
           startX: event.clientX,
           startY: event.clientY,
@@ -843,17 +849,18 @@
       },
       deckTextMove: function (event) {
         var d = this._drag
-        if (!d) {
+        if (!d || d.pointerId !== event.pointerId) {
           return
         }
         var dx = event.clientX - d.startX
         var dy = event.clientY - d.startY
-        if (! d.moved) {
+        if (!d.moved) {
           if (Math.abs(dx) + Math.abs(dy) < 4) {
             return // still a click, not a drag
           }
           d.moved = true
           this.closeTextPop()
+          d.guides = this._showAlignmentGuides(d.block)
         }
         d.nx = Math.min(1 - d.width, Math.max(0, d.x0 + dx / d.box.width))
         d.ny = Math.min(0.95, Math.max(0, d.y0 + dy / d.box.height))
@@ -861,9 +868,46 @@
           + ((d.nx - d.x0) * d.box.width * d.unit).toFixed(1) + ' '
           + ((d.ny - d.y0) * d.box.height * d.unit).toFixed(1) + ')')
       },
-      deckTextUp: function () {
-        var d = this._endDrag()
-        if (!d || ! d.moved) {
+      _showAlignmentGuides: function (block) {
+        var svg = block.ownerSVGElement
+        var frame = svg.viewBox.baseVal
+        var columns = new Set()
+        var rows = new Set()
+        var edgesAndCenter = [0, 0.5, 1]
+        svg.querySelectorAll('[data-rp-edit], [data-rp-guide]').forEach(function (element) {
+          if (element === block) {
+            return
+          }
+          var bounds = element.getBBox()
+          edgesAndCenter.forEach(function (fraction) {
+            columns.add(Math.round(bounds.x + bounds.width * fraction))
+            rows.add(Math.round(bounds.y + bounds.height * fraction))
+          })
+        })
+        var guides = document.createElement('div')
+        guides.className = 'slide-guides'
+        guides.setAttribute('aria-hidden', 'true')
+        var addLines = function (positions, start, size, side) {
+          positions.forEach(function (position) {
+            var ratio = (position - start) / size
+            if (ratio <= 0 || ratio >= 1) {
+              return
+            }
+            var line = document.createElement('span')
+            line.className = 'slide-guide-' + side
+            line.style[side] = ratio * 100 + '%'
+            guides.append(line)
+          })
+        }
+        addLines(columns, frame.x, frame.width, 'left')
+        addLines(rows, frame.y, frame.height, 'top')
+        svg.after(guides)
+
+        return guides
+      },
+      deckTextUp: function (event) {
+        var d = this._endDrag(event)
+        if (!d || !d.moved) {
           return
         }
         this._dragEndedAt = performance.now()
@@ -875,15 +919,24 @@
         }
         this.revealSlide(d.slideIndex)
       },
-      deckTextCancel: function () {
-        var d = this._endDrag()
+      deckTextCancel: function (event) {
+        var d = this._endDrag(event)
         if (d && d.moved) {
           d.block.removeAttribute('transform')
         }
       },
-      _endDrag: function () {
+      _endDrag: function (event) {
         var d = this._drag
+        if (!d || d.pointerId !== event.pointerId) {
+          return null
+        }
         this._drag = null
+        if (d.guides) {
+          d.guides.remove()
+        }
+        if (d.previewSlides) {
+          this.slides = d.previewSlides
+        }
         window.removeEventListener('pointermove', this._boundDragMove)
         window.removeEventListener('pointerup', this._boundDragUp)
         window.removeEventListener('pointercancel', this._boundDragCancel)
