@@ -52,3 +52,29 @@ test('default SVG layers animate without a custom scene or an animation library'
   player.seek(0);
   assert.equal(images[0].style.opacity, 0);
 });
+
+test('exported text never shows two slides\' titles in the same frame while backgrounds crossfade', () => {
+  const layers = (id) => [
+    {id: 'background', src: `slides/${id}/background.svg`, animation: 'none'},
+    {id: 'title', src: `slides/${id}/title.svg`, animation: 'rise', transition: 'sequential'},
+  ];
+  const video = timeline({width: 64, height: 64, fps: 30, slides: [
+    {id: 'one', durationInFrames: 90, transitionInFrames: 0, layers: layers('one')},
+    {id: 'two', durationInFrames: 90, transitionInFrames: 12, layers: layers('two')},
+    {id: 'three', durationInFrames: 60, transitionInFrames: 12, layers: layers('three')},
+  ]});
+  const clips = video.slides.map(() => {
+    const images = [{style: {}}, {style: {}}];
+    return {images, element: {style: {}, querySelectorAll: () => images}};
+  });
+  const player = createTimeline(video, {children: clips.map(({element}) => element)}, {});
+  let crossfadeFrames = 0;
+  for (let frame = 0; frame < video.durationInFrames; ++frame) {
+    player.seek(frame / video.fps);
+    const shown = clips.filter(({element}) => element.style.visibility === 'visible');
+    const titles = shown.filter(({element, images}) => element.style.opacity * images[1].style.opacity > 0);
+    assert.ok(titles.length <= 1, `frame ${frame} shows ${titles.length} titles`);
+    if (shown.length > 1) ++crossfadeFrames;
+  }
+  assert.equal(crossfadeFrames, 24, 'backgrounds still crossfade');
+});

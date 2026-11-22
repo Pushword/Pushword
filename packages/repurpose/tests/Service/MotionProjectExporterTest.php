@@ -138,6 +138,8 @@ final class MotionProjectExporterTest extends KernelTestCase
                 self::assertIsString($layer['src']);
                 self::assertArrayHasKey('public/'.$layer['src'], $files);
                 self::assertSame('title' === $layer['id'] ? 'rise' : 'none', $layer['animation']);
+                // Text waits out the crossfades, so two slides' titles never overlap.
+                self::assertSame('title' === $layer['id'] ? 'sequential' : null, $layer['transition'] ?? null);
             }
         }
     }

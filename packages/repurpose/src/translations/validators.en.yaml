@@ -72,6 +72,7 @@ repurpose:
   image:
     media:
       empty: 'A slide image needs a media filename.'
+      notFound: 'No image named "%media%" in the media library (JPEG, PNG, GIF or WebP).'
     focus:
       range: 'A focal point must be between 0 and 1.'
     zoom:

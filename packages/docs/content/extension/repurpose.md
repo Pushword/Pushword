@@ -112,6 +112,7 @@ handles URLs and emoji differently; Repurpose does not validate that count.
 ```bash
 bin/console pw:repurpose:schema                 # print the JSON Schema
 bin/console pw:repurpose:validate spec.json     # lint a spec (precise violations, non-zero exit)
+bin/console pw:repurpose:validate spec.json --strict # contrast warnings fail too
 bin/console pw:repurpose:render spec.json out/  # render to out/slide-1.svg …
 bin/console pw:repurpose:motion spec.json video/ # export an editable HyperFrames project
 bin/console pw:repurpose:fonts                  # list font pairings + installed status
@@ -124,7 +125,9 @@ All emit compact JSON when run by an AI agent (`--format=agent`).
 
 A slide's `image` carries `focusX`/`focusY` (0..1 focal point) and `zoom` (≥ 1),
 applied at **render time** as an SVG clip, so the same numbers hold when the slide is
-re-rendered at another ratio.
+re-rendered at another ratio. `media` must name a JPEG, PNG, GIF or WebP of the media
+library: anything else is a validation error, since the renderer could only paint it
+as a grey placeholder.
 
 ## Text
 
@@ -158,7 +161,10 @@ measured with `imagettfbbox`, and a rasterised SVG cannot fetch remote resources
 
 A slide with an image and no `overlay` gets `0.35` (an explicit `0` is honoured), and
 `validate`, `PUT` and the studio preview return non-blocking contrast `warnings` (WCAG
-AA large text, 3:1) naming the slide and the fix.
+AA large text, 3:1) naming the text field and the fix. Every drawn block is measured:
+the tagline in the accent colour, the title and paragraph, and each free text in its
+own colour; a highlighted block is measured against its marker. The studio lists them
+under the toolbar; `pw:repurpose:validate --strict` turns them into failures.
 
 ## Creator byline
 
@@ -264,7 +270,10 @@ and disables HyperFrames telemetry in its npm commands. It needs no cloud accoun
 crossfades **in frames**; `timeline.schema.json` describes its shape. Crossfades
 overlap scenes and reduce total duration. Each slide exports SVG layers in
 drawing order, preserving the static layout and embedded assets. Layers support
-`none`, `fade`, `rise` and `zoom-in` animations.
+`none`, `fade`, `rise` and `zoom-in` animations. Text layers are exported with
+`"transition": "sequential"`: they enter after the incoming crossfade and leave
+during the first half of the outgoing one, so two slides' texts never overlap
+while their images crossfade.
 
 For custom animation, edit `src/scene.mjs` or register an object by slide id in
 `src/scenes.mjs`: `html(slide, video)` returns the markup, and

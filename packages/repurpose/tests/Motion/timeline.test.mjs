@@ -4,7 +4,7 @@ import {copyFile, mkdir, mkdtemp, rm, writeFile} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {test} from 'node:test';
-import {timeline, entranceOpacity, layerStyle} from '../../src/Resources/motion/src/timeline.mjs';
+import {timeline, entranceOpacity, layerStyle, sequencedLayerStyle} from '../../src/Resources/motion/src/timeline.mjs';
 
 const slide = (id, durationInFrames = 90, transitionInFrames = 0) => ({
   id, durationInFrames, transitionInFrames,
@@ -15,6 +15,7 @@ const project = (slides) => ({width: 1080, height: 1920, fps: 30, slides});
 test('cuts and overlapping fades have exact frame counts, including the last scene', () => {
   const video = timeline(project([slide('one'), slide('two', 60, 12), slide('three', 30, 6)]));
   assert.deepEqual(video.slides.map(({from}) => from), [0, 78, 132]);
+  assert.deepEqual(video.slides.map(({transitionOutFrames}) => transitionOutFrames), [12, 6, 0]);
   assert.equal(video.durationInFrames, 162);
   assert.equal(timeline(project([slide('one', 1)])).durationInFrames, 1);
   assert.equal(timeline(project([slide('one'), slide('two')])).durationInFrames, 180);
@@ -50,6 +51,9 @@ test('assets stay local and layer ids and animation presets are checked', () => 
   item.layers[0].animation = 'typo';
   assert.throws(() => timeline(project([item])), /animation/);
   item.layers[0].animation = 'none';
+  item.layers[0].transition = 'typo';
+  assert.throws(() => timeline(project([item])), /layers\[0\].transition/);
+  item.layers[0].transition = 'sequential';
   item.layers.push({...item.layers[0]});
   assert.throws(() => timeline(project([item])), /layers\[1\].id/);
   item.layers = [];
@@ -72,6 +76,20 @@ test('frame-addressed animations clamp and do not depend on playback order', () 
   const frame = layerStyle('rise', 7, 30, 90);
   layerStyle('rise', 80, 30, 90);
   assert.deepEqual(layerStyle('rise', 7, 30, 90), frame);
+});
+
+test('sequential layers wait for the incoming crossfade and leave during the outgoing one', () => {
+  const scene = {durationInFrames: 90, transitionInFrames: 12, transitionOutFrames: 8};
+  const text = {animation: 'none', transition: 'sequential'};
+  assert.deepEqual(sequencedLayerStyle(text, 11, scene, 30), {opacity: 0});
+  assert.deepEqual(sequencedLayerStyle(text, 12, scene, 30), {opacity: 1});
+  assert.deepEqual(sequencedLayerStyle(text, 81, scene, 30), {opacity: 1});
+  assert.deepEqual(sequencedLayerStyle(text, 82, scene, 30), {opacity: 0.75});
+  assert.deepEqual(sequencedLayerStyle(text, 85, scene, 30), {opacity: 0}, 'gone by the middle of the crossfade');
+  assert.deepEqual(sequencedLayerStyle({...text, animation: 'rise'}, 12, scene, 30), {opacity: 0, transform: 'translateY(4%)'});
+  assert.deepEqual(sequencedLayerStyle({...text, animation: 'rise'}, 26, scene, 30), {opacity: 1, transform: 'translateY(0%)'});
+  assert.deepEqual(sequencedLayerStyle({animation: 'rise'}, 0, scene, 30), layerStyle('rise', 0, 30, 90), 'crossfade is the default');
+  assert.deepEqual(sequencedLayerStyle(text, 89, {...scene, transitionOutFrames: 0}, 30), {opacity: 1});
 });
 
 test('project check counts existing assets and fails for a missing file', async () => {

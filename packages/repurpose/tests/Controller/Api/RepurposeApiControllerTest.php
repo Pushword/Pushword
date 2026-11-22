@@ -141,7 +141,7 @@ final class RepurposeApiControllerTest extends WebTestCase
         self::assertNotEmpty($warnings);
         $first = $warnings[0];
         self::assertIsArray($first);
-        self::assertSame('slides[0]', $first['path']);
+        self::assertSame('slides[0].title', $first['path']);
     }
 
     /**
@@ -307,7 +307,7 @@ final class RepurposeApiControllerTest extends WebTestCase
 
         // Reframe: PATCH the same key with a new zoom, confirm it persisted.
         $reframed = $this->validSpec();
-        $reframed['slides'] = [['title' => 'Hello', 'image' => ['media' => 'photo.jpg', 'zoom' => 1.8]]];
+        $reframed['slides'] = [['title' => 'Hello', 'image' => ['media' => '1.jpg', 'zoom' => 1.8]]];
         $this->requestJson('PATCH', $url, $reframed);
         self::assertSame(Response::HTTP_OK, $this->client->getResponse()->getStatusCode());
 
@@ -351,7 +351,7 @@ final class RepurposeApiControllerTest extends WebTestCase
             'network' => 'linkedin',
             'format' => 'linkedin-4-5',
             'slides' => [
-                ['title' => 'Hello', 'image' => ['media' => 'photo.jpg', 'zoom' => 1.1]],
+                ['title' => 'Hello', 'image' => ['media' => '1.jpg', 'zoom' => 1.1]],
             ],
         ];
     }

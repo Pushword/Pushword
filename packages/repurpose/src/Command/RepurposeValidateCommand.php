@@ -47,6 +47,8 @@ final class RepurposeValidateCommand
         string $path = '-',
         #[Option(description: 'Output format: auto (compact JSON when an AI agent is detected), agent (force JSON), or text', name: 'format')]
         string $format = 'auto',
+        #[Option(description: 'Fail on warnings (contrast) too, not only on violations', name: 'strict')]
+        bool $strict = false,
     ): int {
         $this->agentMode = $this->isAgentFormat($format);
 
@@ -81,7 +83,9 @@ final class RepurposeValidateCommand
             return $this->fail($io, $issues);
         }
 
-        return $this->pass($io, $this->contrastAdvisor->warnings($carousel));
+        $warnings = $this->contrastAdvisor->warnings($carousel);
+
+        return $strict && [] !== $warnings ? $this->fail($io, $warnings) : $this->pass($io, $warnings);
     }
 
     /**

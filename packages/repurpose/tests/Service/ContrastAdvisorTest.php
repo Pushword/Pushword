@@ -77,7 +77,7 @@ final class ContrastAdvisorTest extends TestCase
         ]));
 
         self::assertCount(1, $warnings);
-        self::assertSame('slides[0]', $warnings[0]['path']);
+        self::assertSame('slides[0].title', $warnings[0]['path']);
         self::assertStringContainsString('contrast', $warnings[0]['message']);
     }
 
@@ -145,6 +145,72 @@ final class ContrastAdvisorTest extends TestCase
 
         self::assertCount(1, $warnings);
         self::assertStringContainsString('missing-media placeholder', $warnings[0]['message']);
+    }
+
+    /**
+     * The reported miss: a cream free text over a cream background passed, since
+     * only the layout stack was measured.
+     */
+    public function testToneOnToneFreeTextIsFlagged(): void
+    {
+        $warnings = $this->warnings($this->spec([
+            'palette' => ['bg' => '#f5efe0'],
+            'texts' => [
+                ['content' => 'Readable', 'color' => '#1c1917'],
+                ['content' => 'Cream on cream', 'color' => '#efe6d2'],
+            ],
+        ]));
+
+        self::assertCount(1, $warnings);
+        self::assertSame('slides[0].texts[1]', $warnings[0]['path']);
+        self::assertStringContainsString('#efe6d2 over background #f5efe0', $warnings[0]['message']);
+    }
+
+    public function testFreeTextInheritsTheSlideTextColour(): void
+    {
+        $warnings = $this->warnings($this->spec([
+            'palette' => ['bg' => '#f5efe0', 'text' => '#f8fafc'],
+            'texts' => [['content' => 'Inherited']],
+        ]));
+
+        self::assertSame(['slides[0].texts[0]'], array_column($warnings, 'path'));
+    }
+
+    public function testTaglineIsMeasuredInTheAccentColour(): void
+    {
+        $warnings = $this->warnings($this->spec([
+            'tagline' => 'Kicker',
+            'title' => 'Hello',
+            'palette' => ['bg' => '#0b1120', 'text' => '#f8fafc', 'accent' => '#1e293b'],
+        ]));
+
+        self::assertSame(['slides[0].tagline'], array_column($warnings, 'path'));
+        self::assertStringContainsString('#1e293b', $warnings[0]['message']);
+    }
+
+    public function testHighlightedTextIsMeasuredAgainstItsMarker(): void
+    {
+        $slide = [
+            'title' => 'Marked',
+            'highlight' => '#fde047',
+            'palette' => ['bg' => '#0b1120', 'text' => '#0f172a'],
+        ];
+        self::assertSame([], $this->warnings($this->spec($slide)), 'dark text on a yellow marker reads, whatever the background');
+
+        $slide['texts'] = [['content' => 'Marked', 'color' => '#fef9c3', 'highlight' => '#fde047']];
+        $warnings = $this->warnings($this->spec($slide));
+        self::assertSame(['slides[0].texts[0]'], array_column($warnings, 'path'));
+        self::assertStringContainsString('highlight #fde047', $warnings[0]['message']);
+    }
+
+    public function testParagraphIsMeasuredInTheSlideTextColour(): void
+    {
+        $warnings = $this->warnings($this->spec([
+            'paragraph' => 'Body copy',
+            'palette' => ['bg' => '#0b1120', 'text' => '#1e293b'],
+        ]));
+
+        self::assertSame(['slides[0].paragraph'], array_column($warnings, 'path'));
     }
 
     public function testTextlessSlideIsIgnored(): void

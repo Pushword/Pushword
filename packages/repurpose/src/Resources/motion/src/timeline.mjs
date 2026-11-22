@@ -1,6 +1,7 @@
 import {audioMix} from './audio.mjs';
 
 const animations = ['none', 'fade', 'rise', 'zoom-in'];
+const transitions = ['crossfade', 'sequential'];
 
 function integer(value, path, minimum = 0) {
   if (!Number.isSafeInteger(value) || value < minimum) {
@@ -51,12 +52,15 @@ export function timeline(project) {
         throw new Error(`${layerPath}.src must be a relative asset path inside public/.`);
       }
       if (!animations.includes(layer.animation)) throw new Error(`${layerPath}.animation is unknown.`);
+      if (layer.transition !== undefined && !transitions.includes(layer.transition)) {
+        throw new Error(`${layerPath}.transition is unknown.`);
+      }
     }
     const from = end - slide.transitionInFrames;
     end = from + slide.durationInFrames;
     integer(end, `${path} end frame`, 1);
     return {...slide, from};
-  });
+  }).map((slide, index, all) => ({...slide, transitionOutFrames: all[index + 1]?.transitionInFrames ?? 0}));
   return {width: project.width, height: project.height, fps: project.fps, slides, durationInFrames: end, audio: audioMix(project.audio)};
 }
 
@@ -77,4 +81,18 @@ export function layerStyle(animation, frame, fps, durationInFrames) {
     }
     default: return {};
   }
+}
+
+// A `sequential` layer (exported text) starts its entrance once the incoming crossfade
+// ends and fades out over the first half of the outgoing one: two slides' texts never
+// overlap. A `crossfade` layer, the default, fades with its whole slide.
+export function sequencedLayerStyle(layer, frame, slide, fps) {
+  if (layer.transition !== 'sequential') return layerStyle(layer.animation, frame, fps, slide.durationInFrames);
+  const local = frame - slide.transitionInFrames;
+  if (local < 0) return {opacity: 0};
+  const style = layerStyle(layer.animation, local, fps, slide.durationInFrames - slide.transitionInFrames);
+  const exitFrames = Math.ceil(slide.transitionOutFrames / 2);
+  const exitStart = slide.durationInFrames - slide.transitionOutFrames;
+  const remaining = exitFrames === 0 ? 1 : Math.max(0, Math.min(1, 1 - (frame - exitStart + 1) / exitFrames));
+  return {...style, opacity: (style.opacity ?? 1) * remaining};
 }

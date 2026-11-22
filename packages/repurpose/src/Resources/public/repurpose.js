@@ -228,6 +228,7 @@
       view: 'visual',
       live: { state: 'ok', text: 'in sync' },
       violations: [],
+      warnings: [],
       slidesOpen: [],
       deckOpen: true,
       dragIndex: null,
@@ -434,9 +435,11 @@
             this.selectedVideo = spec.video || ''
             this.slides = body.slides
             this.violations = []
+            this.warnings = Array.isArray(body.warnings) ? body.warnings : []
             this.live = { state: 'ok', text: 'preview live' }
           } else if (body && Array.isArray(body.violations)) {
             this.violations = body.violations
+            this.warnings = []
             this.live = { state: 'bad', text: body.violations.length + ' issue(s)' }
           } else {
             this.live = { state: 'bad', text: (body && body.error) || 'preview failed' }

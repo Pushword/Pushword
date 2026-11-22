@@ -37,7 +37,7 @@ final class CarouselValidationTest extends KernelTestCase
             'page' => 'blog/mon-article',
             'network' => 'linkedin',
             'format' => 'linkedin-4-5',
-            'slides' => [['title' => 'Hello', 'image' => ['media' => 'photo.jpg']]],
+            'slides' => [['title' => 'Hello', 'image' => ['media' => '1.jpg']]],
         ]);
 
         self::assertSame([], $violations);
@@ -157,17 +157,33 @@ final class CarouselValidationTest extends KernelTestCase
         // `images[0]`, so the violation surfaces there (proving back-compat too).
         $violations = $this->violations([
             'page' => 'x', 'network' => 'linkedin', 'format' => 'linkedin-4-5',
-            'slides' => [['title' => 'Hi', 'image' => ['media' => 'p.jpg', 'focusX' => 2]]],
+            'slides' => [['title' => 'Hi', 'image' => ['media' => '1.jpg', 'focusX' => 2]]],
         ]);
 
         self::assertArrayHasKey('slides[0].images[0].focusX', $violations);
+    }
+
+    /**
+     * The renderer paints anything it cannot embed as a flat grey placeholder, so
+     * a typo, a video or an SVG must fail validation instead of exporting grey.
+     */
+    public function testSlideImageMustBeARasterImageOfTheMediaLibrary(): void
+    {
+        foreach (['typo.jpg', 'repurpose-nord.mp4', 'logo.svg'] as $media) {
+            $violations = $this->violations([
+                'page' => 'x', 'network' => 'linkedin', 'format' => 'linkedin-4-5',
+                'slides' => [['title' => 'Hi', 'images' => [['media' => '1.jpg'], ['media' => $media]], 'imageLayout' => 'split-v']],
+            ]);
+
+            self::assertSame(['slides[0].images[1].media' => 'No image named "'.$media.'" in the media library (JPEG, PNG, GIF or WebP).'], $violations);
+        }
     }
 
     public function testSplitLayoutNeedsTwoImages(): void
     {
         $violations = $this->violations([
             'page' => 'x', 'network' => 'linkedin', 'format' => 'linkedin-4-5',
-            'slides' => [['title' => 'Split', 'imageLayout' => 'split-v', 'images' => [['media' => 'top.jpg']]]],
+            'slides' => [['title' => 'Split', 'imageLayout' => 'split-v', 'images' => [['media' => '1.jpg']]]],
         ]);
 
         self::assertArrayHasKey('slides[0].images', $violations);
@@ -177,7 +193,7 @@ final class CarouselValidationTest extends KernelTestCase
     {
         $violations = $this->violations([
             'page' => 'x', 'network' => 'linkedin', 'format' => 'linkedin-4-5',
-            'slides' => [['title' => 'Split', 'imageLayout' => 'split-h', 'images' => [['media' => 'left.jpg'], ['media' => 'right.jpg']]]],
+            'slides' => [['title' => 'Split', 'imageLayout' => 'split-h', 'images' => [['media' => '1.jpg'], ['media' => '2.jpg']]]],
         ]);
 
         self::assertSame([], $violations);
@@ -186,7 +202,7 @@ final class CarouselValidationTest extends KernelTestCase
     public function testTooManySlidesForNetworkIsRejected(): void
     {
         // An organic Pinterest image Pin contains one visual.
-        $slides = array_fill(0, 2, ['title' => 'Hi', 'image' => ['media' => 'p.jpg']]);
+        $slides = array_fill(0, 2, ['title' => 'Hi', 'image' => ['media' => '1.jpg']]);
         $violations = $this->violations([
             'page' => 'x', 'network' => 'pinterest', 'format' => 'pinterest-2-3',
             'caption' => 'A useful Pin description.',
@@ -253,7 +269,7 @@ final class CarouselValidationTest extends KernelTestCase
     {
         // 12 LinkedIn slides breaks the "ideally under 10" *guidance* but no hard
         // limit (cap is 300 pages) — the validator must stay silent.
-        $slides = array_fill(0, 12, ['title' => 'Hi', 'image' => ['media' => 'p.jpg']]);
+        $slides = array_fill(0, 12, ['title' => 'Hi', 'image' => ['media' => '1.jpg']]);
         $violations = $this->violations([
             'page' => 'x', 'network' => 'linkedin', 'format' => 'linkedin-4-5',
             'slides' => $slides,

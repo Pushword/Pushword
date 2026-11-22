@@ -35,7 +35,8 @@
               "properties": {
                 "id": {"type": "string", "minLength": 1},
                 "src": {"type": "string", "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))[a-zA-Z0-9_./-]+$", "description": "Local path relative to public/."},
-                "animation": {"enum": ["none", "fade", "rise", "zoom-in"], "description": "fade/rise enter over half a second; zoom-in scales 1 to 1.04 over the scene. Custom motion belongs in src/scene.mjs or src/scenes.mjs."}
+                "animation": {"enum": ["none", "fade", "rise", "zoom-in"], "description": "fade/rise enter over half a second; zoom-in scales 1 to 1.04 over the scene. Custom motion belongs in src/scene.mjs or src/scenes.mjs."},
+                "transition": {"enum": ["crossfade", "sequential"], "default": "crossfade", "description": "crossfade fades with the whole slide. sequential (exported text) enters once the incoming crossfade ends and fades out over the first half of the outgoing one, so two slides' texts never overlap."}
               }
             }
           }

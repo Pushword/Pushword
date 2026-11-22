@@ -56,6 +56,10 @@ layer references and asset availability and reports a JSON result.
 - `animation`: `none`, `fade`, `rise`, or `zoom-in`. Fade and rise enter during the
   first half-second (or the scene length if shorter); zoom goes from 1 to 1.04 over the scene. Use zoom on a
   full-frame image; scaling a split-image layer also moves its clipping boundary.
+- `transition`: `crossfade` (default) fades the layer with its whole slide.
+  `sequential`, exported on text layers, waits for the incoming crossfade to end
+  before its entrance and fades out over the first half of the outgoing one, so
+  two slides' texts never overlap while their images crossfade.
 
 Layers have semantic ids: `background`, `images.0`, `images.1`, `overlay`,
 `effect`, `tagline`, `title`, `paragraph`, `texts.0`, `creator`, `counter`, `swipe`.
@@ -105,6 +109,8 @@ export const scenes = {
 requested local frame, starting at 0. It must support seeking in either direction.
 The enclosing timeline applies each scene's duration and crossfade. A scene can
 reuse `slideLayers` or supply all its own artwork, as NORD. does.
+`slide.transitionOutFrames` is the next scene's crossfade (0 on the last scene):
+custom text can leave before it, as `sequencedLayerStyle` in `timeline.mjs` does.
 
 Markup is generated under `compositions/`: reference local images and fonts with
 `../public/`, for example `<img src="../public/photos/photo.jpg" alt="">`.

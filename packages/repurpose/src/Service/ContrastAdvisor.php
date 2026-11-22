@@ -10,16 +10,18 @@ use Pushword\Repurpose\Model\Slide;
 use Pushword\Repurpose\Model\SlideImage;
 
 /**
- * Flags slides whose text is likely unreadable — dark text over a photo, tone-on-
- * tone palettes. These are **warnings, never violations**: "valid but illegible"
- * is the worst failure mode for an agent-driven tool, but legibility is a
- * judgement call the validator must not hard-fail (a deliberate low-contrast
- * design stays saveable).
+ * Flags text blocks — tagline, title, paragraph and each free text — that are
+ * likely unreadable: dark text over a photo, tone-on-tone palettes. These are
+ * **warnings, never violations**: "valid but illegible" is the worst failure
+ * mode for an agent-driven tool, but legibility is a judgement call the
+ * validator must not hard-fail (a deliberate low-contrast design stays
+ * saveable).
  *
  * The effective background is the flat palette colour, or for an image slide the
  * image's mean luminance (measured from the embedded derivative through GD)
  * darkened by the overlay — an approximation of what sits behind the text, which
- * is exactly the trap: `palette.text` is applied verbatim by the renderer.
+ * is exactly the trap: `palette.text` is applied verbatim by the renderer. A
+ * highlighted block is measured against its marker instead.
  * Threshold is WCAG AA for large text (3:1) since slide copy is large by design.
  */
 final readonly class ContrastAdvisor
@@ -38,45 +40,82 @@ final readonly class ContrastAdvisor
     {
         $warnings = [];
         foreach ($carousel->slides as $index => $slide) {
-            if (null === $slide->tagline && null === $slide->title && null === $slide->paragraph) {
-                continue;
-            }
-
-            $text = $this->color($carousel, $slide, static fn (Palette $p): ?string => $p->text) ?? SlideRenderer::DEFAULT_TEXT;
-            $textLum = $this->hexLuminance($text);
-            if (null === $textLum) {
+            $blocks = $this->textBlocks($carousel, $slide);
+            if ([] === $blocks) {
                 continue;
             }
 
             [$bgLum, $bgLabel] = $this->effectiveBackground($carousel, $slide);
-            if (null === $bgLum) {
-                continue;
+            foreach ($blocks as $field => [$color, $highlight]) {
+                // A highlight marker is a flat rect painted right behind its text.
+                $message = null === $highlight
+                    ? $this->warning($color, $bgLum, $bgLabel, $slide->hasImage())
+                    : $this->warning($color, $this->hexLuminance($highlight), \sprintf('highlight %s', $highlight), false);
+                if (null !== $message) {
+                    $warnings[] = ['path' => \sprintf('slides[%d].%s', $index, $field), 'message' => $message];
+                }
             }
-
-            $ratio = $this->ratio($textLum, $bgLum);
-            if ($ratio >= self::MIN_RATIO) {
-                continue;
-            }
-
-            // Advise the direction with the most headroom: against a background
-            // below ~0.18 luminance, white text can reach a higher ratio than
-            // black, and vice versa ((bg+0.05)² = 0.0525 is the crossover).
-            $suggestLighter = $bgLum < 0.179;
-            $warnings[] = [
-                'path' => \sprintf('slides[%d]', $index),
-                'message' => \sprintf(
-                    'Text %s over %s: estimated contrast %.1f:1, below %.0f:1 (WCAG AA large text) — likely unreadable. Use a %s text colour%s.',
-                    $text,
-                    $bgLabel,
-                    $ratio,
-                    self::MIN_RATIO,
-                    $suggestLighter ? 'lighter' : 'darker',
-                    $slide->hasImage() && $suggestLighter ? ', or raise the overlay' : '',
-                ),
-            ];
         }
 
         return $warnings;
+    }
+
+    /**
+     * Every text block the renderer draws on the slide, keyed by its spec field,
+     * with the colours it paints: the tagline in the accent, free texts in their
+     * own colour when they set one.
+     *
+     * @return array<string, array{0: string, 1: string|null}> field => [text colour, highlight]
+     */
+    private function textBlocks(Carousel $carousel, Slide $slide): array
+    {
+        $text = $this->color($carousel, $slide, static fn (Palette $p): ?string => $p->text) ?? SlideRenderer::DEFAULT_TEXT;
+        $blocks = [];
+        if (null !== $slide->tagline) {
+            $blocks['tagline'] = [$this->color($carousel, $slide, static fn (Palette $p): ?string => $p->accent) ?? SlideRenderer::DEFAULT_ACCENT, null];
+        }
+
+        if (null !== $slide->title) {
+            $blocks['title'] = [$text, $slide->highlight];
+        }
+
+        if (null !== $slide->paragraph) {
+            $blocks['paragraph'] = [$text, null];
+        }
+
+        foreach ($slide->texts as $i => $free) {
+            $blocks[\sprintf('texts[%d]', $i)] = [$free->color ?? $text, $free->highlight];
+        }
+
+        return $blocks;
+    }
+
+    private function warning(string $text, ?float $bgLum, string $bgLabel, bool $overImage): ?string
+    {
+        $textLum = $this->hexLuminance($text);
+        if (null === $textLum || null === $bgLum) {
+            return null;
+        }
+
+        $ratio = $this->ratio($textLum, $bgLum);
+        if ($ratio >= self::MIN_RATIO) {
+            return null;
+        }
+
+        // Advise the direction with the most headroom: against a background
+        // below ~0.18 luminance, white text can reach a higher ratio than
+        // black, and vice versa ((bg+0.05)² = 0.0525 is the crossover).
+        $suggestLighter = $bgLum < 0.179;
+
+        return \sprintf(
+            'Text %s over %s: estimated contrast %.1f:1, below %.0f:1 (WCAG AA large text) — likely unreadable. Use a %s text colour%s.',
+            $text,
+            $bgLabel,
+            $ratio,
+            self::MIN_RATIO,
+            $suggestLighter ? 'lighter' : 'darker',
+            $overImage && $suggestLighter ? ', or raise the overlay' : '',
+        );
     }
 
     /**

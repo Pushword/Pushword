@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pushword\Repurpose\Model;
 
+use Pushword\Repurpose\Validator\LibraryImage;
 use Symfony\Component\Validator\Constraints as Assert;
 
 /**
@@ -16,6 +17,7 @@ class SlideImage
 {
     public function __construct(
         #[Assert\NotBlank(message: 'repurpose.image.media.empty')]
+        #[LibraryImage]
         public string $media = '',
         /** 0..1 focal point in the source, x axis (0 = left edge kept, 1 = right). */
         #[Assert\Range(notInRangeMessage: 'repurpose.image.focus.range', min: 0, max: 1)]

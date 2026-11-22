@@ -154,7 +154,7 @@ final class RepurposeStudioControllerTest extends WebTestCase
         $post = $this->persistPost();
 
         $spec = $this->validSpec();
-        $spec['slides'] = [['title' => 'A brand new headline', 'image' => ['media' => 'photo.jpg']]];
+        $spec['slides'] = [['title' => 'A brand new headline', 'image' => ['media' => '1.jpg']]];
         $this->postJson('/admin/repurpose/studio/'.$post->id.'/save', $spec);
 
         self::assertSame(Response::HTTP_OK, $this->client->getResponse()->getStatusCode());
@@ -450,7 +450,7 @@ final class RepurposeStudioControllerTest extends WebTestCase
         $post = $this->persistPost();
         $spec = $this->validSpec();
         $spec['slides'] = [
-            ['title' => 'Original headline', 'image' => ['media' => 'photo.jpg']],
+            ['title' => 'Original headline', 'image' => ['media' => '1.jpg']],
             ['title' => 'Second idea'],
         ];
         $post->spec = $spec;
@@ -811,7 +811,7 @@ final class RepurposeStudioControllerTest extends WebTestCase
         $post->spec = [
             'page' => 'blog/studio-article', 'network' => 'pinterest', 'format' => 'pinterest-2-3',
             'caption' => 'A caption to pin',
-            'slides' => [['title' => 'Cover', 'image' => ['media' => 'photo.jpg']]],
+            'slides' => [['title' => 'Cover', 'image' => ['media' => '1.jpg']]],
         ];
 
         $this->em->persist($post);
@@ -830,7 +830,7 @@ final class RepurposeStudioControllerTest extends WebTestCase
             'network' => 'linkedin',
             'format' => 'linkedin-4-5',
             'slides' => [
-                ['title' => 'Original headline', 'image' => ['media' => 'photo.jpg']],
+                ['title' => 'Original headline', 'image' => ['media' => '1.jpg']],
             ],
         ];
     }

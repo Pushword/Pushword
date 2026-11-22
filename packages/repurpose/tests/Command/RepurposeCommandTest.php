@@ -28,7 +28,7 @@ final class RepurposeCommandTest extends KernelTestCase
     }
 
     private const string VALID = '{"page":"blog/x","network":"linkedin","format":"linkedin-4-5",'
-        .'"slides":[{"title":"Hello","image":{"media":"photo.jpg"}}]}';
+        .'"slides":[{"title":"Hello","image":{"media":"1.jpg"}}]}';
 
     public function testSchemaCommandPrintsJsonSchema(): void
     {
@@ -51,6 +51,16 @@ final class RepurposeCommandTest extends KernelTestCase
 
         self::assertSame(0, $tester->getStatusCode());
         self::assertStringContainsString('valid', $tester->getDisplay());
+        unlink($path);
+    }
+
+    public function testStrictDoesNotFailACleanSpec(): void
+    {
+        $path = $this->fileWith(self::VALID);
+        $tester = $this->tester('pw:repurpose:validate');
+        $tester->execute(['path' => $path, '--format' => 'text', '--strict' => true]);
+
+        self::assertSame(0, $tester->getStatusCode());
         unlink($path);
     }
 
@@ -195,6 +205,29 @@ final class RepurposeCommandTest extends KernelTestCase
         self::assertSame('passed', $decoded['result']);
         self::assertIsArray($decoded['warnings']);
         self::assertNotEmpty($decoded['warnings']);
+
+        $tester->execute(['path' => $path, '--format' => 'agent', '--strict' => true]);
+        self::assertSame(1, $tester->getStatusCode(), '--strict fails on warnings');
+        $decoded = json_decode(trim($tester->getDisplay()), true, flags: \JSON_THROW_ON_ERROR);
+        self::assertIsArray($decoded);
+        self::assertSame('failed', $decoded['result']);
+        self::assertSame(1, $decoded['errors']);
+        self::assertIsArray($decoded['issues']);
+        self::assertSame(['slides[0].title'], array_column($decoded['issues'], 'path'));
+        unlink($path);
+    }
+
+    public function testValidateRejectsAnImageMissingFromTheMediaLibrary(): void
+    {
+        $path = $this->fileWith('{"page":"blog/x","network":"linkedin","format":"linkedin-4-5",'
+            .'"slides":[{"title":"Hello","image":{"media":"typo.jpg"}}]}');
+        $tester = $this->tester('pw:repurpose:validate');
+        $tester->execute(['path' => $path, '--format' => 'agent']);
+
+        self::assertSame(1, $tester->getStatusCode());
+        $decoded = json_decode(trim($tester->getDisplay()), true, flags: \JSON_THROW_ON_ERROR);
+        self::assertIsArray($decoded);
+        self::assertSame([['path' => 'slides[0].images[0].media', 'message' => 'No image named "typo.jpg" in the media library (JPEG, PNG, GIF or WebP).']], $decoded['issues']);
         unlink($path);
     }
 

@@ -202,6 +202,9 @@
     ul.violations { list-style: none; margin: 0; padding: 0; font-size: .74rem; color: #842029; display: flex; flex-direction: column; gap: .3rem; }
     ul.violations li { padding: .4rem .55rem; border-radius: 8px; background: #f8d7da; border: 1px solid #f1aeb5; }
     ul.violations code { color: var(--bad); }
+    ul.violations.warnings { color: #78350f; }
+    ul.violations.warnings li { background: #fef3c7; border-color: #fde68a; }
+    ul.violations.warnings code { color: var(--warn); }
 
     .notice { display: flex; align-items: flex-start; gap: .5rem; font-size: .74rem; color: var(--warn); background: #fef3c7; border: 1px solid #fde68a; border-radius: 8px; padding: .55rem .65rem; line-height: 1.4; }
     .notice span { flex: 1; }
@@ -488,6 +491,12 @@
       <ul class="violations" x-show="violations.length" x-cloak>
         <template x-for="(v, i) in violations" :key="i">
           <li><code x-text="v.path || 'spec'"></code> — <span x-text="v.message"></span></li>
+        </template>
+      </ul>
+
+      <ul class="violations warnings" x-show="warnings.length" x-cloak aria-label="Warnings">
+        <template x-for="(w, i) in warnings" :key="i">
+          <li><code x-text="w.path"></code> — <span x-text="w.message"></span></li>
         </template>
       </ul>
 

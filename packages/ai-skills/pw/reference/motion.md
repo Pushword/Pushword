@@ -55,7 +55,9 @@ two compatible levels:
 
 - `timeline.json`: order, durations and incoming crossfades in **frames**, plus
   per-layer `none`, `fade`, `rise` or `zoom-in`. Crossfades overlap scenes; they
-  reduce total duration. Layer order is back-to-front.
+  reduce total duration. Layer order is back-to-front. Text layers carry
+  `"transition": "sequential"` so outgoing and incoming texts never overlap;
+  keep it when adding text layers.
 - `src/scenes.mjs`: register objects by timeline scene id (`slide-1`, etc.).
   `html(slide, video)` returns static HTML in Node;
   `render(root, frame, slide, video)` updates that markup in the browser for the

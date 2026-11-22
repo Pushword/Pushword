@@ -45,7 +45,9 @@ final readonly class MotionProjectExporter
                 $src = 'slides/'.$id.'/'.$name.'.svg';
                 $files['public/'.$src] = $svg;
                 $isText = \in_array($name, ['tagline', 'title', 'paragraph'], true) || str_starts_with($name, 'texts.');
-                $layers[] = ['id' => $name, 'src' => $src, 'animation' => $isText ? 'rise' : 'none'];
+                $layers[] = $isText
+                    ? ['id' => $name, 'src' => $src, 'animation' => 'rise', 'transition' => 'sequential']
+                    : ['id' => $name, 'src' => $src, 'animation' => 'none'];
             }
 
             $slides[] = ['id' => $id, 'durationInFrames' => 90, 'transitionInFrames' => 0 === $index ? 0 : 12, 'layers' => $layers];

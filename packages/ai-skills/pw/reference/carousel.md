@@ -27,12 +27,15 @@ for LinkedIn).
 5. **Validate before rendering** — this is the point of the tool:
    - API: `POST /api/repurpose/validate` (body = the spec) → `{valid:true}` or
      `422 {violations:[{path,message}]}`.
-   - CLI: `bin/console pw:repurpose:validate spec.json` (or `-` for stdin).
+   - CLI: `bin/console pw:repurpose:validate spec.json` (or `-` for stdin);
+     `--strict` also fails on warnings.
    Fix every violation. Common ones: `title_overflow` (shorten the title),
    `crop_out_of_bounds` / `source_too_small` (change `focusX/focusY/zoom` or pick a
-   bigger image), `format` not allowed for the network, `slides` over the cap.
+   bigger image), an image `media` missing from the media library (JPEG, PNG, GIF
+   or WebP only), `format` not allowed for the network, `slides` over the cap.
    A valid response may also carry **`warnings`** (non-blocking) — mostly
-   text/background contrast. Treat them as bugs in your spec and fix them too.
+   text/background contrast, per text field (`slides[0].texts[1]`). Treat them as
+   bugs in your spec and fix them too.
 6. **Save it** (creates a `SocialPost`, one per page+network):
    - API: `PUT /api/repurpose/{host}/{network}/{page}` (body = the spec). The
      response echoes the persisted `slides` count (confirm it matches), the
@@ -102,8 +105,8 @@ Key rules (the schema is the source of truth — always fetch it):
   are for annotations and callouts.
 - **Highlight**: `slide.highlight` (behind each title line) or `texts[].highlight`
   (behind a free box's lines) paints a rounded marker in that hex colour, sized
-  from the measured line widths. Keep the text colour readable over it — the
-  contrast advisor does not check highlight pairs.
+  from the measured line widths. The contrast advisor measures the text colour
+  against the marker.
 
 ## Do not
 
