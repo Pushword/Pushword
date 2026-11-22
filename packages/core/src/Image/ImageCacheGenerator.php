@@ -263,7 +263,7 @@ final readonly class ImageCacheGenerator
      * runs in CLI where the limit is usually lifted. Eager mode also has a preview
      * copy ready; on-demand mode leaves variant creation to the image request.
      */
-    private function decodeFitsInMemory(Media $media): bool
+    public function decodeFitsInMemory(Media $media): bool
     {
         if ('gd' !== $this->imageReader->getResolvedDriver()) {
             return true;

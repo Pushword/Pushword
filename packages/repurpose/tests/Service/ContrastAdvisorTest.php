@@ -5,13 +5,15 @@ declare(strict_types=1);
 namespace Pushword\Repurpose\Tests\Service;
 
 use PHPUnit\Framework\Attributes\Group;
-use PHPUnit\Framework\TestCase;
+use Pushword\Core\Image\ImageCacheGenerator;
+use Pushword\Core\Repository\MediaRepository;
 use Pushword\Repurpose\Service\CarouselFactory;
 use Pushword\Repurpose\Service\ContrastAdvisor;
 use Pushword\Repurpose\Service\MediaResolver;
+use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
 #[Group('integration')]
-final class ContrastAdvisorTest extends TestCase
+final class ContrastAdvisorTest extends KernelTestCase
 {
     private string $publicDir;
 
@@ -21,11 +23,17 @@ final class ContrastAdvisorTest extends TestCase
     {
         $this->publicDir = sys_get_temp_dir().'/pw-contrast-'.uniqid();
         mkdir($this->publicDir.'/media/md', 0o777, true);
-        $this->advisor = new ContrastAdvisor(new MediaResolver($this->publicDir.'/media'));
+        self::bootKernel();
+        $this->advisor = new ContrastAdvisor(new MediaResolver(
+            $this->publicDir.'/media',
+            self::getContainer()->get(MediaRepository::class),
+            self::getContainer()->get(ImageCacheGenerator::class),
+        ));
     }
 
     protected function tearDown(): void
     {
+        parent::tearDown();
         array_map(unlink(...), glob($this->publicDir.'/media/md/*') ?: []);
         rmdir($this->publicDir.'/media/md');
         rmdir($this->publicDir.'/media');

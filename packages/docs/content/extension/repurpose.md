@@ -128,7 +128,8 @@ A slide's `image` carries `focusX`/`focusY` (0..1 focal point) and `zoom` (≥ 1
 applied at **render time** as an SVG clip, so the same numbers hold when the slide is
 re-rendered at another ratio. `media` must name a JPEG, PNG, GIF or WebP of the media
 library: anything else is a validation error, since the renderer could only paint it
-as a grey placeholder.
+as a grey placeholder. An image uploaded moments ago, whose derivatives core still
+builds in the background, gets its `default` derivative built on first render.
 
 ## Text
 

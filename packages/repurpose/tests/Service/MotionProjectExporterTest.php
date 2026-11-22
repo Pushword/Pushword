@@ -7,6 +7,8 @@ namespace Pushword\Repurpose\Tests\Service;
 use DOMDocument;
 use DOMElement;
 use PHPUnit\Framework\Attributes\Group;
+use Pushword\Core\Image\ImageCacheGenerator;
+use Pushword\Core\Repository\MediaRepository;
 use Pushword\Repurpose\Model\Creator;
 use Pushword\Repurpose\Service\CarouselFactory;
 use Pushword\Repurpose\Service\MediaResolver;
@@ -78,7 +80,11 @@ final class MotionProjectExporterTest extends KernelTestCase
         imagepng(imagecreatetruecolor(4, 4), $directory.'/default/pixel.png');
 
         try {
-            self::getContainer()->set(MediaResolver::class, new MediaResolver($directory));
+            self::getContainer()->set(MediaResolver::class, new MediaResolver(
+                $directory,
+                self::getContainer()->get(MediaRepository::class),
+                self::getContainer()->get(ImageCacheGenerator::class),
+            ));
             $renderer = self::getContainer()->get(SlideRenderer::class);
             $carousel = new CarouselFactory()->fromArray([
                 'page' => 'x', 'network' => 'instagram', 'format' => 'story-9-16',
