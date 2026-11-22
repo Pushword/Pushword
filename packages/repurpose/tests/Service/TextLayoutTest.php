@@ -81,6 +81,14 @@ final class TextLayoutTest extends TestCase
         self::assertTrue($laid->overflow);
     }
 
+    public function testShrinkToFitCountsBlankLines(): void
+    {
+        $laid = $this->layout->layout("First\n\nSecond", self::FONT, 500, 88, 25, 24);
+
+        self::assertSame(24.0, $laid->fontSize);
+        self::assertFalse($laid->overflow);
+    }
+
     public function testEmptyTextProducesNoLines(): void
     {
         $laid = $this->layout->layout('   ', self::FONT, 500, 500);

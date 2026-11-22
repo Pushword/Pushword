@@ -327,6 +327,12 @@ final readonly class SlideRenderer
         $svg = '';
         $y = $top;
         foreach ($laid->lines as $line) {
+            if ('' === $line->text) {
+                $y += $laid->lineHeight;
+
+                continue;
+            }
+
             $content = $upper ? mb_strtoupper($line->text) : $line->text;
             $baseline = $y + $laid->fontSize * 0.82;
             if (null !== $highlight) {

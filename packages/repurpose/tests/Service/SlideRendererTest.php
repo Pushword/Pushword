@@ -90,6 +90,34 @@ final class SlideRendererTest extends KernelTestCase
         self::assertStringContainsString('data-rp-edit="texts.0"', $svg);
     }
 
+    public function testFreeTextPreservesBlankLinesWithoutHighlightingThem(): void
+    {
+        $svg = $this->render([
+            'page' => 'x', 'network' => 'linkedin', 'format' => 'linkedin-4-5',
+            'slides' => [['texts' => [[
+                'content' => "First line\nSecond line\r\n \r\nThird line\n\n\nFourth line",
+                'y' => 0.4,
+                'size' => 0.05,
+                'highlight' => '#22c55e',
+            ]]]],
+        ]);
+
+        $doc = new DOMDocument();
+        self::assertTrue($doc->loadXML($svg));
+        $baselines = [];
+        foreach ($doc->getElementsByTagName('text') as $line) {
+            $baselines[$line->textContent] = (float) $line->getAttribute('y');
+        }
+
+        self::assertSame([
+            'First line' => 584.28,
+            'Second line' => 649.08,
+            'Third line' => 778.68,
+            'Fourth line' => 973.08,
+        ], $baselines);
+        self::assertSame(4, substr_count($svg, 'fill="#22c55e"'));
+    }
+
     /**
      * A tiny stated size must be honoured, not silently *enlarged*: TextLayout's
      * shrink loop never runs when the start size is below its minimum, and would

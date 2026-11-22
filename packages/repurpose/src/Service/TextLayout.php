@@ -68,13 +68,18 @@ final class TextLayout
     }
 
     /**
-     * Greedy word wrap at a fixed size, honouring explicit newlines. Each returned
-     * line carries its measured pixel width.
+     * Greedy word wrap at a fixed size, honouring explicit newlines between
+     * paragraphs. Each returned line carries its measured pixel width.
      *
      * @return TextLine[]
      */
     public function wrap(string $text, string $fontFile, float $cssPx, float $maxWidthPx): array
     {
+        $text = trim($text);
+        if ('' === $text) {
+            return [];
+        }
+
         $text = $this->glueTerminalPunctuation($text);
 
         $lines = [];
@@ -104,9 +109,10 @@ final class TextLayout
      */
     private function wrapParagraph(string $paragraph, string $fontFile, float $cssPx, float $maxWidthPx, array &$lines): void
     {
-        $words = preg_split('/\s+/', trim($paragraph)) ?: [];
-        $words = array_values(array_filter($words, static fn (string $w): bool => '' !== $w));
+        $words = preg_split('/\s+/', trim($paragraph), -1, \PREG_SPLIT_NO_EMPTY) ?: [];
         if ([] === $words) {
+            $lines[] = new TextLine('', 0.0);
+
             return;
         }
 

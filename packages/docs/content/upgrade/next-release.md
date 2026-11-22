@@ -1,5 +1,5 @@
 ---
-title: ''
+title: 'carousel text preserves blank lines'
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -34,3 +34,9 @@ belongs in the feature doc, which you link to instead.
 
 Several changes land here between two tags: append to the file, do not replace it.
 -->
+
+**Concerns:** `pushword/repurpose`
+
+## Blank lines in carousel text
+
+Carousel text now preserves blank lines between paragraphs. Review spacing in affected slides before regenerating existing exports.
