@@ -190,8 +190,9 @@ final class RepurposeApiControllerTest extends WebTestCase
         self::assertStringContainsString('robin', $message);
         self::assertStringContainsString('Pushword', $message);
 
+        self::assertIsString($result['revision']);
         $spec['creator'] = 'robin';
-        self::assertNull($this->creatorWarning($this->requestJson('PUT', $url, $spec)));
+        self::assertNull($this->creatorWarning($this->requestJson('PUT', $url, $spec, $result['revision'])));
     }
 
     /**
@@ -331,12 +332,22 @@ final class RepurposeApiControllerTest extends WebTestCase
         self::assertSame(1, $read['slides']);
         self::assertIsString($read['studioUrl']);
         self::assertStringContainsString('/admin/repurpose/studio/'.$id, $read['studioUrl']);
+        $revision = $read['revision'];
+        self::assertIsString($revision);
+        self::assertSame($created['revision'], $revision);
+        self::assertSame($revision, $this->client->getResponse()->getEtag());
 
         // Reframe: PATCH the same key with a new zoom, confirm it persisted.
         $reframed = $this->validSpec();
         $reframed['slides'] = [['title' => 'Hello', 'image' => ['media' => '1.jpg', 'zoom' => 1.8]]];
         $this->requestJson('PATCH', $url, $reframed);
+        self::assertResponseStatusCodeSame(Response::HTTP_PRECONDITION_REQUIRED);
+        $updated = $this->requestJson('PATCH', $url, $reframed, $revision);
         self::assertSame(Response::HTTP_OK, $this->client->getResponse()->getStatusCode());
+        $newRevision = $updated['revision'];
+        self::assertIsString($newRevision);
+        self::assertNotSame($revision, $newRevision);
+        self::assertSame($newRevision, $this->client->getResponse()->getEtag());
 
         $this->client->request(Request::METHOD_GET, $url, [], [], $this->authServer());
         self::assertStringContainsString('"zoom":1.8', (string) $this->client->getResponse()->getContent());
@@ -361,11 +372,19 @@ final class RepurposeApiControllerTest extends WebTestCase
         }
 
         // Delete, then confirm it is gone.
-        $this->client->request(Request::METHOD_DELETE, $url, [], [], $this->authServer());
+        $this->requestJson('DELETE', $url);
+        self::assertResponseStatusCodeSame(Response::HTTP_PRECONDITION_REQUIRED);
+        $conflict = $this->requestJson('DELETE', $url, revision: $revision);
+        self::assertResponseStatusCodeSame(Response::HTTP_CONFLICT);
+        self::assertSame($newRevision, $conflict['current_revision']);
+        $this->client->request(Request::METHOD_DELETE, $url, [], [], [...$this->authServer(), 'HTTP_IF_MATCH' => $newRevision]);
         self::assertSame(Response::HTTP_NO_CONTENT, $this->client->getResponse()->getStatusCode());
 
         $this->requestJson('GET', $url);
         self::assertSame(Response::HTTP_NOT_FOUND, $this->client->getResponse()->getStatusCode());
+
+        $this->requestJson('PUT', $url, $reframed, $newRevision);
+        self::assertResponseStatusCodeSame(Response::HTTP_NOT_FOUND);
     }
 
     /**
@@ -399,9 +418,14 @@ final class RepurposeApiControllerTest extends WebTestCase
      *
      * @return array<string, mixed>
      */
-    private function requestJson(string $method, string $url, array $body = []): array
+    private function requestJson(string $method, string $url, array $body = [], ?string $revision = null): array
     {
-        $this->client->request($method, $url, [], [], $this->authServer(), [] === $body ? null : (string) json_encode($body));
+        $headers = $this->authServer();
+        if (null !== $revision) {
+            $headers['HTTP_IF_MATCH'] = $revision;
+        }
+
+        $this->client->request($method, $url, [], [], $headers, [] === $body ? null : (string) json_encode($body));
 
         $content = (string) $this->client->getResponse()->getContent();
         $decoded = json_decode($content, true);

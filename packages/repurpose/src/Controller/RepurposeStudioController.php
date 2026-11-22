@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Pushword\Repurpose\Controller;
 
+use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\ORM\OptimisticLockException;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Repository\MediaRepository;
@@ -247,17 +249,25 @@ final class RepurposeStudioController extends AbstractController
         ]);
     }
 
-    /**
-     * Persists an edited spec from the studio's editor. The post's identity
-     * (host, page, network) is fixed here — the studio edits a carousel's content,
-     * never re-keys it — so page/network are forced from the stored post. The spec
-     * runs through the same validator the agent and CLI use; violations come back
-     * as `{path, message}` for inline display, nothing is saved until it is valid.
-     */
+    #[Route('/admin/repurpose/studio/{id}/revision', name: 'repurpose_studio_revision', requirements: ['id' => '\d+'], methods: ['GET'])]
+    public function revision(int $id): JsonResponse
+    {
+        return new JsonResponse(['revision' => $this->loadPost($id)->revision()], headers: ['Cache-Control' => 'no-store']);
+    }
+
     #[Route('/admin/repurpose/studio/{id}/save', name: 'repurpose_studio_save', requirements: ['id' => '\d+'], methods: ['POST'])]
     public function save(int $id, Request $request): JsonResponse
     {
         $post = $this->loadPost($id);
+
+        $expected = $request->headers->get('If-Match');
+        if (null === $expected || '' === $expected) {
+            return new JsonResponse(['error' => 'Missing If-Match header'], Response::HTTP_PRECONDITION_REQUIRED);
+        }
+
+        if ($expected !== $post->revision()) {
+            return $this->saveConflict();
+        }
 
         $spec = $this->decodePinnedSpec($post, $request);
         if (null === $spec) {
@@ -269,18 +279,33 @@ final class RepurposeStudioController extends AbstractController
             return new JsonResponse(['violations' => $violations], Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
-        // Re-linking to another page must not collide with an existing carousel on
-        // the same (host, page, network) key.
         $page = \is_string($spec['page'] ?? null) ? $spec['page'] : $post->page;
         $existing = $this->repository->findOneByKey($post->host, $page, $post->network);
         if ($existing instanceof SocialPost && $existing->id !== $post->id) {
-            return new JsonResponse(['violations' => [['path' => 'page', 'message' => 'A carousel already exists for this page on this network.']]], Response::HTTP_UNPROCESSABLE_ENTITY);
+            return $this->pageConflict();
         }
 
         $post->spec = $spec;
-        $this->entityManager->flush();
 
-        return new JsonResponse(['ok' => true]);
+        try {
+            $this->entityManager->flush();
+        } catch (OptimisticLockException) {
+            return $this->saveConflict();
+        } catch (UniqueConstraintViolationException) {
+            return $this->pageConflict();
+        }
+
+        return new JsonResponse(['ok' => true, 'revision' => $post->revision()]);
+    }
+
+    private function saveConflict(): JsonResponse
+    {
+        return new JsonResponse(['error' => 'revision_mismatch'], Response::HTTP_CONFLICT);
+    }
+
+    private function pageConflict(): JsonResponse
+    {
+        return new JsonResponse(['violations' => [['path' => 'page', 'message' => 'A carousel already exists for this page on this network.']]], Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 
     /**

@@ -20,6 +20,70 @@ function selection(fileName, eventOrigin = origin) {
   return {origin: eventOrigin, data: {type: 'pw-media-picker-select', media: {fileName}}};
 }
 
+test('a revision check detects another save while keeping the local draft intact', async () => {
+  let current = '"1-1"';
+  const requests = [];
+  const state = studio({revision: current, urls: {revision: '/revision', save: '/save'}}, async url => {
+    requests.push(url);
+    return {ok: true, json: async () => ({revision: current})};
+  });
+
+  await state.checkRevision();
+  assert.equal(state.syncState, '');
+  state.spec.slides[0].title = 'Local edit';
+  state.dirty = true;
+  current = '"1-2"';
+  await state.checkRevision();
+  assert.equal(state.syncState, 'changed');
+  assert.equal(state.revision, '"1-1"');
+  assert.equal(state.spec.slides[0].title, 'Local edit');
+  assert.equal(state.dirty, true);
+  await state.save();
+  assert.deepEqual(requests, ['/revision', '/revision'], 'a stale tab cannot submit another save');
+});
+
+test('a conflict during save leaves the local draft available', async () => {
+  const revision = '"1-1"';
+  const state = studio({revision, urls: {save: '/save'}}, async (url, options) => {
+    assert.equal(url, '/save');
+    assert.equal(options.headers['If-Match'], revision);
+    assert.equal(JSON.parse(options.body).slides[0].title, 'Local edit');
+    return {status: 409};
+  }, undefined, {setTimeout() {}});
+
+  state.spec.slides[0].title = 'Local edit';
+  state.dirty = true;
+  await state.save();
+  assert.equal(state.syncState, 'changed');
+  assert.equal(state.revision, revision);
+  assert.equal(state.spec.slides[0].title, 'Local edit');
+  assert.equal(state.dirty, true);
+});
+
+test('a successful save keeps edits typed during the request and ignores an older revision check', async () => {
+  let resolveCheck;
+  let resolveSave;
+  const state = studio({revision: '"1-1"', urls: {revision: '/revision', save: '/save'}}, url => {
+    if (url === '/revision') {
+      return new Promise(resolve => { resolveCheck = resolve; });
+    }
+    return new Promise(resolve => { resolveSave = resolve; });
+  }, undefined, {setTimeout() {}});
+
+  const check = state.checkRevision();
+  const save = state.save();
+  state.spec.slides[0].title = 'Typed during save';
+  resolveSave({ok: true, json: async () => ({revision: '"1-2"'})});
+  await save;
+  resolveCheck({ok: true, json: async () => ({revision: '"1-1"'})});
+  await check;
+
+  assert.equal(state.syncState, '');
+  assert.equal(state.revision, '"1-2"');
+  assert.equal(state.spec.slides[0].title, 'Typed during save');
+  assert.equal(state.dirty, true);
+});
+
 test('slide guides mark peer edges and centers until the drag ends', async () => {
   const moved = {content: 'Move this', x: 0.1, y: 0.2, width: 0.3};
   const preview = ['<svg/>'];

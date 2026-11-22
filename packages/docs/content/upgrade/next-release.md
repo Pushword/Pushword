@@ -1,7 +1,8 @@
 ---
-title: 'carousel text preserves blank lines'
+title: 'carousel text preserves blank lines; carousel API writes use revisions'
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
+run: 'doctrine:schema:update --force'
 ---
 
 <!--
@@ -40,3 +41,7 @@ Several changes land here between two tags: append to the file, do not replace i
 ## Blank lines in carousel text
 
 Carousel text now preserves blank lines between paragraphs. Review spacing in affected slides before regenerating existing exports.
+
+## Carousel revisions
+
+Apply the schema update for Repurpose. For existing carousels, update API clients to read the current spec and send its ETag in `If-Match` on PUT, PATCH and DELETE. See [Repurpose](/extension/repurpose#author-with-an-agent).

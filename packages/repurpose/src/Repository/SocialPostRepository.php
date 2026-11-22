@@ -23,6 +23,21 @@ class SocialPostRepository extends ServiceEntityRepository
         return $this->findOneBy(['host' => $host, 'page' => $page, 'network' => $network]);
     }
 
+    public function deleteAtVersion(SocialPost $post): bool
+    {
+        // Doctrine's entity DELETE matches only the ID, even on versioned entities.
+        $deleted = $this->createQueryBuilder('post')
+            ->delete()
+            ->where('post.id = :id AND post.version = :version')
+            ->setParameter('id', $post->id)
+            ->setParameter('version', $post->version)
+            ->getQuery()
+            ->execute();
+        $this->getEntityManager()->detach($post);
+
+        return 1 === $deleted;
+    }
+
     /**
      * @return SocialPost[]
      */

@@ -137,7 +137,9 @@ Upload `out/video.mp4` through the media library, or send a multipart `file` to
 top-level `video` field of `spec.json`, keep the companion deck's media references
 valid for the site, then validate and save the spec through
 `POST /api/repurpose/validate` and `PUT /api/repurpose/{host}/{network}/{page}`.
-PUT replaces the spec at that key; preserve existing post fields when updating.
+When updating an existing carousel, GET the spec first and apply your changes
+to it. Send its `ETag` as `If-Match`. On `409`, review `current.spec`, reapply
+your edits and retry with `current_revision`.
 If the upload is rejected for size, reduce the encoded file size or adjust the
 site's PHP `upload_max_filesize` and `post_max_size` before uploading again.
 

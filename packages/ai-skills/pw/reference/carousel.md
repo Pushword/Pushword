@@ -23,8 +23,10 @@ for LinkedIn).
      API downloads missing families on validate; on the command line, a missing
      font fails validation with the `pw:repurpose:fonts` command to run.
    Or on a flat-file site: `bin/console pw:repurpose:schema`.
-4. **Write the spec** (shape below). Keep titles short — the renderer shrinks text
-   to fit, but a wall of text still reads badly.
+4. **Prepare the spec.** Before editing an existing carousel, GET
+   `/api/repurpose/{host}/{network}/{page}` and keep the returned revision.
+   Apply only the requested changes to the stored `spec`. For a new carousel,
+   write the spec using the shape below. Keep titles short for readability.
 5. **Validate before rendering** — this is the point of the tool:
    - API: `POST /api/repurpose/validate` (body = the spec) → `{valid:true}` or
      `422 {violations:[{path,message}]}`.
@@ -37,10 +39,16 @@ for LinkedIn).
    A valid response may also carry **`warnings`** (non-blocking) — mostly
    text/background contrast, per text field (`slides[0].texts[1]`). Treat them as
    bugs in your spec and fix them too.
-6. **Save it** (creates a `SocialPost`, one per page+network):
-   - API: `PUT /api/repurpose/{host}/{network}/{page}` (body = the spec). The
-     response echoes the persisted `slides` count (confirm it matches), the
-     `warnings`, and `studioUrl` / `previewUrl` / `slideUrls`.
+6. **Save it** (one `SocialPost` per page+network):
+   - API: Send the full spec with PUT or PATCH to the same URL. For an existing
+     carousel, send its revision verbatim as `If-Match`, including the quotes.
+     A `409` includes
+     `current.spec` and `current_revision`. Review intervening edits and reapply
+     your changes to that spec before retrying. Ask the editor if the edits
+     conflict on the same field. If GET returns `404` and the task is to create
+     a carousel, PUT the new spec without `If-Match`.
+     The save response includes the new revision, persisted slide count,
+     warnings and `studioUrl` / `previewUrl` / `slideUrls`.
    - Flat site: write `content/{host}/social-post/{page}/{network}.json` and run
      `bin/console pw:flat:sync --mode=import`.
 7. **Look at what you made** — fetch `previewUrl`

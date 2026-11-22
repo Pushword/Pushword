@@ -68,6 +68,11 @@ repurposeSourceUnpublished: Not published
 repurposeStatusDraft: Draft
 repurposeStatusPlanned: Planned
 repurposeStatusPosted: Posted
+repurposeSyncChanged: 'Another user or agent updated this carousel.'
+repurposeSyncDeleted: 'Another user or agent deleted this carousel.'
+repurposeSyncDraft: 'Your unsaved edits are still in this tab.'
+repurposeSyncOpenLatest: 'Open latest version in a new tab'
+repurposeSyncReload: 'Reload latest version'
 repurposeVideoChoose: 'Choose'
 repurposeVideoDownload: 'Download rendered video'
 repurposeVideoEmpty: 'Choose or upload an MP4 or WebM to review the finished animation.'

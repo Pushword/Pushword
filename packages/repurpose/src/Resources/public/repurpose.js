@@ -17,6 +17,7 @@
   // A slider drag streams events, so a plain trailing debounce would only render
   // on release; the ceiling forces a preview at least this often mid-stream.
   var PREVIEW_MAX_WAIT_MS = 700
+  var REVISION_CHECK_MS = 10000
 
   // Tailwind's default palette (v3 hexes), one row per hue × these shades, plus a
   // neutral ramp — the swatch suggestions offered by the colour popover.
@@ -243,6 +244,8 @@
       effectModal: { open: false, target: 'deck', tab: 'All' },
       mediaModal: { open: false, src: '' },
       dirty: false,
+      revision: cfg.revision,
+      syncState: '',
       saving: false,
       saveLabel: 'Save',
       exporting: false,
@@ -261,6 +264,8 @@
       _dragEndedAt: 0,
       _hoverTimer: null,
       _sourceReady: false,
+      _revisionTimer: null,
+      _checkingRevision: false,
       _pickSlide: null,
       _pickCell: null,
 
@@ -277,6 +282,36 @@
           }
         }.bind(this))
         window.addEventListener('message', this.onMediaMessage.bind(this))
+        this._revisionTimer = setInterval(this.checkRevision.bind(this), REVISION_CHECK_MS)
+      },
+
+      destroy: function () {
+        clearInterval(this._revisionTimer)
+      },
+
+      checkRevision: async function () {
+        if (document.hidden || this.saving || this._checkingRevision) {
+          return
+        }
+
+        var revision = this.revision
+        this._checkingRevision = true
+        try {
+          var response = await fetch(this.urls.revision, { cache: 'no-store' })
+          var current = response.ok ? (await response.json()).revision : null
+          if (this.saving || this.revision !== revision) {
+            return
+          }
+          if (404 === response.status) {
+            this.syncState = 'deleted'
+          } else if (current && current !== revision) {
+            this.syncState = 'changed'
+          }
+        } catch {
+          // Keep the draft available and try again on the next check.
+        } finally {
+          this._checkingRevision = false
+        }
       },
 
       normalize: function () {
@@ -460,9 +495,14 @@
       },
 
       save: async function () {
-        var spec
+        if (this.saving || this.syncState) {
+          return
+        }
+
+        var options
         try {
-          spec = this.payload()
+          options = jsonPost(this.payload())
+          options.headers['If-Match'] = this.revision
         } catch (error) {
           this.badJson(error)
           return
@@ -471,14 +511,25 @@
         this.saving = true
         this.saveLabel = 'Saving…'
         try {
-          var response = await fetch(this.urls.save, jsonPost(spec))
+          var response = await fetch(this.urls.save, options)
+          if (409 === response.status || 404 === response.status) {
+            this.syncState = 409 === response.status ? 'changed' : 'deleted'
+            this.saveLabel = 'Not saved'
+            return
+          }
+
+          var body = await response.json()
           if (response.ok) {
+            this.revision = body.revision
             this.violations = []
-            this.dirty = false
+            try {
+              this.dirty = JSON.stringify(this.payload()) !== options.body
+            } catch {
+              this.dirty = true
+            }
             this.saveLabel = 'Saved ✓'
             this.live = { state: 'ok', text: 'saved' }
           } else {
-            var body = await response.json()
             if (body && Array.isArray(body.violations)) {
               this.violations = body.violations
               this.live = { state: 'bad', text: body.violations.length + ' issue(s) — not saved' }

@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Pushword\Repurpose\Tests\Controller;
 
+use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\ORM\OptimisticLockException;
 use Override;
 use PHPUnit\Framework\Attributes\Group;
 use Pushword\Core\Entity\Media;
@@ -43,6 +45,8 @@ final class RepurposeStudioControllerTest extends WebTestCase
 
     private string $testUserEmail = '';
 
+    private string $testToken = '';
+
     private ?int $motionMediaId = null;
 
     private const string HOST = 'repurpose-studio-test.example';
@@ -62,7 +66,10 @@ final class RepurposeStudioControllerTest extends WebTestCase
         $user = new $userClass();
         $user->email = $this->testUserEmail;
         $user->setPassword('hashed-password');
-        $user->setRoles(['ROLE_ADMIN']);
+        $user->setRoles(['ROLE_ADMIN', 'ROLE_EDITOR']);
+
+        $this->testToken = bin2hex(random_bytes(32));
+        $user->apiToken = $this->testToken;
 
         $this->em->persist($user);
         $this->em->flush();
@@ -158,7 +165,7 @@ final class RepurposeStudioControllerTest extends WebTestCase
 
         $spec = $this->validSpec();
         $spec['slides'] = [['title' => 'A brand new headline', 'image' => ['media' => '1.jpg']]];
-        $this->postJson('/admin/repurpose/studio/'.$post->id.'/save', $spec);
+        $this->saveSpec($post, $spec);
 
         self::assertSame(Response::HTTP_OK, $this->client->getResponse()->getStatusCode());
 
@@ -170,6 +177,76 @@ final class RepurposeStudioControllerTest extends WebTestCase
         $firstSlide = $slides[0] ?? null;
         self::assertIsArray($firstSlide);
         self::assertSame('A brand new headline', $firstSlide['title']);
+    }
+
+    public function testStudioAndApiRejectStaleEditsAndShareTheCurrentRevision(): void
+    {
+        $post = $this->persistPost();
+        $studio = '/admin/repurpose/studio/'.$post->id;
+        $api = '/api/repurpose/'.self::HOST.'/'.$post->network.'/'.$post->page;
+        $revision = $post->revision();
+        $headers = ['HTTP_AUTHORIZATION' => 'Bearer '.$this->testToken, 'CONTENT_TYPE' => 'application/json'];
+
+        $this->client->request(Request::METHOD_GET, $studio.'/revision');
+        self::assertResponseIsSuccessful();
+        self::assertSame($revision, $this->responseJson()['revision']);
+        self::assertTrue($this->client->getResponse()->headers->hasCacheControlDirective('no-store'));
+
+        $editorSpec = [...$this->validSpec(), 'slides' => [['title' => 'Studio headline']]];
+        $this->postJson($studio.'/save', $editorSpec);
+        self::assertResponseStatusCodeSame(Response::HTTP_PRECONDITION_REQUIRED);
+        $saved = $this->postJson($studio.'/save', $editorSpec, $revision);
+        self::assertResponseIsSuccessful();
+        self::assertIsString($saved['revision']);
+        self::assertNotSame($revision, $saved['revision']);
+
+        $agentSpec = [...$this->validSpec(), 'caption' => 'Agent caption'];
+        $this->client->request(Request::METHOD_PUT, $api, server: [...$headers, 'HTTP_IF_MATCH' => $revision], content: (string) json_encode($agentSpec));
+        self::assertResponseStatusCodeSame(Response::HTTP_CONFLICT);
+        $conflict = $this->responseJson();
+        self::assertSame('revision_mismatch', $conflict['error']);
+        self::assertSame($revision, $conflict['your_revision']);
+        self::assertSame($saved['revision'], $conflict['current_revision']);
+        self::assertIsArray($conflict['current']);
+        self::assertSame($editorSpec, $conflict['current']['spec']);
+
+        $merged = [...$editorSpec, 'caption' => 'Agent caption'];
+        $this->client->request(Request::METHOD_PUT, $api, server: [...$headers, 'HTTP_IF_MATCH' => $saved['revision']], content: (string) json_encode($merged));
+        self::assertResponseIsSuccessful();
+        $updated = $this->responseJson()['revision'];
+        self::assertNotSame($saved['revision'], $updated);
+
+        $this->client->request(Request::METHOD_GET, $studio.'/revision');
+        self::assertSame($updated, $this->responseJson()['revision']);
+        $this->postJson($studio.'/save', $editorSpec, $saved['revision']);
+        self::assertResponseStatusCodeSame(Response::HTTP_CONFLICT);
+
+        $this->client->request(Request::METHOD_GET, $api, server: $headers);
+        self::assertSame($merged, $this->responseJson()['spec']);
+    }
+
+    public function testWritesAreGuardedEvenWhenAnotherWriterSavesAfterTheRead(): void
+    {
+        $post = $this->persistPost();
+        $otherEditor = new EntityManager($this->em->getConnection(), $this->em->getConfiguration());
+        $stale = $otherEditor->find(SocialPost::class, $post->id);
+        self::assertInstanceOf(SocialPost::class, $stale);
+
+        $latestSpec = [...$post->spec, 'caption' => 'First saved caption'];
+        $post->spec = $latestSpec;
+        $this->em->flush();
+
+        self::assertFalse($this->em->getRepository(SocialPost::class)->deleteAtVersion($stale));
+
+        $stale->spec = [...$stale->spec, 'caption' => 'Stale caption'];
+
+        try {
+            $otherEditor->flush();
+            self::fail('A stale carousel was saved.');
+        } catch (OptimisticLockException) {
+            $this->em->refresh($post);
+            self::assertSame($latestSpec, $post->spec);
+        }
     }
 
     public function testMotionExampleOpensWithAPlayableVideoAndStaticSlides(): void
@@ -215,13 +292,13 @@ final class RepurposeStudioControllerTest extends WebTestCase
     {
         $post = $this->persistPost();
         $spec = [...$this->validSpec(), 'video' => 'repurpose-nord.mp4'];
-        $this->postJson('/admin/repurpose/studio/'.$post->id.'/save', $spec);
+        $this->saveSpec($post, $spec);
         self::assertResponseIsSuccessful();
         $saved = $this->em->find(SocialPost::class, $post->id);
         self::assertInstanceOf(SocialPost::class, $saved);
         self::assertSame('repurpose-nord.mp4', $saved->spec['video']);
 
-        $this->postJson('/admin/repurpose/studio/'.$post->id.'/save', $this->validSpec());
+        $this->saveSpec($post, $this->validSpec());
         self::assertResponseIsSuccessful();
         $saved = $this->em->find(SocialPost::class, $post->id);
         self::assertInstanceOf(SocialPost::class, $saved);
@@ -260,7 +337,7 @@ final class RepurposeStudioControllerTest extends WebTestCase
         $spec = $this->validSpec();
         $spec['page'] = 'blog/some-other-page';
         $spec['network'] = 'instagram'; // ignored — network is fixed, switched via its own route
-        $this->postJson('/admin/repurpose/studio/'.$post->id.'/save', $spec);
+        $this->saveSpec($post, $spec);
 
         self::assertSame(Response::HTTP_OK, $this->client->getResponse()->getStatusCode());
 
@@ -285,7 +362,7 @@ final class RepurposeStudioControllerTest extends WebTestCase
 
         $spec = $this->validSpec();
         $spec['page'] = 'blog/occupied';
-        $body = $this->postJson('/admin/repurpose/studio/'.$post->id.'/save', $spec);
+        $body = $this->saveSpec($post, $spec);
 
         self::assertSame(Response::HTTP_UNPROCESSABLE_ENTITY, $this->client->getResponse()->getStatusCode());
         self::assertNotEmpty($body['violations']);
@@ -361,7 +438,7 @@ final class RepurposeStudioControllerTest extends WebTestCase
         $edited = $this->validSpec();
         unset($edited['page']);
         $edited['slides'] = [['title' => 'Edited standalone']];
-        $this->postJson('/admin/repurpose/studio/'.$post->id.'/save', $edited);
+        $this->saveSpec($post, $edited);
 
         self::assertSame(Response::HTTP_OK, $this->client->getResponse()->getStatusCode());
 
@@ -377,7 +454,7 @@ final class RepurposeStudioControllerTest extends WebTestCase
         // A linkedin post cannot use an instagram-only format.
         $spec = $this->validSpec();
         $spec['format'] = 'instagram-4-5';
-        $body = $this->postJson('/admin/repurpose/studio/'.$post->id.'/save', $spec);
+        $body = $this->saveSpec($post, $spec);
 
         self::assertSame(Response::HTTP_UNPROCESSABLE_ENTITY, $this->client->getResponse()->getStatusCode());
         self::assertNotEmpty($body['violations']);
@@ -630,11 +707,11 @@ final class RepurposeStudioControllerTest extends WebTestCase
     {
         $post = $this->persistPost();
         $audio = ['voice' => ['media' => 'voice.wav', 'volume' => 0, 'fadeIn' => 0.2], 'music' => ['media' => 'music.mp3', 'volume' => 0.3, 'fadeOut' => 2], 'ducking' => false];
-        $this->postJson('/admin/repurpose/studio/'.$post->id.'/save', [...$this->validSpec(), 'audio' => $audio]);
+        $this->saveSpec($post, [...$this->validSpec(), 'audio' => $audio]);
         self::assertResponseIsSuccessful();
         self::assertSame($audio, $this->em->find(SocialPost::class, $post->id)?->spec['audio']);
         unset($audio['voice']);
-        $this->postJson('/admin/repurpose/studio/'.$post->id.'/save', [...$this->validSpec(), 'audio' => $audio]);
+        $this->saveSpec($post, [...$this->validSpec(), 'audio' => $audio]);
         self::assertResponseIsSuccessful();
         self::assertSame($audio, $this->em->find(SocialPost::class, $post->id)?->spec['audio']);
     }
@@ -888,10 +965,31 @@ final class RepurposeStudioControllerTest extends WebTestCase
      *
      * @return array<string, mixed>
      */
-    private function postJson(string $url, array $body): array
+    private function saveSpec(SocialPost $post, array $body): array
     {
-        $this->client->request(Request::METHOD_POST, $url, [], [], ['CONTENT_TYPE' => 'application/json'], (string) json_encode($body));
+        return $this->postJson('/admin/repurpose/studio/'.$post->id.'/save', $body, $post->revision());
+    }
 
+    /**
+     * @param array<string, mixed> $body
+     *
+     * @return array<string, mixed>
+     */
+    private function postJson(string $url, array $body, ?string $revision = null): array
+    {
+        $headers = ['CONTENT_TYPE' => 'application/json'];
+        if (null !== $revision) {
+            $headers['HTTP_IF_MATCH'] = $revision;
+        }
+
+        $this->client->request(Request::METHOD_POST, $url, [], [], $headers, (string) json_encode($body));
+
+        return $this->responseJson();
+    }
+
+    /** @return array<string, mixed> */
+    private function responseJson(): array
+    {
         $decoded = json_decode((string) $this->client->getResponse()->getContent(), true);
         if (! \is_array($decoded)) {
             return [];

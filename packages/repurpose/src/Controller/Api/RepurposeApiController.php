@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 namespace Pushword\Repurpose\Controller\Api;
 
+use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\ORM\OptimisticLockException;
+use Doctrine\Persistence\ManagerRegistry;
 use Pushword\Api\Controller\AbstractApiController;
 use Pushword\Repurpose\Entity\SocialPost;
 use Pushword\Repurpose\Repository\SocialPostRepository;
@@ -51,6 +54,7 @@ final class RepurposeApiController extends AbstractApiController
         private readonly FontResolver $fontResolver,
         private readonly SocialPostRepository $repository,
         private readonly EntityManagerInterface $entityManager,
+        private readonly ManagerRegistry $doctrine,
         private readonly SlideRenderer $renderer,
         private readonly CreatorResolverInterface $creatorResolver,
         private readonly ContrastAdvisor $contrastAdvisor,
@@ -109,12 +113,23 @@ final class RepurposeApiController extends AbstractApiController
             return $this->notFound('Carousel not found.');
         }
 
-        return $this->respond($this->payload($post));
+        return $this->respond($this->payload($post), headers: ['ETag' => $post->revision()]);
     }
 
     #[Route(path: '/api/repurpose/{host}/{network}/{page}', name: 'pushword_api_repurpose_put', requirements: ['host' => '[^/]+', 'network' => '[a-z]+', 'page' => Requirement::CATCH_ALL], methods: ['PUT', 'PATCH'])]
     public function upsert(Request $request, string $host, string $network, string $page): JsonResponse
     {
+        $post = $this->repository->findOneByKey($host, $page, $network);
+        $created = ! $post instanceof SocialPost;
+        if ($post instanceof SocialPost) {
+            $conflict = $this->checkIfMatch($request, $post->revision(), fn (): array => $this->payload($post));
+            if ($conflict instanceof JsonResponse) {
+                return $conflict;
+            }
+        } elseif ($request->headers->has('If-Match')) {
+            return $this->notFound('Carousel not found.');
+        }
+
         $spec = $this->decodeJson($request);
         // The natural key from the route is authoritative.
         $spec['page'] = $page;
@@ -127,13 +142,27 @@ final class RepurposeApiController extends AbstractApiController
             return $this->validationErrors($violations);
         }
 
-        $post = $this->repository->findOneByKey($host, $page, $network) ?? new SocialPost();
-        $created = null === $post->id;
+        $post ??= new SocialPost();
         $post->host = $host;
         $post->spec = $spec;
 
-        $this->entityManager->persist($post);
-        $this->entityManager->flush();
+        try {
+            $this->entityManager->persist($post);
+            $this->entityManager->flush();
+        } catch (OptimisticLockException) {
+            $current = $this->doctrine->resetManager()->find(SocialPost::class, $post->id);
+
+            return $this->writeConflict($request, $current);
+        } catch (UniqueConstraintViolationException $exception) {
+            if (! $created) {
+                throw $exception;
+            }
+
+            $current = $this->doctrine->resetManager()->getRepository(SocialPost::class)
+                ->findOneBy(['host' => $host, 'page' => $page, 'network' => $network]);
+
+            return $this->writeConflict($request, $current);
+        }
 
         // Echo the persisted slide count and the proof URLs so the agent can
         // confirm and eyeball its work without a follow-up GET.
@@ -143,6 +172,7 @@ final class RepurposeApiController extends AbstractApiController
                 'page' => $page,
                 'network' => $network,
                 'status' => $post->status,
+                'revision' => $post->revision(),
                 'warnings' => [
                     ...$this->contrastAdvisor->warnings($carousel),
                     ...$this->creatorAdvisor->warnings($carousel, $host),
@@ -150,21 +180,42 @@ final class RepurposeApiController extends AbstractApiController
                 ...$this->urls($post, \count($carousel->slides)),
             ],
             $created ? Response::HTTP_CREATED : Response::HTTP_OK,
+            ['ETag' => $post->revision()],
         );
     }
 
     #[Route(path: '/api/repurpose/{host}/{network}/{page}', name: 'pushword_api_repurpose_delete', requirements: ['host' => '[^/]+', 'network' => '[a-z]+', 'page' => Requirement::CATCH_ALL], methods: ['DELETE'])]
-    public function delete(string $host, string $network, string $page): JsonResponse
+    public function delete(Request $request, string $host, string $network, string $page): JsonResponse
     {
         $post = $this->repository->findOneByKey($host, $page, $network);
         if (! $post instanceof SocialPost) {
             return $this->notFound('Carousel not found.');
         }
 
-        $this->entityManager->remove($post);
-        $this->entityManager->flush();
+        $conflict = $this->checkIfMatch($request, $post->revision(), fn (): array => $this->payload($post));
+        if ($conflict instanceof JsonResponse) {
+            return $conflict;
+        }
+
+        if (! $this->repository->deleteAtVersion($post)) {
+            return $this->writeConflict($request, $this->repository->find($post->id));
+        }
 
         return $this->noContent();
+    }
+
+    private function writeConflict(Request $request, ?SocialPost $current): JsonResponse
+    {
+        if (! $current instanceof SocialPost) {
+            return $this->notFound('Carousel not found.');
+        }
+
+        return $this->respond([
+            'error' => 'revision_mismatch',
+            'your_revision' => $request->headers->get('If-Match'),
+            'current_revision' => $current->revision(),
+            'current' => $this->payload($current),
+        ], Response::HTTP_CONFLICT);
     }
 
     #[Route(path: '/api/repurpose/{id}/slide-{n}.svg', name: 'pushword_api_repurpose_slide', requirements: ['id' => '\d+', 'n' => '\d+'], methods: ['GET'])]
@@ -240,6 +291,7 @@ final class RepurposeApiController extends AbstractApiController
             'format' => $post->format,
             'status' => $post->status,
             'plannedAt' => $post->plannedAt?->format(\DATE_ATOM),
+            'revision' => $post->revision(),
             'spec' => $spec,
             ...$this->urls($post, $slideCount),
         ];
@@ -279,6 +331,25 @@ final class RepurposeApiController extends AbstractApiController
      */
     public static function describe(): array
     {
+        $ifMatch = ['name' => 'If-Match', 'in' => 'header', 'schema' => ['type' => 'string']];
+        $conflicts = [
+            '409' => ['description' => 'Revision mismatch. Reapply your changes to current.spec using current_revision.'],
+            '428' => ['description' => 'Missing If-Match header for an existing carousel'],
+        ];
+        $write = [
+            'summary' => 'Create or replace a carousel',
+            'description' => 'Send the full spec. For an existing carousel, apply your changes to the latest spec and send its ETag as If-Match. The response includes the saved revision and proof URLs.',
+            'tags' => ['Repurpose'],
+            'parameters' => [[...$ifMatch, 'required' => false, 'description' => 'Required when updating an existing carousel']],
+            'requestBody' => ['required' => true, 'content' => ['application/json' => ['schema' => ['type' => 'object']]]],
+            'responses' => [
+                '200' => ['description' => 'Updated'],
+                '201' => ['description' => 'Created'],
+                '404' => ['description' => 'Carousel addressed by If-Match no longer exists'],
+                '422' => ['description' => 'Validation errors'],
+            ] + $conflicts,
+        ];
+
         return [
             'paths' => [
                 '/api/repurpose/schema' => ['get' => [
@@ -298,9 +369,15 @@ final class RepurposeApiController extends AbstractApiController
                     'responses' => ['200' => ['description' => 'Valid (may carry warnings)'], '422' => ['description' => 'Validation errors']],
                 ]],
                 '/api/repurpose/{host}/{network}/{page}' => [
-                    'get' => ['summary' => 'Read a carousel (spec, slide count, studio/preview/slide URLs)', 'tags' => ['Repurpose'], 'responses' => ['200' => ['description' => 'Carousel'], '404' => ['description' => 'Not found']]],
-                    'put' => ['summary' => 'Create or replace a carousel; echoes the persisted slide count, warnings and proof URLs', 'tags' => ['Repurpose'], 'responses' => ['200' => ['description' => 'Updated'], '201' => ['description' => 'Created'], '422' => ['description' => 'Validation errors']]],
-                    'delete' => ['summary' => 'Delete a carousel', 'tags' => ['Repurpose'], 'responses' => ['204' => ['description' => 'Deleted'], '404' => ['description' => 'Not found']]],
+                    'get' => ['summary' => 'Read a carousel (spec, revision, slide count, studio/preview/slide URLs)', 'tags' => ['Repurpose'], 'responses' => ['200' => ['description' => 'Carousel with its ETag'], '404' => ['description' => 'Not found']]],
+                    'put' => $write,
+                    'patch' => $write,
+                    'delete' => [
+                        'summary' => 'Delete a carousel at its current revision',
+                        'tags' => ['Repurpose'],
+                        'parameters' => [[...$ifMatch, 'required' => true]],
+                        'responses' => ['204' => ['description' => 'Deleted'], '404' => ['description' => 'Not found']] + $conflicts,
+                    ],
                 ],
                 '/api/repurpose/{id}/slide-{n}.svg' => ['get' => [
                     'summary' => 'Render a slide to a self-contained SVG',

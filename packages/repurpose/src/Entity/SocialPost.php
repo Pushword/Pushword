@@ -39,6 +39,10 @@ class SocialPost implements IdInterface, Stringable
     use IdTrait;
     use TimestampableTrait;
 
+    #[ORM\Version]
+    #[ORM\Column(type: Types::INTEGER, options: ['default' => 1])]
+    public private(set) int $version = 1;
+
     #[ORM\Column(type: Types::STRING, length: 255)]
     public string $page = '';
 
@@ -80,6 +84,11 @@ class SocialPost implements IdInterface, Stringable
     public function __construct()
     {
         $this->initTimestampableProperties();
+    }
+
+    public function revision(): string
+    {
+        return '"'.$this->id.'-'.$this->version.'"';
     }
 
     public function __toString(): string

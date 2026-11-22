@@ -174,7 +174,7 @@ retrieve its current spec first and preserve fields outside the requested edit.
      --data-binary @spec.json "$PUSHWORD_URL/api/repurpose/validate"
    ```
 
-4. Save the draft, using the same network and page as the spec:
+4. Create the draft, using the same network and page as the spec:
 
    ```sh
    NETWORK=$(node -p "require('./spec.json').network")
@@ -183,6 +183,10 @@ retrieve its current spec first and preserve fields outside the requested edit.
      --data-binary @spec.json \
      "$PUSHWORD_URL/api/repurpose/$PUSHWORD_HOST/$NETWORK/standalone/my-reel" > post.json
    ```
+
+   To update an existing carousel, follow the
+   [carousel revision workflow](carousel.md#the-loop). Apply the requested edits
+   to the latest stored spec and include its revision in `If-Match`.
 
    Confirm the returned slide count and warnings, then GET the same URL and
    verify `spec.video` matches the upload's filename. Open the returned

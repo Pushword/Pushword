@@ -61,6 +61,10 @@ for one carousel or a list filtered to that page and host for several.
 Choose **Preview** to enlarge the cover or **Studio** to edit it. The studio's
 source card links back to the page editor; standalone carousels have no source.
 
+The Studio alerts you when another user or an agent saves the carousel. If you
+have unsaved edits, open the latest version in a new tab to review and reapply
+them. The original tab keeps your draft and blocks saves against the old revision.
+
 ## Author with an agent
 
 There is no LLM inside the package. An agent writes the spec against a published
@@ -75,15 +79,25 @@ schema and validates it — free, with whatever model you already use.
 3. `POST /api/repurpose/validate` — validate a spec, get precise
    `{path, message}` violations (overflow, out-of-bounds crop, disallowed format…)
    plus non-blocking `warnings` (e.g. text/background contrast below WCAG AA).
-4. `PUT /api/repurpose/{host}/{network}/{page}` — save it. The response echoes the
-   persisted slide count, the warnings, and `studioUrl` / `previewUrl` /
-   `slideUrls` so the result can be confirmed and eyeballed without a follow-up GET.
+4. `PUT /api/repurpose/{host}/{network}/{page}` saves the full spec. The response
+   includes the new revision, slide count, warnings and proof URLs
+   (`studioUrl`, `previewUrl`, `slideUrls`).
 5. `GET /api/repurpose/{id}/preview.png` — the whole deck as one contact-sheet
    PNG, slides sized to the network's **mobile feed width** (`feedMobile` in
    `/api/repurpose/networks`, e.g. ~390px, Pinterest's two-column grid ~186px) so
    text legibility is judged at the realistic worst case. Needs Chromium on the
    host; without it, a 501 points back at the SVGs.
    Or `GET /api/repurpose/{id}/slide-{n}.svg` for one slide.
+
+Before editing an existing carousel, GET the same URL and apply your changes
+to its `spec`. Send the returned `ETag` (also available as `revision`) verbatim in
+the `If-Match` header on PUT or PATCH, including the quotes. Both methods replace
+the full spec. If someone saved in the meantime, the API returns `409` with
+`current.spec` and `current_revision`. Review the latest spec, preserve any
+intervening edits, then retry with the new revision. Ask the editor which
+version to keep when both edits touch the same field. A missing header on an
+existing carousel returns `428`. Use a headerless PUT to create a new carousel.
+DELETE also requires the current revision.
 
 The [`pw` ai-skill](https://github.com/Pushword/Pushword/tree/main/packages/ai-skills)
 ships a `carousel` playbook for exactly this loop.
@@ -351,7 +365,7 @@ images and attaching the MP4. Keep editable projects outside `vendor/`.
 For API delivery, upload `out/video.mp4` using
 [`POST /api/media/{filename}`](/media-api#multipart-file-upload). Set `video` to
 the response's `filename`, which may differ after renaming or deduplication.
-Validate and PUT the updated spec through the Repurpose API, then open its
+Validate and PUT the updated spec using the revision workflow above, then open its
 returned `studioUrl`. Saving a draft does not publish to a social network.
 
 The development fixtures reuse this example's spec and include its rendered MP4

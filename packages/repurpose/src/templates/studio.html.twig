@@ -215,6 +215,10 @@
     .notice { display: flex; align-items: flex-start; gap: .5rem; font-size: .74rem; color: var(--warn); background: #fef3c7; border: 1px solid #fde68a; border-radius: 8px; padding: .55rem .65rem; line-height: 1.4; }
     .notice span { flex: 1; }
     .notice .icon-btn { flex: 0 0 auto; width: 1.5rem; height: 1.5rem; }
+    .has-sync-notice { flex-wrap: wrap; }
+    .has-sync-notice + .layout .deck-wrap { position: static; }
+    .studio-sync { flex: 1 0 100%; flex-wrap: wrap; align-items: center; font-size: .82rem; }
+    .studio-sync > span { min-width: min(100%, 19rem); }
 
     .actions { display: flex; gap: .6rem; }
     .actions .btn { flex: 1; }
@@ -336,10 +340,11 @@
     }
   </style>
 </head>
-<body x-data="repurposeStudio()">
+<body x-data="repurposeStudio()" x-on:focus.window="checkRevision()" x-on:visibilitychange.document="checkRevision()">
   <script>
     window.RP_STUDIO = {
       spec: {{ specJs|raw }},
+      revision: {{ post.revision()|json_encode|raw }},
       slides: {{ slidesJs|raw }},
       video: {{ videoJs|raw }},
       messages: {
@@ -363,6 +368,7 @@
       networkUrls: {{ networkUrlsJs|raw }},
       urls: {
         preview: {{ path('repurpose_studio_preview', {id: post.id})|json_encode|raw }},
+        revision: {{ path('repurpose_studio_revision', {id: post.id})|json_encode|raw }},
         save: {{ path('repurpose_studio_save', {id: post.id})|json_encode|raw }},
         export: {{ path('repurpose_studio_export', {id: post.id})|json_encode|raw }},
         exportVideo: {{ path('repurpose_studio_export_video', {id: post.id})|json_encode|raw }},
@@ -375,7 +381,7 @@
     }
   </script>
 
-  <header>
+  <header x-bind:class="{ 'has-sync-notice': syncState }">
     <div class="studio-context">
       <a class="back" href="{{ backUrl }}">← Back</a>
       <h1>Repurpose Studio</h1>
@@ -397,7 +403,16 @@
           <button class="btn" type="button" x-show="network === 'pinterest'" x-cloak @click="pinToPinterest()" :disabled="pinning" x-text="pinLabel">📌 Pin to Pinterest</button>
         </div>
       </details>
-      <button class="btn primary studio-save" type="button" @click="save()" :disabled="saving" x-text="saveLabel">Save</button>
+      <button class="btn primary studio-save" type="button" @click="save()" :disabled="saving || syncState !== ''" x-text="saveLabel">Save</button>
+    </div>
+    <div class="notice studio-sync" x-show="syncState" x-cloak>
+      <span role="alert">
+        <span x-show="syncState === 'changed'">{{ 'repurposeSyncChanged'|trans }}</span>
+        <span x-show="syncState === 'deleted'">{{ 'repurposeSyncDeleted'|trans }}</span>
+        <span x-show="dirty">{{ 'repurposeSyncDraft'|trans }}</span>
+      </span>
+      <a class="btn" x-show="syncState === 'changed' && dirty" href="{{ path('repurpose_studio', {id: post.id}) }}" target="_blank" rel="noopener">{{ 'repurposeSyncOpenLatest'|trans }}</a>
+      <button class="btn" type="button" x-show="syncState === 'changed' && !dirty" x-on:click="window.location.reload()">{{ 'repurposeSyncReload'|trans }}</button>
     </div>
   </header>
 
