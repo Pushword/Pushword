@@ -101,9 +101,9 @@ final class FontPairingRegistry
     }
 
     /**
-     * True when the family headlines at least one pairing. One TTF serves a
-     * family everywhere, so heading families are fetched at weight 700 (headings
-     * must read bold) and body-only families at 400.
+     * True when the family headlines at least one pairing. Its suffix-free TTF
+     * then holds weight 700, the body-only families' weight 400 — see
+     * {@see FontResolver::fileNameFor()}.
      */
     public static function isHeadingFamily(string $family): bool
     {

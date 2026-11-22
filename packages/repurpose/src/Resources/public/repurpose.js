@@ -142,6 +142,7 @@
 
     dropEmptyObject(s, 'palette')
     dropEmptyObject(s, 'counter')
+    dropEmptyObject(s, 'fontPairing')
     if (Array.isArray(s.hashtags) && 0 === s.hashtags.length) {
       delete s.hashtags
     }
@@ -619,6 +620,17 @@
       },
       pickAudio: function (track, mode) {
         this.pickMedia('audio', track, mode)
+      },
+      fontPairingChoice: function () {
+        var pairing = this.spec.fontPairing
+        return pairing && 'object' === typeof pairing ? 'custom' : (pairing || '')
+      },
+      chooseFontPairing: function (value) {
+        this.spec.fontPairing = 'custom' === value ? { heading: '', body: '' } : value
+      },
+      // Options rendered by x-for exist only after this tick.
+      syncSelect: function (el, value) {
+        this.$nextTick(function () { el.value = value })
       },
       clearVideo: function () {
         this.spec.video = ''

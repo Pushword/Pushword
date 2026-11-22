@@ -18,7 +18,16 @@
         "audio": { "$ref": "#/$defs/audioMix", "description": "Independent voice and looping music for new video exports. Does not change an already imported rendered video." },
         "hashtags": { "type": "array", "items": { "type": "string" } },
         "palette": { "$ref": "#/$defs/palette", "description": "Deck-level colour override; any slide may override again." },
-        "fontPairing": { "type": ["string", "null"], "description": "A key from the font-pairing registry (see /api/repurpose/networks, fontPairings). Only pick a pairing whose `installed` is true — an uninstalled one silently falls back to Roboto; `pw:repurpose:fonts <pairing>` installs the missing TTFs. Null inherits site typography." },
+        "fontPairing": {
+            "type": ["string", "object", "null"],
+            "description": "A key from the font-pairing registry (see /api/repurpose/networks, fontPairings), or a custom pairing of any two Google Fonts families: headings render at weight 700, body text at 400. The API and the studio download missing families on validate and save; elsewhere a family not installed is a validation error naming the `pw:repurpose:fonts` command. Null renders in Roboto.",
+            "required": ["heading", "body"],
+            "additionalProperties": false,
+            "properties": {
+                "heading": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9 ]{0,63}$", "description": "Google Fonts family name, e.g. Gabarito." },
+                "body": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9 ]{0,63}$", "description": "Google Fonts family name, e.g. Poppins." }
+            }
+        },
         "counter": { "$ref": "#/$defs/counter" },
         "background": { "enum": ["none", "dots", "rings", "waves", "scales", "chevron", "hexagon", "triangles", "plus", "diamonds", "memphis", "sketchy", "paper"], "default": "none", "description": "Deck-wide decorative effect, authored once and sliced across every slide so a shape continues over a swipe. A slide may override it." },
         "creator": {

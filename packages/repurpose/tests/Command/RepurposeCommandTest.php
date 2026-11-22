@@ -5,9 +5,12 @@ declare(strict_types=1);
 namespace Pushword\Repurpose\Tests\Command;
 
 use PHPUnit\Framework\Attributes\Group;
+use Pushword\Repurpose\Service\FontResolver;
+use Pushword\Repurpose\Tests\GoogleFontsMock;
 use Symfony\Bundle\FrameworkBundle\Console\Application;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Console\Tester\CommandTester;
+use Symfony\Component\Filesystem\Filesystem;
 
 #[Group('integration')]
 final class RepurposeCommandTest extends KernelTestCase
@@ -190,6 +193,64 @@ final class RepurposeCommandTest extends KernelTestCase
         self::assertIsArray($decoded['alreadyPresent']);
         self::assertContains('Playfair Display', $decoded['alreadyPresent']);
         self::assertContains('Chivo', $decoded['alreadyPresent']);
+    }
+
+    public function testFontsCommandInstallsCustomFamiliesAtTheWeightOfTheirRole(): void
+    {
+        $kernel = self::bootKernel();
+        $google = new GoogleFontsMock(unknown: ['Nope']);
+        self::getContainer()->set('http_client', $google->client());
+        $fonts = self::getContainer()->get(FontResolver::class);
+        $tester = new CommandTester(new Application($kernel)->find('pw:repurpose:fonts'));
+        $run = static function (array $input) use ($tester): array {
+            $tester->execute([...$input, '--format' => 'agent']);
+            $decoded = json_decode(trim($tester->getDisplay()), true, flags: \JSON_THROW_ON_ERROR);
+            self::assertIsArray($decoded);
+
+            return $decoded;
+        };
+
+        try {
+            $decoded = $run(['--heading' => 'Gabarito', '--body' => 'Poppins']);
+            self::assertSame(0, $tester->getStatusCode());
+            self::assertSame(['Gabarito', 'Poppins'], $decoded['installed']);
+            self::assertFileExists($fonts->installDir().'/gabarito-700.ttf');
+            self::assertFileExists($fonts->installDir().'/poppins-400.ttf', 'body text never borrows the bold bundled poppins.ttf');
+            self::assertCount(4, $google->takeRequests(), 'a stylesheet and a TTF per face');
+
+            $decoded = $run(['--heading' => 'Gabarito', '--body' => 'Poppins']);
+            self::assertSame(['Gabarito', 'Poppins'], $decoded['alreadyPresent']);
+            self::assertSame([], $google->takeRequests(), 'nothing fetched twice');
+
+            $decoded = $run(['--heading' => 'Nope', '--body' => 'Bad/Name']);
+            self::assertSame(1, $tester->getStatusCode());
+            self::assertSame([
+                ['pairing' => '--body', 'reason' => 'invalid family name "Bad/Name"'],
+                ['pairing' => '--heading', 'reason' => 'download failed for "Nope"'],
+            ], $decoded['failed']);
+            self::assertCount(2, $google->takeRequests(), 'only Nope, weighted then unweighted: a malformed name never reaches Google');
+        } finally {
+            new Filesystem()->remove($fonts->installDir());
+        }
+    }
+
+    public function testValidateNamesTheCommandThatInstallsAMissingFont(): void
+    {
+        $path = $this->fileWith('{"page":"blog/x","network":"linkedin","format":"linkedin-4-5",'
+            .'"fontPairing":{"heading":"Gabarito","body":"Inter"},"slides":[{"title":"Hello"}]}');
+        $tester = $this->tester('pw:repurpose:validate');
+        $tester->execute(['path' => $path, '--format' => 'agent']);
+
+        self::assertSame(1, $tester->getStatusCode(), 'the command line never downloads');
+        $decoded = json_decode(trim($tester->getDisplay()), true, flags: \JSON_THROW_ON_ERROR);
+        self::assertIsArray($decoded);
+        self::assertIsArray($decoded['issues']);
+        $issue = $decoded['issues'][0] ?? null;
+        self::assertIsArray($issue);
+        self::assertSame('fontPairing.heading', $issue['path']);
+        self::assertIsString($issue['message']);
+        self::assertStringContainsString('pw:repurpose:fonts --heading="Gabarito"', $issue['message']);
+        unlink($path);
     }
 
     public function testValidateAgentOutputCarriesContrastWarnings(): void

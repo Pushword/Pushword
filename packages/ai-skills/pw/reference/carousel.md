@@ -18,9 +18,10 @@ for LinkedIn).
    - `GET /api/repurpose/schema` — the exact JSON shape (keys, enums, ranges).
    - `GET /api/repurpose/networks` — formats (id → ratio/pixels), per-network
      **hard limits** (errors) vs **guidance** (advice), and font pairings.
-     **Only pick a pairing whose `installed` is true** — an uninstalled one
-     silently renders in Roboto; `bin/console pw:repurpose:fonts <pairing>`
-     installs the missing TTFs.
+     For a brand typography outside the registry, pair any two Google Fonts
+     families: `"fontPairing": {"heading": "Gabarito", "body": "Poppins"}`. The
+     API downloads missing families on validate; on the command line, a missing
+     font fails validation with the `pw:repurpose:fonts` command to run.
    Or on a flat-file site: `bin/console pw:repurpose:schema`.
 4. **Write the spec** (shape below). Keep titles short — the renderer shrinks text
    to fit, but a wall of text still reads badly.
@@ -113,8 +114,9 @@ Key rules (the schema is the source of truth — always fetch it):
 - Do not carry your own brand voice — read the project's rules.
 - Do not skip validation. The whole value is catching overflow/crop errors before
   a single pixel is rendered.
-- Do not invent format ids, network names, or font pairings — enumerate them from
-  `/api/repurpose/networks`.
+- Do not invent format ids, network names, or registry font pairings — enumerate
+  them from `/api/repurpose/networks`. A custom pairing names real Google Fonts
+  families.
 
 ## Detect the project shape
 

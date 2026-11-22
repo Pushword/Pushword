@@ -7,6 +7,7 @@ namespace Pushword\Repurpose\Tests\Service;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
 use Pushword\Repurpose\Model\Creator;
+use Pushword\Repurpose\Model\FontPairing;
 use Pushword\Repurpose\Service\CarouselFactory;
 
 #[Group('integration')]
@@ -144,5 +145,21 @@ final class CarouselFactoryTest extends TestCase
         self::assertSame('Guest', $inline->role);
         self::assertNull($inline->avatar);
         self::assertSame('business', $inline->type);
+    }
+
+    public function testFontPairingAcceptsAKeyOrACustomPairOfFamilies(): void
+    {
+        $base = ['page' => 'x', 'network' => 'linkedin', 'format' => 'linkedin-4-5', 'slides' => [['title' => 'Hi']]];
+        $factory = new CarouselFactory();
+
+        self::assertSame('poppins-inter', $factory->fromArray([...$base, 'fontPairing' => 'poppins-inter'])->fontPairing);
+        self::assertNull($factory->fromArray([...$base, 'fontPairing' => ''])->fontPairing);
+        self::assertNull($factory->fromArray([...$base, 'fontPairing' => 42])->fontPairing);
+
+        $custom = $factory->fromArray([...$base, 'fontPairing' => ['heading' => ' Gabarito ', 'body' => 'Poppins']])->fontPairing;
+        self::assertEquals(new FontPairing('Gabarito', 'Poppins'), $custom, 'family names are trimmed');
+
+        $partial = $factory->fromArray([...$base, 'fontPairing' => ['heading' => 'Gabarito']])->fontPairing;
+        self::assertEquals(new FontPairing('Gabarito', ''), $partial, 'kept, so the validator names the missing family');
     }
 }

@@ -69,7 +69,7 @@ schema and validates it — free, with whatever model you already use.
 1. `GET /api/repurpose/schema` — the JSON shape (keys, enums, ranges).
 2. `GET /api/repurpose/networks` — formats (ratio/pixels), per-network **hard
    limits** (errors) vs **guidance** (advice), and font pairings — each with an
-   `installed` flag; only pick installed ones (the rest fall back to Roboto).
+   `installed` flag. Validation through the API downloads a missing pairing.
    Pinterest models an organic image Pin: it requires exactly one 2:3 slide and
    a non-empty caption. Multiple frames belong in a video Pin or paid carousel ad.
 3. `POST /api/repurpose/validate` — validate a spec, get precise
@@ -117,6 +117,7 @@ bin/console pw:repurpose:render spec.json out/  # render to out/slide-1.svg …
 bin/console pw:repurpose:motion spec.json video/ # export an editable HyperFrames project
 bin/console pw:repurpose:fonts                  # list font pairings + installed status
 bin/console pw:repurpose:fonts bebas-neue-lato  # install a pairing's TTFs (or --all)
+bin/console pw:repurpose:fonts --heading=Gabarito --body=Poppins # any Google Fonts families
 ```
 
 All emit compact JSON when run by an AI agent (`--format=agent`).
@@ -149,13 +150,25 @@ follows the slide's layout, align or text-scale controls.
 
 ## Fonts
 
-Six pairings ship with the package (DM Serif Display+DM Sans, Playfair+Chivo,
-Montserrat+Work Sans, Poppins+Inter, Anton+Roboto, Lora+Ubuntu); the other ~45 —
-all Google Fonts — are installed on demand with `pw:repurpose:fonts <pairing>`
-into `repurpose.font_dir` (default `var/repurpose/fonts`, outside `vendor/`). A pairing
-not installed falls back to Roboto — check the `installed` flag in
-`GET /api/repurpose/networks` or `pw:repurpose:fonts`. Fonts must be local: text is
-measured with `imagettfbbox`, and a rasterised SVG cannot fetch remote resources.
+`fontPairing` names a registry pairing, or pairs any two Google Fonts families:
+
+```json
+"fontPairing": { "heading": "Gabarito", "body": "Poppins" }
+```
+
+Headings render at weight 700, body text at 400. Six registry pairings ship with
+the package (DM Serif Display+DM Sans, Playfair+Chivo, Montserrat+Work Sans,
+Poppins+Inter, Anton+Roboto, Lora+Ubuntu); every other family is downloaded from
+Google Fonts into `repurpose.font_dir` (default `var/repurpose/fonts`, outside
+`vendor/`), which then caches it: a font on disk is never fetched again.
+
+The studio downloads missing families when it opens a post, previews or saves it, and
+so does the API on `validate` and `PUT`; rendering never makes a network call. On the
+command line, a font not installed is a validation error naming the command that
+installs it: `pw:repurpose:fonts <pairing>` or `pw:repurpose:fonts --heading=… --body=…`.
+`var/` is not versioned, so each machine downloads its fonts once. Fonts must be
+local: text is measured with `imagettfbbox`, and a rasterised SVG cannot fetch remote
+resources.
 
 ## Legibility
 

@@ -1,5 +1,5 @@
 ---
-title: 'repurpose rejects slide images missing from the media library; contrast warnings name the text field'
+title: 'repurpose rejects slide images missing from the media library and fonts not installed; contrast warnings name the text field'
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -35,7 +35,7 @@ belongs in the feature doc, which you link to instead.
 Several changes land here between two tags: append to the file, do not replace it.
 -->
 
-**Concerns:** pushword/repurpose
+**Concerns:** `pushword/repurpose`
 
 ## Slide images must exist in the media library
 
@@ -48,3 +48,12 @@ violation: pick an existing one before saving.
 Warnings now cover the tagline, free texts and highlights, with paths such as
 `slides[0].title` or `slides[0].texts[1]` instead of `slides[0]`. Update any
 script that matches the old path.
+
+## Fonts not installed fail validation
+
+A font pairing whose files are missing is now a validation error, no longer a
+silent Roboto fallback. The studio and the API download missing Google Fonts
+families themselves. **Sites validating on the command line:** run the command
+the error names, `pw:repurpose:fonts <pairing>` or `--heading=… --body=…`.
+Pairings that set a heading family as body text (`abril-fatface-poppins`,
+`merriweather-lora`…) now download its regular weight instead of rendering it bold.

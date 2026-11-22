@@ -12,9 +12,12 @@ use Pushword\Core\Entity\Page;
 use Pushword\Core\Entity\User;
 use Pushword\Core\Tests\PathTrait;
 use Pushword\Repurpose\Entity\SocialPost;
+use Pushword\Repurpose\Model\FontPairing;
 use Pushword\Repurpose\Service\AudioAssetResolver;
 use Pushword\Repurpose\Service\CarouselFactory;
+use Pushword\Repurpose\Service\FontResolver;
 use Pushword\Repurpose\Service\VideoBuilder;
+use Pushword\Repurpose\Tests\GoogleFontsMock;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\Filesystem\Filesystem;
@@ -789,6 +792,51 @@ final class RepurposeStudioControllerTest extends WebTestCase
         $bytes = ob_get_clean();
 
         return 'data:image/png;base64,'.base64_encode($bytes);
+    }
+
+    public function testPreviewDownloadsTheMissingFamiliesOfACustomFontPairing(): void
+    {
+        $google = new GoogleFontsMock(unknown: ['Nope']);
+        self::getContainer()->set('http_client', $google->client());
+        $fonts = self::getContainer()->get(FontResolver::class);
+        $post = $this->persistPost();
+
+        try {
+            $body = $this->postJson('/admin/repurpose/studio/'.$post->id.'/preview', [...$this->validSpec(), 'fontPairing' => ['heading' => 'Gabarito', 'body' => 'Poppins']]);
+            self::assertResponseIsSuccessful();
+            self::assertIsArray($body['slides'] ?? null);
+            self::assertTrue($fonts->isInstalled(new FontPairing('Gabarito', 'Poppins')));
+            self::assertCount(4, $google->takeRequests(), 'two faces, a stylesheet and a TTF each');
+
+            $this->postJson('/admin/repurpose/studio/'.$post->id.'/preview', [...$this->validSpec(), 'fontPairing' => ['heading' => 'Gabarito', 'body' => 'Poppins']]);
+            self::assertSame([], $google->takeRequests(), 'served from the font dir from then on');
+
+            $body = $this->postJson('/admin/repurpose/studio/'.$post->id.'/preview', [...$this->validSpec(), 'fontPairing' => ['heading' => 'Nope', 'body' => 'Poppins']]);
+            self::assertResponseStatusCodeSame(Response::HTTP_UNPROCESSABLE_ENTITY);
+            self::assertIsArray($body['violations'] ?? null);
+            self::assertSame(['fontPairing.heading'], array_column($body['violations'], 'path'));
+        } finally {
+            new Filesystem()->remove($fonts->installDir());
+        }
+    }
+
+    /**
+     * A spec synced from another machine reaches the studio before its fonts do.
+     */
+    public function testOpeningTheStudioInstallsTheStoredPairing(): void
+    {
+        $google = new GoogleFontsMock();
+        self::getContainer()->set('http_client', $google->client());
+        $fonts = self::getContainer()->get(FontResolver::class);
+        $post = $this->persistPost([...$this->validSpec(), 'fontPairing' => ['heading' => 'Gabarito', 'body' => 'Poppins']]);
+
+        try {
+            $this->client->request(Request::METHOD_GET, '/admin/repurpose/studio/'.$post->id);
+            self::assertResponseIsSuccessful();
+            self::assertTrue($fonts->isInstalled(new FontPairing('Gabarito', 'Poppins')));
+        } finally {
+            new Filesystem()->remove($fonts->installDir());
+        }
     }
 
     /** @param array<string, mixed>|null $spec */

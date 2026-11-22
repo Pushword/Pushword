@@ -179,6 +179,51 @@ final class CarouselValidationTest extends KernelTestCase
         }
     }
 
+    public function testCustomFontPairingOfInstalledFamiliesPasses(): void
+    {
+        self::assertSame([], $this->violations([
+            'page' => 'x', 'network' => 'linkedin', 'format' => 'linkedin-4-5',
+            'fontPairing' => ['heading' => 'Poppins', 'body' => 'Inter'],
+            'slides' => [['title' => 'Hi']],
+        ]));
+    }
+
+    /**
+     * The renderer would silently fall back to Roboto; validation names the
+     * family and the command that installs it instead.
+     */
+    public function testAFontNotInstalledIsRejectedWithItsInstallCommand(): void
+    {
+        $spec = ['page' => 'x', 'network' => 'linkedin', 'format' => 'linkedin-4-5', 'slides' => [['title' => 'Hi']]];
+
+        self::assertSame([
+            'fontPairing.heading' => 'Font "Gabarito" (weight 700) is not installed. Check the Google Fonts family name, or install it with: bin/console pw:repurpose:fonts --heading="Gabarito"',
+            'fontPairing.body' => 'Font "Poppins" (weight 400) is not installed. Check the Google Fonts family name, or install it with: bin/console pw:repurpose:fonts --body="Poppins"',
+        ], $this->violations([...$spec, 'fontPairing' => ['heading' => 'Gabarito', 'body' => 'Poppins']]));
+
+        // A registry pairing too; both its faces report at `fontPairing`, so the
+        // path => message map keeps the body's.
+        self::assertSame(
+            ['fontPairing' => 'Font "Questrial" (weight 400) is not installed. Check the Google Fonts family name, or install it with: bin/console pw:repurpose:fonts --body="Questrial"'],
+            $this->violations([...$spec, 'fontPairing' => 'rozha-one-questrial']),
+        );
+    }
+
+    public function testMalformedFontPairingsAreRejected(): void
+    {
+        $spec = ['page' => 'x', 'network' => 'linkedin', 'format' => 'linkedin-4-5', 'slides' => [['title' => 'Hi']]];
+
+        self::assertSame(['fontPairing' => 'Unknown font pairing.'], $this->violations([...$spec, 'fontPairing' => 'no-such-pairing']));
+        self::assertSame(
+            ['fontPairing.heading' => 'A font family name holds only letters, digits and spaces, as on Google Fonts.'],
+            $this->violations([...$spec, 'fontPairing' => ['heading' => 'Bad/Name', 'body' => 'Inter']]),
+        );
+        self::assertSame(
+            ['fontPairing.body' => 'A custom font pairing needs both a heading and a body family.'],
+            $this->violations([...$spec, 'fontPairing' => ['heading' => 'Poppins']]),
+        );
+    }
+
     public function testSplitLayoutNeedsTwoImages(): void
     {
         $violations = $this->violations([

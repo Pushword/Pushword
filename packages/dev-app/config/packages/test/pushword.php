@@ -49,6 +49,12 @@ return static function (ContainerConfigurator $container): void {
         'default_editor' => 'flat-import@example.tld',
     ]);
 
+    // Per-worker font dir: the studio, API and command tests install (mocked)
+    // Google Fonts downloads into it.
+    $container->extension('pushword_repurpose', [
+        'font_dir' => '%env(PUSHWORD_TEST_VAR_DIR)%/repurpose/fonts',
+    ]);
+
     // Per-worker version storage. Without this, parallel workers share
     // var/log/version keyed by entity id (which collides at 1 across workers'
     // separate DBs), so one worker's reset() deletes another's snapshots

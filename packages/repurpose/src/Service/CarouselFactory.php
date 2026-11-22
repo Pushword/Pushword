@@ -9,6 +9,7 @@ use Pushword\Repurpose\Model\AudioTrack;
 use Pushword\Repurpose\Model\Carousel;
 use Pushword\Repurpose\Model\Counter;
 use Pushword\Repurpose\Model\Creator;
+use Pushword\Repurpose\Model\FontPairing;
 use Pushword\Repurpose\Model\FreeText;
 use Pushword\Repurpose\Model\Palette;
 use Pushword\Repurpose\Model\Slide;
@@ -36,7 +37,7 @@ final class CarouselFactory
             caption: $this->strOrNull($data['caption'] ?? null),
             hashtags: $this->strings($data['hashtags'] ?? null),
             palette: $this->palette($data['palette'] ?? null),
-            fontPairing: $this->strOrNull($data['fontPairing'] ?? null),
+            fontPairing: $this->fontPairing($data['fontPairing'] ?? null),
             counter: $this->counter($data['counter'] ?? null),
             background: $this->strOr($data['background'] ?? null, 'none'),
             creator: $this->creator($data['creator'] ?? null),
@@ -227,6 +228,19 @@ final class CarouselFactory
             style: $this->strOr($raw['style'] ?? null, 'fraction'),
             align: $this->strOr($raw['align'] ?? null, 'right'),
         );
+    }
+
+    /**
+     * `fontPairing` is a registry key (string) or a custom `{heading, body}`
+     * pairing of Google Fonts families. Anything else falls back to null.
+     */
+    private function fontPairing(mixed $raw): string|FontPairing|null
+    {
+        if (\is_array($raw)) {
+            return new FontPairing(heading: trim($this->str($raw['heading'] ?? null)), body: trim($this->str($raw['body'] ?? null)));
+        }
+
+        return $this->strOrNull($raw);
     }
 
     /**

@@ -19,7 +19,11 @@ repurpose:
   plannedAt:
     invalid: 'plannedAt must be a valid date-time.'
   fontPairing:
+    family:
+      empty: 'A custom font pairing needs both a heading and a body family.'
+      invalid: 'A font family name holds only letters, digits and spaces, as on Google Fonts.'
     invalid: 'Unknown font pairing.'
+    notInstalled: 'Font "%family%" (weight %weight%) is not installed. Check the Google Fonts family name, or install it with: bin/console pw:repurpose:fonts --%role%="%family%"'
   background:
     invalid: 'Unknown background effect.'
   caption:

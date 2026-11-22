@@ -19,7 +19,11 @@ repurpose:
   plannedAt:
     invalid: 'plannedAt doit être une date-heure valide.'
   fontPairing:
+    family:
+      empty: 'Une association personnalisée a besoin d''une famille pour les titres et d''une pour le texte.'
+      invalid: 'Un nom de famille de police ne contient que des lettres, des chiffres et des espaces, comme sur Google Fonts.'
     invalid: 'Association de polices inconnue.'
+    notInstalled: 'La police « %family% » (graisse %weight%) n''est pas installée. Vérifiez le nom de la famille Google Fonts, ou installez-la avec : bin/console pw:repurpose:fonts --%role%="%family%"'
   background:
     invalid: 'Effet de fond inconnu.'
   caption:

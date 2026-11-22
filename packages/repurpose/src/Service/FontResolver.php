@@ -4,17 +4,24 @@ declare(strict_types=1);
 
 namespace Pushword\Repurpose\Service;
 
+use Pushword\Repurpose\Model\FontPairing;
+
 /**
- * Resolves a font pairing to the heading and body TTF files on disk.
+ * Resolves a font pairing — a registry key or a custom {@see FontPairing} — to
+ * the heading and body TTF files on disk.
  *
- * FreeType (the measurement primitive) needs a real TTF/OTF file, so a pairing's
- * families are looked up as `<family-slug>.ttf` — first in the app font dir
- * (where `pw:repurpose:fonts <pairing>` installs them, `repurpose.font_dir`),
- * then in the bundled font dir. Anything not installed falls back to the bundled
- * Apache-2.0 Roboto, which is always present.
+ * FreeType (the measurement primitive) needs a real TTF/OTF file, so each family
+ * is looked up at the weight of its role (headings bold, body regular) — first
+ * in the app font dir (where `pw:repurpose:fonts` and the studio install them,
+ * `repurpose.font_dir`), then in the bundled font dir. Anything not installed
+ * falls back to the bundled Apache-2.0 Roboto, which is always present.
  */
 final readonly class FontResolver
 {
+    public const int HEADING_WEIGHT = 700;
+
+    public const int BODY_WEIGHT = 400;
+
     private const string HEADING_FALLBACK = 'roboto-bold.ttf';
 
     private const string BODY_FALLBACK = 'roboto-regular.ttf';
@@ -30,101 +37,114 @@ final readonly class FontResolver
     }
 
     /**
-     * Where `pw:repurpose:fonts` writes downloaded TTFs (the bundle dir when no
-     * app dir is configured — only the case in bare unit tests).
+     * Where downloaded TTFs are written (the bundle dir when no app dir is
+     * configured — only the case in bare unit tests).
      */
     public function installDir(): string
     {
         return $this->fontDir ?? $this->bundleDir;
     }
 
-    public function headingFile(?string $pairingKey): string
+    public function headingFile(string|FontPairing|null $pairing): string
     {
-        return $this->resolve($this->familyOf($pairingKey, 'heading'), self::HEADING_FALLBACK);
+        return $this->resolve($this->familyOf($pairing, 'heading'), self::HEADING_WEIGHT, self::HEADING_FALLBACK);
     }
 
-    public function bodyFile(?string $pairingKey): string
+    public function bodyFile(string|FontPairing|null $pairing): string
     {
-        return $this->resolve($this->familyOf($pairingKey, 'body'), self::BODY_FALLBACK);
+        return $this->resolve($this->familyOf($pairing, 'body'), self::BODY_WEIGHT, self::BODY_FALLBACK);
     }
 
     /**
      * The CSS family name to declare for the heading (resolved family, or Roboto).
      */
-    public function headingFamily(?string $pairingKey): string
+    public function headingFamily(string|FontPairing|null $pairing): string
     {
-        return $this->cssFamily($this->familyOf($pairingKey, 'heading'));
+        $family = $this->familyOf($pairing, 'heading');
+
+        return null !== $family && $this->hasFace($family, self::HEADING_WEIGHT) ? $family : 'Roboto';
+    }
+
+    /**
+     * The faces a pairing draws with, each family at the weight of its role.
+     * Empty for no pairing or an unknown registry key.
+     *
+     * @return array<'heading'|'body', array{family: string, weight: int}>
+     */
+    public function faces(string|FontPairing|null $pairing): array
+    {
+        $heading = $this->familyOf($pairing, 'heading');
+        $body = $this->familyOf($pairing, 'body');
+        if (null === $heading || null === $body) {
+            return [];
+        }
+
+        return [
+            'heading' => ['family' => $heading, 'weight' => self::HEADING_WEIGHT],
+            'body' => ['family' => $body, 'weight' => self::BODY_WEIGHT],
+        ];
     }
 
     /**
      * True when the pairing's own font files are installed (not falling back).
      */
-    public function isInstalled(string $pairingKey): bool
+    public function isInstalled(string|FontPairing $pairing): bool
     {
-        $heading = $this->familyOf($pairingKey, 'heading');
-        $body = $this->familyOf($pairingKey, 'body');
+        $faces = $this->faces($pairing);
 
-        return null !== $heading && null !== $body
-            && $this->hasFamily($heading) && $this->hasFamily($body);
+        return [] !== $faces
+            && array_all($faces, fn (array $face): bool => $this->hasFace($face['family'], $face['weight']));
     }
 
     /**
-     * The on-disk filename a family resolves to, in any font dir.
+     * The on-disk filename of a family at a weight. A registry family keeps its
+     * historical suffix-free name at the weight of its registry role (bold for a
+     * heading family); any other weight gets a `-<weight>` suffix, so a bold file
+     * never serves body text and a custom pairing can reuse a registry family.
      */
-    public function fileNameFor(string $family): string
+    public function fileNameFor(string $family, int $weight): string
     {
-        return $this->slug($family).'.ttf';
+        $registryWeight = FontPairingRegistry::isHeadingFamily($family) ? self::HEADING_WEIGHT : self::BODY_WEIGHT;
+        $slug = strtolower((string) preg_replace('/[^a-z0-9]+/i', '-', $family));
+
+        return $weight === $registryWeight ? $slug.'.ttf' : $slug.'-'.$weight.'.ttf';
     }
 
     /**
-     * True when the family's TTF is present (app dir or bundled).
+     * True when the family's TTF at that weight is present (app dir or bundled).
      */
-    public function hasFamily(string $family): bool
+    public function hasFace(string $family, int $weight): bool
     {
-        return null !== $this->fileFor($family);
+        return null !== $this->fileFor($family, $weight);
     }
 
     /**
      * @param 'heading'|'body' $role
      */
-    private function familyOf(?string $pairingKey, string $role): ?string
+    private function familyOf(string|FontPairing|null $pairing, string $role): ?string
     {
-        if (null === $pairingKey) {
+        if ($pairing instanceof FontPairing) {
+            return 'heading' === $role ? $pairing->heading : $pairing->body;
+        }
+
+        $entry = null === $pairing ? null : $this->pairings->get($pairing);
+        if (null === $entry) {
             return null;
         }
 
-        $pairing = $this->pairings->get($pairingKey);
-        if (null === $pairing) {
-            return null;
-        }
-
-        return 'heading' === $role ? $pairing['heading'] : $pairing['body'];
+        return 'heading' === $role ? $entry['heading'] : $entry['body'];
     }
 
-    private function resolve(?string $family, string $fallback): string
+    private function resolve(?string $family, int $weight, string $fallback): string
     {
-        if (null !== $family) {
-            $file = $this->fileFor($family);
-            if (null !== $file) {
-                return $file;
-            }
-        }
+        $file = null === $family ? null : $this->fileFor($family, $weight);
 
-        return $this->bundleDir.'/'.$fallback;
+        return $file ?? $this->bundleDir.'/'.$fallback;
     }
 
-    private function cssFamily(?string $family): string
+    private function fileFor(string $family, int $weight): ?string
     {
-        if (null !== $family && null !== $this->fileFor($family)) {
-            return $family;
-        }
-
-        return 'Roboto';
-    }
-
-    private function fileFor(string $family): ?string
-    {
-        $name = $this->fileNameFor($family);
+        $name = $this->fileNameFor($family, $weight);
         foreach ([$this->fontDir, $this->bundleDir] as $dir) {
             if (null !== $dir && is_file($dir.'/'.$name)) {
                 return $dir.'/'.$name;
@@ -132,10 +152,5 @@ final readonly class FontResolver
         }
 
         return null;
-    }
-
-    private function slug(string $family): string
-    {
-        return strtolower((string) preg_replace('/[^a-z0-9]+/i', '-', $family));
     }
 }

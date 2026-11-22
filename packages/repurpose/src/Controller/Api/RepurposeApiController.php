@@ -15,6 +15,7 @@ use Pushword\Repurpose\Service\ContactSheet;
 use Pushword\Repurpose\Service\ContrastAdvisor;
 use Pushword\Repurpose\Service\CreatorAdvisor;
 use Pushword\Repurpose\Service\CreatorResolverInterface;
+use Pushword\Repurpose\Service\FontInstaller;
 use Pushword\Repurpose\Service\FontPairingRegistry;
 use Pushword\Repurpose\Service\FontResolver;
 use Pushword\Repurpose\Service\FormatRegistry;
@@ -56,6 +57,7 @@ final class RepurposeApiController extends AbstractApiController
         private readonly CreatorAdvisor $creatorAdvisor,
         private readonly ContactSheet $contactSheet,
         private readonly ChromiumRasterizer $rasterizer,
+        private readonly FontInstaller $fontInstaller,
     ) {
     }
 
@@ -86,6 +88,7 @@ final class RepurposeApiController extends AbstractApiController
     public function validate(Request $request): JsonResponse
     {
         $carousel = $this->factory->fromArray($this->decodeJson($request));
+        $this->fontInstaller->installPairing($carousel->fontPairing);
         $violations = $this->validator->validate($carousel);
         if (\count($violations) > 0) {
             return $this->validationErrors($violations);
@@ -118,6 +121,7 @@ final class RepurposeApiController extends AbstractApiController
         $spec['network'] = $network;
 
         $carousel = $this->factory->fromArray($spec);
+        $this->fontInstaller->installPairing($carousel->fontPairing);
         $violations = $this->validator->validate($carousel);
         if (\count($violations) > 0) {
             return $this->validationErrors($violations);

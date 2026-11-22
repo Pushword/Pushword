@@ -22,6 +22,7 @@ use Pushword\Repurpose\Service\ContrastAdvisor;
 use Pushword\Repurpose\Service\CreatorAdvisor;
 use Pushword\Repurpose\Service\CreatorResolverInterface;
 use Pushword\Repurpose\Service\ExportBuilder;
+use Pushword\Repurpose\Service\FontInstaller;
 use Pushword\Repurpose\Service\FontPairingRegistry;
 use Pushword\Repurpose\Service\FormatRegistry;
 use Pushword\Repurpose\Service\NetworkRegistry;
@@ -64,6 +65,7 @@ final class RepurposeStudioController extends AbstractController
         private readonly EntityManagerInterface $entityManager,
         private readonly SiteRegistry $siteRegistry,
         private readonly MediaRepository $mediaRepository,
+        private readonly FontInstaller $fontInstaller,
     ) {
     }
 
@@ -73,6 +75,8 @@ final class RepurposeStudioController extends AbstractController
         $post = $this->loadPost($id);
 
         $carousel = $this->factory->fromArray($post->spec);
+        // A spec synced from another machine may name fonts not downloaded here yet.
+        $this->fontInstaller->installPairing($carousel->fontPairing);
         $creator = $this->creatorResolver->resolve($carousel, $post->host);
 
         // Safe to embed inside a <script> block (escapes </script>, quotes, etc.).
@@ -680,6 +684,10 @@ final class RepurposeStudioController extends AbstractController
      */
     private function violations(Carousel $carousel, ?string $property = null): array
     {
+        if (null === $property) {
+            $this->fontInstaller->installPairing($carousel->fontPairing);
+        }
+
         $errors = [];
         $violations = null === $property ? $this->validator->validate($carousel) : $this->validator->validateProperty($carousel, $property);
         foreach ($violations as $violation) {

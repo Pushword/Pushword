@@ -10,6 +10,7 @@ use Pushword\Repurpose\Service\CaptionFormatter;
 use Pushword\Repurpose\Service\FontPairingRegistry;
 use Pushword\Repurpose\Service\FormatRegistry;
 use Pushword\Repurpose\Service\NetworkRegistry;
+use Pushword\Repurpose\Validator\InstalledFonts;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Validator\Context\ExecutionContextInterface;
 use Throwable;
@@ -56,8 +57,9 @@ class Carousel
         public array $hashtags = [],
         #[Assert\Valid]
         public ?Palette $palette = null,
-        #[Assert\Choice(callback: [FontPairingRegistry::class, 'keys'], message: 'repurpose.fontPairing.invalid')]
-        public ?string $fontPairing = null,
+        /** A registry key, or a custom pairing of Google Fonts families. */
+        #[InstalledFonts]
+        public string|FontPairing|null $fontPairing = null,
         #[Assert\Valid]
         public ?Counter $counter = null,
         #[Assert\Choice(callback: [BackgroundEffectRegistry::class, 'keys'], message: 'repurpose.background.invalid')]
@@ -144,6 +146,25 @@ class Carousel
             ->setParameter('%max%', (string) $max)
             ->atPath('caption')
             ->addViolation();
+    }
+
+    /**
+     * A string names a registry pairing; a custom pairing validates its families.
+     */
+    #[Assert\Callback]
+    public function validateFontPairing(ExecutionContextInterface $context): void
+    {
+        if ($this->fontPairing instanceof FontPairing) {
+            $context->getValidator()->inContext($context)->atPath('fontPairing')->validate($this->fontPairing);
+
+            return;
+        }
+
+        if (null !== $this->fontPairing && ! \in_array($this->fontPairing, FontPairingRegistry::keys(), true)) {
+            $context->buildViolation('repurpose.fontPairing.invalid')
+                ->atPath('fontPairing')
+                ->addViolation();
+        }
     }
 
     /**

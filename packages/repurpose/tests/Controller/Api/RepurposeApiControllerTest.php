@@ -8,8 +8,12 @@ use Override;
 use PHPUnit\Framework\Attributes\Group;
 use Pushword\Core\Entity\User;
 use Pushword\Repurpose\Entity\SocialPost;
+use Pushword\Repurpose\Model\FontPairing;
+use Pushword\Repurpose\Service\FontResolver;
+use Pushword\Repurpose\Tests\GoogleFontsMock;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
+use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -123,6 +127,29 @@ final class RepurposeApiControllerTest extends WebTestCase
         $this->client->request(Request::METHOD_GET, '/api/repurpose/999999/preview.png', [], [], $this->authServer());
 
         self::assertSame(Response::HTTP_NOT_FOUND, $this->client->getResponse()->getStatusCode());
+    }
+
+    public function testValidateAndUpsertDownloadTheFamiliesOfACustomFontPairing(): void
+    {
+        $google = new GoogleFontsMock();
+        self::getContainer()->set('http_client', $google->client());
+        $fonts = self::getContainer()->get(FontResolver::class);
+        $spec = [...$this->validSpec(), 'fontPairing' => ['heading' => 'Gabarito', 'body' => 'Poppins']];
+
+        try {
+            $result = $this->requestJson('POST', '/api/repurpose/validate', $spec);
+            self::assertTrue($result['valid'] ?? null);
+            self::assertTrue($fonts->isInstalled(new FontPairing('Gabarito', 'Poppins')));
+            self::assertCount(4, $google->takeRequests());
+
+            $spec['fontPairing'] = ['heading' => 'Gabarito', 'body' => 'Lato'];
+            $this->requestJson('PUT', '/api/repurpose/'.self::HOST.'/linkedin/'.self::PAGE, $spec);
+            self::assertContains($this->client->getResponse()->getStatusCode(), [Response::HTTP_OK, Response::HTTP_CREATED]);
+            self::assertTrue($fonts->hasFace('Lato', 400));
+            self::assertCount(2, $google->takeRequests(), 'Lato only: Gabarito was not fetched again');
+        } finally {
+            new Filesystem()->remove($fonts->installDir());
+        }
     }
 
     public function testValidateWarnsOnUnreadableContrastWithoutBlocking(): void

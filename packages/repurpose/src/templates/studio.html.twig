@@ -595,11 +595,24 @@
               </div>
               <div class="field" x-id="['field']">
                 <label :for="$id('field')">Font pairing</label>
-                <select x-model="spec.fontPairing" x-init="$nextTick(() => $el.value = spec.fontPairing)" :id="$id('field')">
+                <select x-effect="syncSelect($el, fontPairingChoice())" @change="chooseFontPairing($event.target.value)" :id="$id('field')">
                   <option value="">— inherit —</option>
                   <template x-for="f in vocab.fontPairings" :key="f"><option :value="f" x-text="f"></option></template>
+                  <option value="custom">Custom Google Fonts…</option>
                 </select>
               </div>
+              <template x-if="'custom' === fontPairingChoice()">
+                <div class="field" x-id="['field']">
+                  <label :for="$id('field')">Heading font</label>
+                  <input type="text" x-model.lazy="spec.fontPairing.heading" placeholder="Gabarito" :id="$id('field')">
+                </div>
+              </template>
+              <template x-if="'custom' === fontPairingChoice()">
+                <div class="field" x-id="['field']">
+                  <label :for="$id('field')">Body font</label>
+                  <input type="text" x-model.lazy="spec.fontPairing.body" placeholder="Poppins" :id="$id('field')">
+                </div>
+              </template>
               <div class="field" x-id="['field']">
                 <label :for="$id('field')">Planned at</label>
                 <input type="datetime-local" x-model="spec.plannedAt" :id="$id('field')">
