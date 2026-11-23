@@ -7,9 +7,9 @@ toc: true
 ---
 
 Turn a page into social posts, carousels and animated videos for LinkedIn,
-Instagram, Facebook, Pinterest, Threads, YouTube Shorts, TikTok and X. A JSON
-**spec** renders to self-contained SVG slides with embedded fonts and images. PHP
-validates text overflow and crop bounds before rendering; the browser exports PNGs.
+Instagram, Facebook, Pinterest, Threads, YouTube Shorts, TikTok and X. Repurpose
+validates a JSON spec and renders each slide as a self-contained SVG. Export the
+slides from the studio as PNGs, a LinkedIn PDF or an MP4 slideshow.
 
 ## Install
 
@@ -17,38 +17,13 @@ validates text overflow and crop bounds before rendering; the browser exports PN
 composer require pushword/repurpose
 ```
 
-Requires `ext-gd` (text measurement) and `ext-zip` (export); no Imagick.
+Install with PHP extensions `gd` and `zip`. On a fresh site, the demo fixtures
+add a ten-slide carousel of the `examples` page under **Social carousels**. Copy
+`src/DataFixtures/Carousel.json` for a sample spec, or try the
+[NORD. motion example](#packaged-example-nord).
 
-Installed before seeding a fresh site, the demo fixtures add a ten-slide carousel of
-the `examples` page, one feature per slide. Its spec, `src/DataFixtures/Carousel.json`,
-is the reference to copy from; the post sits under **Social carousels**. For motion, see
-the [NORD. example](#packaged-example-nord) below.
-
-## How it fits together
-
-```
-Page ──► CarouselDrafter ──► SocialPost ◄──► social-post/{page}/{network}.json
-                                  ▲
-                                  └── admin studio / REST API / AI agent
-                                     │
-                                     ▼
-                        SlideRenderer + TextLayout (PHP)
-                                     │
-                                     ▼
-                   self-contained SVG  →  PNG (browser)  →  .zip + .pdf
-```
-
-- **Spec** — a JSON document (slides, text, focal-point crop, palette, font
-  pairing, background effect, status). The `Carousel` model + Symfony Validator are
-  the single source of truth, shared by the renderer, the CLI lint and the API.
-- **Storage** — a `SocialPost` row (so the admin can list "everything planned this
-  week", filter by status, enforce per-network uniqueness) that also round-trips as
-  a flat JSON file through `pw:flat:sync`. Works on a DB-first site and a flat-file
-  site alike.
-- **Studio** — an admin page (`/admin/repurpose/studio/{id}`) previewing the deck at
-  the network's mobile feed width (zoom slider or Ctrl+scroll; always reopens at
-  100%) and exporting it. Click a text to edit it in place; drag any text on the
-  slide (a stack field becomes a free text box where it lands).
+Each carousel has a database record. Flat-file sites can sync the same spec at
+`content/{host}/social-post/{page}/{network}.json` with `pw:flat:sync`.
 
 ## In the admin
 
@@ -61,43 +36,30 @@ for one carousel or a list filtered to that page and host for several.
 Choose **Preview** to enlarge the cover or **Studio** to edit it. The studio's
 source card links back to the page editor; standalone carousels have no source.
 
+The studio opens at the network's mobile feed width. Use the zoom slider or
+Ctrl+scroll to resize the preview. Click text to edit it. As you drag a text box,
+guides show the centres and edges of nearby slide elements.
+
 The Studio alerts you when another user or an agent saves the carousel. If you
-have unsaved edits, open the latest version in a new tab to review and reapply
-them. The original tab keeps your draft and blocks saves against the old revision.
+have unsaved edits, choose **Open latest version in a new tab**. Your draft stays
+in the original tab so you can review and reapply your changes.
 
 ## Author with an agent
 
-There is no LLM inside the package. An agent writes the spec against a published
-schema and validates it — free, with whatever model you already use.
-
-1. `GET /api/repurpose/schema` — the JSON shape (keys, enums, ranges).
-2. `GET /api/repurpose/networks` — formats (ratio/pixels), per-network **hard
-   limits** (errors) vs **guidance** (advice), and font pairings — each with an
-   `installed` flag. Validation through the API downloads a missing pairing.
-   Pinterest models an organic image Pin: it requires exactly one 2:3 slide and
-   a non-empty caption. Multiple frames belong in a video Pin or paid carousel ad.
-3. `POST /api/repurpose/validate` — validate a spec, get precise
-   `{path, message}` violations (overflow, out-of-bounds crop, disallowed format…)
-   plus non-blocking `warnings` (e.g. text/background contrast below WCAG AA).
-4. `PUT /api/repurpose/{host}/{network}/{page}` saves the full spec. The response
-   includes the new revision, slide count, warnings and proof URLs
-   (`studioUrl`, `previewUrl`, `slideUrls`).
-5. `GET /api/repurpose/{id}/preview.png` — the whole deck as one contact-sheet
-   PNG, slides sized to the network's **mobile feed width** (`feedMobile` in
-   `/api/repurpose/networks`, e.g. ~390px, Pinterest's two-column grid ~186px) so
-   text legibility is judged at the realistic worst case. Needs Chromium on the
-   host; without it, a 501 points back at the SVGs.
-   Or `GET /api/repurpose/{id}/slide-{n}.svg` for one slide.
-
-Before editing an existing carousel, GET the same URL and apply your changes
-to its `spec`. Send the returned `ETag` (also available as `revision`) verbatim in
-the `If-Match` header on PUT or PATCH, including the quotes. Both methods replace
-the full spec. If someone saved in the meantime, the API returns `409` with
-`current.spec` and `current_revision`. Review the latest spec, preserve any
-intervening edits, then retry with the new revision. Ask the editor which
-version to keep when both edits touch the same field. A missing header on an
-existing carousel returns `428`. Use a headerless PUT to create a new carousel.
-DELETE also requires the current revision.
+1. Fetch `GET /api/repurpose/schema` for the JSON format and
+   `GET /api/repurpose/networks` for network limits, mobile feed widths and font pairings.
+2. Send the spec to `POST /api/repurpose/validate`. Fix the `{path, message}`
+   violations and review the `warnings` before saving.
+3. Create a carousel with `PUT /api/repurpose/{host}/{network}/{page}`. To edit
+   one, GET the same URL first and apply your changes to its `spec`. PUT and
+   PATCH both replace the full spec. For PUT, PATCH and DELETE on an existing
+   carousel, send its `ETag` (also `revision` in the body) as `If-Match`,
+   including the quotes. A missing header returns `428`.
+4. For `409`, review `current.spec` and use `current_revision` to retry after
+   reapplying your changes. Ask the editor when both edits touch the same field.
+5. Use `studioUrl`, `previewUrl` and `slideUrls` from the save response to review
+   the result. `previewUrl` shows all slides at the network's mobile feed width.
+   If Chromium is unavailable on the server, use the per-slide SVGs.
 
 The [`pw` ai-skill](https://github.com/Pushword/Pushword/tree/main/packages/ai-skills)
 ships a `carousel` playbook for exactly this loop.
@@ -148,7 +110,7 @@ builds in the background, gets its `default` derivative built on first render.
 ## Text
 
 The layout stack (`tagline`/`title`/`paragraph`) is anchored by `layout` × `align`
-and auto-fits its size. An explicit `\n` in any field makes a hard line break.
+and auto-fits its size. Use `\n` for a hard line break and `\n\n` for a blank line.
 For text outside the stack — annotations, callouts — a slide takes free text
 boxes in `texts[]`: `content`, a fractional box (`x`, `y`, `width`, with
 `x + width ≤ 1`), `size` (fraction of the frame width), `align`, `font`
@@ -375,7 +337,7 @@ Node.js or rendering tools.
 ## Networks and formats
 
 Validation checks allowed formats, slide counts and captions. Caps include
-LinkedIn's 300 pages, Instagram's 20 slides, Pinterest's single captioned image,
+LinkedIn's 300 pages, Instagram's 20 slides, Pinterest's single captioned 2:3 image,
 and X's four images. Caption limits include hashtags appended at export.
 Publishing guidance does not block validation; file-size limits in the registry
 are reference data, so check the export before uploading. Fetch limits, formats
