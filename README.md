@@ -1,7 +1,8 @@
 # Pushword
 
-A **Symfony CMS** for managing multiple sites and languages from one installation.
-Edit in the admin or keep your pages in Git. AI agents can edit through the REST API.
+A **Symfony CMS** for Markdown and Twig websites. Manage multiple sites and languages
+from one admin. Edit pages in the block editor, work on Markdown in Git,
+or update a live site with an AI agent.
 
 [![Latest Version](https://img.shields.io/github/tag/pushword/pushword.svg?style=flat&label=release)](https://github.com/Pushword/Pushword/tags)
 [![Software License](https://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat)](LICENSE)
@@ -25,14 +26,13 @@ For Docker and FrankenPHP setup, see the [installation guide](https://pushword.p
 
 ![A page open in the Pushword admin block editor](packages/docs/content/media/admin-blockeditor.png)
 
-## Editing and publishing
+## Why Pushword
 
-Use the admin to manage pages and media across sites. Write in the block editor. Pages use Markdown with YAML front matter, and layouts use Twig.
-
-- Flat syncs Markdown files with the database. You can review changes in Git and edit the same pages in the admin. [Flat documentation](https://pushword.piedweb.com/extension/flat)
-- Agents can work on local Markdown files or edit a live site through the token-authenticated REST API. Page revisions protect against overwriting concurrent edits. [AI agent guide](https://pushword.piedweb.com/ai-agents)
-- Export a static site for GitHub Pages. You can serve the files with Apache or FrankenPHP too. [Static Generator documentation](https://pushword.piedweb.com/extension/static-generator)
-- Extend Pushword with Symfony events and entity filters, or use Twig components in templates.
+- **One admin for multiple sites and languages.** Write in the block editor and manage pages and media across your sites.
+- **Content you can review in Git.** Pages use Markdown with YAML front matter, and layouts use Twig. Flat syncs Markdown files with the database, so the same pages stay editable in the admin. [Flat documentation](https://pushword.piedweb.com/extension/flat)
+- **AI editing on a live site.** Agents can work on local Markdown or edit through the token-authenticated REST API. Revision checks protect newer page edits from being overwritten. [AI agent guide](https://pushword.piedweb.com/ai-agents)
+- **Publish to static hosting.** Export your site for GitHub Pages or serve the files with Apache or FrankenPHP. [Static Generator documentation](https://pushword.piedweb.com/extension/static-generator)
+- **Customize it in Symfony.** Use events and entity filters to extend the CMS, and Twig components to build reusable parts of your templates.
 
 ## Extensions
 
