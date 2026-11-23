@@ -42,23 +42,46 @@ test('a revision check detects another save while keeping the local draft intact
   assert.deepEqual(requests, ['/revision', '/revision'], 'a stale tab cannot submit another save');
 });
 
-test('a conflict during save leaves the local draft available', async () => {
-  const revision = '"1-1"';
-  const state = studio({revision, urls: {save: '/save'}}, async (url, options) => {
-    assert.equal(url, '/save');
-    assert.equal(options.headers['If-Match'], revision);
-    assert.equal(JSON.parse(options.body).slides[0].title, 'Local edit');
-    return {status: 409};
-  }, undefined, {setTimeout() {}});
-
+test('a revision check retries after a network error and detects a deleted carousel', async () => {
+  const requests = [];
+  const state = studio({revision: '"1-1"', urls: {revision: '/revision', save: '/save'}}, async url => {
+    requests.push(url);
+    if (requests.length === 1) {
+      throw new TypeError('Network error');
+    }
+    return {ok: false, status: 404};
+  });
   state.spec.slides[0].title = 'Local edit';
   state.dirty = true;
-  await state.save();
-  assert.equal(state.syncState, 'changed');
-  assert.equal(state.revision, revision);
+  await state.checkRevision();
+  assert.equal(state.syncState, '');
+  await state.checkRevision();
+  assert.equal(state.syncState, 'deleted');
   assert.equal(state.spec.slides[0].title, 'Local edit');
   assert.equal(state.dirty, true);
+  await state.save();
+  assert.deepEqual(requests, ['/revision', '/revision']);
 });
+
+for (const [status, syncState] of [[409, 'changed'], [404, 'deleted']]) {
+  test(`save returning ${status} leaves the local draft available`, async () => {
+    const revision = '"1-1"';
+    const state = studio({revision, urls: {save: '/save'}}, async (url, options) => {
+      assert.equal(url, '/save');
+      assert.equal(options.headers['If-Match'], revision);
+      assert.equal(JSON.parse(options.body).slides[0].title, 'Local edit');
+      return {status};
+    }, undefined, {setTimeout() {}});
+
+    state.spec.slides[0].title = 'Local edit';
+    state.dirty = true;
+    await state.save();
+    assert.equal(state.syncState, syncState);
+    assert.equal(state.revision, revision);
+    assert.equal(state.spec.slides[0].title, 'Local edit');
+    assert.equal(state.dirty, true);
+  });
+}
 
 test('a successful save keeps edits typed during the request and ignores an older revision check', async () => {
   let resolveCheck;
