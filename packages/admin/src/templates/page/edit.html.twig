@@ -7,7 +7,6 @@
             <div class="pw-page-draft" data-pw-page-draft
                  data-url="{{ path('pushword_page_draft', {id: entity.instance.id}) }}"
                  data-token="{{ csrf_token('page-draft-' ~ entity.instance.id) }}"
-                 data-settings="{{ 'adminPageDraftSettings'|trans }}"
                  data-settings-pending="{{ 'adminPageDraftSettingsPending'|trans }}"
                  data-join="{{ 'adminPageDraftJoinActive'|trans }}"
                  data-classic="{{ 'adminPageDraftClassic'|trans }}"
@@ -34,6 +33,48 @@
             </div>
         {% endif %}
     </div>
+{% endblock %}
+
+{% block page_actions %}
+    {% set actions = entity.actions|reverse %}
+    {% set more_action_names = ['linkImproverAutoLinks', 'repurpose'] %}
+    {% for item in actions|filter(item => item.name != 'saveAndContinue' and item.name not in more_action_names) %}
+        {% if item.isActionGroup %}
+            {{ include(item.templatePath, {group: item, entity: entity}, with_context: false) }}
+        {% else %}
+            {{ include(item.templatePath, {action: item, entity: entity}, with_context: false) }}
+        {% endif %}
+    {% endfor %}
+
+    {% set more_actions = actions|filter(item => item.name in more_action_names) %}
+    {% if more_actions is not empty %}
+        <div class="btn-group action-group">
+            <twig:ea:Button
+                color="default"
+                variant="ghost"
+                htmlElement="button"
+                type="button"
+                class="dropdown-toggle"
+                data-bs-toggle="dropdown"
+                data-bs-popper-config='{"strategy":"fixed"}'
+                aria-haspopup="true"
+                aria-expanded="false"
+            >{{ 'adminPageMoreActions'|trans }}</twig:ea:Button>
+            <twig:ea:ActionMenu:ActionList align="end">
+                {% for action in more_actions %}
+                    <twig:ea:ActionMenu:ActionList:Item
+                        label="{{ action.label|trans }}"
+                        icon="{{ action.icon }}"
+                        class="{{ action.cssClass }} dropdown-item-variant-{{ action.color.value }}"
+                        htmlAttributes="{{ action.htmlAttributes|ea_html_attrs }}"
+                        renderAsForm="{{ action.isRenderedAsForm }}"
+                        url="{{ action.linkUrl }}"
+                        renderLabelRaw="true"
+                    />
+                {% endfor %}
+            </twig:ea:ActionMenu:ActionList>
+        </div>
+    {% endif %}
 {% endblock %}
 
 {% block main %}
@@ -66,8 +107,8 @@
     {% set autosave_attrs = edit_form.vars.attr|merge(entity_attrs)|merge({
         'data-pw-ctrl-s-form': '1',
         'data-pw-ctrl-s-event': autosave_event,
-        'data-pw-ctrl-s-indicator': '.action-saveAndContinue .action-label',
-        'data-pw-ctrl-s-button': '.action-saveAndContinue',
+        'data-pw-ctrl-s-indicator': '.action-saveAndReturn .action-label',
+        'data-pw-ctrl-s-button': '.action-saveAndReturn',
         'hx-post': edit_form.vars.action,
         'hx-trigger': autosave_event,
         'hx-swap': 'none',

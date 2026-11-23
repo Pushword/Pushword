@@ -250,6 +250,8 @@ it('offers live editing without switching modes or changing local edits', () => 
 
 it('shows current collaborators with a separate API badge only in collaborative mode', async () => {
   const { controls, form, button, status } = pageDraftForm()
+  controls.insertAdjacentHTML('beforebegin', '<button class="action-saveAndReturn"><span class="action-label">Save</span></button>')
+  const saveLabel = document.querySelector('.action-saveAndReturn .action-label')
   const fetch = vi.fn(async (_url, { method }) => method === 'DELETE'
     ? new Response(null, { status: 204 })
     : Response.json({
@@ -267,6 +269,7 @@ it('shows current collaborators with a separate API badge only in collaborative 
 
   button.click()
   await vi.waitFor(() => expect(status.textContent).toBe('Saved'))
+  expect(saveLabel.textContent).toBe('Save')
   expect(roster.hidden).toBe(false)
   const [browserAvatar, apiAvatar] = roster.children
   expect(browserAvatar.textContent).toBe('É')

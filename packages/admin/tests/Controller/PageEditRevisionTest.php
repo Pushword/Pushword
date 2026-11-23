@@ -38,7 +38,7 @@ final class PageEditRevisionTest extends AbstractAdminTestClass
         parent::tearDown();
     }
 
-    public function testAgentSaveChangesThePingRevisionAndProtectsBothSaveButtons(): void
+    public function testAgentSaveChangesThePingRevisionAndProtectsManualAndShortcutSaves(): void
     {
         $client = $this->loginUser();
         $page = $this->createPage();

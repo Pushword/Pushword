@@ -155,7 +155,6 @@ adminPageDraftOffline: Hors ligne. Gardez cet onglet ouvert.
 adminPageDraftParticipants: Participants actifs
 adminPageDraftPending: Enregistrement des modifications…
 adminPageDraftPresence: Un autre éditeur est en mode collaboratif.
-adminPageDraftSettings: Enregistrer les réglages
 adminPageDraftSettingsPending: Enregistrez le réglage de publication pour reprendre la sauvegarde en direct.
 adminPageDraftStale: Le contenu a changé hors de cette session. Vos retouches restent dans cet onglet.
 adminPageDraftTooLarge: Cette session a atteint sa taille maximale. Passez en mode classique pour enregistrer vos retouches.
@@ -188,6 +187,7 @@ adminPageMarkdownHelp: 'Applique l''enrichissement du texte via la syntaxe Markd
 adminPageMarkdownLabel: 'Formatage markdown'
 adminPageMetaRobotsChoiceNoIndex: "Interdire l'indexation"
 adminPageMetaRobotsLabel: 'Moteur de recherches'
+adminPageMoreActions: Plus d’actions
 adminPageNameHelp: "Permet d'identifier la page, utilisé dans le fil d'arianne."
 adminPageNameLabel: 'Nom court'
 adminPageOgDescriptionHelp: 'Par défaut, la description <code>search</code> sinon un extrait'
@@ -216,6 +216,7 @@ adminPageRevisionConflict: 'Cette page a changé depuis son ouverture. Ouvrez la
 adminPageRevisionDeleted: 'Cette page a été supprimée. Vos retouches sont toujours dans cet onglet.'
 adminPageRevisionReload: 'Ouvrir la dernière version'
 adminPageRevisions: Révisions
+adminPageSave: Enregistrer
 adminSchedule: Planifier
 adminPageSearchExcreptHelp: '<small>Visible depuis les pages de résultats des moteurs de recherches (meta description) <span id="descWidth"></span></small>'
 adminPageSearchExcreptLabel: 'Courte Description'

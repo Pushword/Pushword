@@ -28,10 +28,6 @@ export function bindPageDraft(controls) {
   const publication = form.querySelector('[name$="[publishedAt]"]')
   let initialPublication = publication?.value
   const publicationPending = () => publication?.value !== initialPublication
-  const saveLabels = new Map(Array.from(
-    document.querySelectorAll('.action-saveAndReturn .action-label, .action-saveAndContinue .action-label'),
-    (label) => [label, label.textContent],
-  ))
   const holderId = body().getAttribute('data-editorjs')
   const holder = holderId ? document.getElementById(holderId) : null
   let initial = body().value
@@ -142,7 +138,6 @@ export function bindPageDraft(controls) {
     button.setAttribute('aria-pressed', 'false')
     updatePresence()
     delete form.dataset.pwDraftActive
-    for (const [label, text] of saveLabels) label.textContent = text
     if (!stale) status.textContent = ''
   }
 
@@ -162,7 +157,6 @@ export function bindPageDraft(controls) {
       button.textContent = controls.dataset.classic
       button.setAttribute('aria-pressed', 'true')
       form.dataset.pwDraftActive = ''
-      for (const label of saveLabels.keys()) label.textContent = controls.dataset.settings
       session = openDraft({
         url: controls.dataset.url,
         revision: revision.value,

@@ -156,7 +156,6 @@ adminPageDraftOffline: Offline. Keep this tab open.
 adminPageDraftParticipants: Active collaborators
 adminPageDraftPending: Saving changes…
 adminPageDraftPresence: Someone else is editing collaboratively.
-adminPageDraftSettings: Save settings
 adminPageDraftSettingsPending: Save the publication setting to resume live saves.
 adminPageDraftStale: The saved version changed outside this session. Your edits are in this tab.
 adminPageDraftTooLarge: This session has reached its size limit. Switch to classic mode to save your edits.
@@ -189,6 +188,7 @@ adminPageMarkdownHelp: 'Applies text enrichment via Markdown syntax to the entir
 adminPageMarkdownLabel: "Markdown formatting"
 adminPageMetaRobotsChoiceNoIndex: "Disallow indexing"
 adminPageMetaRobotsLabel: "Search engines"
+adminPageMoreActions: More actions
 adminPageNameHelp: "Allows to identify the page, used in the breadcrumb."
 adminPageNameLabel: "Short name"
 adminPageOgDescriptionHelp: "By default, the <code>search</code> description otherwise an excerpt"
@@ -217,6 +217,7 @@ adminPageRevisionConflict: 'This page changed since you opened it. Open the late
 adminPageRevisionDeleted: 'This page was deleted. Your unsaved edits are still in this tab.'
 adminPageRevisionReload: 'Open latest version'
 adminPageRevisions: Revisions
+adminPageSave: Save
 adminSchedule: Schedule
 adminPageSearchExcreptHelp: '<small>Visible from search engine results pages (meta description) <span id="descWidth"></span></small>'
 adminPageSearchExcreptLabel: "Short Description"

@@ -169,6 +169,8 @@ class PageCrudController extends AbstractAdminCrudController
     #[Override]
     public function configureActions(Actions $actions): Actions
     {
+        $actions->update(Crud::PAGE_EDIT, Action::SAVE_AND_RETURN, static fn (Action $action): Action => $action->setLabel('adminPageSave'));
+
         $viewAction = Action::new('viewPage', 'adminPageViewLabel', 'fa fa-eye')
             ->linkToUrl($this->getPageUrl(...))
             ->setHtmlAttributes(['target' => '_blank', 'rel' => 'noopener']);

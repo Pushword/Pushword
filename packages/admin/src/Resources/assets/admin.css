@@ -423,16 +423,16 @@ tr:hover .pw-row-menu .dropdown-toggle,
   background: #e0f2fe; /* sky-100, current site */
 }
 
-.action-saveAndContinue[data-pw-ctrl-s-state='saving'] {
+[data-pw-ctrl-s-state='saving'] {
   opacity: 0.8;
   position: relative;
 }
 
-.action-saveAndContinue[data-pw-ctrl-s-state='success'] {
+[data-pw-ctrl-s-state='success'] {
   box-shadow: 0 0 0 0.2rem rgba(34, 197, 94, 0.25);
 }
 
-.action-saveAndContinue[data-pw-ctrl-s-state='error'] {
+[data-pw-ctrl-s-state='error'] {
   box-shadow: 0 0 0 0.2rem rgba(239, 68, 68, 0.3);
 }
 

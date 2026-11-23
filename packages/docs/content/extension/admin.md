@@ -75,10 +75,13 @@ and the page cannot be its own parent.
 
 ### Saving and recovering changes
 
-In classic mode, `Ctrl+S` saves without leaving the form. While you edit, the
-browser keeps a local copy for your account. **Restore them** puts your edited
-fields back in the form and warns if a newer revision changed any of them.
-A successful save, **Discard** or sign-out clears the copy.
+**Save** opens the page view after saving. Use `Ctrl+S` or `Cmd+S` to save and
+stay in the editor. Installed page tools such as Auto links and Repurpose are
+under **More actions**.
+
+While you edit, the browser keeps a local copy for your account. **Restore them**
+puts your edited fields back in the form and warns if a newer revision changed
+any of them. A successful save, **Discard** or sign-out clears the copy.
 
 The editor checks for newer revisions every three seconds and when you return
 to the tab. An untouched, visible editor reloads. If you have started editing,
@@ -98,9 +101,9 @@ still holds. Once you join, the action bar shows the initials of active
 collaborators. The code icon marks sessions using the collaborative API,
 including sessions authenticated with your account.
 
-Live saves follow the page's publication status. Use **Save settings** for
-other fields. Changing the publication date pauses live saves until you save
-the date and body together. With the [Version extension](/extension/version),
+Live saves follow the page's publication status. Changing the publication date
+pauses live saves until you save the date and body together.
+With the [Version extension](/extension/version),
 the next edit adds a restore point after five idle minutes or thirty minutes
 of continuous editing.
 

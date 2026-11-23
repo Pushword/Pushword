@@ -108,7 +108,7 @@ final class PageUrlTest extends AbstractAdminTestClass
         self::assertResponseRedirects('https://admin-block-editor.test/kitchen-sink');
     }
 
-    public function testSaveAndReturnOpensThePageWhileSaveAndContinueStaysInTheEditor(): void
+    public function testSaveOpensThePageAndShortcutSavesInPlace(): void
     {
         $client = $this->loginUser();
         $entityManager = self::getContainer()->get(EntityManagerInterface::class);
@@ -128,11 +128,21 @@ final class PageUrlTest extends AbstractAdminTestClass
             $editUrl = $this->generateAdminUrl('admin_page_edit', ['id' => $pageId]);
 
             $crawler = $client->request(Request::METHOD_GET, $editUrl);
-            $client->submit($crawler->filter('button[value="saveAndContinue"]')->form());
-            self::assertResponseRedirects($editUrl);
+            self::assertSelectorNotExists('.page-actions button[value="saveAndContinue"]');
+            self::assertSame('Save', $crawler->filter('.page-actions button[value="saveAndReturn"] .action-label')->text());
+            self::assertSelectorTextContains('.page-actions .dropdown-toggle', 'More actions');
+            self::assertSelectorExists('.page-actions .dropdown-menu .action-linkImproverAutoLinks');
+            self::assertSelectorExists('.page-actions .dropdown-menu .action-repurpose');
+
+            $shortcut = $crawler->filter('[data-pw-ctrl-s-submit]')->form();
+            $shortcut['Page[h1]'] = 'Saved from the keyboard';
+            $client->submit($shortcut, serverParameters: ['HTTP_HX_REQUEST' => 'true']);
+            self::assertResponseStatusCodeSame(204);
 
             $crawler = $client->request(Request::METHOD_GET, $editUrl);
-            $client->submit($crawler->filter('button[value="saveAndReturn"]')->form());
+            $save = $crawler->filter('button[value="saveAndReturn"]')->form();
+            self::assertSame('Saved from the keyboard', $save->getValues()['Page[h1]']);
+            $client->submit($save);
             self::assertResponseRedirects('/save-and-return-fixture');
         } finally {
             $entityManager = self::getContainer()->get(EntityManagerInterface::class);

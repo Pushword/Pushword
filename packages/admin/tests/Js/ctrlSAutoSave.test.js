@@ -42,6 +42,14 @@ describe('initCtrlSAutoSave on htmx 4 events', () => {
     expect(triggered).toHaveBeenCalledOnce()
   })
 
+  it('leaves native submissions alone on forms without a shortcut button', () => {
+    const triggered = vi.fn()
+    form.addEventListener('pw-ctrl-s-event', triggered)
+    const manual = new SubmitEvent('submit', { cancelable: true })
+    expect(form.dispatchEvent(manual)).toBe(true)
+    expect(triggered).not.toHaveBeenCalled()
+  })
+
   it('shows saving on htmx:before:request', () => {
     fire('htmx:before:request')
     expect(indicator.dataset.state).toBe('saving')
@@ -100,6 +108,47 @@ it('runs the guarded shortcut through the form and confirms only a revision-bear
     expect(document.querySelector('#ind').textContent).toBe('Saved')
   } finally {
     vi.useRealTimers()
+    vi.unstubAllGlobals()
+  }
+})
+
+it('cancels shortcut submission before EasyAdmin can disable the save button', () => {
+  vi.stubGlobal('htmx', {})
+  try {
+    document.body.innerHTML = `
+      <form data-pw-ctrl-s-form="1">
+        <button type="submit">Save</button>
+        <button type="submit" data-pw-ctrl-s-submit hidden></button>
+      </form>`
+    const form = document.querySelector('form')
+    const [save, shortcut] = form.querySelectorAll('button')
+    const autosave = vi.fn()
+    form.addEventListener('submit', (event) => {
+      if (!event.defaultPrevented) save.disabled = true
+    })
+    form.addEventListener('submit', (event) => event.preventDefault(), { capture: true, once: true })
+    form.addEventListener('pw-ctrl-s-event', autosave)
+    initCtrlSAutoSave()
+
+    form.requestSubmit(shortcut)
+    expect(autosave).not.toHaveBeenCalled()
+    expect(save.disabled).toBe(false)
+
+    const prepareEditor = (event) => event.stopImmediatePropagation()
+    form.addEventListener('submit', prepareEditor, { capture: true, once: true })
+    form.requestSubmit(shortcut)
+    expect(autosave).not.toHaveBeenCalled()
+    expect(save.disabled).toBe(false)
+
+    form.requestSubmit(shortcut)
+    expect(autosave).toHaveBeenCalledOnce()
+    expect(save.disabled).toBe(false)
+
+    const manual = new SubmitEvent('submit', { submitter: save, cancelable: true })
+    expect(form.dispatchEvent(manual)).toBe(true)
+    expect(save.disabled).toBe(true)
+    expect(autosave).toHaveBeenCalledOnce()
+  } finally {
     vi.unstubAllGlobals()
   }
 })
