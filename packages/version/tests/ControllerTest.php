@@ -11,6 +11,7 @@ use Pushword\Core\Entity\Page;
 use Pushword\Core\Service\RevisionCalculator;
 use Pushword\Snippet\Entity\Snippet;
 use Pushword\Version\Versionner;
+use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Serializer\Encoder\JsonEncoder;
@@ -109,11 +110,15 @@ final class ControllerTest extends AbstractAdminTestClass
 
         $page->mainContent = 'second';
         $em->flush(); // v1 — live
+        $page->title = 'Archived SEO title';
+        $page->editMessage = 'Archive test edit';
         $page->setHoldPublication(true);
         $page->mainContent = 'third';
 
         $em->flush(); // v2 — previous revision
+        $page->h1 = 'Archived page title';
         $page->mainContent = 'fourth';
+
         $em->flush(); // v3 — mirrors current
 
         $versions = $versionner->getVersions('page', $id);
@@ -121,6 +126,15 @@ final class ControllerTest extends AbstractAdminTestClass
         self::assertCount(3, $versions);
 
         $router = self::getContainer()->get('router');
+
+        $client->request(Request::METHOD_GET, $router->generate('admin_version_list', ['type' => 'page', 'id' => $id]));
+        self::assertResponseIsSuccessful();
+        self::assertSelectorTextContains('.pw-list-title', 'Archived page title');
+        self::assertSelectorTextContains('tbody', 'Archived SEO title');
+        self::assertSelectorTextContains('tbody', $page->slug);
+        self::assertSelectorTextContains('tbody', 'Archive test edit');
+        self::assertSelectorTextContains('tbody', 'admin@example.tld');
+        self::assertSelectorExists('tbody .badge');
 
         $editUrl = $this->generateAdminUrl('admin_page_edit', ['id' => $id]);
         $client->request(Request::METHOD_GET, $editUrl);
@@ -221,12 +235,18 @@ final class ControllerTest extends AbstractAdminTestClass
         $em->flush();
 
         $versions = $versionner->getVersions('snippet', (int) $snippet->id);
-        self::assertNotEmpty($versions, 'Snippet should have at least one version');
+        self::assertCount(2, $versions);
+        $files = new Filesystem();
+        $oldFile = $storageDir.'/snippet/'.$snippet->id.'/'.$versions[0];
+        $originalJson = gzdecode($files->readFile($oldFile));
+        self::assertIsString($originalJson);
+        $files->dumpFile($oldFile, $originalJson);
         $token = $this->csrfToken($client, 'version_load_snippet_'.$snippet->id);
 
         $listUrl = $router->generate('admin_version_list', ['type' => 'snippet', 'id' => $snippet->id]);
         $client->request(Request::METHOD_GET, $listUrl);
         self::assertSame(200, $client->getResponse()->getStatusCode(), (string) $client->getResponse()->getContent());
+        self::assertSelectorTextContains('.pw-list-title', 'Snippet version route');
 
         $compareUrl = $router->generate('admin_version_compare', ['type' => 'snippet', 'id' => $snippet->id, 'versionLeft' => $versions[0], 'versionRight' => 'current']);
         $client->request(Request::METHOD_GET, $compareUrl);
@@ -253,7 +273,9 @@ final class ControllerTest extends AbstractAdminTestClass
 
         $versionner->reset('snippet', (int) $snippet->id);
         $em = self::getContainer()->get('doctrine.orm.default_entity_manager');
-        $em->remove($em->getRepository(Snippet::class)->find($snippet->id) ?? $snippet);
+        $restored = $em->getRepository(Snippet::class)->find($snippet->id);
+        self::assertSame('first', $restored?->content);
+        $em->remove($restored);
         $em->flush();
     }
 

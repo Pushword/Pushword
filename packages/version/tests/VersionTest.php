@@ -23,6 +23,7 @@ use Symfony\Component\Serializer\Normalizer\DateTimeNormalizer;
 use Symfony\Component\Serializer\Normalizer\ObjectNormalizer;
 use Symfony\Component\Serializer\Serializer;
 use Symfony\Component\Serializer\SerializerInterface;
+use UnexpectedValueException;
 
 #[Group('integration')]
 final class VersionTest extends KernelTestCase
@@ -197,11 +198,15 @@ final class VersionTest extends KernelTestCase
 
         $latest = $versionner->getLatestVersion('page', (int) $page->id);
         self::assertNotNull($latest);
-        $snapshot = new Filesystem()->readFile($storageDir.'/'.(int) $page->id.'/'.$latest);
+        $compressed = new Filesystem()->readFile($storageDir.'/'.(int) $page->id.'/'.$latest);
+        $snapshot = gzdecode($compressed);
+        self::assertIsString($snapshot);
+        self::assertSame(gzencode($snapshot, 1), $compressed);
         self::assertStringContainsString('"editedBy"', $snapshot, 'Snapshot must record the editor');
         self::assertStringContainsString($user->getUserIdentifier(), $snapshot);
+        self::assertStringContainsString('"mainContent"', $snapshot);
+        self::assertArrayNotHasKey('mainContent', $versionner->metadataOf('page', (int) $page->id, $latest));
 
-        // The version list reads the editor through editorOf(), not the entity.
         self::assertSame($user->getUserIdentifier(), $versionner->editorOf('page', (int) $page->id, $latest));
 
         // Restore must not fail nor replace the editor with a phantom User.
@@ -209,6 +214,24 @@ final class VersionTest extends KernelTestCase
         $restored = $em->getRepository(Page::class)->find($page->id);
         self::assertNotNull($restored);
         self::assertSame($user->id, $restored->editedBy?->id);
+    }
+
+    public function testCorruptedGzipSnapshotFailsClearly(): void
+    {
+        self::bootKernel();
+        $container = self::getContainer();
+        $storageDir = sys_get_temp_dir().'/pw-version-corrupt-'.uniqid('', true);
+        $versionner = $this->buildVersionner($storageDir, $container->get('doctrine.orm.default_entity_manager'), $container->get('serializer'));
+        new Filesystem()->dumpFile($storageDir.'/1/invalid', "\x1f\x8btruncated");
+
+        $this->expectException(UnexpectedValueException::class);
+        $this->expectExceptionMessageIsOrContains('Invalid gzip snapshot invalid');
+
+        try {
+            $versionner->populate(new Page(), 'page', 1, 'invalid');
+        } finally {
+            new Filesystem()->remove($storageDir);
+        }
     }
 
     public function testVersionableTypesIncludesSnippetWhenInstalled(): void

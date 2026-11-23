@@ -17,6 +17,7 @@
     }
   ],
   "require": {
+    "ext-zlib": "*",
     "pushword/core": "*",
     "symfony/serializer": "^8.0"
   },

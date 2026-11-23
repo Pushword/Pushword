@@ -1,5 +1,5 @@
 ---
-title: 'page edits use revisions in the admin; carousels keep a version history'
+title: 'page edits use revisions in the admin; carousels keep a version history; new page and snippet snapshots use gzip'
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 run: 'doctrine:schema:update --force'
@@ -36,7 +36,7 @@ belongs in the feature doc, which you link to instead.
 Several changes land here between two tags: append to the file, do not replace it.
 -->
 
-**Concerns:** `pushword/core`, `pushword/repurpose`
+**Concerns:** `pushword/core`, `pushword/repurpose`, `pushword/version`
 
 ## Page editing revisions
 
@@ -45,3 +45,7 @@ Apply the schema update before opening the admin. If you override the page edit 
 ## Carousel version history
 
 **Sites with Repurpose.** Apply the schema update before editing carousels to create the compressed archive. The first edit archives the existing specification and makes it available in [Version history](/extension/repurpose#in-the-admin).
+
+## Compressed page and snippet snapshots
+
+**Sites with Version.** New version files contain gzip-compressed JSON. If your tools read `pushword_version.storage_dir` directly, update them to decode gzip files and accept existing plain JSON snapshots.

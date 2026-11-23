@@ -91,8 +91,9 @@ class VersionController extends AbstractController
         $versions = [];
         $editors = [];
         foreach ($this->versionner->getVersions($type, $id) as $version) {
-            $versions[$version] = $this->versionner->populate($this->newEntity($type), $type, $id, $version);
-            $editors[$version] = $this->versionner->editorOf($type, $id, $version);
+            $metadata = $this->versionner->metadataOf($type, $id, $version);
+            $versions[$version] = $metadata;
+            $editors[$version] = $metadata['editedBy']['username'] ?? null;
         }
 
         return $this->renderAdmin('@PushwordVersion/list.html.twig', [

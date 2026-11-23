@@ -26,7 +26,11 @@ use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
 use Symfony\Component\Serializer\Normalizer\ObjectNormalizer;
 use Symfony\Component\Serializer\SerializerInterface;
+use UnexpectedValueException;
 
+/**
+ * @phpstan-type SnapshotMetadata array{h1?: string, title?: string, name?: string, slug?: string, editMessage?: string|null, holdPublicationAt?: string|null, editedBy?: array{username?: string}}
+ */
 #[AsDoctrineListener(event: Events::postPersist)]
 #[AsDoctrineListener(event: Events::postUpdate)]
 class Versionner
@@ -114,9 +118,10 @@ class Versionner
         }
 
         $filename = $this->buildVersionFilename($hash);
+        $snapshot = $this->snapshotWithEditor($entity, $jsonContent);
         $this->fileSystem->dumpFile(
             $this->getVersionFile($type, $id, $filename),
-            $this->snapshotWithEditor($entity, $jsonContent),
+            gzencode($snapshot, 1) ?: $snapshot,
         );
 
         $this->pruneOldVersions($type, $id);
@@ -299,9 +304,7 @@ class Versionner
 
     public function populate(object $entity, string $type, int|string $id, string $version): object
     {
-        $serialized = $this->fileSystem->readFile($this->getVersionFile($type, $id, $version));
-
-        $this->serializer->deserialize($serialized, $entity::class, 'json', [
+        $this->serializer->deserialize($this->readSnapshot($type, $id, $version), $entity::class, 'json', [
             AbstractNormalizer::OBJECT_TO_POPULATE => $entity,
             ObjectNormalizer::DISABLE_TYPE_ENFORCEMENT => true, // permits to import tags as string
             // Restrict to the same column properties the snapshot was built
@@ -319,12 +322,24 @@ class Versionner
      */
     public function editorOf(string $type, int|string $id, string $version): ?string
     {
-        $serialized = $this->fileSystem->readFile($this->getVersionFile($type, $id, $version));
+        return $this->metadataOf($type, $id, $version)['editedBy']['username'] ?? null;
+    }
 
-        /** @var array{editedBy?: array{username?: string}} $data */
-        $data = json_decode($serialized, true, 512, \JSON_THROW_ON_ERROR);
+    /** @return SnapshotMetadata */
+    public function metadataOf(string $type, int|string $id, string $version): array
+    {
+        /** @var SnapshotMetadata $data */
+        $data = json_decode($this->readSnapshot($type, $id, $version), true, flags: \JSON_THROW_ON_ERROR);
 
-        return $data['editedBy']['username'] ?? null;
+        return array_intersect_key($data, [
+            'h1' => true,
+            'title' => true,
+            'name' => true,
+            'slug' => true,
+            'editMessage' => true,
+            'holdPublicationAt' => true,
+            'editedBy' => true,
+        ]);
     }
 
     public function find(string $type, int|string $id): object
@@ -418,19 +433,23 @@ class Versionner
         return $versions[0]; // every version matches current → oldest
     }
 
-    /**
-     * Whether the snapshot recorded the page in "hold publication" mode. Reads the
-     * raw JSON (like editorOf) instead of hydrating, since holdPublicationAt is a
-     * column and always present in the snapshot.
-     */
     private function isHeldSnapshot(string $type, int|string $id, string $version): bool
     {
-        $serialized = $this->fileSystem->readFile($this->getVersionFile($type, $id, $version));
+        return null !== ($this->metadataOf($type, $id, $version)['holdPublicationAt'] ?? null);
+    }
 
-        /** @var array{holdPublicationAt?: mixed} $data */
-        $data = json_decode($serialized, true, 512, \JSON_THROW_ON_ERROR);
+    private function readSnapshot(string $type, int|string $id, string $version): string
+    {
+        $snapshot = $this->fileSystem->readFile($this->getVersionFile($type, $id, $version));
 
-        return null !== ($data['holdPublicationAt'] ?? null);
+        // Legacy JSON snapshots share the same filenames as gzip snapshots.
+        if (! str_starts_with($snapshot, "\x1f\x8b")) {
+            return $snapshot;
+        }
+
+        $json = @gzdecode($snapshot);
+
+        return false !== $json ? $json : throw new UnexpectedValueException('Invalid gzip snapshot '.$version);
     }
 
     private function getVersionDir(string $type, int|string $id): string

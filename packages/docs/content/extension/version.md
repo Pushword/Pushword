@@ -23,7 +23,8 @@ pushword_version:
 
 ## Usage
 
-Each create or update stores a serialized snapshot. The page form links to the page's
+Each create or update stores a gzip-compressed JSON snapshot. Older JSON snapshots
+can also be compared and restored. The page form links to the page's
 version list (under the *created at* field), where you compare two versions side by side
 or restore one.
 
