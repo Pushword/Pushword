@@ -242,6 +242,7 @@
     .has-sync-notice + .layout .deck-wrap { position: static; }
     .studio-sync { flex: 1 0 100%; flex-wrap: wrap; align-items: center; font-size: .82rem; }
     .studio-sync > span { min-width: min(100%, 19rem); }
+    .studio-restored { margin: 1rem 1.5rem 0; color: var(--ok); background: var(--panel); border-color: var(--line); }
 
     .actions { display: flex; gap: .6rem; }
     .actions .btn { flex: 1; }
@@ -435,6 +436,7 @@
           <button class="btn" type="button" x-show="network === 'pinterest'" x-cloak @click="pinToPinterest()" :disabled="pinning" x-text="pinLabel">📌 Pin to Pinterest</button>
         </div>
       </details>
+      <a class="btn" href="{{ path('repurpose_history_index', {id: post.id}) }}" target="_blank" rel="noopener" aria-label="{{ 'repurposeHistoryOpen'|trans }}">{{ 'repurposeHistory'|trans }}</a>
       <button class="btn primary studio-save" type="button" @click="save()" :disabled="saving || syncState !== ''" x-text="saveLabel">Save</button>
     </div>
     <div class="notice studio-sync" x-show="syncState" x-cloak>
@@ -447,6 +449,10 @@
       <button class="btn" type="button" x-show="syncState === 'changed' && !dirty" x-on:click="window.location.reload()">{{ 'repurposeSyncReload'|trans }}</button>
     </div>
   </header>
+
+  {% for message in app.flashes('repurpose_history_restored') %}
+    <div class="notice studio-restored" role="status">{{ message|trans }}</div>
+  {% endfor %}
 
   <div class="layout" @wheel="sliderWheel($event)">
     <section class="studio-target" aria-label="{{ 'repurposePublishingTarget'|trans }}">

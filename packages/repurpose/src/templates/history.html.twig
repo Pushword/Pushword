@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="{{ app.request.locale|replace({_: '-'}) }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ 'repurposeHistory'|trans }} · Repurpose Studio</title>
+  <style>
+    :root { color-scheme: light; --bg: #f4f5f7; --panel: #fdfdfe; --line: #dee2e6; --text: #212529; --muted: #495057; --accent: #0b5ed7; }
+    * { box-sizing: border-box; }
+    body { margin: 0; font: 1rem/1.5 system-ui, sans-serif; color: var(--text); background: var(--bg); }
+    a { color: var(--accent); }
+    a:hover { text-decoration-thickness: 2px; }
+    :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    main { max-width: 74rem; margin: auto; padding: 1.5rem clamp(1rem, 4vw, 2.5rem) 3rem; }
+    h1 { margin: .6rem 0 0; font-size: 1.75rem; }
+    h2 { margin: 0; font-size: 1rem; }
+    .context, .hint { color: var(--muted); font-size: .875rem; margin: .25rem 0 0; overflow-wrap: anywhere; }
+    .history { display: grid; grid-template-columns: minmax(12rem, 15rem) minmax(0, 1fr); align-items: start; gap: 1.5rem; margin-top: 1.5rem; }
+    .versions, .comparison { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
+    .versions { padding: .85rem; }
+    .versions ul { list-style: none; margin: .5rem 0 0; padding: 0; max-height: 65vh; overflow: auto; }
+    .versions li > * { display: grid; gap: .1rem; padding: .5rem .65rem; border-radius: 6px; color: inherit; text-decoration: none; font-size: .875rem; }
+    .versions a:hover { background: var(--bg); text-decoration: underline; }
+    .versions a[aria-current] { background: #eaf2ff; color: #084298; font-weight: 600; }
+    time { font-size: .8rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+    .toolbar { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem; padding: 1rem; }
+    .toolbar form { display: flex; flex-wrap: wrap; align-items: center; gap: .45rem; }
+    .toolbar label { font-size: .875rem; }
+    button, select { min-height: 2.5rem; max-width: 100%; padding: .4rem .65rem; border: 1px solid #a7b0ba; border-radius: 6px; color: inherit; background: var(--panel); font: inherit; font-size: .875rem; }
+    button { font-weight: 600; cursor: pointer; }
+    button:hover { background: var(--bg); }
+    .restore button { color: var(--panel); border-color: var(--accent); background: var(--accent); }
+    .restore button:hover { background: #084298; }
+    .comparison-head, .values { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .comparison-head { background: var(--bg); }
+    .comparison-head > *, .values > * { padding: .65rem 1rem; min-width: 0; }
+    .comparison-head > :last-child, .values > :last-child { border-left: 1px solid var(--line); }
+    .field-name { margin: 0; padding: .35rem 1rem; border-block: 1px solid var(--line); background: var(--bg); color: var(--muted); font-size: .8rem; overflow-wrap: anywhere; }
+    pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; font-size: .875rem; }
+    .missing { font-size: .875rem; color: var(--muted); }
+    .empty, .source { padding: 1rem; margin: 0; border-top: 1px solid var(--line); }
+    .comparison > .empty { border-top: 0; }
+    .source summary { cursor: pointer; }
+    .source pre { margin-top: .65rem; }
+    .error { padding: .75rem 1rem; border: 1px solid #f1aeb5; border-radius: 6px; color: #842029; background: #fff1f2; }
+    @media (max-width: 45rem) {
+      .history { grid-template-columns: minmax(0, 1fr); gap: 1rem; }
+      .versions ul { max-height: 13rem; }
+      button, select { min-height: 2.75rem; }
+      .comparison-head > *, .values > * { padding-inline: .65rem; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <a href="{{ path('repurpose_studio', {id: post.id}) }}">← Repurpose Studio</a>
+    <h1>{{ 'repurposeHistory'|trans }}</h1>
+    <p class="context">{{ post.page }} · {{ post.network }}</p>
+
+    {% for message in app.flashes('repurpose_history_error') %}
+      <p class="error" role="alert">{{ message|trans }}</p>
+    {% endfor %}
+
+    <div class="history">
+      <nav class="versions" aria-labelledby="versions-title">
+        <h2 id="versions-title">{{ 'repurposeHistoryVersions'|trans }}</h2>
+        <ul>
+          <li><span><strong>{{ 'repurposeHistoryCurrent'|trans }}</strong><time datetime="{{ post.updatedAt|date('c') }}">{{ post.updatedAt|format_datetime('medium', 'medium', locale: app.request.locale) }}</time></span></li>
+          {% for version, savedAt in versions %}
+            <li>
+              <a href="{{ path('repurpose_history_index', {id: post.id, version: version}) }}"{% if selected and version == selected.version %} aria-current="page"{% endif %}>
+                {{ 'repurposeHistoryVersion'|trans({'%number%': version}) }}
+                <time datetime="{{ savedAt|date('c') }}">{{ savedAt|format_datetime('medium', 'medium', locale: app.request.locale) }}</time>
+              </a>
+            </li>
+          {% endfor %}
+        </ul>
+      </nav>
+
+      <section class="comparison" aria-label="{{ 'repurposeHistoryChanges'|trans }}">
+        {% if selected is null %}
+          <p class="empty">{{ 'repurposeHistoryEmpty'|trans }}</p>
+        {% else %}
+          <div class="toolbar">
+            {% if versions|length > 1 %}
+              <form method="get" action="{{ path('repurpose_history_index', {id: post.id}) }}">
+                <input type="hidden" name="version" value="{{ selected.version }}">
+                <label for="compare">{{ 'repurposeHistoryCompareWith'|trans }}</label>
+                <select id="compare" name="compare">
+                  <option value="">{{ 'repurposeHistoryCurrent'|trans }}</option>
+                  {% for version, savedAt in versions %}
+                    {% if version != selected.version %}
+                      <option value="{{ version }}"{% if compared and compared.version == version %} selected{% endif %}>{{ 'repurposeHistoryVersion'|trans({'%number%': version}) }} · {{ savedAt|format_datetime('medium', 'medium', locale: app.request.locale) }}</option>
+                    {% endif %}
+                  {% endfor %}
+                </select>
+                <button type="submit">{{ 'repurposeHistoryCompare'|trans }}</button>
+              </form>
+            {% endif %}
+            <div>
+              <form class="restore" method="post" action="{{ path('repurpose_history_restore', {id: post.id, version: selected.version}) }}">
+                <input type="hidden" name="_token" value="{{ csrf_token('repurpose_restore_' ~ post.id ~ '_' ~ selected.version) }}">
+                <input type="hidden" name="revision" value="{{ post.revision() }}">
+                <button type="submit" aria-describedby="restore-hint">{{ 'repurposeHistoryRestore'|trans({'%number%': selected.version}) }}</button>
+              </form>
+              <p class="hint" id="restore-hint">{{ 'repurposeHistoryRestoreHint'|trans }}</p>
+            </div>
+          </div>
+          <div class="comparison-head">
+            <h2 id="selected-version">{{ 'repurposeHistoryVersion'|trans({'%number%': selected.version}) }}</h2>
+            <h2 id="compared-version">{{ compared ? 'repurposeHistoryVersion'|trans({'%number%': compared.version}) : 'repurposeHistoryCurrent'|trans }}</h2>
+          </div>
+          {% for change in differences %}
+            <div>
+              <h3 class="field-name" id="field-{{ loop.index }}"><code>{{ change.field }}</code></h3>
+              <div class="values">
+                {% for version, value in {selected: change.left, compared: change.right} %}
+                  <div role="group" aria-labelledby="{{ version }}-version">
+                    {% if value is null %}
+                      <span class="missing">{{ 'repurposeHistoryMissing'|trans }}</span>
+                    {% else %}
+                      <pre>{{ value }}</pre>
+                    {% endif %}
+                  </div>
+                {% endfor %}
+              </div>
+            </div>
+          {% else %}
+            <p class="empty">{{ 'repurposeHistoryNoChanges'|trans }}</p>
+          {% endfor %}
+          <details class="source">
+            <summary>{{ 'repurposeHistorySource'|trans({'%number%': selected.version}) }}</summary>
+            <pre>{{ selected.spec|json_encode(constant('JSON_PRETTY_PRINT') b-or constant('JSON_UNESCAPED_SLASHES') b-or constant('JSON_UNESCAPED_UNICODE')) }}</pre>
+          </details>
+        {% endif %}
+      </section>
+    </div>
+  </main>
+</body>
+</html>

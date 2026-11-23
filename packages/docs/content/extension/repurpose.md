@@ -36,6 +36,16 @@ for one carousel or a list filtered to that page and host for several.
 Choose **Preview** to enlarge the cover or **Studio** to edit it. The studio's
 source card links back to the page editor; standalone carousels have no source.
 
+Open **Version history** in the Studio to compare a saved carousel with the
+current version or another saved version. **Restore version** restores the
+entire carousel specification, including its source page, slides, caption and
+publishing settings. The previous state stays available in the history.
+
+History is stored per carousel in the database and includes changes made in the
+Studio, through the API, and by flat-file imports. For existing carousels, the
+first edit archives the state that was saved before the edit. Versions reference
+media from the library. Deleting a carousel also deletes its history.
+
 The studio opens at the network's mobile feed width. Use the zoom slider or
 Ctrl+scroll to resize the preview. Click a text block or focus it with **Tab** to
 show its outline. Double-click it, press **Enter**, or choose **Edit text** to edit

@@ -1,5 +1,5 @@
 ---
-title: 'page edits use revisions in the admin'
+title: 'page edits use revisions in the admin; carousels keep a version history'
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 run: 'doctrine:schema:update --force'
@@ -36,8 +36,12 @@ belongs in the feature doc, which you link to instead.
 Several changes land here between two tags: append to the file, do not replace it.
 -->
 
-**Concerns:** `pushword/core`
+**Concerns:** `pushword/core`, `pushword/repurpose`
 
 ## Page editing revisions
 
 Apply the schema update before opening the admin. If you override the page edit form, render the hidden revision field and keep the sync banner and shortcut submit button from the [admin template](/extension/admin#saving-and-recovering-changes).
+
+## Carousel version history
+
+**Sites with Repurpose.** Apply the schema update before editing carousels. The first edit archives the existing specification and makes it available in [Version history](/extension/repurpose#in-the-admin).

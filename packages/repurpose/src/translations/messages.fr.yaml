@@ -75,6 +75,23 @@ repurposeHelpEffect: "S’applique à tout le carrousel. Chaque slide peut rempl
 repurposeHelpPalette: "Remplace le fond du carrousel pour cette slide. Laissez vide pour hériter."
 repurposeHelpPreview: "100 % correspond à la largeur habituelle du fil mobile du réseau choisi. Le zoom ne change que l’aperçu."
 repurposeHelpSource: "Le JSON est validé pendant la saisie. L’éditeur visuel et la source restent synchronisés lors du changement de vue."
+repurposeHistory: 'Historique des versions'
+repurposeHistoryChanges: 'Différences entre les versions'
+repurposeHistoryCompare: 'Comparer'
+repurposeHistoryCompareWith: 'Comparer avec'
+repurposeHistoryConflict: 'Ce carrousel a changé depuis l’ouverture de l’historique. Vérifiez les nouvelles différences avant de restaurer cette version.'
+repurposeHistoryCurrent: 'Version actuelle'
+repurposeHistoryEmpty: 'Les versions précédentes s’afficheront ici après l’enregistrement de modifications sur ce carrousel.'
+repurposeHistoryMissing: 'Champ absent'
+repurposeHistoryNoChanges: 'Ces versions contiennent les mêmes valeurs.'
+repurposeHistoryOpen: 'Historique des versions (s’ouvre dans un nouvel onglet)'
+repurposeHistoryPageConflict: 'Un autre carrousel utilise déjà la page source enregistrée pour ce réseau.'
+repurposeHistoryRestore: 'Restaurer la version %number%'
+repurposeHistoryRestoreHint: 'Vous pourrez retrouver la version actuelle dans cet historique.'
+repurposeHistoryRestored: 'Version du carrousel restaurée.'
+repurposeHistorySource: 'Voir la source de la version %number%'
+repurposeHistoryVersion: 'Version %number%'
+repurposeHistoryVersions: 'Versions enregistrées'
 repurposeLinkedCarouselsCount: 'Carrousels liés (%count%)'
 repurposeListCarousel: Carrousel
 repurposeListClose: Fermer

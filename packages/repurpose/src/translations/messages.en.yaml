@@ -75,6 +75,23 @@ repurposeHelpEffect: "Applies to the whole deck. Each slide can override this ef
 repurposeHelpPalette: "Overrides the deck background for this slide. Leave empty to inherit."
 repurposeHelpPreview: "100% is the typical mobile feed width for the selected network. Zoom changes the preview only."
 repurposeHelpSource: "JSON is validated as you type. The visual editor and source stay in sync when you switch."
+repurposeHistory: 'Version history'
+repurposeHistoryChanges: 'Changes between versions'
+repurposeHistoryCompare: 'Compare'
+repurposeHistoryCompareWith: 'Compare with'
+repurposeHistoryConflict: 'This carousel changed since you opened the history. Review the latest differences before restoring.'
+repurposeHistoryCurrent: 'Current version'
+repurposeHistoryEmpty: 'Previous versions will appear here after you save changes to this carousel.'
+repurposeHistoryMissing: 'Field absent'
+repurposeHistoryNoChanges: 'These versions contain the same values.'
+repurposeHistoryOpen: 'Version history (opens in a new tab)'
+repurposeHistoryPageConflict: 'Another carousel already uses the saved source page on this network.'
+repurposeHistoryRestore: 'Restore version %number%'
+repurposeHistoryRestoreHint: 'You can recover the current version from this history.'
+repurposeHistoryRestored: 'Carousel version restored.'
+repurposeHistorySource: 'View source of version %number%'
+repurposeHistoryVersion: 'Version %number%'
+repurposeHistoryVersions: 'Saved versions'
 repurposeLinkedCarouselsCount: 'Linked carousels (%count%)'
 repurposeListCarousel: Carousel
 repurposeListClose: Close

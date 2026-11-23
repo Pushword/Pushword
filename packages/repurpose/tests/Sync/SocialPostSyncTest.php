@@ -10,6 +10,7 @@ use PHPUnit\Framework\Attributes\Group;
 use Pushword\Core\Site\SiteRegistry;
 use Pushword\Flat\FlatFileContentDirFinder;
 use Pushword\Repurpose\Entity\SocialPost;
+use Pushword\Repurpose\Entity\SocialPostRevision;
 use Pushword\Repurpose\Repository\SocialPostRepository;
 use Pushword\Repurpose\Sync\SocialPostSync;
 use ReflectionProperty;
@@ -152,6 +153,7 @@ final class SocialPostSyncTest extends KernelTestCase
         $reloaded = $this->repository->findOneByKey(self::HOST, self::PAGE, self::NETWORK);
         self::assertNotNull($reloaded);
         self::assertSame('posted', $reloaded->status);
+        self::assertSame($this->spec(), $this->em->getRepository(SocialPostRevision::class)->findFor($reloaded, 1)?->spec);
     }
 
     public function testDeletingTheFileSweepsTheRow(): void
