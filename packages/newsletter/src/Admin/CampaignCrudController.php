@@ -292,19 +292,32 @@ class CampaignCrudController extends AbstractCrudController
             ->setFormTypeOption('label_attr', ['id' => 'newsletter-campaign-audience-label'])
             ->setFormTypeOption('attr', ['aria-labelledby' => 'newsletter-campaign-audience-label']);
 
-        yield FormField::addFieldset('newsletter.editorial.preparation')->setIcon('fa fa-calendar');
-        yield TextField::new('workingTitle', 'newsletter.editorial.workingTitle')->setRequired(false)->hideOnIndex()->setColumns('col-12');
         yield TextField::new('title', 'newsletter.editorial.workingTitle')->onlyOnIndex()->setSortable(false);
-        yield ChoiceField::new('editorialStage', 'newsletter.editorial.stage')
-            ->setColumns('col-12')
-            ->renderAsNativeWidget()
-            ->setFormTypeOption('placeholder', false)
-            ->setFormTypeOption('disabled', ! $preparing);
-        yield TextareaField::new('internalNotes', 'newsletter.editorial.internalNotes')->setRequired(false)->hideOnIndex()->setColumns('col-12')->setNumOfRows(3);
+
+        yield FormField::addFieldset('newsletter.campaign.fieldset.content')->setIcon('fa fa-pen-nib');
+        if ($isForm) {
+            yield $audienceField->setColumns('col-12');
+        }
+
+        yield TextField::new('subject', 'newsletter.campaign.field.subject')->setFormTypeOption('disabled', ! $preparing)->setRequired(false)->hideOnIndex()->setColumns('col-12');
+        yield ChoiceField::new('status', 'newsletter.campaign.field.status')
+            ->renderAsBadges([
+                CampaignStatus::Draft->value => 'secondary',
+                CampaignStatus::Scheduled->value => 'info',
+                CampaignStatus::Sending->value => 'warning',
+                CampaignStatus::Sent->value => 'success',
+            ])
+            ->hideOnForm();
+        yield DateTimeField::new('sendDate', 'newsletter.campaign.field.sendDate')->onlyOnIndex()->setSortable(false)->formatValue(
+            static fn (mixed $value): string => $value instanceof DateTimeInterface ? $value->format('d/m/Y H:i') : '—',
+        );
+        yield TextField::new('preheader', 'newsletter.campaign.field.preheader')->setFormTypeOption('disabled', ! $preparing)->hideOnIndex()->setColumns('col-12')
+            ->setHelp('newsletter.campaign.field.preheader.help')
+            ->setFormTypeOption('context_help', true);
+        yield $this->bodyField()->setFormTypeOption('disabled', ! $preparing);
 
         if ($isForm) {
             yield FormField::addFieldset('newsletter.campaign.fieldset.design')->setIcon('fa fa-palette');
-            yield $audienceField->setColumns('col-12');
             yield ChoiceField::new('emailLayout', 'newsletter.campaign.design.label')->setFormTypeOption('disabled', ! $preparing)
                 ->setChoices([
                     'newsletter.campaign.design.inherit' => '',
@@ -329,23 +342,14 @@ class CampaignCrudController extends AbstractCrudController
             ->setFormTypeOption('placeholder', false)
             ->setFormTypeOption('disabled', ! $preparing);
 
-        yield FormField::addFieldset('newsletter.campaign.fieldset.content')->setIcon('fa fa-pen-nib');
-        yield TextField::new('subject', 'newsletter.campaign.field.subject')->setFormTypeOption('disabled', ! $preparing)->setRequired(false)->hideOnIndex()->setColumns('col-12');
-        yield ChoiceField::new('status', 'newsletter.campaign.field.status')
-            ->renderAsBadges([
-                CampaignStatus::Draft->value => 'secondary',
-                CampaignStatus::Scheduled->value => 'info',
-                CampaignStatus::Sending->value => 'warning',
-                CampaignStatus::Sent->value => 'success',
-            ])
-            ->hideOnForm();
-        yield DateTimeField::new('sendDate', 'newsletter.campaign.field.sendDate')->onlyOnIndex()->setSortable(false)->formatValue(
-            static fn (mixed $value): string => $value instanceof DateTimeInterface ? $value->format('d/m/Y H:i') : '—',
-        );
-        yield TextField::new('preheader', 'newsletter.campaign.field.preheader')->setFormTypeOption('disabled', ! $preparing)->hideOnIndex()->setColumns('col-12')
-            ->setHelp('newsletter.campaign.field.preheader.help')
-            ->setFormTypeOption('context_help', true);
-        yield $this->bodyField()->setFormTypeOption('disabled', ! $preparing);
+        yield FormField::addFieldset('newsletter.editorial.preparation')->setIcon('fa fa-calendar')->hideOnIndex();
+        yield TextField::new('workingTitle', 'newsletter.editorial.workingTitle')->setRequired(false)->hideOnIndex()->setColumns('col-12');
+        yield ChoiceField::new('editorialStage', 'newsletter.editorial.stage')
+            ->setColumns('col-12')
+            ->renderAsNativeWidget()
+            ->setFormTypeOption('placeholder', false)
+            ->setFormTypeOption('disabled', ! $preparing);
+        yield TextareaField::new('internalNotes', 'newsletter.editorial.internalNotes')->setRequired(false)->hideOnIndex()->setColumns('col-12')->setNumOfRows(3);
 
         if ($this->smsSettings->isConfigured()) {
             yield FormField::addFieldset('newsletter.sms.alternative')->hideOnIndex()->setIcon('fa fa-comment-sms');

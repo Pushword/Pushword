@@ -140,12 +140,12 @@ newsletter:
     editor: Rédiger la newsletter
     fieldset:
       advanced: Options avancées
-      audience: 3. Affiner les destinataires
-      content: 2. Rédiger la newsletter
-      design: 1. Choisir l'audience et l'habillage
+      audience: Affiner les destinataires
+      content: Rédiger la newsletter
+      design: "Habillage et expéditeur"
       languages: Traductions
       performance: Résultats de l'envoi
-      schedule: 4. Préparer l'envoi
+      schedule: Préparer l'envoi
       scheduleHelp: "Enregistrez le brouillon et envoyez un test. Seul Envoyer autorise l’envoi, à la date choisie ou immédiatement."
     field:
       audience: Audience
@@ -638,6 +638,7 @@ newsletter:
     rateBasisUnavailable: "Base du taux indisponible"
     readReport: "Comment lire ces chiffres"
     recipients: "Destinataires ciblés"
+    reportOptions: "Options du rapport"
     reports: "Rapports"
     requiredDate: "Saisissez une date."
     reset: "Réinitialiser"

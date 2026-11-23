@@ -12,7 +12,7 @@
 
 {% macro creations(actions) %}
   <a class="btn btn-primary" href="{{ path('admin_newsletter_campaign_new') }}">{{ 'newsletter.catalogue.createNative'|trans }}</a>
-  {% for label, url in actions %}<a class="btn btn-primary" href="{{ url }}">{{ label|trans }}</a>{% endfor %}
+  {% for label, url in actions %}<a class="btn btn-secondary" href="{{ url }}">{{ label|trans }}</a>{% endfor %}
 {% endmacro %}
 
 {% block configured_stylesheets %}

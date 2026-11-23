@@ -2,7 +2,7 @@
 
 {% block page_actions %}
   {% if ea.crud.entityFqcn ends with '\\Campaign' %}
-    {% set secondary = ['saveAndContinue', 'duplicate', 'previewSegment', 'recipients'] %}
+    {% set secondary = ['saveAndContinue', 'send', 'cancelSchedule', 'duplicate', 'previewSegment', 'recipients'] %}
     {% for action in entity.actions|reverse|filter(action => action.name not in secondary) %}
       {{ include(action.templatePath, {action: action, entity: entity}, with_context: false) }}
     {% endfor %}

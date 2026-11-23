@@ -6,5 +6,5 @@
   <div id="newsletter-design-settings" class="pw-newsletter-design-editor">
     {{ editor_form|raw }}
   </div>
-  {{ include('@PushwordNewsletter/admin/_email_preview.html.twig') }}
+  {{ include('@PushwordNewsletter/admin/_email_preview.html.twig', {kind: 'campaign'}) }}
 </div>

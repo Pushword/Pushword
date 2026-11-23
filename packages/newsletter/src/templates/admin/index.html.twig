@@ -4,6 +4,16 @@
 {% set isInitialEmpty = entities is empty and not isFiltered %}
 
 {% block global_actions %}
+  {% if isInitialEmpty %}
+    {% for action in global_actions|filter(action => action.name in ['calendar', 'catalogue']) %}
+      {{ include(action.templatePath, {action: action}, with_context: false) }}
+    {% endfor %}
+  {% else %}
+    {{ parent() }}
+  {% endif %}
+{% endblock %}
+
+{% block filters %}
   {% if not isInitialEmpty %}{{ parent() }}{% endif %}
 {% endblock %}
 

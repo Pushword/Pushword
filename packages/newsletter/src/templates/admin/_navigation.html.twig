@@ -1,19 +1,18 @@
 {% set section = newsletterSection ?? (ea.crud.entityFqcn|default('')|split('\\')|last|lower) %}
 {% set items = [
-  {section: 'statistics', route: 'admin_newsletter_statistics', icon: 'fa-chart-simple', label: 'newsletter.statistics.title'},
-  {section: 'campaign', route: newsletter_campaigns_route(), icon: 'fa-paper-plane', label: 'newsletter.campaign.label.plural'},
-  {section: 'emailblock', route: 'admin_newsletter_block_index', icon: 'fa-cubes', label: 'newsletter.block.plural'},
-  {section: 'automation', route: 'admin_newsletter_automation_index', icon: 'fa-bolt', label: 'newsletter.automation.label.plural'},
-  {section: 'contact', route: 'admin_newsletter_contact_index', icon: 'fa-address-book', label: 'newsletter.contact.label.plural'},
-  {section: 'audience', route: 'admin_newsletter_audience_index', icon: 'fa-users', label: 'newsletter.audience.label.plural'},
-  {section: 'automationdelivery', route: 'admin_newsletter_automation_delivery_index', icon: 'fa-list-check', label: 'newsletter.delivery.label.plural'},
+  {section: 'statistics', route: 'admin_newsletter_statistics', label: 'newsletter.statistics.title'},
+  {section: 'campaign', route: newsletter_campaigns_route(), label: 'newsletter.campaign.label.plural'},
+  {section: 'emailblock', route: 'admin_newsletter_block_index', label: 'newsletter.block.plural'},
+  {section: 'automation', route: 'admin_newsletter_automation_index', label: 'newsletter.automation.label.plural'},
+  {section: 'contact', route: 'admin_newsletter_contact_index', label: 'newsletter.contact.label.plural'},
+  {section: 'audience', route: 'admin_newsletter_audience_index', label: 'newsletter.audience.label.plural'},
+  {section: 'automationdelivery', route: 'admin_newsletter_automation_delivery_index', label: 'newsletter.delivery.label.plural'},
 ] %}
 
 <nav class="pw-newsletter-nav" aria-label="{{ 'newsletter.menu.label'|trans }}">
   {% for item in items %}
     {% set current = section == item.section or (section == 'campaignrecipient' and item.section == 'campaign') %}
     <a href="{{ path(item.route) }}"{% if current %} aria-current="page"{% endif %}>
-      <i class="fa {{ item.icon }}" aria-hidden="true"></i>
       {{ item.label|trans }}
     </a>
   {% endfor %}

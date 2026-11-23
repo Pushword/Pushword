@@ -140,12 +140,12 @@ newsletter:
     editor: Write newsletter
     fieldset:
       advanced: Advanced options
-      audience: 3. Refine recipients
-      content: 2. Write the newsletter
-      design: 1. Choose the audience and design
+      audience: Refine recipients
+      content: Write the newsletter
+      design: "Design and sender"
       languages: Translations
       performance: Delivery results
-      schedule: 4. Prepare to send
+      schedule: Prepare to send
       scheduleHelp: "Save the draft and send a test. Only Send authorizes delivery, at the selected date or immediately."
     field:
       audience: Audience
@@ -638,6 +638,7 @@ newsletter:
     rateBasisUnavailable: "Rate base unavailable"
     readReport: "How to read these figures"
     recipients: "Target recipients"
+    reportOptions: "Report options"
     reports: "Reports"
     requiredDate: "Enter a date."
     reset: "Reset"

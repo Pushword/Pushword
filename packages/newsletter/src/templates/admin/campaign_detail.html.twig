@@ -39,13 +39,11 @@
 {% endblock %}
 
 {% block main %}
-  {% if campaign.isDraft or campaign.isScheduled %}
+  {% if (campaign.isDraft or campaign.isScheduled) and not (preflight_issues is empty and campaign.sendIssues is empty) %}
     <section class="pw-campaign-preflight alert {{ preflight_issues|filter(issue => issue.severity == 'error') is empty ? 'alert-info' : 'alert-warning' }}" aria-labelledby="campaign-preflight-title">
       <h2 class="h6" id="campaign-preflight-title">{{ 'newsletter.preflight.title'|trans }}</h2>
       {% if campaign.sendIssues is not empty %}<p>{{ 'newsletter.preflight.blocked'|trans }}</p>{% endif %}
-      {% if preflight_issues is empty %}
-        <p class="mb-0">{{ 'newsletter.preflight.passed'|trans }}</p>
-      {% else %}
+      {% if preflight_issues is not empty %}
         <ul class="mb-0">
           {% for issue in preflight_issues %}
             <li data-preflight-code="{{ issue.code }}">
@@ -56,6 +54,8 @@
         </ul>
       {% endif %}
     </section>
+  {% elseif campaign.isDraft or campaign.isScheduled %}
+    <p class="pw-campaign-check-passed"><i class="fa fa-circle-check" aria-hidden="true"></i> {{ 'newsletter.preflight.passed'|trans }}</p>
   {% endif %}
   <div class="pw-campaign-review">
     <div class="pw-campaign-message">

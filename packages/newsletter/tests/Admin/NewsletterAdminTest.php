@@ -140,6 +140,8 @@ final class NewsletterAdminTest extends AbstractAdminTestClass
         $secondary = $crawler->filter('.pw-newsletter-more-actions');
         self::assertCount(1, $secondary->selectLink('Duplicate as draft'));
         self::assertCount(1, $secondary->selectLink('Count audience'));
+        self::assertCount(1, $secondary->selectButton('Send'));
+        self::assertCount(1, $crawler->filter('.page-actions')->selectLink('Send test'));
         $form = $secondary->selectButton('Save and continue editing')->form();
         $form['Campaign[workingTitle]'] = 'Updated working title';
         $client->submit($form);
@@ -158,7 +160,12 @@ final class NewsletterAdminTest extends AbstractAdminTestClass
         $crawler = $client->request(Request::METHOD_GET, '/admin/newsletter/campaign');
         self::assertResponseIsSuccessful();
         self::assertCount(1, $crawler->filter('.pw-newsletter-empty a.btn-primary'));
-        self::assertCount(0, $crawler->filter('.content-header .action-new, .pw-newsletter-status'));
+        self::assertCount(1, $crawler->filter('.content-header')->selectLink('Calendar'));
+        self::assertCount(0, $crawler->filter('.content-header .action-new, .action-filters-button, .pw-newsletter-status'));
+
+        $crawler = $client->request(Request::METHOD_GET, '/admin/newsletter/campaign?filters[status][comparison]=%3D&filters[status][value]=sent');
+        self::assertResponseIsSuccessful();
+        self::assertCount(1, $crawler->filter('.action-filters-button'));
     }
 
     public function testDuplicationOpensAnUnsavedDraftAndSavingLeavesTheOriginalIntact(): void
@@ -362,6 +369,7 @@ final class NewsletterAdminTest extends AbstractAdminTestClass
         $crawler = $client->request('GET', $url);
         self::assertResponseIsSuccessful();
         self::assertSelectorExists('input[name="Campaign[subject]"][disabled]');
+        self::assertSelectorExists('input[name="Campaign[preheader]"][disabled]');
         self::assertSelectorExists('textarea[name="Campaign[bodyMarkdown]"][disabled]');
         $form = $crawler->selectButton('Save changes')->form();
         $values = $form->getPhpValues();
@@ -403,11 +411,30 @@ final class NewsletterAdminTest extends AbstractAdminTestClass
         $client = $this->loginUser();
         $crawler = $client->request(Request::METHOD_GET, '/admin/newsletter/statistics');
         self::assertResponseIsSuccessful();
-        foreach (['from', 'to', 'audience'] as $field) {
+        foreach (['from', 'to', 'audience', 'clickScope', 'basis', 'window', 'groupBy'] as $field) {
             $id = 'statistics-'.$field;
             self::assertCount(1, $crawler->filter('#'.$id));
             self::assertCount(1, $crawler->filter('label[for="'.$id.'"]'));
         }
+    }
+
+    public function testReportOptionsOpenWhenAValueIsAppliedOrNeedsCorrection(): void
+    {
+        $client = $this->loginUser();
+        $url = '/admin/newsletter/statistics';
+
+        $crawler = $client->request(Request::METHOD_GET, $url);
+        self::assertResponseIsSuccessful();
+        self::assertCount(1, $crawler->filter('details:not([open]) #statistics-window'));
+
+        $crawler = $client->request(Request::METHOD_GET, $url.'?window=7');
+        self::assertResponseIsSuccessful();
+        self::assertCount(1, $crawler->filter('details[open] #statistics-window option[value="7"][selected]'));
+
+        $crawler = $client->request(Request::METHOD_GET, $url.'?basis=invalid');
+        self::assertResponseStatusCodeSame(Response::HTTP_BAD_REQUEST);
+        self::assertCount(1, $crawler->filter('details[open] #statistics-basis[aria-invalid="true"][aria-describedby="statistics-basis-error"]'));
+        self::assertCount(1, $crawler->filter('[role="alert"] a[href="#statistics-basis"]'));
     }
 
     public function testContactIdentityIsCompactAndKeepsPhoneOnlyContactsVisible(): void
@@ -959,7 +986,7 @@ final class NewsletterAdminTest extends AbstractAdminTestClass
         $client = $this->loginUser();
         $this->seed();
 
-        $client->request(Request::METHOD_GET, '/admin/newsletter/campaign/new');
+        $crawler = $client->request(Request::METHOD_GET, '/admin/newsletter/campaign/new');
 
         self::assertSame(200, $client->getResponse()->getStatusCode());
         $html = (string) $client->getResponse()->getContent();
@@ -967,6 +994,14 @@ final class NewsletterAdminTest extends AbstractAdminTestClass
         self::assertMatchesRegularExpression('/name="[^"]*\[segmentAsJson\]"/', $html);
         self::assertMatchesRegularExpression('/name="[^"]*\[audience\]"/', $html);
         self::assertMatchesRegularExpression('/name="[^"]*\[translationsAsJson\]"/', $html);
+        $writingFields = $crawler->filter('[name="Campaign[audience]"], [name="Campaign[subject]"], [name="Campaign[workingTitle]"], [name="Campaign[internalNotes]"]');
+        self::assertSame(
+            ['Campaign[audience]', 'Campaign[subject]', 'Campaign[workingTitle]', 'Campaign[internalNotes]'],
+            $writingFields->each(static fn (Crawler $field): ?string => $field->attr('name')),
+        );
+        foreach (['subject', 'workingTitle', 'internalNotes'] as $field) {
+            self::assertSelectorExists('[name="Campaign['.$field.']"]:not([required])');
+        }
     }
 
     /** @return iterable<string, array{string, string}> */
@@ -1037,8 +1072,8 @@ final class NewsletterAdminTest extends AbstractAdminTestClass
         $client = $this->loginUser();
         $audience = $this->seed();
         $crawler = $client->request(Request::METHOD_GET, '/admin/newsletter/campaign/new');
-        self::assertStringContainsString('Preparation', $crawler->filter('.form-fieldset')->first()->text());
-        self::assertStringContainsString('Choose the audience and design', $crawler->filter('.form-fieldset')->eq(1)->text());
+        self::assertStringContainsString('Write the newsletter', $crawler->filter('.form-fieldset')->first()->text());
+        self::assertStringContainsString('Design and sender', $crawler->filter('.form-fieldset')->eq(1)->text());
         foreach (['pushword', 'pushword_letter', 'pushword_bulletin'] as $preset) {
             self::assertCount(1, $crawler->filter('select[name="Campaign[emailLayout]"] option[value="twig:'.$preset.'"]'));
         }

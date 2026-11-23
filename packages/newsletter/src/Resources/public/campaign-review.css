@@ -27,6 +27,19 @@
 .pw-campaign-preflight li > i { flex: none; }
 .pw-campaign-preflight li > span { min-inline-size: 0; overflow-wrap: anywhere; }
 
+.pw-campaign-check-passed {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  margin-block: 0 1.25rem;
+  color: var(--bs-secondary-color);
+  font-size: var(--pw-text-sm);
+}
+
+.pw-campaign-check-passed i {
+  color: var(--bs-success-text-emphasis);
+}
+
 .pw-campaign-more-icon {
   display: none;
 }
@@ -61,23 +74,6 @@
 
 .pw-campaign-preview .pw-newsletter-design-preview {
   position: static;
-}
-
-.pw-campaign-preview .pw-newsletter-design-feedback {
-  display: none;
-}
-
-.pw-campaign-preview [data-preview-width] span {
-  display: none;
-}
-
-.pw-campaign-preview .pw-newsletter-design-canvas {
-  margin-block-start: 1rem;
-  overflow: visible;
-}
-
-.pw-campaign-preview iframe {
-  inline-size: min(375px, 100%);
 }
 
 .pw-campaign-preview[data-viewport='desktop'] iframe {

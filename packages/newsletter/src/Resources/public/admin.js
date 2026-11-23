@@ -357,9 +357,6 @@ document.addEventListener('ea.collection.item-added', (event) => {
 })
 
 window.addEventListener('load', () => {
-  const navigation = document.querySelector('.pw-newsletter-nav')
-  const active = navigation?.querySelector('[aria-current="page"]')
-  if (active) navigation.scrollLeft = Math.max(0, active.offsetLeft - navigation.offsetLeft + active.offsetWidth - navigation.clientWidth)
   initSmsCounters()
   initEmailPreview()
   initNewsletterDelays()
