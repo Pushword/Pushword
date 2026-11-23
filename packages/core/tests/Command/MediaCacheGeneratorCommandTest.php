@@ -353,7 +353,9 @@ final class MediaCacheGeneratorCommandTest extends KernelTestCase
         }
 
         // Small libraries still spread over the workers rather than piling into one.
+        self::assertSame(1, $chunkSize->invoke($command, 0, 2));
         self::assertSame(25, $chunkSize->invoke($command, 50, 2));
+        self::assertSame(17, $chunkSize->invoke($command, 49, 3));
 
         // Where the cap takes over, pinned: the argv assertion above alone would
         // still accept a cap of 500 (500 x 256 sits just under the limit), which

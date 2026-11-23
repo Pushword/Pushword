@@ -7,6 +7,8 @@ use Rector\Config\RectorConfig;
 use Rector\DeadCode\Rector\ClassMethod\RemoveUselessReturnTagRector;
 use Rector\DeadCode\Rector\Node\RemoveNonExistingVarAnnotationRector;
 use Rector\DeadCode\Rector\Property\RemoveDefaultValueFromAssignedPropertyRector;
+use Rector\Doctrine\Orm37\Rector\Attribute\DoctrineOrderByAttributeSortDirectionRector;
+use Rector\Doctrine\Orm37\Rector\MethodCall\DoctrineQueryBuilderSortDirectionRector;
 use Rector\Doctrine\Set\DoctrineSetList;
 use Rector\Php81\Rector\FuncCall\NullToStrictStringFuncCallArgRector;
 use Rector\PHPUnit\CodeQuality\Rector\Class_\PreferPHPUnitThisCallRector;
@@ -84,6 +86,9 @@ return RectorConfig::configure()
         PreferPHPUnitThisCallRector::class,
         AssertFuncCallToPHPUnitAssertRector::class,
         StringCastAssertStringContainsStringRector::class,
+        // Keep Doctrine ordering syntax independent of the polyfill used for clamp().
+        DoctrineOrderByAttributeSortDirectionRector::class,
+        DoctrineQueryBuilderSortDirectionRector::class,
         // Subscriber tags registered explicitly still require EventSubscriberInterface.
         EventSubscriberToAttributeRector::class,
         // @see https://github.com/rectorphp/rector/issues/9519

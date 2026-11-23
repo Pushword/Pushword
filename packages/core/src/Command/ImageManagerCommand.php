@@ -290,7 +290,7 @@ final class ImageManagerCommand
      */
     private function chunkSize(int $staleCount, int $workers): int
     {
-        return min(max(1, (int) ceil($staleCount / $workers)), self::CHUNK_MAX);
+        return clamp((int) ceil($staleCount / $workers), 1, self::CHUNK_MAX);
     }
 
     /**

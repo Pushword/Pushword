@@ -13,10 +13,6 @@ use Symfony\Component\DomCrawler\Crawler;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
-/**
- * Covers inline editing on the review index (pushword_conversation_inline_update):
- * the reply and the weight.
- */
 final class ReviewInlineReplyTest extends AbstractAdminTestClass
 {
     public function testInlineUpdateSetsAndClearsReply(): void
@@ -130,6 +126,26 @@ final class ReviewInlineReplyTest extends AbstractAdminTestClass
         ]);
         self::assertSame(Response::HTTP_FORBIDDEN, $client->getResponse()->getStatusCode());
         self::assertSame('', $this->reloadReview($reviewId)->getReply());
+    }
+
+    public function testInlineRatingClampsNumericInput(): void
+    {
+        $client = $this->loginUser();
+        $reviewId = $this->createReview();
+        $crawler = $client->request(Request::METHOD_GET, '/admin/review');
+        self::assertResponseIsSuccessful();
+        $rating = $crawler->filter('#pw-message-inline-'.$reviewId.' [hx-vals*="rating"]');
+        $token = $this->extractToken((string) $rating->attr('hx-vals'));
+
+        foreach ([['0', 1], ['3.8', 3], ['6', 5]] as [$value, $expected]) {
+            $client->request(Request::METHOD_POST, '/admin/conversation/'.$reviewId.'/inline-update', [
+                'field' => 'rating',
+                'value' => $value,
+                '_token' => $token,
+            ]);
+            self::assertResponseIsSuccessful();
+            self::assertSame($expected, $this->reloadReview($reviewId)->getRating());
+        }
     }
 
     private function createReview(): int

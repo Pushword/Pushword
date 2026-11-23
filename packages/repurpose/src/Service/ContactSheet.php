@@ -33,7 +33,7 @@ final readonly class ContactSheet
     public function build(array $slideSvgs, int $slideWidth, int $slideHeight, int $cellWidth = self::CELL_WIDTH, ?string $note = null): array
     {
         $count = \count($slideSvgs);
-        $columns = max(1, min(self::COLUMNS, $count));
+        $columns = clamp($count, 1, self::COLUMNS);
         $rows = (int) ceil($count / $columns);
         $cellHeight = (int) round($cellWidth * $slideHeight / max(1, $slideWidth));
 

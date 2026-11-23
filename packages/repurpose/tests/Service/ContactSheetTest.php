@@ -66,7 +66,7 @@ final class ContactSheetTest extends TestCase
 
         $doc = new DOMDocument();
         self::assertTrue($doc->loadXML($sheet['svg']));
-        self::assertGreaterThan(0, $sheet['width']);
+        self::assertSame(588, $sheet['width'], 'one 540 px column and two 24 px gaps');
         self::assertGreaterThan(0, $sheet['height']);
     }
 }

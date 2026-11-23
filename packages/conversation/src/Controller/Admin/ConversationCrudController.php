@@ -528,8 +528,7 @@ class ConversationCrudController extends AbstractAdminCrudController
                 return false;
             }
 
-            $intValue = max(1, min(5, (int) $value));
-            $message->setRating($intValue);
+            $message->setRating(clamp((int) $value, 1, 5));
 
             return true;
         }
