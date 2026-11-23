@@ -40,6 +40,14 @@ The studio opens at the network's mobile feed width. Use the zoom slider or
 Ctrl+scroll to resize the preview. Click text to edit it. As you drag a text box,
 guides show the centres and edges of nearby slide elements.
 
+Choose **+ Text**, or press **T** when the preview has focus, then click or tap
+where you want to type. On a focused slide, **Enter** places it in the centre so
+you can fine-tune X and Y in the panel.
+Right-click a spot on the slide to add text there, paste a text box copied in the
+studio, or act on the element under the pointer. For an image, choose **Crop image**
+to drag the photo inside its frame and adjust its zoom. The **⋯** beside a slide
+number or in the slide list offers **Duplicate slide** and **Insert slide after**.
+
 The Studio alerts you when another user or an agent saves the carousel. If you
 have unsaved edits, choose **Open latest version in a new tab**. Your draft stays
 in the original tab so you can review and reapply your changes.

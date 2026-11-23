@@ -127,6 +127,7 @@ final class RepurposeStudioControllerTest extends WebTestCase
         // The free-text editor's font choices and the zoom slider's base width.
         self::assertStringContainsString('"textFonts":["body","heading"]', $html);
         self::assertStringContainsString('feedWidth: 390', $html);
+        self::assertStringContainsString('slideLimit: 300', $html);
         self::assertStringContainsString('"linkedin-4-5":"4:5 · 1080 × 1350 px"', $html);
         self::assertStringContainsString('— brand —', $html);
         // Deck interactions: drag-to-move free texts, wheel-adjustable sliders,
@@ -273,6 +274,7 @@ final class RepurposeStudioControllerTest extends WebTestCase
         self::assertSelectorExists('#rp-slide-preview');
         self::assertSelectorExists('#rp-video-preview video[controls][playsinline]');
         self::assertStringContainsString($filename, (string) $this->client->getResponse()->getContent());
+        self::assertStringContainsString('slideLimit: 20', (string) $this->client->getResponse()->getContent());
 
         $body = $this->postJson('/admin/repurpose/studio/'.$post->id.'/preview', $post->spec);
         self::assertResponseIsSuccessful();

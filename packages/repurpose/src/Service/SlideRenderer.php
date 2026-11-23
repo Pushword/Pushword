@@ -212,7 +212,7 @@ final readonly class SlideRenderer
         $clipId = 'frame-'.$index.'-'.$sub;
 
         return '<clipPath id="'.$clipId.'">'.$cellRect.' data-rp-guide="image"/></clipPath>'
-            .'<g clip-path="url(#'.$clipId.')">'
+            .'<g clip-path="url(#'.$clipId.')" data-rp-image="'.$sub.'">'
             .'<image href="'.$dataUri.'" x="'.$this->n($fx + $placement->x).'" y="'.$this->n($fy + $placement->y).'" '
             .'width="'.$this->n($placement->width).'" height="'.$this->n($placement->height).'" '
             .'preserveAspectRatio="none"/></g>';

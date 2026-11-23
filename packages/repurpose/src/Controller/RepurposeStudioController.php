@@ -89,12 +89,15 @@ final class RepurposeStudioController extends AbstractController
             $networkUrls[$network] = $this->generateUrl('repurpose_studio_network', ['id' => $post->id, 'network' => $network]);
         }
 
+        $limits = NetworkRegistry::NETWORKS[$carousel->network]['limits'] ?? [];
+
         return $this->render('@PushwordRepurpose/studio.html.twig', [
             'post' => $post,
             'carousel' => $carousel,
             // Slides preview at the network's mobile-feed width, so "is the text
             // big enough?" is judged at the size a scrolling viewer actually sees.
             'feedWidth' => $this->networks->mobileWidth($carousel->network),
+            'slideLimit' => $limits['maxSlides'] ?? $limits['maxPages'] ?? null,
             'backUrl' => $this->backUrl($request),
             'specJs' => json_encode($post->spec, $scriptFlags),
             'videoJs' => json_encode($this->renderedVideo($carousel->video), $scriptFlags),

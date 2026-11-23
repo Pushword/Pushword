@@ -18,6 +18,41 @@
   // on release; the ceiling forces a preview at least this often mid-stream.
   var PREVIEW_MAX_WAIT_MS = 700
   var REVISION_CHECK_MS = 10000
+  var PLACED_TEXT_WIDTH = 0.36
+
+  function clamp(value, min, max) {
+    return Math.max(min, Math.min(value, max))
+  }
+
+  function slidePoint(svg, event) {
+    var matrix = svg.getScreenCTM()
+    if (!matrix) {
+      return null
+    }
+    var point = svg.createSVGPoint()
+    point.x = event.clientX
+    point.y = event.clientY
+    var local = point.matrixTransform(matrix.inverse())
+    var frame = svg.viewBox.baseVal
+    return {
+      x: clamp((local.x - frame.x) / frame.width, 0, 1),
+      y: clamp((local.y - frame.y) / frame.height, 0, 1),
+    }
+  }
+
+  function placedText(point, copied) {
+    var box = copied ? Object.assign({}, copied) : {
+      content: '', width: PLACED_TEXT_WIDTH, size: 0.05,
+      align: point.x > 1 - PLACED_TEXT_WIDTH ? 'right' : 'left',
+      font: 'body', color: '', highlight: '',
+    }
+    var anchor = { left: 0, center: 0.5, right: 1 }[box.align]
+    var room = { left: 1 - point.x, center: 2 * Math.min(point.x, 1 - point.x), right: point.x }
+    box.width = Math.min(box.width, Math.max(0.05, Number(room[box.align].toFixed(3))))
+    box.x = clamp(Number((point.x - box.width * anchor).toFixed(3)), 0, 1 - box.width)
+    box.y = Number(clamp(point.y, 0, 0.95).toFixed(3))
+    return box
+  }
 
   // Tailwind's default palette (v3 hexes), one row per hue × these shades, plus a
   // neutral ramp — the swatch suggestions offered by the colour popover.
@@ -226,6 +261,7 @@
       networkUrls: cfg.networkUrls || {},
       filename: cfg.filename || 'carousel',
       feedWidth: cfg.feedWidth || 390,
+      slideLimit: cfg.slideLimit || null,
       zoom: 1,
       view: 'visual',
       live: { state: 'ok', text: 'in sync' },
@@ -241,6 +277,14 @@
       textPop: { open: false, top: 0, left: 0, ref: '' },
       _editObj: null,
       _editKey: '',
+      placingText: false,
+      textDraft: null,
+      textPopTrigger: null,
+      copiedText: null,
+      removedText: null,
+      actionMenu: null,
+      crop: null,
+      _previewTargets: null,
       effectModal: { open: false, target: 'deck', tab: 'All' },
       mediaModal: { open: false, src: '' },
       dirty: false,
@@ -271,6 +315,7 @@
 
       init: function () {
         this.normalize()
+        this._previewTargets = this.previewTargets()
         this._boundDragMove = this.deckTextMove.bind(this)
         this._boundDragUp = this.deckTextUp.bind(this)
         this._boundDragCancel = this.deckTextCancel.bind(this)
@@ -443,6 +488,28 @@
         this._timer = setTimeout(this.preview.bind(this), Math.max(wait, 0))
       },
 
+      previewTargets: function () {
+        return this.spec.slides.map(function (slide) {
+          return { slide: slide, texts: (slide.texts || []).slice() }
+        })
+      },
+
+      previewSlideIndex: function (index) {
+        var target = this._previewTargets?.[index]
+        return target ? this.spec.slides.indexOf(target.slide) : -1
+      },
+      previewMatches: function (index, slide) {
+        return this._previewTargets?.[index]?.slide === slide
+      },
+      previewIndexOf: function (slide) {
+        return this._previewTargets?.findIndex(item => item.slide === slide) ?? -1
+      },
+
+      previewTextIndex: function (index, slide, textIndex) {
+        var target = this._previewTargets?.[index]
+        return target ? slide.texts.indexOf(target.texts[textIndex]) : -1
+      },
+
       preview: async function () {
         this._previewQueuedAt = null
         var spec
@@ -455,6 +522,7 @@
 
         // Mid-drag previews overlap; a response only lands if no newer one started.
         var seq = ++this._previewSeq
+        var targets = 'visual' === this.view ? this.previewTargets() : null
         this.live = { state: 'busy', text: 'rendering…' }
         try {
           var response = await fetch(this.urls.preview, jsonPost(spec))
@@ -472,8 +540,10 @@
             // Keep the SVG under the pointer until the drag ends.
             if (this._drag) {
               this._drag.previewSlides = body.slides
+              this._drag.previewTargets = targets
             } else {
               this.slides = body.slides
+              this._previewTargets = targets
             }
             this.violations = []
             this.warnings = Array.isArray(body.warnings) ? body.warnings : []
@@ -546,10 +616,22 @@
         }
       },
 
-      addSlide: function () {
-        this.spec.slides.push({ layout: 'bottom', align: 'left', title: 'New slide', imageLayout: 'full', images: [{ focusX: 0.5, focusY: 0.5, zoom: 1 }], palette: {}, texts: [] })
-        this.slidesOpen.push(false)
-        this.revealSlide(this.spec.slides.length - 1)
+      addSlide: function (after = this.spec.slides.length - 1) {
+        this.insertSlide(after, { layout: 'bottom', align: 'left', title: 'New slide', imageLayout: 'full', images: [{ focusX: 0.5, focusY: 0.5, zoom: 1 }], palette: {}, texts: [] })
+      },
+      duplicateSlide: function (index) {
+        this.insertSlide(index, JSON.parse(JSON.stringify(this.spec.slides[index])))
+      },
+      insertSlide: function (after, slide) {
+        if (!this.canInsertSlide) {
+          return
+        }
+        var index = after + 1
+        this.spec.slides.splice(index, 0, slide)
+        this.revealSlide(index)
+      },
+      get canInsertSlide() {
+        return null === this.slideLimit || this.spec.slides.length < this.slideLimit
       },
       addText: function (slide) {
         if (!Array.isArray(slide.texts)) {
@@ -558,9 +640,32 @@
         slide.texts.push({ content: 'Text', x: 0.08, y: 0.08, width: 0.84, size: 0.05, align: 'left', font: 'body', color: '', highlight: '' })
       },
       removeText: function (slide, index) {
+        var text = slide.texts[index]
+        if (this._editObj === text) {
+          this.closeTextPop()
+        }
+        this.removedText = { slide: slide, text: text, index: index }
         slide.texts.splice(index, 1)
       },
+      undoRemoveText: function () {
+        var removed = this.removedText
+        this.removedText = null
+        if (removed && this.spec.slides.includes(removed.slide)) {
+          removed.slide.texts.splice(removed.index, 0, removed.text)
+          this.revealControl(this.spec.slides.indexOf(removed.slide), '.free-text textarea', removed.index)
+        }
+      },
       removeSlide: function (index) {
+        var slide = this.spec.slides[index]
+        if (this.crop?.slide === slide) {
+          this.crop = null
+        }
+        if (this.textDraft?.slide === slide || this._editObj === slide || slide.texts.includes(this._editObj)) {
+          this.closeTextPop()
+        }
+        if (this.removedText && this.removedText.slide === slide) {
+          this.removedText = null
+        }
         this.spec.slides.splice(index, 1)
         this.slidesOpen.splice(index, 1)
       },
@@ -630,6 +735,81 @@
       cellCount: function (slide) {
         return slide && slide.imageLayout && 'full' !== slide.imageLayout ? 2 : 1
       },
+      imageCellAt: function (slide, point) {
+        switch (slide.imageLayout) {
+          case 'split-h': return point.x >= 0.5 ? 1 : 0
+          case 'split-v': return point.y >= 0.5 ? 1 : 0
+          default: return 0
+        }
+      },
+      get croppedImage() {
+        return this.crop ? this.crop.slide.images[this.crop.cell] : null
+      },
+      cropFrame: function (slide) {
+        var cell = this.crop.cell
+        switch (slide.imageLayout) {
+          case 'split-h': return { left: cell * 50 + '%', top: '0', width: '50%', height: '100%' }
+          case 'split-v': return { left: '0', top: cell * 50 + '%', width: '100%', height: '50%' }
+          default: return { left: '0', top: '0', width: '100%', height: '100%' }
+        }
+      },
+      beginCrop: function (slideIndex, cell) {
+        var slide = this.spec.slides[slideIndex]
+        this.setPreviewMode('slides')
+        this.closeTextPop()
+        this.placingText = false
+        this.crop = { slide: slide, cell: cell }
+        this.revealSlide(slideIndex, false)
+        var index = this.previewIndexOf(slide)
+        this.$nextTick(() => {
+          document.querySelectorAll('.slide-canvas')[index]?.scrollIntoView({ block: 'nearest', inline: 'nearest' })
+          document.getElementById('rp-crop-done')?.focus({ preventScroll: true })
+        })
+      },
+      finishCrop: function () {
+        if (this.crop) {
+          if (this._drag?.image) {
+            this.deckTextCancel({ pointerId: this._drag.pointerId })
+          }
+          var index = this.previewIndexOf(this.crop.slide)
+          this.crop = null
+          document.querySelectorAll('.slide-canvas')[index]?.focus({ preventScroll: true })
+        }
+      },
+      startCropDrag: function (event) {
+        var svg = event.currentTarget.querySelector('svg')
+        var point = svg && slidePoint(svg, event)
+        if (!point || this.imageCellAt(this.crop.slide, point) !== this.crop.cell) {
+          return
+        }
+        var image = svg.querySelector('[data-rp-image="' + this.crop.cell + '"] > image')
+        if (!image) {
+          return
+        }
+        var frame = svg.viewBox.baseVal
+        var box = svg.getBoundingClientRect()
+        var imageFrame = this.cropFrame(this.crop.slide)
+        var width = frame.width * parseFloat(imageFrame.width) / 100
+        var height = frame.height * parseFloat(imageFrame.height) / 100
+        var crop = this.croppedImage
+        event.preventDefault()
+        this.startDrag({
+          image: crop, block: image, pointerId: event.pointerId, moved: false,
+          startX: event.clientX, startY: event.clientY, x0: crop.focusX, y0: crop.focusY,
+          overflowX: Math.max(0, image.width.baseVal.value - width),
+          overflowY: Math.max(0, image.height.baseVal.value - height),
+          unit: frame.width / box.width,
+        })
+      },
+      setPreviewMode: function (mode) {
+        if (mode !== this.previewMode) {
+          this.closeTextPop()
+          this.closeActionMenu(false)
+          this.placingText = false
+          this.crop = null
+          this.previewMode = mode
+        }
+      },
       imageSlots: function (slide) {
         var slots = []
         for (var k = 0; k < this.cellCount(slide); k++) {
@@ -698,6 +878,9 @@
         var slide = this.spec.slides[index]
         if (slide && slide.images && slide.images[cell]) {
           slide.images[cell].media = ''
+          if (this.crop?.slide === slide && this.crop.cell === cell) {
+            this.finishCrop()
+          }
         }
       },
       closeMediaModal: function () {
@@ -735,7 +918,7 @@
           this.selectedVideo = filename
           this.video = null
           this.videoError = false
-          this.previewMode = 'video'
+          this.setPreviewMode('video')
           this.closeMediaModal()
           return
         }
@@ -750,30 +933,281 @@
         this.closeMediaModal()
       },
 
+      get canvasEditing() {
+        return 'visual' === this.view && 'slides' === this.previewMode
+      },
+
+      editorKey: function (event) {
+        if (!this.canvasEditing) {
+          return
+        }
+        if ('Escape' === event.key) {
+          if (this.actionMenu) {
+            this.closeActionMenu()
+          } else {
+            this.placingText = false
+            this.finishCrop()
+          }
+          return
+        }
+        if (event.key.toLowerCase() === 't' && event.target.closest('.deck-wrap')
+            && !event.altKey && !event.ctrlKey && !event.metaKey && !event.repeat
+            && !event.target.closest('input, textarea, select, [contenteditable], dialog, [role="menu"]')) {
+          event.preventDefault()
+          this.togglePlaceText()
+        }
+      },
+
+      togglePlaceText: function () {
+        var placing = !this.placingText
+        this.closeTextPop()
+        this.crop = null
+        this.placingText = placing
+        if (placing) {
+          var index = this.slidesOpen.indexOf(true)
+          var target = this.previewIndexOf(this.spec.slides[index])
+          var canvas = document.querySelectorAll('.slide-canvas')[Math.max(0, target)]
+          if (canvas) {
+            canvas.focus()
+          }
+        }
+      },
+
+      canvasKey: function (index, event) {
+        if ('ContextMenu' === event.key || (event.shiftKey && 'F10' === event.key)) {
+          event.preventDefault()
+          this.openCanvasMenu(index, event, true)
+        } else if ('Enter' === event.key && this.placingText) {
+          event.preventDefault()
+          var slideIndex = this.previewSlideIndex(index)
+          var svg = event.currentTarget.querySelector('svg')
+          if (slideIndex >= 0 && svg) {
+            this.startTextAt(slideIndex, svg, { x: 0.5, y: 0.5 })
+          }
+        }
+      },
+
+      openCanvasMenu: function (index, event, keyboard = false) {
+        var slideIndex = this.previewSlideIndex(index)
+        var slide = this.spec.slides[slideIndex]
+        var svg = event.currentTarget.querySelector('svg')
+        if (!this.canvasEditing || !slide || !svg) {
+          return
+        }
+        event.preventDefault()
+        var point = keyboard ? { x: 0.5, y: 0.5 } : slidePoint(svg, event)
+        if (!point) {
+          return
+        }
+        var block = event.target.closest('[data-rp-edit]')
+        var ref = block && block.getAttribute('data-rp-edit')
+        var textIndex = ref && ref.startsWith('texts.') ? this.previewTextIndex(index, slide, Number(ref.slice(6))) : -1
+        if (textIndex >= 0) {
+          this.openTextMenu(slideIndex, textIndex, event)
+          return
+        }
+
+        var items = ['textHere']
+        if (this.copiedText) {
+          items.push('pasteHere')
+        }
+        var cell = this.imageCellAt(slide, point)
+        if (ref && !ref.startsWith('texts.') && slide[ref]) {
+          items.unshift('convertText')
+        } else if (!keyboard && slide.images[cell] && slide.images[cell].media) {
+          items.push('replaceImage')
+          if (svg.querySelector('[data-rp-image="' + cell + '"]')) {
+            items.push('cropImage')
+          }
+        }
+        this.openActionMenu(event, { slide: slide, svg: svg, point: point, ref: ref, cell: cell, items: items }, keyboard)
+      },
+
+      openTextMenu: function (slideIndex, textIndex, event) {
+        var slide = this.spec.slides[slideIndex]
+        this.openActionMenu(event, { slide: slide, text: slide.texts[textIndex], items: [
+          'duplicateText', 'copyText', 'textSettings', 'removeText',
+        ] })
+      },
+
+      openSlideMenu: function (index, event) {
+        var slide = this.spec.slides[index]
+        if (slide && 'visual' === this.view) {
+          event.preventDefault()
+          this.openActionMenu(event, { slide: slide, items: ['duplicateSlide', 'insertSlide'] })
+        }
+      },
+      openPreviewSlideMenu: function (index, event) {
+        if (this.canvasEditing) {
+          this.openSlideMenu(this.previewSlideIndex(index), event)
+        }
+      },
+
+      openActionMenu: function (event, target, keyboard = false) {
+        var trigger = event.currentTarget
+        if ('contextmenu' === event.type && !trigger.matches('[tabindex], button')) {
+          trigger = trigger.querySelector('[aria-haspopup="menu"]') || trigger
+        }
+        if (this.actionMenu && this.actionMenu.trigger === trigger && 'contextmenu' !== event.type && !keyboard) {
+          this.closeActionMenu()
+          return
+        }
+        this.closeTextPop()
+        this.placingText = false
+        this.crop = null
+        clearTimeout(this._hoverTimer)
+        var rect = trigger.getBoundingClientRect()
+        var atPointer = 'contextmenu' === event.type && !keyboard
+        this.actionMenu = Object.assign(target, {
+          trigger: trigger,
+          left: atPointer ? event.clientX : rect.left,
+          top: atPointer ? event.clientY : rect.bottom + 4,
+        })
+        this.$nextTick(() => {
+          if (!this.actionMenu || this.actionMenu.trigger !== trigger) {
+            return
+          }
+          var menu = this.$refs.actionMenu
+          this.actionMenu.left = clamp(this.actionMenu.left, 8, window.innerWidth - menu.offsetWidth - 8)
+          this.actionMenu.top = clamp(this.actionMenu.top, 8, window.innerHeight - menu.offsetHeight - 8)
+          menu.querySelector('[role="menuitem"]').focus({ preventScroll: true })
+        })
+      },
+
+      closeActionMenu: function (restoreFocus = true) {
+        var menu = this.actionMenu
+        this.actionMenu = null
+        if (menu && restoreFocus) {
+          menu.trigger.focus({ preventScroll: true })
+        }
+      },
+
+      actionMenuKey: function (event) {
+        var items = Array.from(event.currentTarget.querySelectorAll('[role="menuitem"]'))
+        var index = items.indexOf(document.activeElement)
+        switch (event.key) {
+          case 'Escape':
+          case 'Tab':
+            event.stopPropagation()
+            if ('Escape' === event.key) {
+              event.preventDefault()
+            }
+            this.closeActionMenu()
+            return
+          case 'ArrowDown': index += 1; break
+          case 'ArrowUp': index -= 1; break
+          case 'Home': index = 0; break
+          case 'End': index = items.length - 1; break
+          default: return
+        }
+        event.preventDefault()
+        items[(index + items.length) % items.length].focus()
+      },
+
+      actionUnavailable: function (action) {
+        return ['insertSlide', 'duplicateSlide'].includes(action) && !this.canInsertSlide
+      },
+
+      runCanvasAction: function (action) {
+        if (this.actionUnavailable(action)) {
+          return
+        }
+        var menu = this.actionMenu
+        var slide = menu.slide
+        var index = this.spec.slides.indexOf(slide)
+        this.closeActionMenu()
+        if (index < 0) {
+          return
+        }
+        var textIndex = menu.text ? slide.texts.indexOf(menu.text) : -1
+        if (menu.text && textIndex < 0) {
+          return
+        }
+        switch (action) {
+          case 'textHere': this.startTextAt(index, menu.svg, menu.point); break
+          case 'pasteHere': slide.texts.push(placedText(menu.point, this.copiedText)); break
+          case 'convertText': this.freeTextFromField(index, menu.ref); break
+          case 'copyText': this.copiedText = Object.assign({}, menu.text); break
+          case 'duplicateText': this.duplicateText(index, textIndex); break
+          case 'textSettings': this.revealControl(index, '.free-text', textIndex, 'input[type="range"]'); break
+          case 'removeText':
+            this.removeText(slide, textIndex)
+            this.$nextTick(() => document.getElementById('rp-undo-text').focus({ preventScroll: true }))
+            break
+          case 'replaceImage': this.pickMedia(index, menu.cell, 'choose'); break
+          case 'cropImage': this.beginCrop(index, menu.cell); break
+          case 'duplicateSlide': this.duplicateSlide(index); break
+          case 'insertSlide': this.addSlide(index); break
+        }
+      },
+
+      duplicateText: function (slideIndex, textIndex) {
+        var texts = this.spec.slides[slideIndex].texts
+        var original = texts[textIndex]
+        var dx = original.x + original.width > 0.97 ? -0.03 : 0.03
+        var dy = original.y > 0.9 ? -0.04 : 0.04
+        texts.push(Object.assign({}, original, {
+          x: clamp(Number((original.x + dx).toFixed(3)), 0, 1 - original.width),
+          y: Number(clamp(original.y + dy, 0, 0.95).toFixed(3)),
+        }))
+        this.revealControl(slideIndex, '.free-text textarea', texts.length - 1)
+      },
+
+      startTextAt: function (slideIndex, svg, point) {
+        this.closeTextPop()
+        this.placingText = false
+        this.crop = null
+        var box = placedText(point)
+        this.textDraft = { slide: this.spec.slides[slideIndex], box: box }
+        this._editObj = this.textDraft.box
+        this._editKey = 'content'
+        this.textPopTrigger = svg.parentElement
+        var screen = svg.getBoundingClientRect()
+        var x = screen.left + screen.width * point.x
+        var y = screen.top + screen.height * box.y
+        this.showTextPop({ left: x, top: y, bottom: y }, 'new')
+        this.revealSlide(slideIndex, false)
+      },
+
       // Inline text editing — a click on a text block in the deck (the renderer
       // tags each block with data-rp-edit) opens a floating editor over the slide
       // and reveals the matching slide row in the panel. The editor writes to the
       // reactive spec, so the live preview re-renders as you type; being a body-
       // level overlay, it survives the preview swapping the SVG out under it.
-      deckTextClick: function (slideIndex, event) {
+      deckTextClick: function (index, event) {
         // The click a drag release fires must not open the editor; the browser
         // may run timers before dispatching it, so swallow by time, not flag.
-        if (performance.now() - this._dragEndedAt < 300 || 'visual' !== this.view) {
+        if (performance.now() - this._dragEndedAt < 300 || !this.canvasEditing || this.crop) {
+          return
+        }
+        var slideIndex = this.previewSlideIndex(index)
+        var slide = this.spec.slides[slideIndex]
+        if (!slide) {
+          return
+        }
+        this.closeActionMenu(false)
+        var svg = event.currentTarget.querySelector('svg')
+        if (this.placingText) {
+          var point = svg && slidePoint(svg, event)
+          if (point) {
+            event.stopPropagation()
+            this.startTextAt(slideIndex, svg, point)
+          }
           return
         }
         var block = event.target.closest('[data-rp-edit]')
-        var slide = this.spec.slides[slideIndex]
-        if (!block || !slide) {
+        if (!block) {
           return
         }
         // Keep the click from reaching the popover's own click-outside handler,
         // which still sees the (not yet re-rendered) open popover and would close
         // the one this click is opening.
         event.stopPropagation()
+        this.closeTextPop()
         var ref = block.getAttribute('data-rp-edit')
         if (0 === ref.indexOf('texts.')) {
-          var n = parseInt(ref.slice(6), 10)
-          if (!slide.texts || !slide.texts[n]) {
+          var n = this.previewTextIndex(index, slide, Number(ref.slice(6)))
+          if (n < 0) {
             return
           }
           this._editObj = slide.texts[n]
@@ -782,22 +1216,28 @@
           this._editObj = slide
           this._editKey = ref
         }
-        var rect = block.getBoundingClientRect()
-        var width = 304
+        this.textPopTrigger = event.currentTarget
+        this.showTextPop(block.getBoundingClientRect(), ref)
+        this.revealSlide(slideIndex)
+      },
+      showTextPop: function (rect, ref) {
+        clearTimeout(this._hoverTimer)
+        var width = Math.min(304, window.innerWidth - 16)
         var left = Math.max(8, Math.min(rect.left, window.innerWidth - width - 8))
         // Flip above the block when the editor would overflow the viewport bottom.
         var top = rect.bottom + 8 + 160 > window.innerHeight ? Math.max(8, rect.top - 168) : rect.bottom + 8
         this.textPop = { open: true, top: top, left: left, ref: ref }
-        this.revealSlide(slideIndex)
-        var self = this
-        this.$nextTick(function () {
-          if (self.$refs.textPopField) {
-            self.$refs.textPopField.focus()
+        this.$nextTick(() => {
+          if (this.textPop.open) {
+            this.$refs.textPopField.focus({ preventScroll: true })
           }
         })
       },
       get textPopLabel() {
         var ref = this.textPop.ref
+        if ('new' === ref) {
+          return this.messages.canvasTextLabel
+        }
         if (0 === ref.indexOf('texts.')) {
           return 'Free text ' + (parseInt(ref.slice(6), 10) + 1)
         }
@@ -811,17 +1251,51 @@
         if (this._editObj) {
           this._editObj[this._editKey] = value
         }
+        var draft = this.textDraft
+        if (draft) {
+          var index = draft.slide.texts.indexOf(draft.box)
+          if (index < 0 && value.trim()) {
+            draft.slide.texts.push(draft.box)
+          } else if (index >= 0 && !value.trim()) {
+            draft.slide.texts.splice(index, 1)
+          }
+        }
       },
-      closeTextPop: function () {
+      closeTextPop: function (restoreFocus = false) {
+        if (restoreFocus) {
+          this.textPopTrigger?.focus({ preventScroll: true })
+        }
+        this.textPopTrigger = null
+        this.textDraft = null
+        this._editObj = null
+        this._editKey = ''
         this.textPop = { open: false, top: 0, left: 0, ref: '' }
       },
+      draftMarker: function () {
+        var box = this.textDraft.box
+        return {
+          left: (box.x + ('right' === box.align ? box.width : 0)) * 100 + '%',
+          top: box.y * 100 + '%',
+        }
+      },
       // Open the slide's panel row (closing the others) and bring it into view.
-      revealSlide: function (index) {
+      revealSlide: function (index, scroll = true) {
         this.slidesOpen = this.spec.slides.map(function (_, i) { return i === index })
-        this.$nextTick(function () {
-          var row = document.getElementById('rp-slide-item-' + index)
-          if (row) {
-            row.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+        if (scroll) {
+          this.$nextTick(() => {
+            document.getElementById('rp-slide-item-' + index)?.scrollIntoView({ block: 'nearest' })
+          })
+        }
+      },
+      revealControl: function (slideIndex, selector, index, child) {
+        this.revealSlide(slideIndex, false)
+        this.$nextTick(() => {
+          var row = document.getElementById('rp-slide-item-' + slideIndex)
+          var target = row && row.querySelectorAll(selector)[index]
+          var control = child ? target?.querySelector(child) : target
+          if (control) {
+            control.scrollIntoView({ block: 'nearest' })
+            control.focus({ preventScroll: true })
           }
         })
       },
@@ -829,7 +1303,8 @@
       // a mouse merely crossing the deck does not jump the panel around.
       hoverSlide: function (index) {
         clearTimeout(this._hoverTimer)
-        if (this._drag || this.textPop.open || this.slidesOpen[index]) {
+        index = this.previewSlideIndex(index)
+        if (index < 0 || this._drag || this.textPop.open || this.actionMenu || this.placingText || this.crop || this.slidesOpen[index]) {
           return
         }
         var self = this
@@ -846,12 +1321,19 @@
       // no server round-trip); the spec is only written on release, which
       // re-renders through the normal preview channel. Clamped to the same
       // bounds as the sliders.
-      deckTextDown: function (slideIndex, event) {
-        if (this._drag || 'visual' !== this.view || 0 !== event.button) {
+      deckTextDown: function (index, event) {
+        if (this._drag || !this.canvasEditing || this.placingText || 0 !== event.button) {
+          return
+        }
+        var slideIndex = this.previewSlideIndex(index)
+        var slide = this.spec.slides[slideIndex]
+        if (this.crop) {
+          if (this.crop.slide === slide) {
+            this.startCropDrag(event)
+          }
           return
         }
         var block = event.target.closest('[data-rp-edit]')
-        var slide = this.spec.slides[slideIndex]
         var svg = block && block.ownerSVGElement
         if (!block || !slide || !svg) {
           return
@@ -860,7 +1342,7 @@
         var t = null
         var geom = null
         if (0 === ref.indexOf('texts.')) {
-          t = slide.texts && slide.texts[parseInt(ref.slice('texts.'.length), 10)]
+          t = slide.texts[this.previewTextIndex(index, slide, Number(ref.slice(6)))]
           if (!t) {
             return
           }
@@ -875,7 +1357,7 @@
         var box = svg.getBoundingClientRect()
         var x0 = t ? Number(t.x) || 0 : geom.x
         var y0 = t ? Number(t.y) || 0 : geom.y
-        this._drag = {
+        this.startDrag({
           t: t,
           field: t ? null : ref,
           geom: geom,
@@ -893,7 +1375,10 @@
           box: box,
           // Screen px → SVG user units, for the live transform while dragging.
           unit: (svg.viewBox.baseVal.width || box.width) / box.width,
-        }
+        })
+      },
+      startDrag: function (drag) {
+        this._drag = drag
         window.addEventListener('pointermove', this._boundDragMove)
         window.addEventListener('pointerup', this._boundDragUp)
         window.addEventListener('pointercancel', this._boundDragCancel)
@@ -911,7 +1396,15 @@
           }
           d.moved = true
           this.closeTextPop()
-          d.guides = this._showAlignmentGuides(d.block)
+          if (!d.image) {
+            d.guides = this._showAlignmentGuides(d.block)
+          }
+        }
+        if (d.image) {
+          d.nx = d.overflowX > 0.1 ? clamp(d.x0 - dx * d.unit / d.overflowX, 0, 1) : d.x0
+          d.ny = d.overflowY > 0.1 ? clamp(d.y0 - dy * d.unit / d.overflowY, 0, 1) : d.y0
+          d.block.setAttribute('transform', 'translate(' + (d.x0 - d.nx) * d.overflowX + ' ' + (d.y0 - d.ny) * d.overflowY + ')')
+          return
         }
         d.nx = Math.min(1 - d.width, Math.max(0, d.x0 + dx / d.box.width))
         d.ny = Math.min(0.95, Math.max(0, d.y0 + dy / d.box.height))
@@ -962,13 +1455,18 @@
           return
         }
         this._dragEndedAt = performance.now()
-        if (d.field) {
+        if (d.image) {
+          d.image.focusX = Number(d.nx.toFixed(4))
+          d.image.focusY = Number(d.ny.toFixed(4))
+        } else if (d.field) {
           this._fieldToFreeText(this.spec.slides[d.slideIndex], d.field, d.geom, d.nx, d.ny)
         } else {
           d.t.x = Number(d.nx.toFixed(3))
           d.t.y = Number(d.ny.toFixed(3))
         }
-        this.revealSlide(d.slideIndex)
+        if (!d.image) {
+          this.revealSlide(d.slideIndex)
+        }
       },
       deckTextCancel: function (event) {
         var d = this._endDrag(event)
@@ -987,6 +1485,7 @@
         }
         if (d.previewSlides) {
           this.slides = d.previewSlides
+          this._previewTargets = d.previewTargets
         }
         window.removeEventListener('pointermove', this._boundDragMove)
         window.removeEventListener('pointerup', this._boundDragUp)
@@ -1006,7 +1505,8 @@
         if (!slide) {
           return
         }
-        var svg = document.querySelectorAll('.deck .slide svg')[slideIndex]
+        var index = this.previewIndexOf(slide)
+        var svg = document.querySelectorAll('.slide-canvas > svg')[index]
         var block = svg ? svg.querySelector('[data-rp-edit="' + field + '"]') : null
         var geom = (block ? this._measureBlock(svg, block, field) : null) || this._fallbackGeometry(slide, field)
         this._fieldToFreeText(slide, field, geom, this._freeTextX(slide.align, geom.width), geom.y)
@@ -1315,6 +1815,11 @@
           // Snapshot the visual spec as JSON *before* flipping the view: payload() reads the
           // active view, so once view is 'source' it would parse the still-empty textarea and throw.
           var text = JSON.stringify(this.payload(), null, 2)
+          this.closeTextPop()
+          this.closeActionMenu(false)
+          this.placingText = false
+          this.crop = null
+          this.removedText = null
           this.view = 'source'
           var self = this
           this.$nextTick(function () {
@@ -1328,6 +1833,7 @@
         try {
           this.spec = JSON.parse(this.sourceText())
           this.normalize()
+          this._previewTargets = null
         } catch (error) {
           this.badJson(error)
           return

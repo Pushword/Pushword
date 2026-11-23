@@ -121,6 +121,7 @@ test('slide guides mark peer edges and centers until the drag ends', async () =>
       performance: {now: () => 1000},
     });
   state.$nextTick = () => {};
+  state._previewTargets = state.previewTargets();
   let transform;
   const block = {
     getAttribute: () => 'texts.0',
@@ -165,6 +166,155 @@ test('slide guides mark peer edges and centers until the drag ends', async () =>
   assert.equal(overlay, undefined);
   assert.equal(state.spec.slides[0].texts[0].x, 0.154);
   assert.equal(state.spec.slides[0].texts[0].y, 0.26);
+});
+
+function canvasSvg() {
+  return {
+    getScreenCTM: () => ({inverse: () => ({})}),
+    createSVGPoint: () => ({matrixTransform() { return {x: (this.x - 100) * 2, y: (this.y - 70) * 2}; }}),
+    viewBox: {baseVal: {x: 0, y: 0, width: 1000, height: 500}},
+    getBoundingClientRect: () => ({left: 100, top: 70, width: 500, height: 250}),
+  };
+}
+
+test('placed text uses the SVG position, fits the edge and only exists while it has content', () => {
+  const state = studio({spec: {slides: [{texts: []}]}}, undefined, undefined, {performance: {now: () => 1000}});
+  state._previewTargets = state.previewTargets();
+  state.showTextPop = () => {};
+  const slide = state.spec.slides[0];
+  const svg = canvasSvg();
+  const event = {
+    currentTarget: {querySelector: () => svg},
+    clientX: 550, clientY: 318, stopPropagation() {},
+  };
+
+  state.placingText = true;
+  state.deckTextClick(0, event);
+  assert.equal(state.placingText, false);
+  assert.equal(slide.texts.length, 0);
+  state.closeTextPop();
+  assert.equal(slide.texts.length, 0);
+
+  state.placingText = true;
+  state.deckTextClick(0, event);
+  state.editValue = '   ';
+  assert.equal(slide.texts.length, 0);
+  state.editValue = 'Right edge';
+  const inserted = slide.texts[0];
+  assert.equal(inserted.x, 0.54);
+  assert.equal(inserted.y, 0.95);
+  assert.equal(inserted.x + inserted.width, 0.9);
+  assert.equal(inserted.align, 'right');
+  state.editValue = '';
+  assert.equal(slide.texts.length, 0);
+  state.editValue = 'New text';
+  state.closeTextPop();
+  assert.equal(slide.texts.length, 1);
+  assert.equal(slide.texts[0].content, 'New text');
+});
+
+test('copy and paste keep styling and paste an independent box inside the destination', () => {
+  const original = {content: 'Caption', width: 0.8334, x: 0.08, y: 0.2, align: 'left', font: 'heading', size: 0.04, color: '#ff6600', highlight: '#112233'};
+  const first = {texts: [original]};
+  const second = {texts: []};
+  const state = studio({spec: {slides: [first, second]}});
+  const trigger = {focus() {}};
+  state.actionMenu = {slide: first, text: original, trigger};
+  state.runCanvasAction('copyText');
+  original.content = 'Edited after copy';
+
+  state.actionMenu = {slide: second, point: {x: 0.9, y: 0.4}, trigger};
+  state.runCanvasAction('pasteHere');
+  const pasted = second.texts[0];
+  assert.equal(pasted.content, 'Caption');
+  assert.equal(pasted.x, 0.9);
+  assert.equal(pasted.x + pasted.width, 1);
+  assert.equal(pasted.y, 0.4);
+  assert.equal(pasted.color, '#ff6600');
+  assert.equal(pasted.highlight, '#112233');
+  assert.equal(pasted.font, 'heading');
+  assert.equal(pasted.size, 0.04);
+  assert.notEqual(pasted, state.copiedText);
+});
+
+test('a stale preview still targets the right slide and text after moves and deletion', () => {
+  const first = {texts: [{content: 'Remove'}, {content: 'Keep', x: 0.1, y: 0.2, width: 0.36}]};
+  const second = {texts: []};
+  const state = studio({spec: {slides: [first, second]}});
+  state.$nextTick = () => {};
+  state._previewTargets = state.previewTargets();
+  state.moveSlideTo(0, 1);
+  state.removeText(first, 0);
+  assert.equal(state.previewSlideIndex(0), 1);
+  assert.equal(state.previewTextIndex(0, first, 0), -1);
+  assert.equal(state.previewTextIndex(0, first, 1), 0);
+  state.duplicateText(1, 0);
+  state.undoRemoveText();
+  assert.deepEqual(first.texts.map(text => text.content), ['Remove', 'Keep', 'Keep']);
+  assert.equal(first.texts[2].x, 0.13);
+  assert.equal(first.texts[2].y, 0.24);
+  state.removeSlide(1);
+  assert.equal(state.previewSlideIndex(0), -1);
+});
+
+test('slide duplication and insertion follow the target and respect the network limit', () => {
+  const first = {title: 'First', texts: [{content: 'Keep'}], images: [{media: 'one.jpg', focusX: 0.5}]};
+  const second = {title: 'Second'};
+  const state = studio({slideLimit: 4, spec: {slides: [first, second]}});
+  state.$nextTick = () => {};
+  state.duplicateSlide(0);
+  const copy = state.spec.slides[1];
+  copy.texts[0].content = 'Copy';
+  copy.images[0].focusX = 0.3;
+  assert.equal(first.texts[0].content, 'Keep');
+  assert.equal(first.images[0].focusX, 0.5);
+  state.addSlide(1);
+  assert.deepEqual(state.spec.slides.map(slide => slide.title), ['First', 'First', 'New slide', 'Second']);
+  assert.equal(state.slidesOpen[2], true);
+  assert.equal(state.actionUnavailable('duplicateSlide'), true);
+  state.duplicateSlide(0);
+  assert.equal(state.spec.slides.length, 4);
+});
+
+test('the image context menu and crop drag target the clicked cell even over the slide overlay', () => {
+  const first = {media: 'first.jpg', focusX: 0.5, focusY: 0.5};
+  const second = {media: 'second.jpg', focusX: 0.5, focusY: 0.6};
+  const slide = {imageLayout: 'split-h', images: [first, second], texts: []};
+  const state = studio({spec: {slides: [slide]}}, undefined, undefined, {performance: {now: () => 1000}});
+  state._previewTargets = state.previewTargets();
+  let openedMenu;
+  state.openActionMenu = (_, menu) => { openedMenu = menu; };
+  let transform;
+  const image = {
+    width: {baseVal: {value: 750}}, height: {baseVal: {value: 500}},
+    setAttribute: (_, value) => { transform = value; },
+    removeAttribute: () => { transform = undefined; },
+  };
+  const svg = {...canvasSvg(), querySelector: selector => selector.startsWith('[data-rp-image="1"]') ? image : null};
+  const event = {
+    target: {closest: () => null}, currentTarget: {querySelector: () => svg},
+    clientX: 508, clientY: 180, pointerId: 4, button: 0, preventDefault() {},
+  };
+
+  state.openCanvasMenu(0, event);
+  assert.equal(openedMenu.cell, 1);
+  assert.deepEqual(Array.from(openedMenu.items), ['textHere', 'replaceImage', 'cropImage']);
+  state.crop = {slide, cell: 1};
+  state.deckTextDown(0, {...event, clientX: 200});
+  assert.equal(state._drag, null, 'the other cell cannot drag the selected crop');
+  state.deckTextDown(0, event);
+  state.deckTextMove({...event, clientX: 558, clientY: 200});
+  assert.match(transform, /^translate\(100(?:\.0+)? 0\)$/);
+  state.deckTextCancel(event);
+  assert.equal(transform, undefined);
+  assert.equal(second.focusX, 0.5);
+
+  state.deckTextDown(0, event);
+  state.deckTextMove({...event, clientX: 758, clientY: 200});
+  state.deckTextUp(event);
+  assert.equal(second.focusX, 0);
+  assert.equal(second.focusY, 0.6, 'a fitted axis stays fixed');
+  assert.equal(first.focusX, 0.5);
 });
 
 test('audio errors stay attached to the exact track and field and clear after validation', () => {
