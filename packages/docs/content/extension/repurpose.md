@@ -17,7 +17,7 @@ slides from the studio as PNGs, a LinkedIn PDF or an MP4 slideshow.
 composer require pushword/repurpose
 ```
 
-Install with PHP extensions `gd` and `zip`. On a fresh site, the demo fixtures
+Install with PHP extensions `gd`, `zip` and `zlib`. On a fresh site, the demo fixtures
 add a ten-slide carousel of the `examples` page under **Social carousels**. Copy
 `src/DataFixtures/Carousel.json` for a sample spec, or try the
 [NORD. motion example](#packaged-example-nord).
@@ -42,9 +42,10 @@ entire carousel specification, including its source page, slides, caption and
 publishing settings. The previous state stays available in the history.
 
 History is stored per carousel in the database and includes changes made in the
-Studio, through the API, and by flat-file imports. For existing carousels, the
-first edit archives the state that was saved before the edit. Versions reference
-media from the library. Deleting a carousel also deletes its history.
+Studio, through the API, and by flat-file imports. Each archived specification is
+compressed and loaded when selected for comparison or restoration. For existing
+carousels, the first edit archives the state that was saved before the edit.
+Versions reference media from the library. Deleting a carousel also deletes its history.
 
 The studio opens at the network's mobile feed width. Use the zoom slider or
 Ctrl+scroll to resize the preview. Click a text block or focus it with **Tab** to

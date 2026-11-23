@@ -32,6 +32,7 @@ return static function (ContainerConfigurator $containerConfigurator): void {
     $services->load('Pushword\Repurpose\\', __DIR__.'/../*')
         ->exclude([
             __DIR__.'/../'.PushwordCoreBundle::SERVICE_AUTOLOAD_EXCLUDE_PATH,
+            __DIR__.'/../Doctrine',
             __DIR__.'/../Model', // plain value objects, not services
             __DIR__.'/../Admin',  // loaded below only when EasyAdmin is present
             ...$apiExclude,

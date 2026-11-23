@@ -47,6 +47,7 @@
     "php": "~8.5.0 || ~8.6.0",
     "ext-gd": "*",
     "ext-zip": "*",
+    "ext-zlib": "*",
     "babdev/pagerfanta-bundle": "^4.0",
     "caseyamcl/toc": "^4.0",
     "cocur/slugify": "^4.6",

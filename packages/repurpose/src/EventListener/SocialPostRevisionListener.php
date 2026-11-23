@@ -12,6 +12,7 @@ use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Event\PostUpdateEventArgs;
 use Doctrine\ORM\Event\PreUpdateEventArgs;
 use Doctrine\ORM\Events;
+use Pushword\Repurpose\Doctrine\CompressedJsonType;
 use Pushword\Repurpose\Entity\SocialPost;
 
 #[AsEntityListener(event: Events::preUpdate, entity: SocialPost::class)]
@@ -42,6 +43,6 @@ final class SocialPostRevisionListener
             'version' => $post->version - 1,
             'saved_at' => DateTimeImmutable::createFromInterface($savedAt),
             'spec' => $changes['spec'][0],
-        ], ['saved_at' => Types::DATETIME_IMMUTABLE, 'spec' => Types::JSON]);
+        ], ['saved_at' => Types::DATETIME_IMMUTABLE, 'spec' => CompressedJsonType::NAME]);
     }
 }

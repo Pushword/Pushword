@@ -126,6 +126,17 @@ final class RepurposeHistoryControllerTest extends WebTestCase
         $versions = $this->entityManager()->getRepository(SocialPostRevision::class);
         self::assertSame([3, 2, 1], array_keys($versions->datesFor($persisted)));
         self::assertSame($apiSpec, $versions->findFor($persisted, 3)?->spec);
+
+        $connection = $this->entityManager()->getConnection();
+        $blob = $connection->fetchOne('SELECT spec FROM social_post_revision WHERE post_id = ? AND version = ?', [$post->id, 3]);
+        $compressed = \is_resource($blob) ? stream_get_contents($blob) : $blob;
+        self::assertIsString($compressed);
+        self::assertSame(gzcompress(json_encode($apiSpec, \JSON_THROW_ON_ERROR | \JSON_PRESERVE_ZERO_FRACTION), 1), $compressed);
+
+        $currentJson = $connection->fetchOne('SELECT spec FROM social_post WHERE id = ?', [$post->id]);
+        self::assertIsString($currentJson);
+        self::assertSame($post->spec, json_decode($currentJson, true, flags: \JSON_THROW_ON_ERROR));
+
         $this->client->request(Request::METHOD_GET, $history.'?version=1');
         self::assertSelectorTextContains('.empty', 'These versions contain the same values.');
     }

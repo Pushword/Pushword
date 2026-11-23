@@ -7,6 +7,7 @@ namespace Pushword\Repurpose\Entity;
 use DateTimeImmutable;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Pushword\Repurpose\Doctrine\CompressedJsonType;
 use Pushword\Repurpose\Repository\SocialPostRevisionRepository;
 
 #[ORM\Entity(repositoryClass: SocialPostRevisionRepository::class)]
@@ -26,6 +27,6 @@ class SocialPostRevision
     public DateTimeImmutable $savedAt;
 
     /** @var array<string, mixed> */
-    #[ORM\Column(type: Types::JSON)]
+    #[ORM\Column(type: CompressedJsonType::NAME)]
     public array $spec;
 }

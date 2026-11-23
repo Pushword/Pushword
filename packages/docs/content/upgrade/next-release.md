@@ -44,4 +44,4 @@ Apply the schema update before opening the admin. If you override the page edit 
 
 ## Carousel version history
 
-**Sites with Repurpose.** Apply the schema update before editing carousels. The first edit archives the existing specification and makes it available in [Version history](/extension/repurpose#in-the-admin).
+**Sites with Repurpose.** Apply the schema update before editing carousels to create the compressed archive. The first edit archives the existing specification and makes it available in [Version history](/extension/repurpose#in-the-admin).
