@@ -1,0 +1,47 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+setup_dir=$(mktemp -d "$RUNNER_TEMP/pushword-turbocov.XXXXXXXX")
+mkdir "$setup_dir"/{extension,driver,ini}
+
+download() {
+    local archive="$setup_dir/$1.tar.gz"
+    curl --fail --silent --show-error --location --retry 3 \
+        "https://codeload.github.com/shipmonk-rnd/$1/tar.gz/$2" --output "$archive"
+    tar -xzf "$archive" --strip-components=1 -C "$setup_dir/$3"
+}
+
+download turbocov 6ba58e483b370c07d9170fa68a17a6b2be36e56c extension # 0.1.1
+download turbocov-phpunit 05b4fc716639c1e2d35c66d8352487ed485ab682 driver # 0.1.0
+
+(
+    cd "$setup_dir/extension"
+    phpize
+    ./configure --enable-turbocov
+    make -j"$(nproc)"
+)
+
+cat > "$setup_dir/bootstrap.php" <<'PHP'
+<?php
+$root = getenv('GITHUB_WORKSPACE');
+$autoload = require $root.'/vendor/autoload.php';
+$autoload->addPsr4('ShipMonk\Turbocov\\', __DIR__.'/driver/src');
+require $root.'/packages/core/tests/bootstrap.php';
+PHP
+
+# ParaTest reads phpunit.xml before phpunit.xml.dist.
+php -r '
+  $document = new DOMDocument();
+  $document->load("phpunit.xml.dist");
+  $document->documentElement->setAttribute("bootstrap", $argv[1]);
+  $document->documentElement->appendChild($document->createElement("coverage"))
+      ->setAttribute("driver", "ShipMonk\\Turbocov\\TurbocovDriver");
+  $document->save("phpunit.xml");
+' "$setup_dir/bootstrap.php"
+
+# The parent and all PHP children read the same settings at startup.
+printf 'extension="%s"\nturbocov.collect_paths="%s"\nopcache.enable_cli=0\n' \
+    "$setup_dir/extension/modules/turbocov.so" "$PWD/packages" > "$setup_dir/ini/turbocov.ini"
+scan_dir="${PHP_INI_SCAN_DIR:-}:$setup_dir/ini"
+PHP_INI_SCAN_DIR="$scan_dir" php --ri turbocov
+printf 'PHP_INI_SCAN_DIR=%s\n' "$scan_dir" >> "$GITHUB_ENV"

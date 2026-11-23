@@ -358,10 +358,7 @@ jobs:
           php-version: ${{ matrix.php }}
           tools: pecl
           extensions: dom, curl, libxml, mbstring, zip, pdo, sqlite, pdo_sqlite, bcmath, soap, intl, gd, exif, iconv, imagick, fileinfo
-          # pcov, not xdebug: the badge only needs line coverage, and xdebug slows
-          # the whole suite down several-fold to collect it.
-          coverage: ${{ env.COLLECT_COVERAGE == 'true' && 'pcov' || 'none' }}
-          ini-values: pcov.directory=${{ github.workspace }}/packages
+          coverage: none
 
       - name: Setup problem matchers
         run: |
@@ -391,6 +388,10 @@ jobs:
 
       - name: Generate Images Cache
         run: cd packages/dev-app && php bin/console pw:image:cache
+
+      - name: Set up TurboCov
+        if: env.COLLECT_COVERAGE == 'true'
+        run: ./.scripts/setup-turbocov
 
       - name: Execute tests
         # The 'serial' group holds tests that need exclusive access to the shared
