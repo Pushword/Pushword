@@ -726,7 +726,7 @@ newsletter:
     device_id: '%env(SMS_GATEWAY_DEVICE_ID)%'
     sim_number: 1
     enabled: false             # Enable explicitly on the sending installation
-    daily_limit: 24            # Shared rolling 24-hour limit; 0 pauses sending
+    daily_limit: 24            # Rolling 24-hour limit; 0 pauses sending
     interval_seconds: 30
     start_hour: 8              # Included
     end_hour: 20               # Excluded; 24 means midnight
@@ -775,8 +775,8 @@ applications share one SIM, configure a common limit on the gateway/device as
 well. Quota usage is measured in messages.
 
 Each queued message freezes its number, personalized text and provider identity.
-Before transmission, permission, suppression, number, audience, segment and email
-presence are checked again. Quota reservations survive an uncertain response;
+Before sending a campaign SMS, the queue rechecks permission, suppression, number,
+audience, segment and email presence. Quota reservations survive an uncertain response;
 retries look up the same identity before posting it again. Deleting a campaign
 retains its send history and quota reservations; its pending SMS are excluded.
 Failed SMS do not mark an email bounced or change email automations. A campaign
@@ -1712,7 +1712,7 @@ not in the newsletter bundle.
 3. arms scheduled campaigns whose date has passed;
 4. drains pending recipients at the cadence;
 5. sends the drip steps that are due;
-6. processes the optional SMS queue under its shared quota and sending window.
+6. processes the optional [SMS queue](#sms-alternative-with-smsgate).
 
 Triggering comes first, so something whose delay has already elapsed goes out in
 the run that noticed it.

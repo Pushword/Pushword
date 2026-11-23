@@ -89,8 +89,9 @@ the banner opens the latest version in another tab and lets you review and
 recover your work. The server rejects saves from an older revision.
 
 If you override `@pwAdmin/page/edit.html.twig`, retain the unsaved-changes and
-revision banners, `data-pw-unsaved-key` and the shortcut submit button. Render
-all remaining fields with `form_rest` or `form_end` to submit the revision.
+revision banners, `data-pw-unsaved-key` and the hidden `data-pw-ctrl-s-submit`
+button. Render the remaining fields with `form_rest` or `form_end` so the form
+submits the revision.
 
 ## Collaborative page editing
 

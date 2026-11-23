@@ -1,5 +1,5 @@
 ---
-title: 'admin SMS tests are immediate and campaign quotas exclude tests'
+title: 'page editing uses one Save button; admin SMS tests are immediate and campaign quotas exclude tests'
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -25,9 +25,9 @@ belongs in the feature doc, which you link to instead.
   Required as soon as the note has a section; the release stops if it is still empty.
 - `run:` — the command(s) the release expects, without `php bin/console`. Omit the
   key when there is none. A list runs in the order given.
-- `**Concerns:**` — first line of the body, listing every package a site has to
-  install to be affected. Alphabetical, full composer names, `@pushword/js-helper`
-  last. Add the packages your change touches to the line, keep the others.
+- `**Concerns:**` — list affected packages alphabetically on the first line of
+  the body, each enclosed in backticks (for example, `pushword/core`). Keep
+  `@pushword/js-helper` last and preserve any packages already listed.
 - One `##` section per change, five lines at most: one sentence for what changed, a
   bold line for who is affected when only some sites are, then the action — a command,
   a config key, an edit to make. Nothing to do: say so in the sentence and stop.
@@ -35,7 +35,13 @@ belongs in the feature doc, which you link to instead.
 Several changes land here between two tags: append to the file, do not replace it.
 -->
 
-**Concerns:** pushword/newsletter
+**Concerns:** `pushword/admin` `pushword/newsletter`
+
+## Page editor save actions
+
+**Save** returns to the page view. Use **Ctrl+S** or **Cmd+S** to stay in the editor.
+If your edit template overrides the shortcut selectors, point them at
+`.action-saveAndReturn`. See [the admin guide](/extension/admin#saving-and-recovering-changes).
 
 ## SMS tests from the admin
 
