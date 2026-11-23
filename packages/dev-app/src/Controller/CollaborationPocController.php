@@ -36,6 +36,7 @@ final class CollaborationPocController extends AbstractController
     #[Route('/admin/collaboration-poc/{room}', name: 'collaboration_poc_editor', requirements: ['room' => self::ROOM], methods: ['GET'])]
     public function editor(string $room): Response
     {
+        /* @symfony-lsp-ignore template.not_found (Twig resolves this path relative to the nested dev-app kernel) */
         return $this->render('collaboration_poc.html.twig', ['room' => $room]);
     }
 
