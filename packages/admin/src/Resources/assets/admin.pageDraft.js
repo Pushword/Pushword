@@ -16,6 +16,7 @@ export function bindPageDraft(controls) {
   const form = document.querySelector('form[data-pw-page-revision-form]')
   const button = controls.querySelector('button')
   const status = controls.querySelector('[role="status"]')
+  const invitation = controls.querySelector('[data-pw-collaboration-notice]')
   const revision = form.querySelector('[data-pw-page-revision]')
   const body = () => form.querySelector('[name$="[mainContent]"]')
   if (!body() || isLegacyBlockContent(body().value)) {
@@ -39,6 +40,7 @@ export function bindPageDraft(controls) {
   let approved = null
   let saving = false
   let stale = false
+  let collaborative = false
   const modeLabel = button.textContent
   const view = {
     saved(current, complete) {
@@ -96,11 +98,23 @@ export function bindPageDraft(controls) {
     form.addEventListener('pw:baseline-ready', () => { initial = body().value }, { once: true })
   }
 
+  function updateInvitation() {
+    const show = collaborative && !session
+    if (invitation) invitation.hidden = !show
+    if (!session) button.textContent = show && invitation ? controls.dataset.join : modeLabel
+  }
+
+  form.addEventListener('pw:collaboration-presence', (event) => {
+    collaborative = event.detail === true
+    updateInvitation()
+  })
+
   function leave() {
     session?.close()
     session = null
-    button.textContent = modeLabel
+    collaborative = false
     button.setAttribute('aria-pressed', 'false')
+    updateInvitation()
     delete form.dataset.pwDraftActive
     for (const [label, text] of saveLabels) label.textContent = text
     if (!stale) status.textContent = ''
@@ -140,6 +154,7 @@ export function bindPageDraft(controls) {
       view,
       status: display,
     })
+    updateInvitation()
     if (publicationPending()) display('settingsPending')
   })
 

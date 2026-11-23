@@ -149,8 +149,10 @@ adminPageEditMessageLabel: "Reason of modification"
 adminPageDraftClassic: Switch to classic mode
 adminPageDraftConnected: Changes saved
 adminPageDraftJoin: Collaborative mode
+adminPageDraftJoinActive: Join live editing
 adminPageDraftOffline: Offline. Keep this tab open.
 adminPageDraftPending: Saving changes…
+adminPageDraftPresence: Someone else is editing collaboratively.
 adminPageDraftSettings: Save settings
 adminPageDraftSettingsPending: Save the publication setting to resume live saves.
 adminPageDraftStale: The saved version changed outside this session. Your edits are in this tab.

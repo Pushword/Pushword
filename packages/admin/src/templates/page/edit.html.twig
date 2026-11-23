@@ -15,12 +15,14 @@
              data-token="{{ csrf_token('page-draft-' ~ entity.instance.id) }}"
              data-settings="{{ 'adminPageDraftSettings'|trans }}"
              data-settings-pending="{{ 'adminPageDraftSettingsPending'|trans }}"
+             data-join="{{ 'adminPageDraftJoinActive'|trans }}"
              data-classic="{{ 'adminPageDraftClassic'|trans }}"
              {% for state in ['pending', 'connected', 'updated', 'offline', 'stale'] %}
                  data-{{ state }}="{{ ('adminPageDraft' ~ state|capitalize)|trans }}"
              {% endfor %}>
             <button type="button" class="btn btn-sm btn-secondary" aria-pressed="false">{{ 'adminPageDraftJoin'|trans }}</button>
             <span role="status"></span>
+            <span role="status" data-pw-collaboration-notice hidden>{{ 'adminPageDraftPresence'|trans }}</span>
         </div>
     {% endif %}
     {% include '@pwAdmin/components/broken_image_banner.html.twig' %}

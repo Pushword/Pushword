@@ -73,8 +73,10 @@ repurposeDraftClassic: Passer en mode classique
 repurposeDraftConnected: Modifications enregistrées
 repurposeDraftInvalid: Corrigez les modifications en attente pour les enregistrer.
 repurposeDraftJoin: Mode collaboratif
+repurposeDraftJoinActive: Rejoindre la coédition
 repurposeDraftOffline: Hors ligne. Gardez cet onglet ouvert.
 repurposeDraftPending: Enregistrement des modifications…
+repurposeDraftPresence: Un autre éditeur est en mode collaboratif.
 repurposeDraftStale: Le contenu a changé hors de cette session. Vos retouches restent dans cet onglet.
 repurposeDraftUpdated: Contenu mis à jour par un autre participant
 repurposeExport: 'Exporter'

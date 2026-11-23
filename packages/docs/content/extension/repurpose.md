@@ -37,7 +37,8 @@ Choose **Preview** to enlarge the cover or **Studio** to edit it. The studio's
 source card links back to the page editor; standalone carousels have no source.
 
 Choose **Collaborative mode** to co-edit a saved carousel from the Studio.
-Valid changes go straight to the database. The history keeps a restore point
+Valid changes go straight to the database. Other editors viewing the same
+content see an invitation to join when a participant enters collaborative mode. The history keeps a restore point
 before each period of editing. A pause of five minutes or thirty minutes of
 continuous editing starts a new period. Switch back to classic mode to save
 manually.

@@ -333,6 +333,7 @@
       saveLabel: 'Save',
       draftState: '',
       draftActive: false,
+      draftAvailable: false,
       exporting: false,
       exportLabel: 'Export .zip',
       exportingSvg: false,
@@ -398,6 +399,7 @@
             draft.close()
             draft = undefined
             this.draftActive = false
+            this.draftAvailable = false
             this.draftState = ''
           } finally {
             this.saving = false
@@ -464,10 +466,12 @@
         this._checkingRevision = true
         try {
           var response = await fetch(this.urls.revision, { cache: 'no-store' })
-          var current = response.ok ? (await response.json()).revision : null
+          var state = response.ok ? await response.json() : null
+          var current = state?.revision
           if (draft || this.saving || this.revision !== revision) {
             return
           }
+          this.draftAvailable = state?.collaborative === true
           if (404 === response.status) {
             this.syncState = 'deleted'
           } else if (current && current !== revision) {

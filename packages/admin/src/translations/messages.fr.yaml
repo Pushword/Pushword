@@ -148,8 +148,10 @@ adminPageEditMessageLabel: "Motif d'édition"
 adminPageDraftClassic: Passer en mode classique
 adminPageDraftConnected: Modifications enregistrées
 adminPageDraftJoin: Mode collaboratif
+adminPageDraftJoinActive: Rejoindre la coédition
 adminPageDraftOffline: Hors ligne. Gardez cet onglet ouvert.
 adminPageDraftPending: Enregistrement des modifications…
+adminPageDraftPresence: Un autre éditeur est en mode collaboratif.
 adminPageDraftSettings: Enregistrer les réglages
 adminPageDraftSettingsPending: Enregistrez le réglage de publication pour reprendre la sauvegarde en direct.
 adminPageDraftStale: Le contenu a changé hors de cette session. Vos retouches restent dans cet onglet.

@@ -86,3 +86,33 @@ it('leaves legacy serialized blocks to the regular editor', () => {
   expect(controls.hidden).toBe(true)
   expect(document.querySelector('textarea').value).toContain('Legacy body')
 })
+
+it('offers live editing without switching modes or changing local edits', () => {
+  document.body.innerHTML = `
+    <div data-pw-page-draft data-join="Join live editing">
+      <button type="button" aria-pressed="false">Collaborative mode</button>
+      <span role="status"></span><span data-pw-collaboration-notice hidden>Another editor is present</span>
+    </div>
+    <form data-pw-page-revision-form>
+      <input data-pw-page-revision value="4">
+      <textarea name="Page[mainContent]">Saved body</textarea>
+    </form>`
+  const form = document.querySelector('form')
+  const body = form.querySelector('textarea')
+  const controls = document.querySelector('[data-pw-page-draft]')
+  const button = controls.querySelector('button')
+  const notice = controls.querySelector('[data-pw-collaboration-notice]')
+  bindPageDraft(controls)
+  body.value = 'My local edits'
+
+  form.dispatchEvent(new CustomEvent('pw:collaboration-presence', { detail: true }))
+  expect(notice.hidden).toBe(false)
+  expect(button.textContent).toBe('Join live editing')
+  expect(button.getAttribute('aria-pressed')).toBe('false')
+  expect(body.value).toBe('My local edits')
+  expect(form.querySelector('[data-pw-page-revision]').value).toBe('4')
+
+  form.dispatchEvent(new CustomEvent('pw:collaboration-presence', { detail: false }))
+  expect(notice.hidden).toBe(true)
+  expect(button.textContent).toBe('Collaborative mode')
+})

@@ -104,6 +104,30 @@ final class RepurposeStudioControllerTest extends WebTestCase
         parent::tearDown();
     }
 
+    public function testClassicStudioSeesCollaborativeModeBeforeAnyEdit(): void
+    {
+        $post = $this->persistPost();
+        $studioUrl = '/admin/repurpose/studio/'.$post->id;
+        $this->client->request(Request::METHOD_GET, $studioUrl);
+        $html = (string) $this->client->getResponse()->getContent();
+        self::assertSame(1, preg_match('/draftToken: "([^"]+)"/', $html, $matches));
+        $tab = bin2hex(random_bytes(16));
+        $headers = ['HTTP_X_COLLABORATION_TOKEN' => $matches[1], 'HTTP_X_COLLABORATION_TAB' => $tab];
+
+        $this->client->request(Request::METHOD_GET, $studioUrl.'/revision');
+        self::assertSame(['revision' => $post->revision(), 'collaborative' => false], $this->readJson());
+        $this->client->jsonRequest(Request::METHOD_POST, $studioUrl.'/draft', ['after' => 0], $headers);
+        self::assertResponseIsSuccessful();
+        $this->client->request(Request::METHOD_GET, $studioUrl.'/revision');
+        self::assertSame(['revision' => $post->revision(), 'collaborative' => true], $this->readJson());
+        $this->client->request(Request::METHOD_DELETE, $studioUrl.'/draft', server: ['HTTP_X_COLLABORATION_TAB' => $tab]);
+        self::assertResponseStatusCodeSame(403);
+        $this->client->request(Request::METHOD_DELETE, $studioUrl.'/draft', server: $headers);
+        self::assertResponseStatusCodeSame(204);
+        $this->client->request(Request::METHOD_GET, $studioUrl.'/revision');
+        self::assertSame(['revision' => $post->revision(), 'collaborative' => false], $this->readJson());
+    }
+
     public function testStudioAndAgentAutosaveTheSameCarouselWithGroupedHistory(): void
     {
         $post = $this->persistPost();

@@ -1,6 +1,12 @@
 import * as Y from 'yjs'
 
 const REMOTE = Symbol('remote')
+const PRESENCE_INTERVAL_MS = 3000
+
+function presenceTab() {
+  const bytes = crypto.getRandomValues(new Uint8Array(16))
+  return Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('')
+}
 
 export function textChange(previous, next) {
   let from = 0
@@ -44,6 +50,8 @@ export function seedDraft(doc, model, baseline) {
 export function openDraft({ url, revision, token, authorization, model, view, status, initial = view.read() }) {
   const doc = new Y.Doc()
   const pending = []
+  const tab = token ? presenceTab() : null
+  let announcedAt = -Infinity
   let cursor = 0
   let room = null
   let rejected = null
@@ -79,6 +87,9 @@ export function openDraft({ url, revision, token, authorization, model, view, st
     const value = pending.length ? model.read(doc) : null
     const content = typeof value === 'string' ? value : JSON.stringify(value)
     const sent = content === rejected ? 0 : pending.length
+    const now = Date.now()
+    const announce = tab && (joining || now - announcedAt >= PRESENCE_INTERVAL_MS)
+    if (announce) announcedAt = now
     const response = await fetch(url, {
       method: 'POST',
       redirect: 'error',
@@ -87,6 +98,7 @@ export function openDraft({ url, revision, token, authorization, model, view, st
         'Content-Type': 'application/json',
         ...(joining && revision ? { 'If-Match': revision } : {}),
         ...(token ? { 'X-Collaboration-Token': token } : {}),
+        ...(announce ? { 'X-Collaboration-Tab': tab } : {}),
         ...(authorization ? { Authorization: authorization } : {}),
       },
       body: JSON.stringify({
@@ -97,8 +109,7 @@ export function openDraft({ url, revision, token, authorization, model, view, st
     })
     if (!active) return false
     if ([404, 409].includes(response.status)) {
-      active = false
-      clearInterval(timer)
+      stop()
       status('stale')
       return false
     }
@@ -171,6 +182,20 @@ export function openDraft({ url, revision, token, authorization, model, view, st
     return request
   }
 
+  function stop() {
+    active = false
+    clearInterval(timer)
+    if (announcedAt === -Infinity) return
+    announcedAt = -Infinity
+    void fetch(url, {
+      method: 'DELETE',
+      keepalive: true,
+      headers: { 'X-Collaboration-Token': token, 'X-Collaboration-Tab': tab },
+    }).catch(() => {
+      // A dropped request leaves the presence to expire on the server.
+    })
+  }
+
   const timer = setInterval(() => void sync(), 350)
   status('pending')
   void sync()
@@ -182,8 +207,7 @@ export function openDraft({ url, revision, token, authorization, model, view, st
       return active && sync(true)
     },
     close() {
-      active = false
-      clearInterval(timer)
+      stop()
       doc.destroy()
     },
   }

@@ -73,8 +73,10 @@ repurposeDraftClassic: Switch to classic mode
 repurposeDraftConnected: Changes saved
 repurposeDraftInvalid: Some changes need correcting before they can be saved.
 repurposeDraftJoin: Collaborative mode
+repurposeDraftJoinActive: Join live editing
 repurposeDraftOffline: Offline. Keep this tab open.
 repurposeDraftPending: Saving changes…
+repurposeDraftPresence: Someone else is editing collaboratively.
 repurposeDraftStale: The saved version changed outside this session. Your edits are in this tab.
 repurposeDraftUpdated: Content updated by another participant
 repurposeExport: 'Export'

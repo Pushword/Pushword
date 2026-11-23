@@ -8,6 +8,7 @@ const sessions = []
 afterEach(() => {
   sessions.splice(0).forEach((session) => session.close())
   vi.unstubAllGlobals()
+  vi.restoreAllMocks()
 })
 
 function sharedRoom(baseline) {
@@ -15,7 +16,8 @@ function sharedRoom(baseline) {
   const room = { offline: false, stale: false, invalid: false, content: baseline, legacyUpdates: [] }
   let cursor = 0
   let snapshot = null
-  vi.stubGlobal('fetch', vi.fn(async (_url, { body, headers }) => {
+  vi.stubGlobal('fetch', vi.fn(async (_url, { body, headers, method }) => {
+    if (method === 'DELETE') return new Response(null, { status: 204 })
     if (room.offline) throw new Error('Connection interrupted')
     if (room.stale) return new Response(null, { status: 409 })
     const message = JSON.parse(body)
@@ -163,4 +165,25 @@ it('imports the existing saved draft before writing its content to the database'
   expect(editor.value).toBe('Alpha archived omega')
   expect(room.content).toBe(editor.value)
   previous.destroy()
+})
+
+it('renews presence for the same tab and releases only that tab on close', async () => {
+  const clock = vi.spyOn(Date, 'now').mockReturnValue(10_000)
+  sharedRoom('Page')
+  const editor = participant('Page')
+  expect(await editor.flush()).toBe(true)
+  const tab = fetch.mock.calls[0][1].headers['X-Collaboration-Tab']
+  expect(tab).toMatch(/^[a-f0-9]{32}$/)
+  expect(await editor.flush()).toBe(true)
+  expect(fetch.mock.calls[1][1].headers['X-Collaboration-Tab']).toBeUndefined()
+  clock.mockReturnValue(13_001)
+  expect(await editor.flush()).toBe(true)
+  expect(fetch.mock.calls[2][1].headers['X-Collaboration-Tab']).toBe(tab)
+
+  editor.close()
+  editor.close()
+  expect(fetch.mock.calls).toHaveLength(4)
+  expect(fetch).toHaveBeenLastCalledWith('/draft', expect.objectContaining({
+    method: 'DELETE', headers: { 'X-Collaboration-Token': 'token', 'X-Collaboration-Tab': tab },
+  }))
 })

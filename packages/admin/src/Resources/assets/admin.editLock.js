@@ -95,6 +95,7 @@ export function initEditLock(pageId, form) {
 
       if (response.redirected) return
       if (response.status === 404 && revision) {
+        form.dispatchEvent(new CustomEvent('pw:collaboration-presence', { detail: false }))
         form.dispatchEvent(new CustomEvent('pw:page-revision', { detail: null }))
         return
       }
@@ -109,6 +110,7 @@ export function initEditLock(pageId, form) {
       updateBanner(data.lockInfo, data.isOwner, data.isSameUser)
 
       if (revision && typeof data.revision === 'string') {
+        form.dispatchEvent(new CustomEvent('pw:collaboration-presence', { detail: data.collaborative === true }))
         form.dispatchEvent(new CustomEvent('pw:page-revision', { detail: data.revision }))
       } else if (!state.isOwner && data.lockInfo?.lastSavedAt) {
         if (state.lastKnownSavedAt !== null && data.lockInfo.lastSavedAt > state.lastKnownSavedAt) {

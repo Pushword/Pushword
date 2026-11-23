@@ -7,6 +7,7 @@ namespace Pushword\Repurpose\Controller;
 use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\OptimisticLockException;
+use Pushword\Core\Collaboration\LivePresence;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Repository\MediaRepository;
@@ -253,9 +254,14 @@ final class RepurposeStudioController extends AbstractController
     }
 
     #[Route('/admin/repurpose/studio/{id}/revision', name: 'repurpose_studio_revision', requirements: ['id' => '\d+'], methods: ['GET'])]
-    public function revision(int $id): JsonResponse
+    public function revision(int $id, LivePresence $presence): JsonResponse
     {
-        return new JsonResponse(['revision' => $this->loadPost($id)->revision()], headers: ['Cache-Control' => 'no-store']);
+        $post = $this->loadPost($id);
+
+        return new JsonResponse([
+            'revision' => $post->revision(),
+            'collaborative' => $presence->isActive('repurpose:'.$post->id),
+        ], headers: ['Cache-Control' => 'no-store']);
     }
 
     #[Route('/admin/repurpose/studio/{id}/save', name: 'repurpose_studio_save', requirements: ['id' => '\d+'], methods: ['POST'])]

@@ -6,6 +6,7 @@ namespace Pushword\Admin\Controller;
 
 use Doctrine\ORM\AbstractQuery;
 use Pushword\Admin\Service\PageEditLockManager;
+use Pushword\Core\Collaboration\LivePresence;
 use Pushword\Core\Entity\User;
 use Pushword\Core\Repository\PageRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -21,6 +22,7 @@ final class PageLockController extends AbstractController
     public function __construct(
         private readonly PageEditLockManager $lockManager,
         private readonly PageRepository $pages,
+        private readonly LivePresence $presence,
     ) {
     }
 
@@ -73,6 +75,7 @@ final class PageLockController extends AbstractController
             'isOwner' => $acquired,
             'isSameUser' => $isSameUser,
             'revision' => (string) $version,
+            'collaborative' => $this->presence->isActive('page:'.$pageId),
         ]);
     }
 }

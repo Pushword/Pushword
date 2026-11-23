@@ -111,7 +111,8 @@ the revision field is submitted, and retain the sync banner and shortcut submit 
 ## Collaborative page editing
 
 On a saved Markdown page, choose **Collaborative mode**. Editor.js and Monaco
-share the body and save it directly to the database. The page follows its
+share the body and save it directly to the database. Other editors viewing the same
+content see an invitation to join when a participant enters collaborative mode. The page follows its
 current publication status. The draft toggle and publication hold control
 visibility. Use **Save settings** for changes to the rest of the page form.
 If you change the publication date in the form, live body saves pause until
