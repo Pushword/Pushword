@@ -1,0 +1,51 @@
+name: Mutation tests
+
+on:
+  pull_request:
+    paths:
+      - 'packages/*/src/**/*.php'
+      - '.scripts/test-mutation'
+      - '.github/workflows/mutation-tests.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'packages/*/src/**/*.php'
+      - '.scripts/test-mutation'
+      - '.github/workflows/mutation-tests.yml'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  infection:
+    name: Infection
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      DIFF_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Fetch comparison base
+        run: git fetch --no-tags --depth=1 origin "$DIFF_BASE"
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: 8.5
+          extensions: dom, curl, libxml, mbstring, zip, pdo_sqlite, bcmath, intl, gd, exif, iconv, imagick, fileinfo, ffi
+          coverage: pcov
+
+      - name: Install dependencies
+        uses: ramsey/composer-install@v4
+        with:
+          composer-options: --prefer-dist --no-interaction
+
+      - name: Mutate changed PHP lines
+        run: ./.scripts/test-mutation --diff "$DIFF_BASE"

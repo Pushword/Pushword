@@ -3,26 +3,44 @@ set -euo pipefail
 
 cd -P "$(dirname "$0")/.."
 
-if [[ $# -lt 2 || ! -f "$1" ]]; then
-    echo "Usage: ./.scripts/test-mutation <source.php> <test.php> [<test.php> ...]" >&2
-    exit 2
-fi
+if [[ "${1:-}" == --diff && $# -eq 2 ]]; then
+    base=$(git rev-parse --verify --end-of-options "$2^{commit}")
+    changed_sources=$(git diff --name-only --diff-filter=AM "$base" HEAD -- ':(glob)packages/*/src/**/*.php')
+    if [[ -z "$changed_sources" ]]; then
+        echo "No added or modified PHP source files to mutate."
+        exit 0
+    fi
 
-source_file=$(realpath -- "$1")
-shift
-if [[ "$source_file" != "$PWD"/packages/*/src/*.php ]]; then
-    echo "Select a PHP source file in packages/*/src." >&2
-    exit 2
-fi
-
-test_files=()
-for path in "$@"; do
-    if ! test_file=$(realpath -e -- "$path") || [[ ! -f "$test_file" || "$test_file" != "$PWD"/packages/*/tests/*.php ]]; then
-        echo "Select a PHPUnit test file in packages/*/tests: $path" >&2
+    source_dirs=("$PWD"/packages/*/src)
+    infection_args=(
+        --git-diff-lines
+        --git-diff-base="$base"
+        --test-framework-extra-args="--exclude-group=benchmark --exclude-group=integration --exclude-group=panther --exclude-group=serial --exclude-group=worker"
+    )
+else
+    if [[ $# -lt 2 || ! -f "$1" ]]; then
+        echo "Usage: ./.scripts/test-mutation <source.php> <test.php> [<test.php> ...]" >&2
+        echo "       ./.scripts/test-mutation --diff <base-commit>" >&2
         exit 2
     fi
-    test_files+=("$test_file")
-done
+
+    source_file=$(realpath -- "$1")
+    shift
+    if [[ "$source_file" != "$PWD"/packages/*/src/*.php ]]; then
+        echo "Select a PHP source file in packages/*/src." >&2
+        exit 2
+    fi
+
+    source_dirs=("$(dirname -- "$source_file")")
+    infection_args=(-- "$source_file")
+    for path in "$@"; do
+        if ! test_file=$(realpath -e -- "$path") || [[ ! -f "$test_file" || "$test_file" != "$PWD"/packages/*/tests/*.php ]]; then
+            echo "Select a PHPUnit test file in packages/*/tests: $path" >&2
+            exit 2
+        fi
+        infection_args+=("$test_file")
+    done
+fi
 
 if ! php -r 'exit(extension_loaded("pcov") ? 0 : 1);'; then
     echo "PCOV is required for mutation testing. Install php-pecl-pcov or php-pcov." >&2
@@ -59,12 +77,13 @@ unset PUSHWORD_TEST_DATABASE_BASE_URL PUSHWORD_TEST_MYSQL_URL
 
 php -r '
 echo json_encode([
-    "source" => ["directories" => [dirname($argv[1])]],
+    "source" => ["directories" => array_slice($argv, 1)],
     "phpUnit" => ["configDir" => getcwd()],
     "initialTestsPhpOptions" => "-d pcov.enabled=1",
 ], JSON_THROW_ON_ERROR);
-' "$source_file" > "$run_dir/infection.json"
+' -- "${source_dirs[@]}" > "$run_dir/infection.json"
 
-php "$phar" run --configuration="$run_dir/infection.json" \
+# Infection reads PHPUnit's text output to identify escaped mutants.
+PAO_DISABLE=1 php "$phar" run --configuration="$run_dir/infection.json" \
     --no-interaction --no-progress --threads=1 \
-    --with-uncovered --with-timeouts -- "$source_file" "${test_files[@]}"
+    --with-uncovered --with-timeouts "${infection_args[@]}"
