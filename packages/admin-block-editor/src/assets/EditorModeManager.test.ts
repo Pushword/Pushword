@@ -119,8 +119,10 @@ describe('EditorModeManager – mode buttons in JSON mode', () => {
       </form>`
     const input = document.querySelector('input')!
     const manager = new EditorModeManager('ed')
-    const switchTo = vi.spyOn(manager as any, 'switchTo').mockImplementation(() => {})
-    const switchFrom = vi.spyOn(manager as any, 'switchFrom').mockResolvedValue(undefined)
+    const switchTo = vi.fn()
+    const switchFrom = vi.fn(async () => {})
+    manager['switchTo'] = switchTo
+    manager['switchFrom'] = switchFrom
 
     manager.toggleEditor()
     input.dataset.editor = 'markdown'

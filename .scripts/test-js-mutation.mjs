@@ -77,10 +77,9 @@ function changedLines(name, commit) {
 }
 
 function onlyMutatesStudio(args) {
-  const option = args.indexOf('--mutate')
-  const targets = option === -1 ? undefined : args[option + 1]
-
-  return targets?.split(',').every((target) => target.split(':')[0] === studioSource) ?? false
+  const [option, targets] = args
+  return args.length === 2 && option === '--mutate'
+    && targets.split(',').every((target) => target.split(':')[0] === studioSource)
 }
 
 function config(name, packageDir, args) {

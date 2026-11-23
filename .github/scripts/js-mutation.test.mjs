@@ -98,5 +98,6 @@ test('runs only the Studio suite when every mutation targets Studio', (t) => {
   assert.equal(repo.run('repurpose', '--diff', base), studioTests)
   assert.equal(repo.run('repurpose', '--mutate', studio), studioTests)
   assert.equal(repo.run('repurpose', '--mutate', `${studio}:1-1,${motion}:1-1`), allMotionTests)
+  assert.equal(repo.run('repurpose', '--mutate', studio, '-m', motion), allMotionTests)
   assert.equal(repo.run('repurpose'), allMotionTests)
 })
