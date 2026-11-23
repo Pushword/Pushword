@@ -4587,16 +4587,16 @@
         },
         {
             "name": "pushword/dev-app",
-            "version": "1.0.126",
+            "version": "1.0.127",
             "source": {
                 "type": "git",
                 "url": "https://github.com/Pushword/dev-app.git",
-                "reference": "7972a48d89ef18e462af2da74c0dbcc1a65da4d4"
+                "reference": "b9ddfa79f9174caaad60259d655680d789131135"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/Pushword/dev-app/zipball/7972a48d89ef18e462af2da74c0dbcc1a65da4d4",
-                "reference": "7972a48d89ef18e462af2da74c0dbcc1a65da4d4",
+                "url": "https://api.github.com/repos/Pushword/dev-app/zipball/b9ddfa79f9174caaad60259d655680d789131135",
+                "reference": "b9ddfa79f9174caaad60259d655680d789131135",
                 "shasum": ""
             },
             "require": {
@@ -4637,7 +4637,7 @@
                     "type": "liberapay"
                 }
             ],
-            "time": "2026-11-23T08:15:32+00:00"
+            "time": "2026-11-23T13:21:52+00:00"
         },
         {
             "name": "sensiolabs/ansi-to-html",
