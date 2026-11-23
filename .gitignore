@@ -14,6 +14,7 @@ packages/admin-monaco-editor/dist
 /PoC/
 .phpactor.json
 /.impeccable/
+/.infection/
 /var/symfony-lsp/
 .twigstan
 .phpunit.result.cache
