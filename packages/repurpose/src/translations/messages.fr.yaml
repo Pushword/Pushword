@@ -78,6 +78,7 @@ repurposeDraftOffline: Hors ligne. Gardez cet onglet ouvert.
 repurposeDraftPending: Enregistrement des modifications…
 repurposeDraftPresence: Un autre éditeur est en mode collaboratif.
 repurposeDraftStale: Le contenu a changé hors de cette session. Vos retouches restent dans cet onglet.
+repurposeDraftTooLarge: Cette session a atteint sa taille maximale. Passez en mode classique pour enregistrer vos retouches.
 repurposeDraftUpdated: Contenu mis à jour par un autre participant
 repurposeExport: 'Exporter'
 repurposeFormat: 'Format'
@@ -116,6 +117,10 @@ repurposeNetwork: 'Réseau'
 repurposePreviewMode: 'Visualisation'
 repurposePreviewSlides: 'Slides'
 repurposePublishingTarget: 'Destination de publication'
+repurposeRecoveryAvailable: Des retouches non enregistrées sont disponibles dans ce navigateur.
+repurposeRecoveryDiscard: Supprimer le brouillon local
+repurposeRecoveryDownload: Télécharger le brouillon local
+repurposeRecoveryRestore: Restaurer le brouillon local
 repurposeSourcePage: Page source
 repurposeSourcePublication: Publication
 repurposeSourceUnpublished: Non publiée

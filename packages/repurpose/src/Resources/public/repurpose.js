@@ -281,6 +281,8 @@
     var lastDraftState
     var composing = false
     var switchingView = false
+    var recoveryKey = cfg.recoveryKey && cfg.recoveryKey + Date.now().toString(36) + Math.random().toString(36).slice(2)
+    var restoredKey
 
     return {
       spec: cfg.spec || { slides: [] },
@@ -331,6 +333,7 @@
       syncState: '',
       saving: false,
       saveLabel: 'Save',
+      recovery: null,
       draftState: '',
       draftActive: false,
       draftAvailable: false,
@@ -358,6 +361,7 @@
       init: function () {
         this.normalize()
         initialSpec = this.payload()
+        this.recovery = this.findRecovery()
         this._previewTargets = this.previewTargets()
         this._boundDragMove = this.deckTextMove.bind(this)
         this._boundDragUp = this.deckTextUp.bind(this)
@@ -365,6 +369,7 @@
         this.deckOpen = '0' !== this._store('rp-studio-deckOpen')
         this.$watch('spec', function () {
           this.dirty = true
+          this.keepRecovery()
           draft?.capture()
           if ('visual' === this.view) {
             this.schedulePreview()
@@ -373,7 +378,8 @@
         window.addEventListener('message', this.onMediaMessage.bind(this))
         this._revisionTimer = setInterval(this.checkRevision.bind(this), REVISION_CHECK_MS)
         this._draftUnload = (event) => {
-          if (!draft || !this.dirty || ['connected', 'updated'].includes(lastDraftState)) return
+          if (!this.dirty || this.keepRecovery()) return
+          if (draft && ['connected', 'updated'].includes(lastDraftState)) return
           event.preventDefault()
           event.returnValue = ''
         }
@@ -384,6 +390,90 @@
         clearInterval(this._revisionTimer)
         window.removeEventListener('beforeunload', this._draftUnload)
         draft?.close()
+      },
+
+      findRecovery: function () {
+        if (!recoveryKey) return null
+        try {
+          var latest = null
+          for (var key of Object.keys(window.localStorage)) {
+            if (!key.startsWith(cfg.recoveryKey) || key === recoveryKey || key === restoredKey) continue
+            var record
+            try { record = JSON.parse(window.localStorage.getItem(key)) } catch { continue }
+            if (typeof record?.value !== 'string' || typeof record.savedAt !== 'number') continue
+            if (!latest || record.savedAt > latest.savedAt) latest = { ...record, key: key }
+          }
+          return latest
+        } catch {
+          return null
+        }
+      },
+
+      keepRecovery: function () {
+        if (!recoveryKey || switchingView) return false
+        try {
+          var source = this.view === 'source'
+          var value = source ? this.sourceText() : JSON.stringify(this.payload())
+          if (!source && value === JSON.stringify(initialSpec)) {
+            this.clearRecovery()
+            return true
+          }
+          window.localStorage.setItem(recoveryKey, JSON.stringify({
+            revision: this.revision, source: source, value: value, savedAt: Date.now(),
+          }))
+          // Once the restored copy is safely in this tab's slot, retire its original.
+          if (restoredKey) {
+            window.localStorage.removeItem(restoredKey)
+            restoredKey = undefined
+          }
+          return true
+        } catch {
+          return false
+        }
+      },
+
+      clearRecovery: function () {
+        if (!recoveryKey) return
+        try {
+          window.localStorage.removeItem(recoveryKey)
+          if (restoredKey) window.localStorage.removeItem(restoredKey)
+          restoredKey = undefined
+        } catch {
+          // Recovery remains optional if the browser blocks storage.
+        }
+      },
+
+      restoreRecovery: function () {
+        var saved = this.recovery
+        if (!saved || this.dirty || this.draftActive || saved.revision !== this.revision || this.syncState) return
+        restoredKey = saved.key
+        this.recovery = this.findRecovery()
+        if (saved.source) {
+          this.setView('source')
+          this.$nextTick(() => {
+            this.setSource(saved.value)
+            this.$refs.source.dispatchEvent(new Event('input', { bubbles: true }))
+          })
+        } else {
+          this.spec = JSON.parse(saved.value)
+          this.normalize()
+          this.dirty = true
+          this.keepRecovery()
+        }
+      },
+
+      downloadRecovery: function () {
+        if (this.recovery) download(new Blob([this.recovery.value], { type: 'application/json' }), this.filename + '-draft.json')
+      },
+
+      discardRecovery: function () {
+        if (!this.recovery) return
+        try {
+          window.localStorage.removeItem(this.recovery.key)
+          this.recovery = this.findRecovery()
+        } catch {
+          // Keep the recovery visible if the browser refuses the removal.
+        }
       },
 
       draftComposition(active) {
@@ -406,7 +496,7 @@
           }
           return
         }
-        if (this.syncState || this.draftState === 'pending') return
+        if (!cfg.draftModule || (this.syncState && !this.draftAvailable) || this.draftState === 'pending') return
         var self = this
         try {
           this.draftState = 'pending'
@@ -426,9 +516,11 @@
               equal: equalJson,
               saved(revision, complete) {
                 self.revision = revision
+                self.syncState = ''
                 if (complete && self.dirty) {
                   initialSpec = read()
                   self.dirty = false
+                  self.clearRecovery()
                 }
               },
               wait: () => composing || switchingView || self._drag !== null || read() === undefined,
@@ -471,7 +563,7 @@
           if (draft || this.saving || this.revision !== revision) {
             return
           }
-          this.draftAvailable = state?.collaborative === true
+          this.draftAvailable = Boolean(cfg.draftModule) && state?.collaborative === true
           if (404 === response.status) {
             this.syncState = 'deleted'
           } else if (current && current !== revision) {
@@ -734,6 +826,7 @@
             } catch {
               this.dirty = true
             }
+            if (!this.dirty) this.clearRecovery()
             this.saveLabel = 'Saved ✓'
             this.live = { state: 'ok', text: 'saved' }
           } else {
@@ -2113,6 +2206,7 @@
         textarea.addEventListener('input', function () {
           if ('source' === self.view) {
             self.dirty = true
+            self.keepRecovery()
             draft?.capture()
             self.schedulePreview()
           }

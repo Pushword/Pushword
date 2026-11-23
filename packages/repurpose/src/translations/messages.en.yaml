@@ -78,6 +78,7 @@ repurposeDraftOffline: Offline. Keep this tab open.
 repurposeDraftPending: Saving changes…
 repurposeDraftPresence: Someone else is editing collaboratively.
 repurposeDraftStale: The saved version changed outside this session. Your edits are in this tab.
+repurposeDraftTooLarge: This session has reached its size limit. Switch to classic mode to save your edits.
 repurposeDraftUpdated: Content updated by another participant
 repurposeExport: 'Export'
 repurposeFormat: 'Format'
@@ -116,6 +117,10 @@ repurposeNetwork: 'Network'
 repurposePreviewMode: 'Preview'
 repurposePreviewSlides: 'Slides'
 repurposePublishingTarget: 'Publishing target'
+repurposeRecoveryAvailable: Unsaved edits are available on this browser.
+repurposeRecoveryDiscard: Discard local draft
+repurposeRecoveryDownload: Download local draft
+repurposeRecoveryRestore: Restore local draft
 repurposeSourcePage: Source page
 repurposeSourcePublication: Publication
 repurposeSourceUnpublished: Not published

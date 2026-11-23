@@ -42,8 +42,14 @@ final readonly class CarouselLiveEditing
         }
 
         /** @var array<string, mixed> $spec */
-        $spec['network'] = $post->network;
-        $spec['page'] = \is_string($spec['page'] ?? null) && '' !== $spec['page'] ? $spec['page'] : $post->page;
+        if (($spec['network'] ?? null) !== $post->network) {
+            return [['path' => 'network', 'message' => 'Use the network switcher to change the carousel network.']];
+        }
+
+        if (! \is_string($spec['page'] ?? null) || '' === $spec['page']) {
+            return [['path' => 'page', 'message' => 'Select a source page or detach the carousel in the Studio.']];
+        }
+
         $violations = [];
         foreach ($this->validator->validate($this->factory->fromArray($spec)) as $violation) {
             $violations[] = ['path' => $violation->getPropertyPath(), 'message' => (string) $violation->getMessage()];

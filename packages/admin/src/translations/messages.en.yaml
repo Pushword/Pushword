@@ -148,6 +148,7 @@ adminPageEditMessageHelpVersionned: 'Previous edit on %lastEditDatetime% <br> <e
 adminPageEditMessageLabel: "Reason of modification"
 adminPageDraftClassic: Switch to classic mode
 adminPageDraftConnected: Changes saved
+adminPageDraftInvalid: The collaborative save was rejected. Your edits are still in the editor.
 adminPageDraftJoin: Collaborative mode
 adminPageDraftJoinActive: Join live editing
 adminPageDraftOffline: Offline. Keep this tab open.
@@ -156,6 +157,7 @@ adminPageDraftPresence: Someone else is editing collaboratively.
 adminPageDraftSettings: Save settings
 adminPageDraftSettingsPending: Save the publication setting to resume live saves.
 adminPageDraftStale: The saved version changed outside this session. Your edits are in this tab.
+adminPageDraftTooLarge: This session has reached its size limit. Switch to classic mode to save your edits.
 adminPageDraftUpdated: Content updated by another participant
 adminPageEditLockRefresh: "Refresh page"
 adminPageEditLockWarning: "%user% is currently editing this page. Your changes may be overwritten."

@@ -112,8 +112,9 @@ the revision field is submitted, and retain the sync banner and shortcut submit 
 
 On a saved Markdown page, choose **Collaborative mode**. Editor.js and Monaco
 share the body and save it directly to the database. Other editors viewing the same
-content see an invitation to join when a participant enters collaborative mode. The page follows its
-current publication status. The draft toggle and publication hold control
+content see an invitation to join when a participant enters collaborative mode.
+They can join from a revision retained by that session and bring their local
+body edits with them. The page follows its current publication status. The draft toggle and publication hold control
 visibility. Use **Save settings** for changes to the rest of the page form.
 If you change the publication date in the form, live body saves pause until
 you save that setting and the body together.
@@ -122,6 +123,10 @@ When the Version extension is enabled, the history keeps a restore point
 before each period of live editing. A new period starts after five minutes
 without a saved change or after thirty minutes of continuous edits. Switch
 back to classic mode to use manual saves for the body.
+
+The collaborative controls are available when Node.js and PHP process
+execution are available to the web process. A request has a 4 MiB limit.
+If a session reaches that limit, switch to classic mode to save the local work.
 
 If a conventional edit changes the underlying page, the live session warns
 you and keeps your current text in the tab. Use the page recovery prompt to

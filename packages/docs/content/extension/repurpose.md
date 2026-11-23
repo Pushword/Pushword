@@ -41,7 +41,9 @@ Valid changes go straight to the database. Other editors viewing the same
 content see an invitation to join when a participant enters collaborative mode. The history keeps a restore point
 before each period of editing. A pause of five minutes or thirty minutes of
 continuous editing starts a new period. Switch back to classic mode to save
-manually.
+manually. The browser keeps unsaved edits for recovery after reloading.
+Restore a draft against the same revision, or download it to reconcile
+with a newer saved carousel.
 
 Open **Version history** in the Studio to compare a saved carousel with the
 current version or another saved version. **Restore version** restores the

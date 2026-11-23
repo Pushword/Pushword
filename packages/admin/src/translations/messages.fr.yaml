@@ -147,6 +147,7 @@ adminPageEditMessageHelpVersionned: 'Précédente modification le %lastEditDatet
 adminPageEditMessageLabel: "Motif d'édition"
 adminPageDraftClassic: Passer en mode classique
 adminPageDraftConnected: Modifications enregistrées
+adminPageDraftInvalid: La sauvegarde collaborative a été refusée. Vos retouches restent dans l’éditeur.
 adminPageDraftJoin: Mode collaboratif
 adminPageDraftJoinActive: Rejoindre la coédition
 adminPageDraftOffline: Hors ligne. Gardez cet onglet ouvert.
@@ -155,6 +156,7 @@ adminPageDraftPresence: Un autre éditeur est en mode collaboratif.
 adminPageDraftSettings: Enregistrer les réglages
 adminPageDraftSettingsPending: Enregistrez le réglage de publication pour reprendre la sauvegarde en direct.
 adminPageDraftStale: Le contenu a changé hors de cette session. Vos retouches restent dans cet onglet.
+adminPageDraftTooLarge: Cette session a atteint sa taille maximale. Passez en mode classique pour enregistrer vos retouches.
 adminPageDraftUpdated: Contenu mis à jour par un autre participant
 adminPageEditLockRefresh: "Actualiser la page"
 adminPageEditLockWarning: "%user% est en train de modifier cette page. Vos modifications pourraient être écrasées."

@@ -8,6 +8,7 @@ use DateTime;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\Attributes\Group;
 use Pushword\Core\Collaboration\DraftExchange;
+use Pushword\Core\Collaboration\LiveProjection;
 use Pushword\Core\Collaboration\LiveWrite;
 use Pushword\Core\Entity\LiveEditingState;
 use Pushword\Core\Entity\Page;
@@ -30,8 +31,11 @@ final class DraftExchangeTest extends KernelTestCase
         $write = self::getContainer()->get(LiveWrite::class);
         $filesystem = new Filesystem();
         $directory = sys_get_temp_dir().'/pw-live-'.bin2hex(random_bytes(8));
-        $exchange = new DraftExchange($em, new LockFactory(new InMemoryStore()), $clock, $write, $filesystem, $directory);
+        $exchange = new DraftExchange($em, new LockFactory(new InMemoryStore()), $clock, $write, $filesystem, $directory, new LiveProjection());
 
+        /** @var array{page: array<string, string>} $fixture */
+        $fixture = json_decode($filesystem->readFile(__DIR__.'/fixtures/live-editing.json'), true, flags: \JSON_THROW_ON_ERROR);
+        $snapshots = $fixture['page'];
         $page = new Page();
         $page->slug = 'live-editing-'.bin2hex(random_bytes(5));
         $page->h1 = 'Collaborative page';
@@ -64,7 +68,7 @@ final class DraftExchangeTest extends KernelTestCase
             self::assertSame([400, ['error' => 'invalid_update']], $send(['after' => 0, 'snapshot' => 'YWJj', 'content' => 'Bad']));
             self::assertSame([409, ['error' => 'revision_mismatch', 'revision' => '1']], $send(['after' => 0], '0'));
 
-            $legacyUpdate = 'YWJj';
+            $legacyUpdate = $snapshots['Initial text'];
             $oldRoom = hash('sha256', 'page:'.$id.':1');
             $filesystem->dumpFile($directory.'/collaboration/draft-'.$oldRoom.'.json', json_encode([$legacyUpdate], \JSON_THROW_ON_ERROR));
             [$status, $start] = $send(['after' => 0], '1');
@@ -75,35 +79,52 @@ final class DraftExchangeTest extends KernelTestCase
             $room = $start['room'];
             self::assertIsString($room);
 
-            $edit = static fn (int $after, string $snapshot, string $content): array => [
-                'room' => $room, 'after' => $after, 'snapshot' => base64_encode($snapshot), 'content' => $content,
+            $edit = static fn (int $after, string $content, ?string $snapshot = null): array => [
+                'room' => $room, 'after' => $after, 'snapshot' => $snapshot ?? $snapshots[$content], 'content' => $content,
             ];
 
-            [$status, $saved] = $send($edit(0, 'snapshot one', 'First live edit'));
+            self::assertSame([422, ['error' => 'invalid_snapshot']], $send($edit(0, 'Broken state', 'YWJj')));
+            self::assertSame([422, ['error' => 'invalid_snapshot']], $send($edit(0, 'Unrelated projection', $snapshots['First live edit'])));
+            $em->refresh($page);
+            self::assertSame('Initial text', $page->mainContent);
+
+            [$status, $saved] = $send($edit(0, 'First live edit'));
             self::assertSame(200, $status);
             self::assertTrue($saved['accepted']);
             self::assertSame('2', $saved['revision']);
+            self::assertSame([
+                'room' => $room, 'revision' => '2', 'baseline' => null, 'after' => 1, 'snapshot' => null, 'accepted' => false, 'anchor' => null, 'legacyUpdates' => [],
+            ], $send(['room' => $room, 'after' => 1])[1]);
             $em->refresh($page);
             self::assertSame('First live edit', $page->mainContent);
             self::assertTrue($page->isPublished());
 
-            [$status, $behind] = $send($edit(0, 'outdated snapshot', 'Unmerged write'));
+            [$status, $behind] = $send($edit(0, 'Unmerged write', $snapshots['First live edit']));
             self::assertSame(200, $status);
             self::assertFalse($behind['accepted']);
             self::assertSame(1, $behind['after']);
-            self::assertSame(base64_encode('snapshot one'), $behind['snapshot']);
+            self::assertSame($snapshots['First live edit'], $behind['snapshot']);
             $em->refresh($page);
             self::assertSame('First live edit', $page->mainContent);
 
-            [$status, $merged] = $send($edit(1, 'snapshot two', 'First live edit merged'));
+            [$status, $merged] = $send($edit(1, 'First live edit merged'));
             self::assertSame(200, $status);
             self::assertTrue($merged['accepted']);
             $em->refresh($page);
             self::assertSame('First live edit merged', $page->mainContent);
             self::assertSame($original, $versionner->getVersions('page', $id));
+            [$status, $lateJoin] = $send(['after' => 0], '1');
+            self::assertSame(200, $status);
+            self::assertSame($room, $lateJoin['room']);
+            self::assertSame(['baseline' => 'Initial text', 'snapshot' => null], $lateJoin['anchor']);
+            self::assertSame($snapshots['First live edit merged'], $lateJoin['snapshot']);
+            [$status, $lateJoin] = $send(['after' => 0], '2');
+            self::assertSame(200, $status);
+            self::assertSame(['baseline' => null, 'snapshot' => $snapshots['First live edit']], $lateJoin['anchor']);
+            self::assertSame($snapshots['First live edit merged'], $lateJoin['snapshot']);
 
             $clock->sleep(300);
-            [$status, $later] = $send($edit(2, 'snapshot three', 'New editing period'));
+            [$status, $later] = $send($edit(2, 'New editing period'));
             self::assertSame(200, $status);
             self::assertTrue($later['accepted']);
             self::assertCount(2, $versionner->getVersions('page', $id));
@@ -117,14 +138,14 @@ final class DraftExchangeTest extends KernelTestCase
             // room cannot overwrite it, and the new room keeps the page held.
             $page->setHoldPublication(true);
             $em->flush();
-            self::assertSame(409, $send($edit(3, 'old room', 'Late edit'))[0]);
+            self::assertSame(409, $send($edit(3, 'Late edit', $snapshots['New editing period']))[0]);
             [$status, $reopened] = $send(['after' => 0]);
             self::assertSame(200, $status);
             self::assertNotSame($room, $reopened['room']);
             self::assertSame('New editing period', $reopened['baseline']);
             self::assertTrue($page->isHoldPublication());
             [$status, $held] = $send([
-                'room' => $reopened['room'], 'after' => 0, 'snapshot' => 'YWJj', 'content' => 'Edit while held',
+                'room' => $reopened['room'], 'after' => 0, 'snapshot' => $snapshots['Edit while held'], 'content' => 'Edit while held',
             ]);
             self::assertSame(200, $status);
             self::assertTrue($held['accepted']);
@@ -136,7 +157,7 @@ final class DraftExchangeTest extends KernelTestCase
             for ($cursor = 1; $cursor <= 6; ++$cursor) {
                 $clock->sleep(299);
                 [$status, $burst] = $send([
-                    'room' => $reopened['room'], 'after' => $cursor, 'snapshot' => base64_encode('burst '.$cursor), 'content' => 'Held edit '.$cursor,
+                    'room' => $reopened['room'], 'after' => $cursor, 'snapshot' => $snapshots['Held edit '.$cursor], 'content' => 'Held edit '.$cursor,
                 ]);
                 self::assertSame(200, $status);
                 self::assertTrue($burst['accepted']);
@@ -146,7 +167,7 @@ final class DraftExchangeTest extends KernelTestCase
 
             $clock->sleep(6);
             [$status, $afterCap] = $send([
-                'room' => $reopened['room'], 'after' => 7, 'snapshot' => 'YWJj', 'content' => 'After thirty minutes',
+                'room' => $reopened['room'], 'after' => 7, 'snapshot' => $snapshots['After thirty minutes'], 'content' => 'After thirty minutes',
             ]);
             self::assertSame(200, $status);
             self::assertTrue($afterCap['accepted']);

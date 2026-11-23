@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pushword\Admin\FormField;
 
+use EasyCorp\Bundle\EasyAdminBundle\Config\Asset;
 use EasyCorp\Bundle\EasyAdminBundle\Field\Field;
 use Pushword\Core\Entity\Media;
 use Symfony\Component\Form\Extension\Core\Type\FileType;
@@ -19,6 +20,6 @@ final class MediaMediaFileField extends AbstractField
             'label' => 'adminMediaMediaFileLabel',
             'required' => null === $this->admin->getSubject()->id,
             'help' => null !== $this->admin->getSubject()->id ? 'adminMediaReplaceFileHelp' : null,
-        ])->addJsFiles('/bundles/pushwordadmin/mediaFileDrop.js');
+        ])->addJsFiles(Asset::new('/bundles/pushwordadmin/mediaFileDrop.js')->htmlAttr('type', 'module'));
     }
 }

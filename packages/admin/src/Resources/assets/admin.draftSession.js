@@ -113,9 +113,9 @@ export function openDraft({ url, revision, token, authorization, model, view, st
       status('stale')
       return false
     }
-    if (response.status === 422) {
+    if ([413, 422].includes(response.status)) {
       rejected = content
-      status('invalid', (await response.json()).violations)
+      status(response.status === 413 ? 'tooLarge' : 'invalid', (await response.json()).violations)
       return false
     }
     if (!response.ok) throw new Error('Live save failed')
@@ -131,10 +131,12 @@ export function openDraft({ url, revision, token, authorization, model, view, st
 
     const before = model.read(doc)
     if (joining) {
-      if (result.snapshot === null) seedDraft(doc, model, result.baseline)
-      else Y.applyUpdate(doc, decode(result.snapshot), REMOTE)
+      const base = result.anchor ?? result
+      if (base.snapshot === null) seedDraft(doc, model, base.baseline)
+      else Y.applyUpdate(doc, decode(base.snapshot), REMOTE)
       room = result.room
       capture()
+      if (result.anchor && result.snapshot !== null) Y.applyUpdate(doc, decode(result.snapshot), REMOTE)
       if (result.legacyUpdates?.length) {
         doc.transact(() => {
           for (const update of result.legacyUpdates) Y.applyUpdate(doc, decode(update))

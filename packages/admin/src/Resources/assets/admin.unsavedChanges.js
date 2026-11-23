@@ -307,6 +307,7 @@ const start = (form, key) => {
     }
 
     form.addEventListener('pw:live-saved', ({ detail: field }) => {
+      syncBanner.hidden = true
       if (baseline[field.name]?.[0] === field.value) return
       baseline[field.name] = [field.value]
       save()

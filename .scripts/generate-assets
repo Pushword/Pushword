@@ -64,6 +64,7 @@ then
     cd packages/admin
     installDependencies
     buildAssets
+    yarn build:live
     cd ../../
 
     echo "--- packages/admin-monaco-editor ---"

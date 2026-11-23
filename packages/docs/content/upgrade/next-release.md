@@ -52,4 +52,4 @@ Apply the schema update before opening the admin. If you override the page edit 
 
 ## Collaborative editing
 
-Apply the schema update before using [collaborative mode](/extension/admin#collaborative-page-editing). Pushword stores the live session with the current page or carousel in the database.
+Apply the schema update before using [collaborative mode](/extension/admin#collaborative-page-editing). Make Node.js 24 available on the PHP web process's PATH with process execution enabled to expose collaborative mode.

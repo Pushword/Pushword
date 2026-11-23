@@ -1,0 +1,104 @@
+{
+  "page": {
+    "Initial text": "AQEBAAQBBGJvZHkMSW5pdGlhbCB0ZXh0AA==",
+    "First live edit": "AgECAMQBCgELDkZpcnN0IGxpdmUgZWRpAgEAAQEEYm9keQuEAQoBdAEBAQAL",
+    "First live edit merged": "AgICAMQBCgELDkZpcnN0IGxpdmUgZWRphAELByBtZXJnZWQCAQABAQRib2R5C4QBCgF0AQEBAAs=",
+    "New editing period": "AgQCAMEBCgELDoEBCwaEAhMBZMQCEwIUEU5ldyBlZGl0aW5nIHBlcmlvAgEAAQEEYm9keQuBAQoBAgIBABQBAQAM",
+    "Edit while held": "AgEDAMQBEAERDkVkaXQgd2hpbGUgaGVsAgEAAQEEYm9keRGEARABZAEBAQAR",
+    "Held edit 1": "AgIDAMEBEAERDoQBEQtIZWxkIGVkaXQgMQIBAAEBBGJvZHkRgQEQAQIDAQAOAQEAEg==",
+    "Held edit 2": "AgQDAMEBEAERDoQBEQpIZWxkIGVkaXQggQMXAYQDGAEyAgEAAQEEYm9keRGBARABAgMCAA4YAQEBABI=",
+    "Held edit 3": "AgQDAMEBEAERDoQBEQpIZWxkIGVkaXQggQMXAoQDGQEzAgEAAQEEYm9keRGBARABAgMCAA4YAgEBABI=",
+    "Held edit 4": "AgQDAMEBEAERDoQBEQpIZWxkIGVkaXQggQMXA4QDGgE0AgEAAQEEYm9keRGBARABAgMCAA4YAwEBABI=",
+    "Held edit 5": "AgQDAMEBEAERDoQBEQpIZWxkIGVkaXQggQMXBIQDGwE1AgEAAQEEYm9keRGBARABAgMCAA4YBAEBABI=",
+    "Held edit 6": "AgQDAMEBEAERDoQBEQpIZWxkIGVkaXQggQMXBYQDHAE2AgEAAQEEYm9keRGBARABAgMCAA4YBQEBABI=",
+    "After thirty minutes": "AgMDAMEBEAERDoEBERCEAx0UQWZ0ZXIgdGhpcnR5IG1pbnV0ZXMCAQABAQRib2R5EYEBEAECAwEAHgEBABI="
+  },
+  "carousel": {
+    "studio": {
+      "snapshot": "AgEEAAQAAUoURWRpdGVkIGluIHRoZSBzdHVkaW8TAQAnAQhjYXJvdXNlbARwYWdlAgQAAQATYmxvZy9zdHVkaW8tYXJ0aWNsZScBCGNhcm91c2VsB25ldHdvcmsCBAABFAhsaW5rZWRpbicBCGNhcm91c2VsBmZvcm1hdAIEAAEdDGxpbmtlZGluLTQtNScBCGNhcm91c2VsBnNsaWRlcwAHAAEqAAgAASsBdwEwhwErAScAAS0BMAEnAAEuBXRpdGxlAgQAAS8RT3JpZ2luYWwgaGVhZGxpbmUnAAEuBWltYWdlAScAAUEFbWVkaWECBAABQgUxLmpwZycAAS4HdGFnbGluZQInAAEuCXBhcmFncmFwaAInAQhjYXJvdXNlbAdjYXB0aW9uAgA=",
+      "content": {
+        "page": "blog/studio-article",
+        "network": "linkedin",
+        "format": "linkedin-4-5",
+        "slides": [
+          {
+            "title": "Original headline",
+            "image": {
+              "media": "1.jpg"
+            },
+            "tagline": "",
+            "paragraph": ""
+          }
+        ],
+        "caption": "Edited in the studio"
+      }
+    },
+    "invalid": {
+      "snapshot": "AgEEAAQAAUoURWRpdGVkIGluIHRoZSBzdHVkaW8TAQAnAQhjYXJvdXNlbARwYWdlAgQAAQATYmxvZy9zdHVkaW8tYXJ0aWNsZScBCGNhcm91c2VsB25ldHdvcmsCBAABFAhsaW5rZWRpbicBCGNhcm91c2VsBmZvcm1hdAIEAAEdDGxpbmtlZGluLTQtNScBCGNhcm91c2VsBnNsaWRlcwAHAAEqAAEAASsBhwErAScAAS0BMAEnAAEuBXRpdGxlAgQAAS8RT3JpZ2luYWwgaGVhZGxpbmUnAAEuBWltYWdlAScAAUEFbWVkaWECBAABQgUxLmpwZycAAS4HdGFnbGluZQInAAEuCXBhcmFncmFwaAInAQhjYXJvdXNlbAdjYXB0aW9uAgEBASwB",
+      "content": {
+        "page": "blog/studio-article",
+        "network": "linkedin",
+        "format": "linkedin-4-5",
+        "slides": [],
+        "caption": "Edited in the studio"
+      }
+    },
+    "collision": {
+      "snapshot": "AwEGAIQBEw5saXZlLWNvbGxpc2lvbgEEAAQAAUoURWRpdGVkIGluIHRoZSBzdHVkaW8UAQAnAQhjYXJvdXNlbARwYWdlAgQAAQAFYmxvZy+BAQUOJwEIY2Fyb3VzZWwHbmV0d29yawIEAAEUCGxpbmtlZGluJwEIY2Fyb3VzZWwGZm9ybWF0AgQAAR0MbGlua2VkaW4tNC01JwEIY2Fyb3VzZWwGc2xpZGVzAAcAASoACAABKwF3ATCHASsBJwABLQEwAScAAS4FdGl0bGUCBAABLxFPcmlnaW5hbCBoZWFkbGluZScAAS4FaW1hZ2UBJwABQQVtZWRpYQIEAAFCBTEuanBnJwABLgd0YWdsaW5lAicAAS4JcGFyYWdyYXBoAicBCGNhcm91c2VsB2NhcHRpb24CAQEBBg4=",
+      "content": {
+        "page": "blog/live-collision",
+        "network": "linkedin",
+        "format": "linkedin-4-5",
+        "slides": [
+          {
+            "title": "Original headline",
+            "image": {
+              "media": "1.jpg"
+            },
+            "tagline": "",
+            "paragraph": ""
+          }
+        ],
+        "caption": "Edited in the studio"
+      }
+    },
+    "network": {
+      "snapshot": "AwEHAIQBHAlwaW50ZXJlc3QBBAAEAAFKFEVkaXRlZCBpbiB0aGUgc3R1ZGlvEwEAJwEIY2Fyb3VzZWwEcGFnZQIEAAEAE2Jsb2cvc3R1ZGlvLWFydGljbGUnAQhjYXJvdXNlbAduZXR3b3JrAgEAARQIJwEIY2Fyb3VzZWwGZm9ybWF0AgQAAR0MbGlua2VkaW4tNC01JwEIY2Fyb3VzZWwGc2xpZGVzAAcAASoACAABKwF3ATCHASsBJwABLQEwAScAAS4FdGl0bGUCBAABLxFPcmlnaW5hbCBoZWFkbGluZScAAS4FaW1hZ2UBJwABQQVtZWRpYQIEAAFCBTEuanBnJwABLgd0YWdsaW5lAicAAS4JcGFyYWdyYXBoAicBCGNhcm91c2VsB2NhcHRpb24CAQEBFQg=",
+      "content": {
+        "page": "blog/studio-article",
+        "network": "pinterest",
+        "format": "linkedin-4-5",
+        "slides": [
+          {
+            "title": "Original headline",
+            "image": {
+              "media": "1.jpg"
+            },
+            "tagline": "",
+            "paragraph": ""
+          }
+        ],
+        "caption": "Edited in the studio"
+      }
+    },
+    "agent": {
+      "snapshot": "AwEIAIQEExMsIHRoZW4gYnkgdGhlIGFnZW50AQQABAABShRFZGl0ZWQgaW4gdGhlIHN0dWRpbxMBACcBCGNhcm91c2VsBHBhZ2UCBAABABNibG9nL3N0dWRpby1hcnRpY2xlJwEIY2Fyb3VzZWwHbmV0d29yawIEAAEUCGxpbmtlZGluJwEIY2Fyb3VzZWwGZm9ybWF0AgQAAR0MbGlua2VkaW4tNC01JwEIY2Fyb3VzZWwGc2xpZGVzAAcAASoACAABKwF3ATCHASsBJwABLQEwAScAAS4FdGl0bGUCBAABLxFPcmlnaW5hbCBoZWFkbGluZScAAS4FaW1hZ2UBJwABQQVtZWRpYQIEAAFCBTEuanBnJwABLgd0YWdsaW5lAicAAS4JcGFyYWdyYXBoAicBCGNhcm91c2VsB2NhcHRpb24CAA==",
+      "content": {
+        "page": "blog/studio-article",
+        "network": "linkedin",
+        "format": "linkedin-4-5",
+        "slides": [
+          {
+            "title": "Original headline",
+            "image": {
+              "media": "1.jpg"
+            },
+            "tagline": "",
+            "paragraph": ""
+          }
+        ],
+        "caption": "Edited in the studio, then by the agent"
+      }
+    }
+  }
+}

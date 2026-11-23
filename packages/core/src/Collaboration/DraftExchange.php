@@ -27,6 +27,7 @@ final readonly class DraftExchange
         private LiveWrite $write,
         private Filesystem $filesystem,
         private string $varDir,
+        private LiveProjection $projection,
     ) {
     }
 
@@ -56,6 +57,10 @@ final readonly class DraftExchange
      */
     public function sync(Request $request, string $document, object $entity, callable $revision, callable $baseline, callable $apply): JsonResponse
     {
+        if (! $this->projection->isAvailable()) {
+            return $this->projection->unavailable();
+        }
+
         $body = $request->getContent();
         if (\strlen($body) > self::MAX_SIZE) {
             return new JsonResponse(['error' => 'update_too_large'], Response::HTTP_REQUEST_ENTITY_TOO_LARGE);
@@ -80,6 +85,10 @@ final readonly class DraftExchange
         try {
             $this->entities->refresh($entity);
             $current = $revision();
+            if (null !== $room && null === $snapshot && $this->isUpToDate($document, $room, $current, $after)) {
+                return $this->result($room, $current, $after);
+            }
+
             $state = $this->entities->find(LiveEditingState::class, $document);
             if ($state instanceof LiveEditingState) {
                 $this->entities->refresh($state);
@@ -88,22 +97,32 @@ final readonly class DraftExchange
             $expected = $request->headers->get('If-Match');
             if (null === $room) {
                 if (null !== $expected && $current !== $expected) {
-                    return $this->conflict($current);
+                    $anchor = $state?->anchors[$expected] ?? null;
+
+                    return $state instanceof LiveEditingState && $state->revision === $current && null !== $anchor
+                        ? $this->answer($state, -1, false, anchor: $anchor)
+                        : $this->conflict($current);
                 }
 
                 if (! $state instanceof LiveEditingState) {
                     $state = new LiveEditingState($document, $current);
                     $this->entities->persist($state);
-                } elseif ($state->revision !== $current) {
+                } elseif ($state->revision !== $current || null === $state->anchors) {
+                    // Earlier WIP sessions contain unvalidated state. Start
+                    // those rooms again from the canonical entity.
                     $state->restart($current);
                 }
 
                 $this->entities->flush();
 
-                return $this->answer($state, -1, false, null === $state->snapshot ? $baseline() : null);
+                $seed = null === $state->snapshot ? $baseline() : null;
+                $legacy = null === $seed ? [] : $this->legacyUpdates($state, ! $entity instanceof Page, $seed);
+
+                return $this->answer($state, -1, false, $seed, legacy: $legacy);
             }
 
-            if (! $state instanceof LiveEditingState || $state->room !== $room || $state->revision !== $current || $after > $state->cursor) {
+            if (! $state instanceof LiveEditingState || null === $state->anchors
+                || $state->room !== $room || $state->revision !== $current || $after > $state->cursor) {
                 return $this->conflict($current);
             }
 
@@ -134,10 +153,18 @@ final readonly class DraftExchange
             || $now - ($state->groupStartedAt ?? $now) >= 1800;
 
         $previous = $baseline();
+        $projection = $this->projection->resolve(! $entity instanceof Page, $previous, $state->snapshot, $snapshot, $content);
+        if ($projection instanceof JsonResponse) {
+            return $projection;
+        }
+
+        if (\strlen($projection['snapshot']) + \strlen($projection['content']) > self::MAX_SIZE) {
+            return new JsonResponse(['error' => 'update_too_large'], Response::HTTP_REQUEST_ENTITY_TOO_LARGE);
+        }
 
         try {
             $this->write->begin($entity, $checkpoint);
-            $violations = $apply($content);
+            $violations = $apply($projection['content']);
             if ([] !== $violations) {
                 return new JsonResponse([
                     'error' => 'invalid_content',
@@ -146,7 +173,11 @@ final readonly class DraftExchange
             }
 
             $changed = $previous !== $baseline();
-            $state->snapshot = $snapshot;
+            if ($changed) {
+                $state->remember($previous);
+            }
+
+            $state->snapshot = $projection['snapshot'];
             ++$state->cursor;
             $state->revision = $revision($changed ? 1 : 0);
             if ($changed) {
@@ -166,29 +197,69 @@ final readonly class DraftExchange
         }
     }
 
+    private function isUpToDate(string $document, string $room, string $revision, int $cursor): bool
+    {
+        // Idle polls only need the room header. Avoid loading full states
+        // and revision anchors across the wire every 350 ms.
+        $state = $this->entities->getConnection()->fetchAssociative(
+            'SELECT room, revision, sync_cursor FROM live_editing_state WHERE document = ? AND anchors IS NOT NULL',
+            [$document],
+        );
+
+        return false !== $state && $state['room'] === $room
+            && $state['revision'] === $revision && is_numeric($state['sync_cursor']) && (int) $state['sync_cursor'] === $cursor;
+    }
+
     private function conflict(string $revision): JsonResponse
     {
         return new JsonResponse(['error' => 'revision_mismatch', 'revision' => $revision], Response::HTTP_CONFLICT);
     }
 
-    private function answer(LiveEditingState $state, int $after, bool $accepted, ?string $baseline = null): JsonResponse
+    /** @return list<string> */
+    private function legacyUpdates(LiveEditingState $state, bool $carousel, string $baseline): array
     {
-        $legacy = [];
-        if (null !== $baseline) {
-            $key = hash('sha256', $state->document.':'.$state->revision);
-            $path = $this->varDir.'/collaboration/draft-'.$key.'.json';
-            if (is_file($path)) {
-                $legacy = json_decode($this->filesystem->readFile($path), true, flags: \JSON_THROW_ON_ERROR);
-            }
+        $key = hash('sha256', $state->document.':'.$state->revision);
+        $path = $this->varDir.'/collaboration/draft-'.$key.'.json';
+        if (! is_file($path)) {
+            return [];
         }
 
+        $legacy = json_decode($this->filesystem->readFile($path), true);
+        if (! \is_array($legacy) || ! array_is_list($legacy) || [] === $legacy) {
+            return [];
+        }
+
+        $updates = array_values(array_filter($legacy, is_string(...)));
+        if (\count($updates) !== \count($legacy)) {
+            return [];
+        }
+
+        return $this->projection->resolve($carousel, $baseline, null, null, null, $updates) instanceof JsonResponse ? [] : $updates;
+    }
+
+    /**
+     * @param array{baseline: ?string, snapshot: ?string}|null $anchor
+     * @param list<string>                                     $legacy
+     */
+    private function answer(LiveEditingState $state, int $after, bool $accepted, ?string $baseline = null, ?array $anchor = null, array $legacy = []): JsonResponse
+    {
+        return $this->result($state->room, $state->revision, $state->cursor, $after < $state->cursor ? $state->snapshot : null, $accepted, $baseline, $anchor, $legacy);
+    }
+
+    /**
+     * @param array{baseline: ?string, snapshot: ?string}|null $anchor
+     * @param list<string>                                     $legacy
+     */
+    private function result(string $room, string $revision, int $cursor, ?string $snapshot = null, bool $accepted = false, ?string $baseline = null, ?array $anchor = null, array $legacy = []): JsonResponse
+    {
         return new JsonResponse([
-            'room' => $state->room,
-            'revision' => $state->revision,
+            'room' => $room,
+            'revision' => $revision,
             'baseline' => $baseline,
-            'after' => $state->cursor,
-            'snapshot' => $after < $state->cursor ? $state->snapshot : null,
+            'after' => $cursor,
+            'snapshot' => $snapshot,
             'accepted' => $accepted,
+            'anchor' => $anchor,
             'legacyUpdates' => $legacy,
         ], headers: ['Cache-Control' => 'no-store']);
     }

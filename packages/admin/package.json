@@ -13,6 +13,7 @@
     "dev": "vite",
     "watch": "vite build --watch",
     "build": "NODE_ENV=production vite build",
+    "build:live": "vite build --config vite.config.live.mjs",
     "test": "vitest run"
   },
   "dependencies": {

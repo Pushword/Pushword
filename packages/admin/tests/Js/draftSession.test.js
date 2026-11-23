@@ -13,7 +13,7 @@ afterEach(() => {
 
 function sharedRoom(baseline) {
   const id = 'a'.repeat(32)
-  const room = { offline: false, stale: false, invalid: false, content: baseline, legacyUpdates: [] }
+  const room = { offline: false, stale: false, invalid: false, lateJoin: false, content: baseline, legacyUpdates: [] }
   let cursor = 0
   let snapshot = null
   vi.stubGlobal('fetch', vi.fn(async (_url, { body, headers, method }) => {
@@ -40,6 +40,7 @@ function sharedRoom(baseline) {
       after: cursor,
       snapshot: !accepted && (joining || message.after < cursor) ? snapshot : null,
       accepted,
+      anchor: joining && room.lateJoin && snapshot ? { baseline, snapshot: null } : null,
       legacyUpdates: joining && snapshot === null ? room.legacyUpdates : [],
     })
   }))
@@ -186,4 +187,22 @@ it('renews presence for the same tab and releases only that tab on close', async
   expect(fetch).toHaveBeenLastCalledWith('/draft', expect.objectContaining({
     method: 'DELETE', headers: { 'X-Collaboration-Token': 'token', 'X-Collaboration-Tab': tab },
   }))
+})
+
+it('merges text typed in classic mode before joining an already advanced session', async () => {
+  const original = 'Alpha middle omega.'
+  const room = sharedRoom(original)
+  const first = participant(original)
+  expect(await first.flush()).toBe(true)
+  first.type('Alpha lovely middle omega.')
+  expect(await first.flush()).toBe(true)
+  room.lateJoin = true
+
+  const second = participant(original)
+  second.type('Alpha middle omega today.')
+  expect(await second.flush()).toBe(true)
+  expect(room.content).toBe('Alpha lovely middle omega today.')
+  expect(second.value).toBe(room.content)
+  expect(await first.flush()).toBe(true)
+  expect(first.value).toBe(room.content)
 })

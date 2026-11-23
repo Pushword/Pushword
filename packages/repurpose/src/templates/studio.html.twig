@@ -370,8 +370,9 @@
     window.RP_STUDIO = {
       spec: {{ specJs|raw }},
       revision: {{ post.revision()|json_encode|raw }},
+      recoveryKey: {{ ('pw:unsaved:' ~ app.user.id ~ ':repurpose:' ~ post.id ~ ':')|json_encode|raw }},
       draftToken: {{ csrf_token('repurpose-draft-' ~ post.id)|json_encode|raw }},
-      draftModule: {{ versionedAsset('/bundles/pushwordadmin/draftSession.js')|json_encode|raw }},
+      draftModule: {{ (liveEditingAvailable() ? versionedAsset('/bundles/pushwordadmin/draftSession.js') : null)|json_encode|raw }},
       slideLimit: {{ slideLimit|json_encode|raw }},
       slides: {{ slidesJs|raw }},
       video: {{ videoJs|raw }},
@@ -417,7 +418,7 @@
     }
   </script>
 
-  <header x-bind:class="{ 'has-sync-notice': syncState }">
+  <header x-bind:class="{ 'has-sync-notice': syncState || recovery }">
     <div class="studio-context">
       <a class="back" href="{{ backUrl }}">← Back</a>
       <h1>Repurpose Studio</h1>
@@ -440,19 +441,27 @@
         </div>
       </details>
       <a class="btn" href="{{ path('repurpose_history_index', {id: post.id}) }}" target="_blank" rel="noopener" aria-label="{{ 'repurposeHistoryOpen'|trans }}">{{ 'repurposeHistory'|trans }}</a>
-      <button class="btn" type="button" @click="toggleDraft()" :aria-pressed="draftActive.toString()" :disabled="saving || (!draftActive && syncState !== '')" x-cloak>
+      {% if liveEditingAvailable() %}
+      <button class="btn" type="button" @click="toggleDraft()" :aria-pressed="draftActive.toString()" :disabled="saving || (!draftActive && syncState !== '' && !draftAvailable)" x-cloak>
         <span x-show="!draftActive && !draftAvailable">{{ 'repurposeDraftJoin'|trans }}</span>
         <span x-show="!draftActive && draftAvailable">{{ 'repurposeDraftJoinActive'|trans }}</span>
         <span x-show="draftActive">{{ 'repurposeDraftClassic'|trans }}</span>
       </button>
       <span x-show="!draftActive && draftAvailable" x-cloak role="status">{{ 'repurposeDraftPresence'|trans }}</span>
       <span x-show="draftState" x-cloak role="status">
-        {% for state in ['pending', 'connected', 'updated', 'offline', 'invalid', 'stale'] %}
-          <span x-show="draftState === '{{ state }}'">{{ ('repurposeDraft' ~ state|capitalize)|trans }}</span>
+        {% for state in ['pending', 'connected', 'updated', 'offline', 'invalid', 'stale', 'tooLarge'] %}
+          <span x-show="draftState === '{{ state }}'">{{ ('repurposeDraft' ~ (state == 'tooLarge' ? 'TooLarge' : state|capitalize))|trans }}</span>
         {% endfor %}
       </span>
+      {% endif %}
       <button class="btn primary studio-save" type="button" aria-keyshortcuts="Control+S Meta+S" title="Ctrl+S / ⌘S"
               x-show="!draftActive" @click="save()" :disabled="saving || syncState !== ''" x-text="saveLabel">Save</button>
+    </div>
+    <div class="notice studio-sync" x-show="recovery" x-cloak>
+      <span role="status">{{ 'repurposeRecoveryAvailable'|trans }}</span>
+      <button class="btn" type="button" x-show="recovery?.revision === revision && !dirty && !draftActive && !syncState" @click="restoreRecovery()">{{ 'repurposeRecoveryRestore'|trans }}</button>
+      <button class="btn" type="button" @click="downloadRecovery()">{{ 'repurposeRecoveryDownload'|trans }}</button>
+      <button class="btn" type="button" @click="discardRecovery()">{{ 'repurposeRecoveryDiscard'|trans }}</button>
     </div>
     <div class="notice studio-sync" x-show="syncState" x-cloak>
       <span role="alert">

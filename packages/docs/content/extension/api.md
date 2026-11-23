@@ -203,12 +203,18 @@ Repurpose route requires the Repurpose extension.
 Send `{"after":0}` to open the session. The response contains a `room`
 identifier and a cursor in `after`. It includes either the current full
 base64 Yjs `snapshot` or a saved `baseline` (Markdown or JSON text), which
-clients import with the deterministic seed used in the example below.
+clients import with the deterministic seed used in the example below. A
+browser joining with an earlier `If-Match` revision may also get an `anchor`.
+Apply local edits to that earlier baseline or snapshot, then merge the current
+snapshot before saving. The server retains the opening revision and a bounded
+set of recent revisions for each session.
 
 To save an edit, send the room identifier, the last cursor read, a full base64
 Yjs `snapshot`, and the corresponding materialized `content` string.
 `accepted: true` confirms that the update is stored with the content in the
-database. When another editor has advanced the cursor, the response includes
+database. The server merges the submitted state with the trusted state and
+verifies that it produces the submitted content. An unreadable or inconsistent
+state returns HTTP 422. When another editor has advanced the cursor, the response includes
 their snapshot and `accepted: false`. Merge that snapshot with the local
 edits and retry at the new cursor. HTTP 409 signals a conventional write
 outside the current session. Read the new version and reconcile local changes
