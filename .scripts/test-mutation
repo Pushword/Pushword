@@ -84,6 +84,8 @@ echo json_encode([
 ' -- "${source_dirs[@]}" > "$run_dir/infection.json"
 
 # Apply the PHPUnit result parser fix to a copy of the verified release.
+# When the pinned release includes https://github.com/infection/infection/pull/3801,
+# delete .scripts/infection-pao.patch, remove the rebuild below and run "$phar" directly.
 adapter=src/TestFramework/PhpUnit/Adapter/PhpUnitAdapter.php
 php -r 'new Phar($argv[1])->extractTo($argv[2], $argv[3]);' "$phar" "$run_dir/tool" "$adapter"
 patch --silent --batch --fuzz=0 -p1 -d "$run_dir/tool" < .scripts/infection-pao.patch
