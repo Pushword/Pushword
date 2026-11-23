@@ -59,9 +59,9 @@ final readonly class SmsQuotaLimiter
     {
         /** @var list<array{id: int|string, phone: string, quota_reserved_at: string}> $recent */
         $recent = $this->em->getConnection()->fetchAllAssociative(
-            'SELECT id, phone, quota_reserved_at FROM newsletter_sms_send WHERE quota_reserved_at > ? ORDER BY quota_reserved_at ASC, id ASC',
-            [$now->modify('-24 hours')],
-            [Types::DATETIME_IMMUTABLE],
+            'SELECT id, phone, quota_reserved_at FROM newsletter_sms_send WHERE quota_reserved_at > ? AND (? OR NOT is_test) ORDER BY quota_reserved_at ASC, id ASC',
+            [$now->modify('-24 hours'), $send->isTest],
+            [Types::DATETIME_IMMUTABLE, Types::BOOLEAN],
         );
         foreach ($recent as $reservation) {
             if ((int) $reservation['id'] === $send->id) {

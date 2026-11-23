@@ -764,13 +764,15 @@ while its connector is unconfigured or paused.
 
 `pw:newsletter:tick` processes a durable SMS queue after emails and drips, within
 its remaining `--batch` budget. No Messenger worker is required. With a minutely
-cron, submissions from the queue are at least one minute apart. The quota,
-sending window, minimum interval and one-message-per-number-per-24-hours rule
-apply to queued campaigns and API tests. Admin tests count toward the quota in
-**this database** and can be submitted at any time while the connector is active.
-If an admin test gets an uncertain response, the queue retries it with the same
-identity. If several applications share one SIM, configure a common limit on the
-gateway/device as well. Quota usage is measured in messages.
+cron, submissions from the queue are at least one minute apart. Campaign SMS
+are subject to the sending window, rolling quota, minimum interval and
+one-message-per-number-per-24-hours rule. Only campaign SMS in **this database**
+count toward the campaign quota and intervals. Queued tests follow the sending
+window and limits based on both campaign and test submissions. Admin tests can
+be submitted at any time while the connector is active. If the response is
+uncertain, the queue retries the test with the same identity. If several
+applications share one SIM, configure a common limit on the gateway/device as
+well. Quota usage is measured in messages.
 
 Each queued message freezes its number, personalized text and provider identity.
 Before transmission, permission, suppression, number, audience, segment and email

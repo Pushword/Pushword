@@ -90,11 +90,14 @@ final class SmsCampaignSenderTest extends AbstractNewsletterTestCase
         self::assertSame('sent', $campaign->status->value);
     }
 
-    public function testQuotaIsDurableAndSharedByCampaignsAndTests(): void
+    public function testQueuedTestWaitsUntilTheCampaignReservationExpires(): void
     {
         $this->configure(limit: 1);
-        $campaign = $this->campaign($this->createAudience());
-        $one = $this->sender()->queueTest($campaign, '+33612345678', Uuid::v7()->toRfc4122());
+        $audience = $this->createAudience();
+        $this->phone($audience);
+        $campaign = $this->campaign($audience);
+        self::getContainer()->get(CampaignSender::class)->arm($campaign);
+        $one = $this->sends($campaign)[0];
         $other = $this->campaign($this->createAudience());
         $two = $this->sender()->queueTest($other, '+33612345679', Uuid::v7()->toRfc4122());
         $now = new DateTimeImmutable('2026-11-13 12:00 UTC');
@@ -108,6 +111,46 @@ final class SmsCampaignSenderTest extends AbstractNewsletterTestCase
         self::assertSame(0, $this->sender()->drain(5, $now->modify('+23 hours'))['smsAccepted']);
         self::assertSame(1, $this->sender()->drain(5, $now->modify('+24 hours'))['smsAccepted']);
         self::assertSame(4, $this->http->getRequestsCount());
+    }
+
+    #[DataProvider('smsTestSources')]
+    public function testCampaignQuotaAndIntervalsIgnoreSmsTests(bool $immediate): void
+    {
+        $this->configure(limit: 1);
+        $audience = $this->createAudience();
+        $phone = '+33612345678';
+        $this->phone($audience, $phone);
+        $draft = $this->campaign($audience);
+        $reference = Uuid::v7()->toRfc4122();
+        if ($immediate) {
+            $test = $this->sender()->sendTest($draft, $phone, $reference);
+        } else {
+            $test = $this->sender()->queueTest($draft, $phone, $reference);
+            self::assertSame(1, $this->sender()->drain(1)['smsAccepted']);
+        }
+
+        $this->entityManager->refresh($test);
+        self::assertSame(SmsState::Accepted, $test->state);
+        $now = $test->quotaReservedAt;
+        self::assertNotNull($now);
+
+        $sender = self::getContainer()->get(CampaignSender::class);
+        $first = $this->campaign($audience);
+        $second = $this->campaign($audience);
+        $sender->arm($first);
+        $sender->arm($second);
+
+        self::assertSame(1, $this->sender()->drain(2, $now)['smsAccepted']);
+        self::assertSame(SmsState::Accepted, $this->sends($first)[0]->state);
+        self::assertSame(SmsState::Pending, $this->sends($second)[0]->state);
+        self::assertEquals($now->modify('+24 hours'), $this->sends($second)[0]->nextAttemptAt);
+    }
+
+    /** @return iterable<string, array{bool}> */
+    public static function smsTestSources(): iterable
+    {
+        yield 'admin' => [true];
+        yield 'queue' => [false];
     }
 
     public function testSamePhoneAndPacingAreSharedEvenWithQuotaRemaining(): void

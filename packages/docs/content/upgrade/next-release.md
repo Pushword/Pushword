@@ -1,5 +1,5 @@
 ---
-title: 'admin SMS tests are submitted immediately'
+title: 'admin SMS tests are immediate and campaign quotas exclude tests'
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -41,4 +41,5 @@ Several changes land here between two tags: append to the file, do not replace i
 
 The [admin test form](/extension/newsletter#sms-alternative-with-smsgate)
 contacts SMSGate immediately, even if the number received an SMS in the last
-24 hours. No setup changes are needed.
+24 hours. Campaign quotas and intervals only count campaign SMS. The change
+takes effect on update.
