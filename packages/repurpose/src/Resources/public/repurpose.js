@@ -19,9 +19,42 @@
   var PREVIEW_MAX_WAIT_MS = 700
   var REVISION_CHECK_MS = 10000
   var PLACED_TEXT_WIDTH = 0.36
+  var SNAP_DISTANCE_PX = 6
+  var ALIGNMENT_ANCHORS = [0, 0.5, 1]
+  var ARROW_DIRECTIONS = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] }
 
   function clamp(value, min, max) {
     return Math.max(min, Math.min(value, max))
+  }
+
+  function textPosition(value, limit) {
+    return clamp(Number(value.toFixed(6)), 0, limit)
+  }
+
+  function hasText(text) {
+    return Boolean(text && String(text.content || '').trim())
+  }
+
+  function snapPosition(value, limit, start, length, guides, distance) {
+    var nearest = distance
+    var snapped = value
+    var active = null
+    for (var [position, line] of guides) {
+      for (var anchor of ALIGNMENT_ANCHORS) {
+        var candidate = position - (start + length * anchor)
+        var gap = Math.abs(value - candidate)
+        if (gap < nearest && candidate >= 0 && candidate <= limit) {
+          nearest = gap
+          snapped = candidate
+          active = line
+        }
+      }
+    }
+    for (var guide of guides.values()) {
+      guide.classList.toggle('is-snapped', guide === active)
+    }
+
+    return snapped
   }
 
   function slidePoint(svg, event) {
@@ -208,7 +241,7 @@
       }
       // Free texts: contentless boxes are authoring leftovers; per-box defaults
       // match the factory so a stored spec stays minimal.
-      var texts = (slide.texts || []).filter(function (t) { return t && String(t.content || '').trim() })
+      var texts = (slide.texts || []).filter(hasText)
       texts.forEach(function (t) {
         dropDefaults(t, { x: 0.08, y: 0.08, width: 0.84, size: 0.05, align: 'left', font: 'body' })
         dropEmptyStrings(t, ['color', 'highlight'])
@@ -280,6 +313,7 @@
       placingText: false,
       textDraft: null,
       textPopTrigger: null,
+      textSelection: null,
       copiedText: null,
       removedText: null,
       actionMenu: null,
@@ -490,7 +524,12 @@
 
       previewTargets: function () {
         return this.spec.slides.map(function (slide) {
-          return { slide: slide, texts: (slide.texts || []).slice() }
+          return {
+            slide: slide,
+            texts: (slide.texts || []).filter(hasText).map(text => ({
+              text: text, x: text.x ?? 0.08, y: text.y ?? 0.08,
+            })),
+          }
         })
       },
 
@@ -507,7 +546,7 @@
 
       previewTextIndex: function (index, slide, textIndex) {
         var target = this._previewTargets?.[index]
-        return target ? slide.texts.indexOf(target.texts[textIndex]) : -1
+        return target ? slide.texts.indexOf(target.texts[textIndex]?.text) : -1
       },
 
       preview: async function () {
@@ -641,6 +680,9 @@
       },
       removeText: function (slide, index) {
         var text = slide.texts[index]
+        if (this.textSelection?.text === text) {
+          this.textSelection = null
+        }
         if (this._editObj === text) {
           this.closeTextPop()
         }
@@ -657,6 +699,9 @@
       },
       removeSlide: function (index) {
         var slide = this.spec.slides[index]
+        if (this.textSelection?.slide === slide) {
+          this.textSelection = null
+        }
         if (this.crop?.slide === slide) {
           this.crop = null
         }
@@ -757,6 +802,7 @@
         var slide = this.spec.slides[slideIndex]
         this.setPreviewMode('slides')
         this.closeTextPop()
+        this.textSelection = null
         this.placingText = false
         this.crop = { slide: slide, cell: cell }
         this.revealSlide(slideIndex, false)
@@ -804,6 +850,7 @@
       setPreviewMode: function (mode) {
         if (mode !== this.previewMode) {
           this.closeTextPop()
+          this.textSelection = null
           this.closeActionMenu(false)
           this.placingText = false
           this.crop = null
@@ -944,9 +991,12 @@
         if ('Escape' === event.key) {
           if (this.actionMenu) {
             this.closeActionMenu()
+          } else if (this._drag?.selection) {
+            this.deckTextCancel({ pointerId: this._drag.pointerId })
           } else {
             this.placingText = false
             this.finishCrop()
+            this.textSelection = null
           }
           return
         }
@@ -961,6 +1011,7 @@
       togglePlaceText: function () {
         var placing = !this.placingText
         this.closeTextPop()
+        this.textSelection = null
         this.crop = null
         this.placingText = placing
         if (placing) {
@@ -974,6 +1025,9 @@
       },
 
       canvasKey: function (index, event) {
+        if (!this.canvasEditing || this._drag) {
+          return
+        }
         if ('ContextMenu' === event.key || (event.shiftKey && 'F10' === event.key)) {
           event.preventDefault()
           this.openCanvasMenu(index, event, true)
@@ -984,6 +1038,14 @@
           if (slideIndex >= 0 && svg) {
             this.startTextAt(slideIndex, svg, { x: 0.5, y: 0.5 })
           }
+        } else if (this.placingText || this.crop || !this.textSelection || !this.previewMatches(index, this.textSelection.slide)) {
+          return
+        } else if ('Enter' === event.key) {
+          event.preventDefault()
+          this.editSelectedText()
+        } else if (Object.hasOwn(ARROW_DIRECTIONS, event.key) && !event.altKey && !event.ctrlKey && !event.metaKey) {
+          event.preventDefault()
+          this.nudgeText(event.currentTarget, ARROW_DIRECTIONS[event.key], event.shiftKey ? 10 : 1)
         }
       },
 
@@ -1169,14 +1231,8 @@
         this.revealSlide(slideIndex, false)
       },
 
-      // Inline text editing — a click on a text block in the deck (the renderer
-      // tags each block with data-rp-edit) opens a floating editor over the slide
-      // and reveals the matching slide row in the panel. The editor writes to the
-      // reactive spec, so the live preview re-renders as you type; being a body-
-      // level overlay, it survives the preview swapping the SVG out under it.
       deckTextClick: function (index, event) {
-        // The click a drag release fires must not open the editor; the browser
-        // may run timers before dispatching it, so swallow by time, not flag.
+        // Ignore the click dispatched after a drag release.
         if (performance.now() - this._dragEndedAt < 300 || !this.canvasEditing || this.crop) {
           return
         }
@@ -1197,28 +1253,36 @@
         }
         var block = event.target.closest('[data-rp-edit]')
         if (!block) {
+          this.textSelection = null
           return
         }
-        // Keep the click from reaching the popover's own click-outside handler,
-        // which still sees the (not yet re-rendered) open popover and would close
-        // the one this click is opening.
-        event.stopPropagation()
-        this.closeTextPop()
-        var ref = block.getAttribute('data-rp-edit')
-        if (0 === ref.indexOf('texts.')) {
-          var n = this.previewTextIndex(index, slide, Number(ref.slice(6)))
-          if (n < 0) {
-            return
-          }
-          this._editObj = slide.texts[n]
-          this._editKey = 'content'
-        } else {
-          this._editObj = slide
-          this._editKey = ref
+        if (this.selectText(index, block)) {
+          block.focus({ preventScroll: true })
         }
-        this.textPopTrigger = event.currentTarget
-        this.showTextPop(block.getBoundingClientRect(), ref)
-        this.revealSlide(slideIndex)
+      },
+      canvasTextFocus: function (index, event) {
+        if (!this.placingText && !this.crop && !this._drag && event.target.matches('[data-rp-edit]')) {
+          this.selectText(index, event.target)
+        }
+      },
+      editSelectedText: function () {
+        var selected = this.textSelection
+        if (!selected?.block.isConnected) {
+          return
+        }
+        this.closeTextPop()
+        this._editObj = selected.text || selected.slide
+        this._editKey = selected.text ? 'content' : selected.field
+        this.textPopTrigger = selected.block.closest('.slide-canvas')
+        var ref = selected.text ? 'texts.' + selected.slide.texts.indexOf(selected.text) : selected.field
+        this.showTextPop(selected.block.getBoundingClientRect(), ref)
+      },
+      canvasDoubleClick: function (index, event) {
+        var block = event.target.closest('[data-rp-edit]')
+        if (block && !this.placingText && !this.crop && !this._drag && performance.now() - this._dragEndedAt >= 300
+            && this.selectText(index, block)) {
+          this.editSelectedText()
+        }
       },
       showTextPop: function (rect, ref) {
         clearTimeout(this._hoverTimer)
@@ -1314,13 +1378,119 @@
         clearTimeout(this._hoverTimer)
       },
 
-      // Any text block is dragged straight on the slide: a free text moves its
-      // box; a stack field (title, tagline, paragraph) converts into a free text
-      // pinned where it lands, keeping its rendered look (_fieldToFreeText).
-      // During the drag the SVG group is nudged with a local transform (instant,
-      // no server round-trip); the spec is only written on release, which
-      // re-renders through the normal preview channel. Clamped to the same
-      // bounds as the sliders.
+      syncCanvas: function (index, canvas, editable) {
+        this.$nextTick(() => {
+          var blocks = canvas.querySelectorAll('[data-rp-edit]')
+          blocks.forEach(block => {
+            if (editable) {
+              block.setAttribute('tabindex', '0')
+            } else {
+              block.removeAttribute('tabindex')
+            }
+          })
+          var selected = this.textSelection
+          if (!editable || !selected || !this.previewMatches(index, selected.slide)) {
+            return
+          }
+          if (!(selected.text ? hasText(selected.text) : String(selected.slide[selected.field] || '').trim())) {
+            this.textSelection = null
+            return
+          }
+          var ref = selected.text
+            ? 'texts.' + this._previewTargets[index].texts.findIndex(item => item.text === selected.text)
+            : selected.field
+          var block = canvas.querySelector('[data-rp-edit="' + ref + '"]')
+          if (block && block !== selected.block && this.selectText(index, block) && document.activeElement === canvas) {
+            block.focus({ preventScroll: true })
+          }
+        })
+      },
+      selectText: function (index, block) {
+        var slideIndex = this.previewSlideIndex(index)
+        if (!this.canvasEditing || slideIndex < 0 || !block?.ownerSVGElement) {
+          return null
+        }
+        if (this.textSelection?.block === block) {
+          return this.textSelection
+        }
+        var slide = this.spec.slides[slideIndex]
+        var svg = block.ownerSVGElement
+        var frame = svg.viewBox.baseVal
+        var ref = block.getAttribute('data-rp-edit')
+        var freeText = ref.startsWith('texts.')
+        var entry = freeText ? this._previewTargets[index].texts[Number(ref.slice(6))] : null
+        var geom = !freeText && slide[ref] ? this._measureBlock(svg, block, ref) : null
+        if (entry ? !slide.texts.includes(entry.text) : !geom) {
+          return null
+        }
+        var bounds = block.getBBox()
+        var selected = {
+          block: block, slide: slide, text: entry?.text, field: geom ? ref : null, geom: geom,
+          x0: entry ? Number(entry.x) : this._freeTextX(slide.align, geom.width),
+          y0: entry ? Number(entry.y) : geom.y,
+          bounds: {
+            x: (bounds.x - frame.x) / frame.width, y: (bounds.y - frame.y) / frame.height,
+            width: bounds.width / frame.width, height: bounds.height / frame.height,
+          },
+        }
+        this.textSelection = selected
+        this.renderTextPosition(this.textSelection, this.textCoordinates(selected))
+        if (!this.slidesOpen[slideIndex]) {
+          this.revealSlide(slideIndex, false)
+        }
+
+        return this.textSelection
+      },
+      textCoordinates: function (selected) {
+        return { x: Number(selected.text?.x ?? selected.x0), y: Number(selected.text?.y ?? selected.y0) }
+      },
+      textRightLimit: function (selected) {
+        return 1 - Number(selected.text?.width ?? selected.geom?.width ?? 0.84)
+      },
+      renderTextPosition: function (selected, position) {
+        var frame = selected.block.ownerSVGElement.viewBox.baseVal
+        var dx = position.x - selected.x0
+        var dy = position.y - selected.y0
+        if (dx || dy) {
+          selected.block.setAttribute('transform', 'translate(' + (dx * frame.width) + ' ' + (dy * frame.height) + ')')
+        } else {
+          selected.block.removeAttribute('transform')
+        }
+        var bounds = selected.bounds
+        selected.outline = {
+          left: (bounds.x + dx) * 100 + '%', top: (bounds.y + dy) * 100 + '%',
+          width: bounds.width * 100 + '%', height: bounds.height * 100 + '%',
+        }
+      },
+      commitTextPosition: function (selected, position) {
+        var x = textPosition(position.x, this.textRightLimit(selected))
+        var y = textPosition(position.y, 0.95)
+        var current = this.textCoordinates(selected)
+        if (x !== current.x || y !== current.y) {
+          if (selected.field) {
+            selected.text = this._fieldToFreeText(selected.slide, selected.field, selected.geom, x, y)
+            selected.field = null
+          } else {
+            selected.text.x = x
+            selected.text.y = y
+          }
+        }
+        this.renderTextPosition(selected, { x: x, y: y })
+      },
+      nudgeText: function (canvas, direction, step) {
+        var selected = this.textSelection
+        var svg = selected.block.ownerSVGElement
+        if (canvas.querySelector('svg') !== svg) {
+          return
+        }
+        // Keep keyboard focus on a stable node while the preview swaps the SVG.
+        canvas.focus({ preventScroll: true })
+        var frame = svg.viewBox.baseVal
+        var position = this.textCoordinates(selected)
+        this.commitTextPosition(selected, { x: position.x + direction[0] * step / frame.width, y: position.y + direction[1] * step / frame.height })
+      },
+
+      // Move the SVG group locally while dragging, then update the spec on release.
       deckTextDown: function (index, event) {
         if (this._drag || !this.canvasEditing || this.placingText || 0 !== event.button) {
           return
@@ -1333,48 +1503,26 @@
           }
           return
         }
-        var block = event.target.closest('[data-rp-edit]')
-        var svg = block && block.ownerSVGElement
-        if (!block || !slide || !svg) {
+        var selected = this.selectText(index, event.target.closest('[data-rp-edit]'))
+        if (!selected) {
           return
         }
-        var ref = block.getAttribute('data-rp-edit')
-        var t = null
-        var geom = null
-        if (0 === ref.indexOf('texts.')) {
-          t = slide.texts[this.previewTextIndex(index, slide, Number(ref.slice(6)))]
-          if (!t) {
-            return
-          }
-        } else {
-          geom = this._measureBlock(svg, block, ref)
-          if (!geom) {
-            return
-          }
-          geom.x = this._freeTextX(slide.align, geom.width)
-        }
+        var svg = selected.block.ownerSVGElement
+        var frame = svg.viewBox.baseVal
+        var matrix = svg.getScreenCTM()
+        var position = this.textCoordinates(selected)
         event.preventDefault() // no text selection while dragging
-        var box = svg.getBoundingClientRect()
-        var x0 = t ? Number(t.x) || 0 : geom.x
-        var y0 = t ? Number(t.y) || 0 : geom.y
+        event.currentTarget.focus({ preventScroll: true })
         this.startDrag({
-          t: t,
-          field: t ? null : ref,
-          geom: geom,
-          width: t ? Number(t.width) || 0.84 : geom.width,
-          block: block,
-          slideIndex: slideIndex,
+          selection: selected,
           pointerId: event.pointerId,
           moved: false,
           startX: event.clientX,
           startY: event.clientY,
-          x0: x0,
-          y0: y0,
-          nx: x0,
-          ny: y0,
-          box: box,
-          // Screen px → SVG user units, for the live transform while dragging.
-          unit: (svg.viewBox.baseVal.width || box.width) / box.width,
+          x0: position.x,
+          y0: position.y,
+          screenWidth: frame.width * matrix.a,
+          screenHeight: frame.height * matrix.d,
         })
       },
       startDrag: function (drag) {
@@ -1397,7 +1545,7 @@
           d.moved = true
           this.closeTextPop()
           if (!d.image) {
-            d.guides = this._showAlignmentGuides(d.block)
+            d.guides = this._showAlignmentGuides(d.selection.block)
           }
         }
         if (d.image) {
@@ -1406,48 +1554,52 @@
           d.block.setAttribute('transform', 'translate(' + (d.x0 - d.nx) * d.overflowX + ' ' + (d.y0 - d.ny) * d.overflowY + ')')
           return
         }
-        d.nx = Math.min(1 - d.width, Math.max(0, d.x0 + dx / d.box.width))
-        d.ny = Math.min(0.95, Math.max(0, d.y0 + dy / d.box.height))
-        d.block.setAttribute('transform', 'translate('
-          + ((d.nx - d.x0) * d.box.width * d.unit).toFixed(1) + ' '
-          + ((d.ny - d.y0) * d.box.height * d.unit).toFixed(1) + ')')
+        var selected = d.selection
+        var right = this.textRightLimit(selected)
+        var bounds = selected.bounds
+        var x = clamp(d.x0 + dx / d.screenWidth, 0, right)
+        var y = clamp(d.y0 + dy / d.screenHeight, 0, 0.95)
+        var distance = event.altKey ? 0 : SNAP_DISTANCE_PX
+        d.position = {
+          x: snapPosition(x, right, bounds.x - selected.x0, bounds.width, d.guides.columns, distance / d.screenWidth),
+          y: snapPosition(y, 0.95, bounds.y - selected.y0, bounds.height, d.guides.rows, distance / d.screenHeight),
+        }
+        this.renderTextPosition(selected, d.position)
       },
       _showAlignmentGuides: function (block) {
         var svg = block.ownerSVGElement
         var frame = svg.viewBox.baseVal
-        var columns = new Set()
-        var rows = new Set()
-        var edgesAndCenter = [0, 0.5, 1]
+        var columns = new Map()
+        var rows = new Map()
+        var overlay = document.createElement('div')
+        overlay.className = 'slide-guides'
+        overlay.setAttribute('aria-hidden', 'true')
+        var addLine = function (positions, ratio, side) {
+          if (ratio <= 0 || ratio >= 1 || positions.has(ratio)) {
+            return
+          }
+          var line = document.createElement('span')
+          line.className = 'slide-guide-' + side
+          line.style[side] = ratio * 100 + '%'
+          positions.set(ratio, line)
+          overlay.append(line)
+        }
         svg.querySelectorAll('[data-rp-edit], [data-rp-guide]').forEach(function (element) {
           if (element === block) {
             return
           }
           var bounds = element.getBBox()
-          edgesAndCenter.forEach(function (fraction) {
-            columns.add(Math.round(bounds.x + bounds.width * fraction))
-            rows.add(Math.round(bounds.y + bounds.height * fraction))
+          // A peer may still carry its temporary translation while awaiting a preview.
+          var transforms = element.transform?.baseVal
+          var translation = transforms?.numberOfItems ? transforms.getItem(0).matrix : null
+          ALIGNMENT_ANCHORS.forEach(function (fraction) {
+            addLine(columns, (bounds.x + bounds.width * fraction + (translation?.e ?? 0) - frame.x) / frame.width, 'left')
+            addLine(rows, (bounds.y + bounds.height * fraction + (translation?.f ?? 0) - frame.y) / frame.height, 'top')
           })
         })
-        var guides = document.createElement('div')
-        guides.className = 'slide-guides'
-        guides.setAttribute('aria-hidden', 'true')
-        var addLines = function (positions, start, size, side) {
-          positions.forEach(function (position) {
-            var ratio = (position - start) / size
-            if (ratio <= 0 || ratio >= 1) {
-              return
-            }
-            var line = document.createElement('span')
-            line.className = 'slide-guide-' + side
-            line.style[side] = ratio * 100 + '%'
-            guides.append(line)
-          })
-        }
-        addLines(columns, frame.x, frame.width, 'left')
-        addLines(rows, frame.y, frame.height, 'top')
-        svg.after(guides)
+        svg.after(overlay)
 
-        return guides
+        return { overlay: overlay, columns: columns, rows: rows }
       },
       deckTextUp: function (event) {
         var d = this._endDrag(event)
@@ -1458,20 +1610,16 @@
         if (d.image) {
           d.image.focusX = Number(d.nx.toFixed(4))
           d.image.focusY = Number(d.ny.toFixed(4))
-        } else if (d.field) {
-          this._fieldToFreeText(this.spec.slides[d.slideIndex], d.field, d.geom, d.nx, d.ny)
         } else {
-          d.t.x = Number(d.nx.toFixed(3))
-          d.t.y = Number(d.ny.toFixed(3))
-        }
-        if (!d.image) {
-          this.revealSlide(d.slideIndex)
+          this.commitTextPosition(d.selection, d.position)
         }
       },
       deckTextCancel: function (event) {
         var d = this._endDrag(event)
-        if (d && d.moved) {
+        if (d?.moved && d.image) {
           d.block.removeAttribute('transform')
+        } else if (d?.moved) {
+          this.renderTextPosition(d.selection, this.textCoordinates(d.selection))
         }
       },
       _endDrag: function (event) {
@@ -1481,7 +1629,7 @@
         }
         this._drag = null
         if (d.guides) {
-          d.guides.remove()
+          d.guides.overlay.remove()
         }
         if (d.previewSlides) {
           this.slides = d.previewSlides
@@ -1498,8 +1646,7 @@
       // that renders the same: geometry is read off the rendered SVG block (the
       // final laid-out font size, measured line widths, resolved colours) rather
       // than recomputed, so the renderer's shrink-to-fit and palette resolution
-      // stay authoritative. Reached by dragging the block on the slide (the box
-      // is pinned where it lands) or by the field's "→ free text" button.
+      // stay authoritative when moving the block or using its "→ free text" button.
       freeTextFromField: function (slideIndex, field) {
         var slide = this.spec.slides[slideIndex]
         if (!slide) {
@@ -1583,8 +1730,8 @@
         }
         slide.texts.push({
           content: content,
-          x: Number(Math.max(0, Math.min(1 - geom.width, x)).toFixed(3)),
-          y: Number(Math.max(0, Math.min(0.95, y)).toFixed(3)),
+          x: textPosition(x, 1 - geom.width),
+          y: textPosition(y, 0.95),
           width: geom.width,
           size: Number(Math.max(0.01, Math.min(0.3, geom.size)).toFixed(4)),
           align: slide.align || 'left',
@@ -1596,6 +1743,8 @@
         if ('title' === field) {
           slide.highlight = ''
         }
+
+        return slide.texts.at(-1)
       },
 
       // Mouse wheel over any range slider nudges it by one step — delegated from
@@ -1817,6 +1966,7 @@
           var text = JSON.stringify(this.payload(), null, 2)
           this.closeTextPop()
           this.closeActionMenu(false)
+          this.textSelection = null
           this.placingText = false
           this.crop = null
           this.removedText = null
@@ -1902,8 +2052,7 @@
         }
       },
 
-      // Vector export: ship the on-screen self-contained SVGs verbatim (font +
-      // image already embedded) for a .zip of .svg files — no canvas, no raster.
+      // Vector export: bundle the self-contained slides as SVG files.
       exportSvg: async function () {
         var svgs = Array.prototype.slice.call(document.querySelectorAll('.slide svg'))
         if (0 === svgs.length) {
@@ -1914,7 +2063,12 @@
         this.exportSvgLabel = 'Bundling…'
         try {
           var serializer = new XMLSerializer()
-          var sources = svgs.map(function (svg) { return serializer.serializeToString(svg) })
+          var sources = svgs.map(function (svg) {
+            var copy = svg.cloneNode(true)
+            copy.querySelectorAll('[data-rp-edit][tabindex]').forEach(block => block.removeAttribute('tabindex'))
+
+            return serializer.serializeToString(copy)
+          })
           var response = await fetch(this.urls.export, jsonPost({ svgs: sources }))
           if (!response.ok) {
             throw new Error('Export failed (' + response.status + ')')

@@ -37,8 +37,11 @@ Choose **Preview** to enlarge the cover or **Studio** to edit it. The studio's
 source card links back to the page editor; standalone carousels have no source.
 
 The studio opens at the network's mobile feed width. Use the zoom slider or
-Ctrl+scroll to resize the preview. Click text to edit it. As you drag a text box,
-guides show the centres and edges of nearby slide elements.
+Ctrl+scroll to resize the preview. Click a text block or focus it with **Tab** to
+show its outline. Double-click it, press **Enter**, or choose **Edit text** to edit
+its content. **Arrow keys** move it one slide pixel at a time. **Shift + Arrow**
+moves it ten. While dragging, the block snaps to nearby guides for the edges and
+centres of other elements. Hold **Alt** while dragging for free positioning.
 
 Choose **+ Text**, or press **T** when the preview has focus, then click or tap
 where you want to type. On a focused slide, **Enter** places it in the centre so

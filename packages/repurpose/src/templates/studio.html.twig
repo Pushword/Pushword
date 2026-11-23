@@ -107,13 +107,15 @@
     .deck-note { display: flex; align-items: center; gap: .6rem; margin: .1rem 0 0 .25rem; font-size: .72rem; color: var(--muted); }
     .deck-note span { flex: 1; }
     .deck-note input[type=range] { width: 8rem; flex: 0 0 auto; }
+    .selection-actions { display: flex; flex-wrap: wrap; align-items: center; gap: .6rem; margin: .5rem 0 0 .25rem; }
     .slide figure:hover .slide-frame { transform: translateY(-3px); }
     .slide figure:hover svg { box-shadow: 0 12px 32px #0000002e; }
     .slide figcaption { display: flex; align-items: center; justify-content: center; gap: .45rem; color: var(--muted); font-size: .72rem; margin-top: .5rem; font-variant-numeric: tabular-nums; }
     .slide-frame .placement-mark { position: absolute; pointer-events: none; height: 1em; border-left: 2px solid white; filter: drop-shadow(0 0 2px var(--accent)); }
     .slide-frame .crop-frame { position: absolute; pointer-events: none; border: 2px solid var(--accent); box-shadow: inset 0 0 0 1px white; border-radius: 6px; }
-    /* Text blocks are click-to-edit and drag-to-move (the renderer tags them with
-       data-rp-edit); dragging a stack field converts it into a free text box. */
+    .slide-selection { position: absolute; inset: 1px; overflow: hidden; border-radius: 13px; pointer-events: none; }
+    .slide-selection-box { position: absolute; border: 1px solid oklch(0.82 0.15 215); outline: 1px solid oklch(0.26 0.04 230 / .75); }
+    /* The renderer tags movable text with data-rp-edit. */
     .slide svg g[data-rp-edit] { cursor: grab; touch-action: none; }
     .slide svg g[data-rp-edit]:hover { opacity: .82; }
     .slide svg g[data-rp-edit]:active { cursor: grabbing; }
@@ -121,11 +123,12 @@
     .is-cropping .slide-canvas, .is-cropping svg g[data-rp-edit] { cursor: grab; touch-action: none; }
     .is-cropping .slide-canvas:active, .is-cropping svg g[data-rp-edit]:active { cursor: grabbing; }
     .slide-guides { position: absolute; inset: 1px; overflow: hidden; border-radius: 13px; pointer-events: none; color: oklch(0.82 0.15 215); filter: drop-shadow(0 0 1px oklch(0.26 0.04 230)); }
-    .slide-guides span { position: absolute; }
-    .slide-guide-left { inset-block: 0; border-left: 1px dashed; }
-    .slide-guide-top { inset-inline: 0; border-top: 1px dashed; }
+    .slide-guides span { position: absolute; opacity: .72; border: 0 dashed; }
+    .slide-guides .slide-guide-left { inset-block: 0; border-left-width: 1px; }
+    .slide-guides .slide-guide-top { inset-inline: 0; border-top-width: 1px; }
+    .slide-guides .is-snapped { border-style: solid; opacity: 1; }
 
-    /* Floating inline text editor, opened by clicking a text block on a slide. */
+    /* Floating inline text editor for the selected block. */
     .text-pop { position: fixed; z-index: 60; width: min(19rem, calc(100vw - 1rem)); background: var(--panel); border: 1px solid var(--line-2); border-radius: 12px; box-shadow: 0 12px 40px #00000026; padding: .7rem; display: flex; flex-direction: column; gap: .35rem; }
     .text-pop label { font-size: .68rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
     .canvas-menu, .text-undo { position: fixed; z-index: 65; background: var(--panel); border: 1px solid var(--line-2); border-radius: 8px; box-shadow: 0 6px 24px #00000026; padding: .3rem; }
@@ -499,8 +502,13 @@
                 <div class="slide-frame" :class="{ 'is-cropping': crop && previewMatches(i, crop.slide) }">
                   <div class="slide-canvas" x-html="svg" role="group" :aria-label="messages.canvasSlide + ' ' + (i + 1)"
                        :tabindex="canvasEditing && previewSlideIndex(i) >= 0 ? 0 : null"
+                       x-effect="svg && syncCanvas(i, $el, canvasEditing && previewSlideIndex(i) >= 0)"
                        @click="deckTextClick(i, $event)" @pointerdown="deckTextDown(i, $event)"
+                       @dblclick="canvasDoubleClick(i, $event)" @focusin="canvasTextFocus(i, $event)"
                        @contextmenu="openCanvasMenu(i, $event)" @keydown="canvasKey(i, $event)"></div>
+                  <div class="slide-selection" x-show="canvasEditing && textSelection && previewMatches(i, textSelection.slide)" x-cloak aria-hidden="true">
+                    <div class="slide-selection-box" :style="textSelection?.outline || {}"></div>
+                  </div>
                   <div class="placement-mark" x-show="textDraft && previewMatches(i, textDraft.slide)" x-cloak aria-hidden="true" :style="textDraft ? draftMarker() : {}"></div>
                   <div class="crop-frame" x-show="crop && previewMatches(i, crop.slide)" x-cloak aria-hidden="true" :style="crop ? cropFrame(crop.slide) : {}"></div>
                 </div>
@@ -520,6 +528,10 @@
           <input type="range" min="0.5" max="3" step="0.05" x-model.number="zoom" aria-label="Preview zoom" title="Preview zoom (or Ctrl+scroll over the deck) — inspection only, 100% is the real feed size">
           <button type="button" class="btn-xs" x-show="1 !== zoom" x-cloak @click="zoom = 1">100&nbsp;%</button>
         </p>
+        <div class="selection-actions" x-show="canvasEditing && textSelection && !textPop.open" x-cloak>
+          <button class="btn-xs" type="button" @click="editSelectedText()">{{ 'repurposeCanvasEditText'|trans }}</button>
+          <span class="preview-hint">{{ 'repurposeCanvasMoveHint'|trans }}</span>
+        </div>
       </div>
     </div>
 
@@ -1001,7 +1013,7 @@
     </div>
   </dialog>
 
-  {# ---------- INLINE TEXT EDITOR (opens on click on a slide's text block) ---------- #}
+  {# ---------- INLINE TEXT EDITOR ---------- #}
   {# Object-syntax :style on purpose: a string binding rewrites the whole style
      attribute, wiping the display x-show manages — and x-show skips re-applying
      when its value did not change, so the wipe would stick (ghost popover). #}

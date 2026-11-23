@@ -107,7 +107,7 @@ test('a successful save keeps edits typed during the request and ignores an olde
   assert.equal(state.dirty, true);
 });
 
-test('slide guides mark peer edges and centers until the drag ends', async () => {
+test('a selected block snaps to nearby guides on both axes unless Alt is held', async () => {
   const moved = {content: 'Move this', x: 0.1, y: 0.2, width: 0.3};
   const preview = ['<svg/>'];
   let overlay;
@@ -116,6 +116,7 @@ test('slide guides mark peer edges and centers until the drag ends', async () =>
       document: {
         addEventListener: (_, callback) => callback(),
         createElement: () => ({style: {}, lines: [], setAttribute() {},
+          classList: {toggle(name, on) { this[name] = on; }},
           append(line) { this.lines.push(line); }, remove() { overlay = undefined; }}),
       },
       performance: {now: () => 1000},
@@ -125,47 +126,60 @@ test('slide guides mark peer edges and centers until the drag ends', async () =>
   let transform;
   const block = {
     getAttribute: () => 'texts.0',
-    getBBox: () => assert.fail('the dragged block must not contribute guides'),
+    getBBox: () => ({x: 120, y: 110, width: 150, height: 55}),
     setAttribute: (_, value) => { transform = value; },
     removeAttribute: () => { transform = undefined; },
     ownerSVGElement: {
       viewBox: {baseVal: {x: 0, y: 0, width: 1000, height: 500}},
-      getBoundingClientRect: () => ({width: 500, height: 250}),
+      getScreenCTM: () => ({a: 0.5, d: 0.5}),
       querySelectorAll: () => [block,
         {getBBox: () => ({x: 200, y: 100, width: 400, height: 200})},
         {getBBox: () => ({x: 0, y: 0, width: 1000, height: 200})}],
       after: element => { overlay = element; },
     },
   };
-  const start = {target: {closest: () => block}, button: 0, pointerId: 1, clientX: 100, clientY: 100, preventDefault() {}};
-  const move = {pointerId: 1, clientX: 127, clientY: 115};
+  const start = {target: {closest: () => block}, currentTarget: {focus() {}}, button: 0, pointerId: 1,
+    clientX: 100, clientY: 100, preventDefault() {}};
+  const move = {pointerId: 1, clientX: 138, clientY: 115};
   state.deckTextDown(0, start);
+  assert.equal(state.textSelection.outline.left, '12%', 'selection outlines the visible block before movement');
+  assert.equal(state.textSelection.outline.width, '15%');
   state.deckTextMove({...move, clientX: 102, clientY: 100});
   assert.equal(overlay, undefined, 'clicks do not display guides');
   state.deckTextMove(move);
   assert.ok(overlay, 'the guides are visible after moving');
   assert.deepEqual(overlay.lines.map(line => line.style.left).filter(Boolean).sort(), ['20%', '40%', '50%', '60%']);
   assert.deepEqual(overlay.lines.map(line => line.style.top).filter(Boolean).sort(), ['20%', '40%', '60%']);
-  assert.equal(transform, 'translate(54.0 30.0)');
+  const active = () => overlay.lines.filter(line => line.classList['is-snapped']).map(line => line.style.left || line.style.top);
+  assert.deepEqual(active(), ['20%', '40%']);
+  assert.equal(state.textSelection.outline.left, '20%');
+  assert.equal(Math.round(parseFloat(state.textSelection.outline.top)), 29);
+  const snapTransform = transform;
+  state.deckTextMove({...move, altKey: true});
+  assert.deepEqual(active(), []);
+  assert.equal(parseFloat(state.textSelection.outline.left).toFixed(1), '19.6');
+  state.deckTextMove(move);
   state.deckTextDown(0, {...start, pointerId: 2});
   state.deckTextMove({...move, pointerId: 2, clientX: 150});
   state.deckTextUp({pointerId: 2});
   assert.ok(overlay, 'a second pointer must not end the first drag');
-  assert.equal(transform, 'translate(54.0 30.0)');
+  assert.equal(transform, snapTransform);
   await state.preview();
   assert.notEqual(state.slides, preview, 'a pending preview must not replace the slide during the drag');
   state.deckTextCancel({pointerId: 1});
   assert.equal(state.slides, preview);
   assert.equal(overlay, undefined);
   assert.equal(transform, undefined);
+  assert.equal(state.textSelection.outline.left, '12%', 'cancelling restores the selected outline');
   assert.equal(state.spec.slides[0].texts[0].x, 0.1);
 
   state.deckTextDown(0, start);
   state.deckTextMove(move);
   state.deckTextUp({pointerId: 1});
   assert.equal(overlay, undefined);
-  assert.equal(state.spec.slides[0].texts[0].x, 0.154);
-  assert.equal(state.spec.slides[0].texts[0].y, 0.26);
+  assert.equal(state.spec.slides[0].texts[0].x, 0.18);
+  assert.equal(state.spec.slides[0].texts[0].y, 0.27);
+  assert.equal(state.textSelection.outline.left, '20%');
 });
 
 function canvasSvg() {
@@ -176,6 +190,56 @@ function canvasSvg() {
     getBoundingClientRect: () => ({left: 100, top: 70, width: 500, height: 250}),
   };
 }
+
+test('arrow keys move the keyboard-focused text in slide pixels and keep it selected through new previews', () => {
+  const text = {content: 'Move me', x: 0.1, y: 0.949, width: 0.3};
+  let active;
+  const state = studio({spec: {slides: [{texts: [{content: ''}, text]}]}}, undefined, undefined, {
+    document: {addEventListener: (_, callback) => callback(), get activeElement() { return active; }},
+  });
+  state.$nextTick = callback => callback();
+  state._previewTargets = state.previewTargets();
+  let block;
+  const canvas = {
+    focus() { active = this; },
+    querySelector: selector => selector === 'svg' ? block.ownerSVGElement : block,
+    querySelectorAll: () => [block],
+  };
+  function renderBlock(x, y) {
+    return {
+      matches: () => true,
+      getAttribute: () => 'texts.0',
+      getBBox: () => ({x, y, width: 150, height: 26}),
+      ownerSVGElement: canvasSvg(),
+      setAttribute() {}, removeAttribute() {},
+      focus() { active = this; },
+    };
+  }
+  block = renderBlock(100, 470);
+  state.canvasTextFocus(0, {target: block});
+  assert.equal(state.textSelection.text, text, 'empty text boxes do not consume a rendered index');
+  let handled = 0;
+  const press = (key, modifiers) => state.canvasKey(0, {key, currentTarget: canvas, preventDefault() { handled += 1; }, ...modifiers});
+  press('ArrowRight');
+  assert.equal(text.x, 0.101);
+  const rendered = state.previewTargets();
+  press('ArrowRight');
+  press('ArrowDown', {shiftKey: true});
+  press('ArrowLeft', {altKey: true});
+  assert.equal(handled, 3);
+  assert.equal(text.x, 0.102);
+  assert.equal(text.y, 0.95);
+  assert.equal(active, canvas);
+
+  block = renderBlock(101, 470);
+  state._previewTargets = rendered;
+  state.syncCanvas(0, canvas, true);
+  assert.equal(active, block, 'focus follows the replacement SVG element');
+  assert.equal(state.textSelection.text, text);
+  assert.equal(parseFloat(state.textSelection.outline.left).toFixed(1), '10.2', 'an older preview still shows the latest offset');
+  press('ArrowUp', {shiftKey: true});
+  assert.equal(text.y, 0.93);
+});
 
 test('placed text uses the SVG position, fits the edge and only exists while it has content', () => {
   const state = studio({spec: {slides: [{texts: []}]}}, undefined, undefined, {performance: {now: () => 1000}});
