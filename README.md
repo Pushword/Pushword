@@ -12,7 +12,7 @@ or update a live site with an AI agent.
 
 ## Quickstart
 
-You need PHP 8.5 with the [required PHP extensions](https://pushword.piedweb.com/installation#requirements) and Composer.
+You need PHP 8.5 or 8.6 with the [required PHP extensions](https://pushword.piedweb.com/installation#requirements) and Composer.
 
 ```shell
 composer create-project pushword/new pushword "^1.0"
@@ -30,14 +30,14 @@ For Docker and FrankenPHP setup, see the [installation guide](https://pushword.p
 
 - **One admin for multiple sites and languages.** Write in the block editor and manage pages and media across your sites.
 - **Content you can review in Git.** Pages use Markdown with YAML front matter, and layouts use Twig. Flat syncs Markdown files with the database, so the same pages stay editable in the admin. [Flat documentation](https://pushword.piedweb.com/extension/flat)
-- **AI editing on a live site.** Agents can work on local Markdown or edit through the token-authenticated REST API. Revision checks protect newer page edits from being overwritten. [AI agent guide](https://pushword.piedweb.com/ai-agents)
+- **Edit together on a live site.** Editors can share a Markdown page in collaborative mode. Agents can edit through the token-authenticated REST API. [Admin guide](https://pushword.piedweb.com/extension/admin#collaborative-page-editing) · [AI agent guide](https://pushword.piedweb.com/ai-agents)
 - **Publish to static hosting.** Export your site for GitHub Pages or serve the files with Apache or FrankenPHP. [Static Generator documentation](https://pushword.piedweb.com/extension/static-generator)
 - **Customize it in Symfony.** Use events and entity filters to extend the CMS, and Twig components to build reusable parts of your templates.
 
 ## Extensions
 
 The `pushword/new` starter includes the admin and block editor, Flat, the API, static export and page revision history.
-Add Search or Newsletter individually with Composer. Install Quiz the same way. [Browse all extensions](https://pushword.piedweb.com/extensions)
+Add extensions such as Search, Newsletter or Quiz with Composer. [Browse all extensions](https://pushword.piedweb.com/extensions)
 
 To install all maintained bundles together on an existing Pushword site, use the aggregate package.
 
@@ -47,15 +47,12 @@ composer require "pushword/pushword:^1.0"
 
 ## Documentation
 
-Visit [pushword.piedweb.com](https://pushword.piedweb.com)
+Read the [Pushword documentation](https://pushword.piedweb.com).
 
 ## Contributing
 
-This repository is the monorepo: every bundle lives in `packages/` and is split
-read-only to its own repository for distribution. Issues and pull requests belong
-**here**.
-
-If you're interested in contributing to Pushword, please read our [contributing docs](https://pushword.piedweb.com/contribute) before submitting a pull request.
+Each bundle in `packages/` has a distribution mirror. Open issues and pull
+requests in this repository. [Contributing guide](https://pushword.piedweb.com/contribute)
 
 If Pushword is useful to you, star the repository so others can find it.
 You can also support its maintenance on [Liberapay](https://liberapay.com/RobinPiedWeb).

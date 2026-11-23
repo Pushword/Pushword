@@ -7,13 +7,13 @@ toc: true
 
 ## Requirements
 
-- **PHP** 8.5
+- **PHP** 8.5 or 8.6
 - **PHP extensions**: dom, curl, libxml, mbstring, zip, pdo, bcmath, intl, gd, exif, iconv, fileinfo; plus `sqlite` and `pdo_sqlite` for SQLite, or `pdo_pgsql` for PostgreSQL
 - **Composer** — [installation instructions](https://getcomposer.org/download/)
 
 Optional:
 
-- **Node 24+** and npm, pnpm or Yarn, only when building frontend assets
+- **Node.js 24+** and npm, pnpm or Yarn for building frontend assets. [Collaborative editing](/extension/admin#collaborative-page-editing) also needs Node.js and PHP process execution on the web server.
 - **libvips** (recommended) or **imagick** — see [Image Processing](#image-processing) below
 - **brotli**
 
