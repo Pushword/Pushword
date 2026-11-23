@@ -19,7 +19,7 @@ final readonly class SmsQuotaLimiter
     {
     }
 
-    public function reserve(SmsSend $send, DateTimeImmutable $now): bool
+    public function reserve(SmsSend $send, DateTimeImmutable $now, ?DateTimeImmutable $testRetryAt = null): bool
     {
         $db = $this->em->getConnection();
         if (false === $db->fetchOne('SELECT id FROM newsletter_sms_quota_lock WHERE id = 1')) {
@@ -30,42 +30,15 @@ final readonly class SmsQuotaLimiter
             }
         }
 
-        return $db->transactional(function () use ($db, $send, $now): bool {
+        return $db->transactional(function () use ($db, $send, $now, $testRetryAt): bool {
             $db->executeStatement('UPDATE newsletter_sms_quota_lock SET id = id WHERE id = 1');
             $this->em->refresh($send);
-            if (SmsState::Pending !== $send->state || ! $this->settings->canSend()) {
+            if (SmsState::Pending !== $send->state || ! $this->settings->canSend()
+                || (! $testRetryAt instanceof DateTimeImmutable && $send->nextAttemptAt > $now)) {
                 return false;
             }
 
-            /** @var list<array{id: int|string, phone: string, quota_reserved_at: string}> $recent */
-            $recent = $db->fetchAllAssociative(
-                'SELECT id, phone, quota_reserved_at FROM newsletter_sms_send WHERE quota_reserved_at > ? ORDER BY quota_reserved_at ASC, id ASC',
-                [$now->modify('-24 hours')],
-                [Types::DATETIME_IMMUTABLE],
-            );
-            $next = $now;
-            $reserved = false;
-            foreach ($recent as $reservation) {
-                if ((int) $reservation['id'] === $send->id) {
-                    $reserved = true;
-                }
-            }
-
-            if (! $reserved) {
-                if (\count($recent) >= $this->settings->dailyLimit) {
-                    $next = max($next, $this->date($recent[\count($recent) - $this->settings->dailyLimit]['quota_reserved_at'])->modify('+24 hours'));
-                }
-
-                foreach ($recent as $reservation) {
-                    $date = $this->date($reservation['quota_reserved_at']);
-                    $next = max($next, $date->modify('+'.$this->settings->intervalSeconds.' seconds'));
-                    if ($reservation['phone'] === $send->phone) {
-                        $next = max($next, $date->modify('+24 hours'));
-                    }
-                }
-            }
-
-            $next = $this->nextOpening($next);
+            $next = $testRetryAt instanceof DateTimeImmutable ? $now : $this->nextAllowed($send, $now);
             if ($next > $now) {
                 $send->nextAttemptAt = $next;
                 $this->em->flush();
@@ -74,12 +47,42 @@ final readonly class SmsQuotaLimiter
             }
 
             $send->quotaReservedAt = $now;
-            $send->nextAttemptAt = null;
+            $send->nextAttemptAt = $testRetryAt;
 
             $this->em->flush();
 
             return true;
         });
+    }
+
+    private function nextAllowed(SmsSend $send, DateTimeImmutable $now): DateTimeImmutable
+    {
+        /** @var list<array{id: int|string, phone: string, quota_reserved_at: string}> $recent */
+        $recent = $this->em->getConnection()->fetchAllAssociative(
+            'SELECT id, phone, quota_reserved_at FROM newsletter_sms_send WHERE quota_reserved_at > ? ORDER BY quota_reserved_at ASC, id ASC',
+            [$now->modify('-24 hours')],
+            [Types::DATETIME_IMMUTABLE],
+        );
+        foreach ($recent as $reservation) {
+            if ((int) $reservation['id'] === $send->id) {
+                return $this->nextOpening($now);
+            }
+        }
+
+        $next = $now;
+        if (\count($recent) >= $this->settings->dailyLimit) {
+            $next = max($next, $this->date($recent[\count($recent) - $this->settings->dailyLimit]['quota_reserved_at'])->modify('+24 hours'));
+        }
+
+        foreach ($recent as $reservation) {
+            $date = $this->date($reservation['quota_reserved_at']);
+            $next = max($next, $date->modify('+'.$this->settings->intervalSeconds.' seconds'));
+            if ($reservation['phone'] === $send->phone) {
+                $next = max($next, $date->modify('+24 hours'));
+            }
+        }
+
+        return $this->nextOpening($next);
     }
 
     private function nextOpening(DateTimeImmutable $candidate): DateTimeImmutable

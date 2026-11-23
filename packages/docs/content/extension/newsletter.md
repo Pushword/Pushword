@@ -714,8 +714,8 @@ rows. The button appears once the campaign is armed; the list is read-only.
 SMS is optional and uses the site's own SMSGate HTTP API and Android device.
 Complete the connector configuration to show the SMS fields and review section in
 the admin. Missing credentials or an insecure URL keep them hidden. `enabled: false`
-pauses sending while leaving preparation available. Nothing contacts SMSGate when
-opening a form, saving a draft, reviewing recipients or queuing a test.
+pauses sending while leaving preparation available. Opening a form, saving a
+draft or reviewing recipients requires no request to SMSGate.
 
 ```yaml
 newsletter:
@@ -757,15 +757,20 @@ a long or Unicode message can consume several SMS segments.
 The campaign review shows the default SMS, eligible contacts and per-channel
 results. A test uses the saved default text literally and its submitted number;
 it creates no contact and does not count toward campaign results. Repeated
-submission of the same test form reuses its message identity. Sending a campaign
-with SMS recipients is blocked while its connector is unconfigured or paused.
+submission of the same test form reuses its message identity. Each new admin
+test is submitted immediately, including to a number that recently received an
+SMS. API tests are queued. Sending a campaign with SMS recipients is blocked
+while its connector is unconfigured or paused.
 
 `pw:newsletter:tick` processes a durable SMS queue after emails and drips, within
 its remaining `--batch` budget. No Messenger worker is required. With a minutely
-cron, SMS submissions are at least one minute apart. The quota, minimum interval
-and one-message-per-number-per-24-hours rule cover all campaigns and tests in
-**this database**. If several applications share one SIM, configure a common
-limit on the gateway/device as well. These quotas count messages, not segments.
+cron, submissions from the queue are at least one minute apart. The quota,
+sending window, minimum interval and one-message-per-number-per-24-hours rule
+apply to queued campaigns and API tests. Admin tests count toward the quota in
+**this database** and can be submitted at any time while the connector is active.
+If an admin test gets an uncertain response, the queue retries it with the same
+identity. If several applications share one SIM, configure a common limit on the
+gateway/device as well. Quota usage is measured in messages.
 
 Each queued message freezes its number, personalized text and provider identity.
 Before transmission, permission, suppression, number, audience, segment and email

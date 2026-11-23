@@ -102,6 +102,9 @@ final class SmsCampaignSenderTest extends AbstractNewsletterTestCase
         self::assertEquals($now, $one->quotaReservedAt);
         self::assertEquals($now->modify('+24 hours'), $two->nextAttemptAt);
         $this->entityManager->clear();
+        $two = $this->entityManager->getRepository(SmsSend::class)->findOneBy(['reference' => $two->reference]);
+        self::assertNotNull($two);
+        self::assertEquals($now->modify('+24 hours'), $two->nextAttemptAt);
         self::assertSame(0, $this->sender()->drain(5, $now->modify('+23 hours'))['smsAccepted']);
         self::assertSame(1, $this->sender()->drain(5, $now->modify('+24 hours'))['smsAccepted']);
         self::assertSame(4, $this->http->getRequestsCount());
@@ -119,6 +122,26 @@ final class SmsCampaignSenderTest extends AbstractNewsletterTestCase
         self::assertNotNull($one->acceptedAt);
         self::assertEquals($now->modify('+24 hours'), $same->nextAttemptAt);
         self::assertEquals($now->modify('+30 seconds'), $another->nextAttemptAt);
+    }
+
+    public function testAnImmediateTestReservesQuotaOutsideTheWindowAndDefersQueueRetries(): void
+    {
+        $this->configure(start: 8, end: 20);
+        $campaign = $this->campaign($this->createAudience());
+        $send = $this->sender()->queueTest($campaign, '+33612345678', Uuid::v7()->toRfc4122());
+        $now = new DateTimeImmutable('2026-11-13 07:59 UTC');
+        $retryAt = $now->modify('+5 minutes');
+        $limiter = self::getContainer()->get(SmsQuotaLimiter::class);
+
+        self::assertTrue($limiter->reserve($send, $now, testRetryAt: $retryAt));
+        $this->entityManager->clear();
+        $send = $this->entityManager->getRepository(SmsSend::class)->findOneBy(['reference' => $send->reference]);
+        self::assertNotNull($send);
+        self::assertEquals($now, $send->quotaReservedAt);
+        self::assertEquals($retryAt, $send->nextAttemptAt);
+        self::assertFalse($limiter->reserve($send, $now->modify('+1 minute')));
+        self::assertEquals($retryAt, $send->nextAttemptAt);
+        self::assertTrue($limiter->reserve($send, $retryAt));
     }
 
     #[DataProvider('sendingWindows')]

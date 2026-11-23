@@ -77,7 +77,7 @@ final readonly class SmsCampaignSender
         }
     }
 
-    public function queueTest(Campaign $campaign, string $phone, string $reference): SmsSend
+    public function queueTest(Campaign $campaign, string $phone, string $reference, ?DateTimeImmutable $nextAttemptAt = null): SmsSend
     {
         if (! $campaign->isDraft() || ! $this->settings->canSend() || ! Uuid::isValid($reference)
             || 1 !== preg_match('/^\+[1-9][0-9]{7,14}$/D', $phone) || ! $this->validContent($campaign->smsContent ?? '')) {
@@ -94,7 +94,29 @@ final readonly class SmsCampaignSender
         }
 
         $send = new SmsSend($campaign, null, $phone, $campaign->smsContent ?? '', true, $reference);
+        $send->nextAttemptAt = $nextAttemptAt;
+
         $this->em->persist($send);
+        $this->em->flush();
+
+        return $send;
+    }
+
+    public function sendTest(Campaign $campaign, string $phone, string $reference): SmsSend
+    {
+        $now = new DateTimeImmutable('now', new DateTimeZone('UTC'));
+        $retryAt = $now->modify('+5 minutes');
+        $send = $this->queueTest($campaign, $phone, $reference, $retryAt);
+        if (! $this->quota->reserve($send, $now, testRetryAt: $retryAt)) {
+            return $send;
+        }
+
+        try {
+            $this->submit($send, $now);
+        } catch (Throwable $throwable) {
+            $send->error = $throwable::class;
+        }
+
         $this->em->flush();
 
         return $send;
@@ -126,7 +148,7 @@ final readonly class SmsCampaignSender
                     }
 
                     ++$report['smsAttempts'];
-                    $send->record($this->gateway->submit($send->reference, $send->phone, $send->content), $now);
+                    $this->submit($send, $now);
                     $outcome = match ($send->state) {
                         SmsState::Failed => 'smsFailed',
                         SmsState::Skipped => 'smsSkipped',
@@ -188,6 +210,11 @@ final readonly class SmsCampaignSender
         }
 
         return $counts;
+    }
+
+    private function submit(SmsSend $send, DateTimeImmutable $now): void
+    {
+        $send->record($this->gateway->submit($send->reference, $send->phone, $send->content), $now);
     }
 
     private function eligible(SmsSend $send): bool

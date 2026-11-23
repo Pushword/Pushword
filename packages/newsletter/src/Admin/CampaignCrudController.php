@@ -38,6 +38,7 @@ use Pushword\Newsletter\Entity\Campaign;
 use Pushword\Newsletter\Entity\Contact;
 use Pushword\Newsletter\Entity\SmsSend;
 use Pushword\Newsletter\Enum\CampaignStatus;
+use Pushword\Newsletter\Enum\SmsState;
 use Pushword\Newsletter\Repository\ContactRepository;
 use Pushword\Newsletter\Segment\SegmentException;
 use Pushword\Newsletter\Segment\SegmentResolver;
@@ -482,17 +483,22 @@ class CampaignCrudController extends AbstractCrudController
         $this->assertActionToken($request, 'sms', (int) $campaign->id);
 
         try {
-            match ($operation) {
-                'test' => $this->smsSender->queueTest($campaign, $request->request->getString('phone'), $request->request->getString('reference')),
-                'refresh' => $this->smsSender->refresh($campaign),
-                'cancel' => $this->smsSender->cancel($campaign),
-                default => throw $this->createNotFoundException(),
-            };
-            $this->addFlash('success', match ($operation) {
-                'test' => 'newsletter.sms.testQueued',
-                'refresh' => 'newsletter.sms.trackingUpdated',
-                'cancel' => 'newsletter.sms.pendingCancelled',
-            });
+            if ('test' === $operation) {
+                $send = $this->smsSender->sendTest($campaign, $request->request->getString('phone'), $request->request->getString('reference'));
+                match ($send->state) {
+                    SmsState::Pending => $this->addFlash('warning', 'newsletter.sms.testQueued'),
+                    SmsState::Failed, SmsState::Skipped => $this->addFlash('danger', 'newsletter.sms.actionFailed'),
+                    default => $this->addFlash('success', 'newsletter.sms.testSubmitted'),
+                };
+            } elseif ('refresh' === $operation) {
+                $this->smsSender->refresh($campaign);
+                $this->addFlash('success', 'newsletter.sms.trackingUpdated');
+            } elseif ('cancel' === $operation) {
+                $this->smsSender->cancel($campaign);
+                $this->addFlash('success', 'newsletter.sms.pendingCancelled');
+            } else {
+                throw $this->createNotFoundException();
+            }
         } catch (InvalidArgumentException) {
             $this->addFlash('danger', 'newsletter.sms.testInvalid');
         } catch (Throwable) {

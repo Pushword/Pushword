@@ -1,5 +1,5 @@
 ---
-title: ''
+title: 'admin SMS tests are submitted immediately'
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -34,3 +34,11 @@ belongs in the feature doc, which you link to instead.
 
 Several changes land here between two tags: append to the file, do not replace it.
 -->
+
+**Concerns:** pushword/newsletter
+
+## SMS tests from the admin
+
+The [admin test form](/extension/newsletter#sms-alternative-with-smsgate)
+contacts SMSGate immediately, even if the number received an SMS in the last
+24 hours. No setup changes are needed.

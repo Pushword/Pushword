@@ -529,11 +529,12 @@ newsletter:
       sent: Sent to mobile network
       skipped: Excluded
     test: "Send SMS test"
-    testHelp: "Use an international number starting with +. The text above is queued exactly as shown and respects the shared quota."
+    testHelp: "Use an international number starting with +. The text above is submitted immediately as shown."
     testInvalid: "Save a draft with valid SMS text and an international test number before testing."
     testLabel: Test
     testPhone: Test phone number
-    testQueued: "SMS test queued. Its status appears in SMS delivery."
+    testQueued: "SMS test awaiting retry. Its status appears in SMS delivery."
+    testSubmitted: "SMS test submitted to SMSGate. Its status appears in SMS delivery."
     testTitle: "Test this SMS"
     trackingUpdated: "SMS delivery status refreshed."
     unconfigured: "Configure the SMS connector before authorizing a campaign with an SMS alternative."

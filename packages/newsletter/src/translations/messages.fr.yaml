@@ -529,11 +529,12 @@ newsletter:
       sent: Transmis au réseau mobile
       skipped: Exclu
     test: "Envoyer un test SMS"
-    testHelp: "Utilisez un numéro international commençant par +. Le texte ci-dessus rejoint la file tel quel et respecte le quota commun."
+    testHelp: "Utilisez un numéro international commençant par +. Le texte ci-dessus est transmis immédiatement tel quel."
     testInvalid: "Enregistrez un brouillon avec un texte SMS valide et un numéro de test international."
     testLabel: Test
     testPhone: Numéro de test
-    testQueued: "SMS de test en attente. Son état apparaît dans le suivi SMS."
+    testQueued: "Nouvelle tentative d’envoi du SMS de test en attente. Son état apparaît dans le suivi SMS."
+    testSubmitted: "SMS de test transmis à SMSGate. Son état apparaît dans le suivi SMS."
     testTitle: "Tester ce SMS"
     trackingUpdated: "Le suivi SMS a été actualisé."
     unconfigured: "Configurez le connecteur SMS avant d’autoriser une campagne avec une alternative SMS."
