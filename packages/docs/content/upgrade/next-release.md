@@ -1,5 +1,5 @@
 ---
-title: 'page editing uses one Save button; admin SMS tests are immediate and campaign quotas exclude tests'
+title: ''
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -34,18 +34,3 @@ belongs in the feature doc, which you link to instead.
 
 Several changes land here between two tags: append to the file, do not replace it.
 -->
-
-**Concerns:** `pushword/admin` `pushword/newsletter`
-
-## Page editor save actions
-
-**Save** returns to the page view. Use **Ctrl+S** or **Cmd+S** to stay in the editor.
-If your edit template overrides the shortcut selectors, point them at
-`.action-saveAndReturn`. See [the admin guide](/extension/admin#saving-and-recovering-changes).
-
-## SMS tests from the admin
-
-The [admin test form](/extension/newsletter#sms-alternative-with-smsgate)
-contacts SMSGate immediately, even if the number received an SMS in the last
-24 hours. Campaign quotas and intervals only count campaign SMS. The change
-takes effect on update.

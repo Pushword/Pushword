@@ -16,6 +16,7 @@ Package names omit `pushword/`; `js-helper` is the npm package
 
 | Version | Packages | What changed |
 | --- | --- | --- |
+| [1.0.129](/upgrade/1.0.129) | `admin` `newsletter` | page editing uses one Save button; admin SMS tests are immediate and campaign quotas exclude tests |
 | [1.0.127](/upgrade/1.0.127) | `admin` `core` `repurpose` `version` | page edits use revisions in the admin; carousels keep a version history; new page and snippet snapshots use gzip; collaborative editing saves live — run `doctrine:schema:update --force` |
 | [1.0.126](/upgrade/1.0.126) | `repurpose` | carousel text preserves blank lines; carousel API writes use revisions — run `doctrine:schema:update --force` |
 | [1.0.124](/upgrade/1.0.124) | `repurpose` | repurpose rejects slide images missing from the media library and fonts not installed; contrast warnings name the text field |
