@@ -196,29 +196,23 @@ property is removed — deleting a line in the file is an edit.
 
 ### Collaborative editing
 
-A bearer-authenticated editor can use the same Yjs session as the admin through
-`POST /api/pages/{id}/draft` or `POST /api/repurpose/{id}/draft`. The
-Repurpose route requires the Repurpose extension.
+Use a bearer token with `POST /api/pages/{id}/draft` or, with Repurpose
+installed, `POST /api/repurpose/{id}/draft`. The API shares the admin's Yjs session.
 
-Send `{"after":0}` to open the session. The response contains a `room`
-identifier and a cursor in `after`. It includes either the current full
-base64 Yjs `snapshot` or a saved `baseline` (Markdown or JSON text), which
-clients import with the deterministic seed used in the example below. A
-browser joining with an earlier `If-Match` revision may also get an `anchor`.
-Apply local edits to that earlier baseline or snapshot, then merge the current
-snapshot before saving. The server retains the opening revision and a bounded
-set of recent revisions for each session.
+1. Send `{"after":0}` to join. The response gives you a `room`, an `after`
+   cursor and a full base64 Yjs `snapshot` or a saved `baseline` (Markdown or
+   JSON text). Seed a baseline using the same deterministic IDs as the example.
+2. Poll with `room` and `after`. To save, add the full base64 `snapshot` and its
+   materialized `content` as a string. `accepted: true` confirms the save. If a
+   write races with another editor, merge the returned `snapshot` and retry
+   with the new `after` cursor.
+3. If you join with an earlier session `revision` in `If-Match`, the response
+   may include an `anchor`. Apply local edits to the anchor, then merge the
+   current snapshot. A `409` means the room or revision is no longer usable.
+   Fetch the latest version and reconcile your edits before starting again.
 
-To save an edit, send the room identifier, the last cursor read, a full base64
-Yjs `snapshot`, and the corresponding materialized `content` string.
-`accepted: true` confirms that the update is stored with the content in the
-database. The server merges the submitted state with the trusted state and
-verifies that it produces the submitted content. An unreadable or inconsistent
-state returns HTTP 422. When another editor has advanced the cursor, the response includes
-their snapshot and `accepted: false`. Merge that snapshot with the local
-edits and retry at the new cursor. HTTP 409 signals a conventional write
-outside the current session. Read the new version and reconcile local changes
-before resuming. An invalid carousel specification returns HTTP 422.
+A request over 4 MiB returns `413`. Inconsistent Yjs state and invalid carousel
+specifications return `422`.
 
 The repository example `packages/admin/examples/shared-draft-agent.mjs`
 reads its token from `PUSHWORD_TOKEN`.

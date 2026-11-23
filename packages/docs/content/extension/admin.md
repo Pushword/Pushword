@@ -75,62 +75,36 @@ and the page cannot be its own parent.
 
 ### Saving and recovering changes
 
-`Ctrl+S` saves without leaving the form. There is no timed autosave: a save publishes
-(it rewrites the flat markdown, regenerates the Open Graph image, purges the static
-cache, and turns a half-typed slug into a redirect page).
+In classic mode, `Ctrl+S` saves without leaving the form. While you edit, the
+browser keeps a local copy for your account. **Restore them** puts your edited
+fields back in the form and warns if a newer revision changed any of them.
+A successful save, **Discard** or sign-out clears the copy.
 
-Instead, while you type, the form state is kept in your browser's `localStorage`, and
-reopening the page offers it back:
+The editor checks for newer revisions every three seconds and when you return
+to the tab. An untouched, visible editor reloads. If you have started editing,
+the banner opens the latest version in another tab and lets you review and
+recover your work. The server rejects saves from an older revision.
 
-> You left unsaved changes here 7 minutes ago, kept in this browser.
-> **Restore them** · **Discard**
-
-*Restore them* puts back only the fields you had changed (body included), without
-saving; untouched fields keep the page's current values. If someone saved one of *your*
-fields since, the offer says so:
-
-> You left unsaved changes here 7 minutes ago, kept in this browser. The page has been
-> saved since, on fields you changed: restoring puts your version back over it.
-
-The copy is dropped on a successful save or on *Discard*. It stays in that browser, is
-offered only to the account that typed it, and is cleared on sign-out. It is unrelated
-to the **Draft** toggle (a publication state stored in the database).
-
-The page editor checks the saved revision every three seconds and when you
-return to the tab. An untouched, visible editor reloads the latest version.
-If you've started editing, a banner lets you open the latest version in another
-tab. Your work stays in the original tab, and the new tab offers to restore your
-local draft. Review any overlapping fields before restoring. A stale form
-cannot save over a newer revision, including with `Ctrl+S`.
-
-A site overriding `@pwAdmin/page/edit.html.twig` has to carry over the
-`unsaved_changes_banner.html.twig` include and the form's `data-pw-unsaved-key`
-attribute. Render all remaining form fields with `form_rest` or `form_end` so
-the revision field is submitted, and retain the sync banner and shortcut submit button.
+If you override `@pwAdmin/page/edit.html.twig`, retain the unsaved-changes and
+revision banners, `data-pw-unsaved-key` and the shortcut submit button. Render
+all remaining fields with `form_rest` or `form_end` to submit the revision.
 
 ## Collaborative page editing
 
 On a saved Markdown page, choose **Collaborative mode**. Editor.js and Monaco
-share the body and save it directly to the database. Other editors viewing the same
-content see an invitation to join when a participant enters collaborative mode.
-They can join from a revision retained by that session and bring their local
-body edits with them. The page follows its current publication status. The draft toggle and publication hold control
-visibility. Use **Save settings** for changes to the rest of the page form.
-If you change the publication date in the form, live body saves pause until
-you save that setting and the body together.
+merge and save body changes as you type. Other editors see an invitation to
+join and can bring local edits from a revision the session still holds.
 
-When the Version extension is enabled, the history keeps a restore point
-before each period of live editing. A new period starts after five minutes
-without a saved change or after thirty minutes of continuous edits. Switch
-back to classic mode to use manual saves for the body.
+Live saves follow the page's publication status. Use **Save settings** for
+other fields. Changing the publication date pauses live saves until you save
+the date and body together. With the [Version extension](/extension/version),
+the next edit adds a restore point after five idle minutes or thirty minutes
+of continuous editing.
 
-The collaborative controls are available when Node.js and PHP process
-execution are available to the web process. A request has a 4 MiB limit.
-If a session reaches that limit, switch to classic mode to save the local work.
-
-If a conventional edit changes the underlying page, the live session warns
-you and keeps your current text in the tab. Use the page recovery prompt to
-review your changes against the new version.
+The PHP web process needs Node.js 24 on its `PATH` and `proc_open` enabled.
+If a request reaches the 4 MiB limit, switch to classic mode to save manually.
+If a classic or API save ends the session, use the recovery prompt to review
+your local changes against the latest revision.
 
 ## Uploading media
 

@@ -38,7 +38,8 @@ export function bindPageDraft(controls) {
   let preparedAt = -Infinity
   let composing = false
   let approved = null
-  let saving = false
+  let submitted = null
+  let busy = false
   let stale = false
   let collaborative = false
   const modeLabel = button.textContent
@@ -121,41 +122,37 @@ export function bindPageDraft(controls) {
   }
 
   button.addEventListener('click', async () => {
-    if (saving || view.read() === undefined) return
-    if (session) {
-      saving = true
-      try {
-        await body()?.pwEditor?.flushDraft?.()
-        if (!stale && !publicationPending()) await session.flush()
-        leave()
-      } finally {
-        saving = false
-      }
-      return
-    }
-
+    if (busy || view.read() === undefined) return
+    const joining = session === null
+    busy = true
     try {
       await body()?.pwEditor?.flushDraft?.()
+      if (!joining) {
+        if (!stale && !publicationPending()) await session?.flush()
+        leave()
+        return
+      }
+
+      stale = false
+      button.textContent = controls.dataset.classic
+      button.setAttribute('aria-pressed', 'true')
+      form.dataset.pwDraftActive = ''
+      for (const label of saveLabels.keys()) label.textContent = controls.dataset.settings
+      session = openDraft({
+        url: controls.dataset.url,
+        revision: revision.value,
+        token: controls.dataset.token,
+        model: markdownModel,
+        initial,
+        view,
+        status: display,
+      })
+      updateInvitation()
     } catch {
       display('offline')
-      return
+    } finally {
+      busy = false
     }
-    stale = false
-    button.textContent = controls.dataset.classic
-    button.setAttribute('aria-pressed', 'true')
-    form.dataset.pwDraftActive = ''
-    for (const label of saveLabels.keys()) label.textContent = controls.dataset.settings
-    session = openDraft({
-      url: controls.dataset.url,
-      revision: revision.value,
-      token: controls.dataset.token,
-      model: markdownModel,
-      initial,
-      view,
-      status: display,
-    })
-    updateInvitation()
-    if (publicationPending()) display('settingsPending')
   })
 
   form.addEventListener('input', (event) => {
@@ -172,8 +169,8 @@ export function bindPageDraft(controls) {
     if (event.target !== form || !session || publicationPending() || (approved?.revision === revision.value && approved?.body === view.read())) return
     event.preventDefault()
     event.stopImmediatePropagation()
-    if (saving) return
-    saving = true
+    if (busy) return
+    busy = true
     try {
       await body()?.pwEditor?.flushDraft?.()
       if (await session.flush()) {
@@ -183,17 +180,21 @@ export function bindPageDraft(controls) {
     } catch {
       display('offline')
     } finally {
-      saving = false
+      busy = false
     }
   }, { capture: true })
 
+  form.addEventListener('htmx:before:request', () => {
+    submitted = { body: view.read(), publication: publication?.value }
+  })
   form.addEventListener('htmx:after:request', (event) => {
     const saved = event.detail?.ctx?.response?.headers?.get('X-Pushword-Page-Revision')
-    if (saved) {
-      initial = approved?.body ?? view.read()
-      initialPublication = publication?.value
+    if (saved && submitted) {
+      initial = submitted.body ?? initial
+      initialPublication = submitted.publication
     }
     if (session && saved && saved !== approved?.revision) leave()
+    submitted = null
     approved = null
   })
   window.addEventListener('pagehide', (event) => {

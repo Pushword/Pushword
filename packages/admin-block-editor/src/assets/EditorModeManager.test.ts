@@ -111,6 +111,28 @@ describe('EditorModeManager – mode buttons', () => {
 })
 
 describe('EditorModeManager – mode buttons in JSON mode', () => {
+  it('allows leaving JSON during collaboration while keeping JSON closed in the other modes', () => {
+    document.body.innerHTML = `
+      <form data-pw-draft-active>
+        <div id="ed" data-input-id="inp"></div>
+        <input id="inp" type="hidden">
+      </form>`
+    const input = document.querySelector('input')!
+    const manager = new EditorModeManager('ed')
+    const switchTo = vi.spyOn(manager as any, 'switchTo').mockImplementation(() => {})
+    const switchFrom = vi.spyOn(manager as any, 'switchFrom').mockResolvedValue(undefined)
+
+    manager.toggleEditor()
+    input.dataset.editor = 'markdown'
+    manager.toggleEditor()
+    expect(switchTo).not.toHaveBeenCalled()
+    expect(switchFrom).not.toHaveBeenCalled()
+
+    input.dataset.editor = 'json'
+    manager.toggleEditor()
+    expect(switchFrom).toHaveBeenCalledExactlyOnceWith('json')
+  })
+
   it('hides the markdown button while JSON is open, and restores it on leaving', () => {
     document.body.innerHTML =
       '<div id="ed" data-input-id="inp"></div><input id="inp" type="hidden">' +

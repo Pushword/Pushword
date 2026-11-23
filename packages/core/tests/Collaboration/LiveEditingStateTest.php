@@ -32,6 +32,7 @@ final class LiveEditingStateTest extends TestCase
             $state->remember('Unused');
         }
 
+        self::assertNotNull($state->anchors);
         self::assertCount(3, $state->anchors);
         self::assertSame([1, 73, 74], array_keys($state->anchors));
 
