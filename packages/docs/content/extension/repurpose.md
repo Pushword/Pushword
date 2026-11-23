@@ -36,12 +36,11 @@ for one carousel or a list filtered to that page and host for several.
 Choose **Preview** to enlarge the cover or **Studio** to edit it. The studio's
 source card links back to the page editor; standalone carousels have no source.
 
-Choose **Join shared draft** to co-edit a saved carousel from the Studio. The
-draft is saved automatically. Reopen the Studio and join again to resume it.
-**Save**, **Ctrl+S**, or **⌘S** records a checkpoint in the carousel's version
-history in either the visual or source editor. If another participant saves
-first, the Studio keeps the previous draft open and offers the latest version
-in a separate tab.
+Choose **Collaborative mode** to co-edit a saved carousel from the Studio.
+Valid changes go straight to the database. The history keeps a restore point
+before each period of editing. A pause of five minutes or thirty minutes of
+continuous editing starts a new period. Switch back to classic mode to save
+manually.
 
 Open **Version history** in the Studio to compare a saved carousel with the
 current version or another saved version. **Restore version** restores the

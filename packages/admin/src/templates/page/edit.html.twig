@@ -13,10 +13,13 @@
         <div class="mb-2" data-pw-page-draft
              data-url="{{ path('pushword_page_draft', {id: entity.instance.id}) }}"
              data-token="{{ csrf_token('page-draft-' ~ entity.instance.id) }}"
-             {% for state in ['pending', 'connected', 'updated', 'offline', 'stale', 'checkpoint'] %}
+             data-settings="{{ 'adminPageDraftSettings'|trans }}"
+             data-settings-pending="{{ 'adminPageDraftSettingsPending'|trans }}"
+             data-classic="{{ 'adminPageDraftClassic'|trans }}"
+             {% for state in ['pending', 'connected', 'updated', 'offline', 'stale'] %}
                  data-{{ state }}="{{ ('adminPageDraft' ~ state|capitalize)|trans }}"
              {% endfor %}>
-            <button type="button" class="btn btn-sm btn-secondary">{{ 'adminPageDraftJoin'|trans }}</button>
+            <button type="button" class="btn btn-sm btn-secondary" aria-pressed="false">{{ 'adminPageDraftJoin'|trans }}</button>
             <span role="status"></span>
         </div>
     {% endif %}

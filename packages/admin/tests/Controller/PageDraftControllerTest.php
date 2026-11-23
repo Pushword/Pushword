@@ -14,7 +14,6 @@ final class PageDraftControllerTest extends AbstractAdminTestClass
 {
     public function testBrowserAndAgentUseTheSamePageDraft(): void
     {
-        $update = base64_encode(random_bytes(8));
         $client = $this->loginUser();
         $crawler = $client->request(Request::METHOD_GET, $this->generateAdminUrl('admin_page_edit', ['id' => 1]));
         self::assertResponseIsSuccessful();
@@ -26,11 +25,15 @@ final class PageDraftControllerTest extends AbstractAdminTestClass
         self::assertIsString($token);
         self::assertIsString($revision);
 
-        $client->jsonRequest(Request::METHOD_POST, $url, ['after' => 0, 'update' => $update], ['HTTP_IF_MATCH' => $revision]);
+        $client->jsonRequest(Request::METHOD_POST, $url, ['after' => 0], ['HTTP_IF_MATCH' => $revision]);
         self::assertResponseStatusCodeSame(403);
         self::assertJsonStringEqualsJsonString('{"error":"invalid_token"}', (string) $client->getResponse()->getContent());
-        $client->jsonRequest(Request::METHOD_POST, $url, ['after' => 0, 'update' => $update], ['HTTP_X_COLLABORATION_TOKEN' => $token, 'HTTP_IF_MATCH' => $revision]);
+        $client->jsonRequest(Request::METHOD_POST, $url, ['after' => 0], ['HTTP_X_COLLABORATION_TOKEN' => $token, 'HTTP_IF_MATCH' => $revision]);
         self::assertResponseIsSuccessful();
+        $browser = json_decode((string) $client->getResponse()->getContent(), true);
+        self::assertIsArray($browser);
+        self::assertIsString($browser['room']);
+        self::assertArrayHasKey('baseline', $browser);
 
         $user = self::getContainer()->get(UserRepository::class)->findOneBy(['email' => 'admin@example.tld']);
         self::assertNotNull($user?->apiToken);
@@ -38,7 +41,7 @@ final class PageDraftControllerTest extends AbstractAdminTestClass
         self::assertResponseIsSuccessful();
         $response = json_decode((string) $client->getResponse()->getContent(), true);
         self::assertIsArray($response);
-        self::assertSame([$update], $response['updates']);
+        self::assertSame($browser['room'], $response['room']);
         self::assertSame($revision, $response['revision']);
     }
 }

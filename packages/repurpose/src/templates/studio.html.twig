@@ -440,14 +440,17 @@
         </div>
       </details>
       <a class="btn" href="{{ path('repurpose_history_index', {id: post.id}) }}" target="_blank" rel="noopener" aria-label="{{ 'repurposeHistoryOpen'|trans }}">{{ 'repurposeHistory'|trans }}</a>
-      <button class="btn" type="button" @click="joinDraft()" x-show="!draftState || draftState === 'checkpoint'" x-cloak>{{ 'repurposeDraftJoin'|trans }}</button>
+      <button class="btn" type="button" @click="toggleDraft()" :aria-pressed="draftActive.toString()" :disabled="saving" x-cloak>
+        <span x-show="!draftActive">{{ 'repurposeDraftJoin'|trans }}</span>
+        <span x-show="draftActive">{{ 'repurposeDraftClassic'|trans }}</span>
+      </button>
       <span x-show="draftState" x-cloak role="status">
-        {% for state in ['pending', 'connected', 'updated', 'offline', 'stale', 'checkpoint'] %}
+        {% for state in ['pending', 'connected', 'updated', 'offline', 'invalid', 'stale'] %}
           <span x-show="draftState === '{{ state }}'">{{ ('repurposeDraft' ~ state|capitalize)|trans }}</span>
         {% endfor %}
       </span>
       <button class="btn primary studio-save" type="button" aria-keyshortcuts="Control+S Meta+S" title="Ctrl+S / ⌘S"
-              @click="save()" :disabled="saving || syncState !== ''" x-text="saveLabel">Save</button>
+              x-show="!draftActive" @click="save()" :disabled="saving || syncState !== ''" x-text="saveLabel">Save</button>
     </div>
     <div class="notice studio-sync" x-show="syncState" x-cloak>
       <span role="alert">

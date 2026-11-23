@@ -69,13 +69,14 @@ repurposeCanvasTextTool: "+ Texte"
 repurposeCanvasUndo: "Annuler"
 repurposeConfirmationCancel: Annuler
 repurposeEditSourcePage: Modifier la page source
-repurposeDraftCheckpoint: Un jalon a été enregistré.
-repurposeDraftConnected: Brouillon partagé enregistré automatiquement
-repurposeDraftJoin: Rejoindre le brouillon partagé
-repurposeDraftOffline: Brouillon partagé hors ligne. Gardez cet onglet ouvert.
-repurposeDraftPending: Synchronisation du brouillon partagé…
-repurposeDraftStale: Une nouvelle version a été enregistrée. Le brouillon précédent reste dans cet onglet.
-repurposeDraftUpdated: Brouillon partagé mis à jour par un autre participant
+repurposeDraftClassic: Passer en mode classique
+repurposeDraftConnected: Modifications enregistrées
+repurposeDraftInvalid: Corrigez les modifications en attente pour les enregistrer.
+repurposeDraftJoin: Mode collaboratif
+repurposeDraftOffline: Hors ligne. Gardez cet onglet ouvert.
+repurposeDraftPending: Enregistrement des modifications…
+repurposeDraftStale: Le contenu a changé hors de cette session. Vos retouches restent dans cet onglet.
+repurposeDraftUpdated: Contenu mis à jour par un autre participant
 repurposeExport: 'Exporter'
 repurposeFormat: 'Format'
 repurposeHelpEffect: "S’applique à tout le carrousel. Chaque slide peut remplacer cet effet."

@@ -10,13 +10,14 @@ afterEach(() => {
   vi.unstubAllGlobals()
 })
 
-it('applies a remote draft to Monaco and checkpoints the merged form body', async () => {
+it('applies the live body to Monaco and switches back to classic mode', async () => {
   document.body.innerHTML = `
     <div data-pw-page-draft data-url="/draft" data-token="csrf" data-connected="saved"
-      data-updated="updated" data-checkpoint="checkpoint"><button type="button">Join</button><span role="status"></span></div>
+      data-updated="updated" data-classic="Classic mode" data-settings-pending="Save settings first"><button type="button">Join</button><span role="status"></span></div>
     <form data-pw-page-revision-form>
       <input data-pw-page-revision value="1">
       <textarea name="Page[mainContent]">Alpha omega.</textarea>
+      <input name="Page[publishedAt]" value="2026-05-01T12:00">
       <button type="submit">Save</button>
     </form>`
 
@@ -34,14 +35,13 @@ it('applies a remote draft to Monaco and checkpoints the merged form body', asyn
 
   const doc = new Y.Doc()
   seedDraft(doc, markdownModel, input.value)
-  const vector = Y.encodeStateVector(doc)
   markdownModel.write(doc, input.value, 'Alpha lively omega.')
-  const update = btoa(String.fromCharCode(...Y.encodeStateAsUpdate(doc, vector)))
+  const update = btoa(String.fromCharCode(...Y.encodeStateAsUpdate(doc)))
   const fetch = vi.fn(async (_url, { body }) => {
     const { after } = JSON.parse(body)
     return Response.json({
-      revision: '1', baseline: after === 0 ? 'Alpha omega.' : null,
-      after: 1, updates: after === 0 ? [update] : [], more: false,
+      revision: '2', room: 'a'.repeat(32), baseline: null,
+      after: 1, snapshot: after === 0 ? update : null, accepted: false,
     })
   })
   vi.stubGlobal('fetch', fetch)
@@ -61,11 +61,16 @@ it('applies a remote draft to Monaco and checkpoints the merged form body', asyn
   await vi.waitFor(() => expect(submit).toHaveBeenCalledOnce())
   expect(fetch).toHaveBeenCalledTimes(2)
 
-  form.dispatchEvent(new CustomEvent('htmx:after:request', {
-    detail: { ctx: { response: new Response(null, { headers: { 'X-Pushword-Page-Revision': '2' } }) } },
-  }))
-  expect(status.textContent).toBe('checkpoint')
-  expect(controls.querySelector('button').hidden).toBe(false)
+  expect(form.querySelector('[data-pw-page-revision]').value).toBe('2')
+  expect(controls.querySelector('button').textContent).toBe('Classic mode')
+
+  const date = form.querySelector('[name$="[publishedAt]"]')
+  date.value = ''
+  date.dispatchEvent(new Event('change', { bubbles: true }))
+  expect(status.textContent).toBe('Save settings first')
+  controls.querySelector('button').click()
+  await vi.waitFor(() => expect(controls.querySelector('button').textContent).toBe('Join'))
+  expect(form.hasAttribute('data-pw-draft-active')).toBe(false)
   doc.destroy()
 })
 

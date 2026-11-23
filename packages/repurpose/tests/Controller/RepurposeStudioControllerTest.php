@@ -104,9 +104,8 @@ final class RepurposeStudioControllerTest extends WebTestCase
         parent::tearDown();
     }
 
-    public function testStudioAndAgentShareDraftUpdatesWithoutCreatingHistory(): void
+    public function testStudioAndAgentAutosaveTheSameCarouselWithGroupedHistory(): void
     {
-        $update = base64_encode(random_bytes(8));
         $post = $this->persistPost();
         $revision = $post->revision();
         $browserUrl = '/admin/repurpose/studio/'.$post->id.'/draft';
@@ -114,29 +113,62 @@ final class RepurposeStudioControllerTest extends WebTestCase
         $this->client->request(Request::METHOD_GET, '/admin/repurpose/studio/'.$post->id);
         $html = (string) $this->client->getResponse()->getContent();
         self::assertSame(1, preg_match('/draftToken: "([^"]+)"/', $html, $matches));
-        $token = $matches[1];
+        $browser = ['HTTP_X_COLLABORATION_TOKEN' => $matches[1], 'HTTP_IF_MATCH' => $revision];
+        $agent = ['HTTP_AUTHORIZATION' => 'Bearer '.$this->testToken];
 
-        $this->client->jsonRequest(Request::METHOD_POST, $browserUrl, ['after' => 0, 'update' => $update], ['HTTP_IF_MATCH' => $revision]);
+        $this->client->jsonRequest(Request::METHOD_POST, $browserUrl, ['after' => 0]);
         self::assertResponseStatusCodeSame(403);
-        self::assertSame('{"error":"invalid_token"}', $this->client->getResponse()->getContent());
-        $this->client->jsonRequest(Request::METHOD_POST, $browserUrl, ['after' => 0, 'update' => $update], ['HTTP_X_COLLABORATION_TOKEN' => $token, 'HTTP_IF_MATCH' => $revision]);
-        self::assertResponseIsSuccessful();
-
         $this->client->jsonRequest(Request::METHOD_POST, $apiUrl, ['after' => 0]);
         self::assertResponseStatusCodeSame(401);
-        $this->client->jsonRequest(Request::METHOD_POST, $apiUrl, ['after' => 0], ['HTTP_AUTHORIZATION' => 'Bearer '.$this->testToken]);
+        $this->client->jsonRequest(Request::METHOD_POST, $browserUrl, ['after' => 0], $browser);
         self::assertResponseIsSuccessful();
-        $body = json_decode((string) $this->client->getResponse()->getContent(), true);
-        self::assertIsArray($body);
-        self::assertSame([$update], $body['updates']);
-        self::assertSame($revision, $body['revision']);
-        self::assertIsString($body['baseline']);
-        self::assertSame($post->spec, json_decode($body['baseline'], true));
+        $room = $this->readJson()['room'];
+        self::assertIsString($room);
 
+        $spec = $post->spec;
+        $spec['caption'] = 'Edited in the studio';
+        $this->client->jsonRequest(Request::METHOD_POST, $browserUrl, [
+            'room' => $room, 'after' => 0, 'snapshot' => 'YWJj', 'content' => json_encode($spec, \JSON_THROW_ON_ERROR),
+        ], $browser);
+        self::assertResponseIsSuccessful();
+        self::assertTrue($this->readJson()['accepted']);
+
+        $this->client->jsonRequest(Request::METHOD_POST, $apiUrl, ['after' => 0], $agent);
+        self::assertResponseIsSuccessful();
+        self::assertSame('YWJj', $this->readJson()['snapshot']);
+        self::assertSame($room, $this->readJson()['room']);
+
+        $this->client->jsonRequest(Request::METHOD_POST, $apiUrl, [
+            'room' => $room, 'after' => 1, 'snapshot' => 'YWJk', 'content' => '{"slides":[]}',
+        ], $agent);
+        self::assertResponseStatusCodeSame(422);
+        self::assertSame('invalid_content', $this->readJson()['error']);
+        $this->client->jsonRequest(Request::METHOD_POST, $apiUrl, [
+            'room' => $room, 'after' => 1, 'snapshot' => 'YWJk', 'content' => '[]',
+        ], $agent);
+        self::assertResponseStatusCodeSame(422);
+        self::assertSame([['path' => '', 'message' => 'Expected a JSON carousel spec.']], $this->readJson()['violations']);
+
+        $other = $this->persistPost([...$spec, 'page' => 'blog/live-collision']);
+        $this->client->jsonRequest(Request::METHOD_POST, $apiUrl, [
+            'room' => $room, 'after' => 1, 'snapshot' => 'YWJk',
+            'content' => json_encode([...$spec, 'page' => $other->page], \JSON_THROW_ON_ERROR),
+        ], $agent);
+        self::assertResponseStatusCodeSame(422);
+        self::assertSame([['path' => 'page', 'message' => 'A carousel already exists for this page on this network.']], $this->readJson()['violations']);
+
+        $spec['caption'] = 'Edited in the studio, then by the agent';
+        $this->client->jsonRequest(Request::METHOD_POST, $apiUrl, [
+            'room' => $room, 'after' => 1, 'snapshot' => 'YWJk', 'content' => json_encode($spec, \JSON_THROW_ON_ERROR),
+        ], $agent);
+        self::assertResponseIsSuccessful();
+        self::assertTrue($this->readJson()['accepted']);
         $saved = $this->em->find(SocialPost::class, $post->id);
         self::assertInstanceOf(SocialPost::class, $saved);
-        self::assertSame($revision, $saved->revision());
-        self::assertSame(0, $this->em->getRepository(SocialPostRevision::class)->count(['post' => $post->id]));
+        $this->em->refresh($saved);
+        self::assertSame($spec, $saved->spec);
+        self::assertSame(3, $saved->version);
+        self::assertSame(1, $this->em->getRepository(SocialPostRevision::class)->count(['post' => $post->id]));
     }
 
     public function testStudioRendersTheEditorShell(): void
@@ -952,6 +984,15 @@ final class RepurposeStudioControllerTest extends WebTestCase
         } finally {
             new Filesystem()->remove($fonts->installDir());
         }
+    }
+
+    /** @return array<array-key, mixed> */
+    private function readJson(): array
+    {
+        $payload = json_decode((string) $this->client->getResponse()->getContent(), true);
+        self::assertIsArray($payload);
+
+        return $payload;
     }
 
     /** @param array<string, mixed>|null $spec */

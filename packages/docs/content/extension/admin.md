@@ -108,22 +108,23 @@ A site overriding `@pwAdmin/page/edit.html.twig` has to carry over the
 attribute. Render all remaining form fields with `form_rest` or `form_end` so
 the revision field is submitted, and retain the sync banner and shortcut submit button.
 
-## Shared page drafts
+## Collaborative page editing
 
-On a saved Markdown page, choose **Join shared draft**. Editor.js and Monaco in Markdown
-mode share the body, and another participant's edits appear in the editor.
-Draft changes are saved automatically and can be recovered by joining the
-same draft again. Save the page to record a checkpoint in the page history
-when the Version extension is enabled.
+On a saved Markdown page, choose **Collaborative mode**. Editor.js and Monaco
+share the body and save it directly to the database. The page follows its
+current publication status. The draft toggle and publication hold control
+visibility. Use **Save settings** for changes to the rest of the page form.
+If you change the publication date in the form, live body saves pause until
+you save that setting and the body together.
 
-A regular save starts a new revision. If another editor or agent records one
-while you are typing, Pushword keeps your work in your tab and offers the
-latest version in a separate tab. Review your changes before applying them to
-a draft for that version. The draft only covers the body; other form fields
-use the existing browser recovery and revision checks.
+When the Version extension is enabled, the history keeps a restore point
+before each period of live editing. A new period starts after five minutes
+without a saved change or after thirty minutes of continuous edits. Switch
+back to classic mode to use manual saves for the body.
 
-The draft store lives in the Pushword var directory. Keep it writable on the
-instance that serves the admin and API so draft autosaves survive restarts.
+If a conventional edit changes the underlying page, the live session warns
+you and keeps your current text in the tab. Use the page recovery prompt to
+review your changes against the new version.
 
 ## Uploading media
 

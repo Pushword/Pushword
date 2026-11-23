@@ -194,25 +194,28 @@ property is removed — deleting a line in the file is an edit.
 - `400` — empty body, malformed YAML, or a document that does not open with `---`.
 - `422` and `428` are JSON errors, identical to the JSON endpoints.
 
-### Live shared drafts
+### Collaborative editing
 
-A bearer-authenticated editor can use the same Yjs draft as the admin through
-`POST /api/pages/{id}/draft` for a page body or
-`POST /api/repurpose/{id}/draft` for a carousel. The latter requires the
-Repurpose extension. Open the draft with `{"after":0}`. The response supplies
-the saved `baseline` (Markdown or JSON text), a draft `revision`, and the
-first batch of base64 Yjs updates.
+A bearer-authenticated editor can use the same Yjs session as the admin through
+`POST /api/pages/{id}/draft` or `POST /api/repurpose/{id}/draft`. The
+Repurpose route requires the Repurpose extension.
 
-Send the returned revision in `If-Match` on later requests and the last
-returned cursor in `after`. Add a base64 Yjs `update` to share a change.
-Read further batches while `more` is true. An HTTP 409 means the draft's
-base revision changed. Reopen the current version and reconcile any pending
-edits before sending them again. The shared draft does not create history
-entries. Saving the page or carousel records a checkpoint.
+Send `{"after":0}` to open the session. The response contains a `room`
+identifier and a cursor in `after`. It includes either the current full
+base64 Yjs `snapshot` or a saved `baseline` (Markdown or JSON text), which
+clients import with the deterministic seed used in the example below.
 
-From the Pushword repository, with the admin JavaScript dependencies installed,
-use `packages/admin/examples/shared-draft-agent.mjs` to read or edit a draft.
-The script reads the API token from `PUSHWORD_TOKEN`.
+To save an edit, send the room identifier, the last cursor read, a full base64
+Yjs `snapshot`, and the corresponding materialized `content` string.
+`accepted: true` confirms that the update is stored with the content in the
+database. When another editor has advanced the cursor, the response includes
+their snapshot and `accepted: false`. Merge that snapshot with the local
+edits and retry at the new cursor. HTTP 409 signals a conventional write
+outside the current session. Read the new version and reconcile local changes
+before resuming. An invalid carousel specification returns HTTP 422.
+
+The repository example `packages/admin/examples/shared-draft-agent.mjs`
+reads its token from `PUSHWORD_TOKEN`.
 
 ```sh
 node packages/admin/examples/shared-draft-agent.mjs https://example.test/api/pages/42/draft "old sentence" "new sentence"

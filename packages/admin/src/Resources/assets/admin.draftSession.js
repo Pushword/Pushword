@@ -45,7 +45,8 @@ export function openDraft({ url, revision, token, authorization, model, view, st
   const doc = new Y.Doc()
   const pending = []
   let cursor = 0
-  let seeded = false
+  let room = null
+  let rejected = null
   let rendered = initial
   let active = true
   let request = null
@@ -57,9 +58,13 @@ export function openDraft({ url, revision, token, authorization, model, view, st
   })
 
   function capture() {
-    if (!active || !seeded || applying) return
+    if (!active || !room || applying) return
     const current = view.read()
-    if (current === undefined || view.equal(rendered, current)) return
+    if (current === undefined) {
+      status('invalid')
+      return
+    }
+    if (view.equal(rendered, current)) return
     doc.transact(() => model.write(doc, rendered, current))
     rendered = current
     status('pending')
@@ -67,19 +72,28 @@ export function openDraft({ url, revision, token, authorization, model, view, st
 
   async function exchange(force) {
     if (!active || (!force && (view.wait?.() || document.hidden))) return false
+    if (view.prepare) await view.prepare()
+    if (!active || (!force && view.wait?.())) return false
     capture()
-    const sent = pending.length
+    const joining = room === null
+    const value = pending.length ? model.read(doc) : null
+    const content = typeof value === 'string' ? value : JSON.stringify(value)
+    const sent = content === rejected ? 0 : pending.length
     const response = await fetch(url, {
       method: 'POST',
       redirect: 'error',
       signal: AbortSignal.timeout(3500),
       headers: {
         'Content-Type': 'application/json',
-        ...(revision ? { 'If-Match': revision } : {}),
+        ...(joining && revision ? { 'If-Match': revision } : {}),
         ...(token ? { 'X-Collaboration-Token': token } : {}),
         ...(authorization ? { Authorization: authorization } : {}),
       },
-      body: JSON.stringify({ after: cursor, update: sent ? encode(Y.mergeUpdates(pending)) : null }),
+      body: JSON.stringify({
+        room,
+        after: cursor,
+        ...(sent ? { snapshot: encode(Y.encodeStateAsUpdate(doc)), content } : {}),
+      }),
     })
     if (!active) return false
     if ([404, 409].includes(response.status)) {
@@ -88,26 +102,41 @@ export function openDraft({ url, revision, token, authorization, model, view, st
       status('stale')
       return false
     }
-    if (!response.ok) throw new Error('Draft sync failed')
+    if (response.status === 422) {
+      rejected = content
+      status('invalid', (await response.json()).violations)
+      return false
+    }
+    if (!response.ok) throw new Error('Live save failed')
 
     const result = await response.json()
     if (!active || (!force && view.wait?.()) || view.read() === undefined) return false
-    revision = result.revision
-    // Capture anything typed during the request before integrating its response.
-    if (!seeded) {
-      seedDraft(doc, model, result.baseline)
-      seeded = true
+    const remote = Boolean(result.snapshot || result.legacyUpdates?.length)
+    if (remote) {
+      if (!force && view.deferRemote?.()) return false
+      if (view.prepare) await view.prepare()
+      if (!active || (!force && (view.wait?.() || view.deferRemote?.())) || view.read() === undefined) return false
     }
-    if (result.updates.length && view.prepare) await view.prepare()
-    if (!active || (!force && view.wait?.()) || view.read() === undefined) return false
-    capture()
+
     const before = model.read(doc)
-    doc.transact(() => {
-      for (const update of result.updates) Y.applyUpdate(doc, decode(update), REMOTE)
-    }, REMOTE)
+    if (joining) {
+      if (result.snapshot === null) seedDraft(doc, model, result.baseline)
+      else Y.applyUpdate(doc, decode(result.snapshot), REMOTE)
+      room = result.room
+      capture()
+      if (result.legacyUpdates?.length) {
+        doc.transact(() => {
+          for (const update of result.legacyUpdates) Y.applyUpdate(doc, decode(update))
+        })
+      }
+    } else {
+      capture()
+      if (result.snapshot !== null) Y.applyUpdate(doc, decode(result.snapshot), REMOTE)
+    }
+
     const merged = model.read(doc)
-    const changed = !view.equal(before, merged)
-    mustRender ||= changed || (result.updates.length > 0 && cursor === 0)
+    const changed = remote && !view.equal(before, merged)
+    mustRender ||= changed
     if (mustRender) {
       applying = true
       try {
@@ -118,10 +147,19 @@ export function openDraft({ url, revision, token, authorization, model, view, st
         applying = false
       }
     }
-    pending.splice(0, sent)
+
+    if (result.accepted) {
+      pending.splice(0, sent)
+      rejected = null
+    }
     cursor = result.after
+    if (joining || result.accepted || result.snapshot || revision !== result.revision) {
+      revision = result.revision
+      view.saved?.(revision, pending.length === 0)
+    }
+    if (pending.length && rejected !== null && !changed) return false
     status(pending.length ? 'pending' : changed ? 'updated' : 'connected')
-    return !result.more && pending.length === 0
+    return pending.length === 0
   }
 
   function sync(force = false) {

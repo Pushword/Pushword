@@ -25,6 +25,6 @@ final class PageDraftController extends AbstractController
 
         $request->getSession()->save();
 
-        return $exchange->sync($request, 'page:'.$page->id, (string) $page->writeVersion, $page->mainContent);
+        return $exchange->page($request, $page);
     }
 }

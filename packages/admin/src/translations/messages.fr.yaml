@@ -145,13 +145,15 @@ adminPageCustomPropertiesLabel: 'Autres paramètres'
 adminPageEditMessageHelp: 'Précédente modification le %lastEditDatetime% <br> <em>%lastEditMessage%</em>'
 adminPageEditMessageHelpVersionned: 'Précédente modification le %lastEditDatetime% <br> <em>%lastEditMessage%</em> <br><a href="%seeVersionLink%">Voir l''historique</a>'
 adminPageEditMessageLabel: "Motif d'édition"
-adminPageDraftCheckpoint: Un jalon a été enregistré.
-adminPageDraftConnected: Brouillon partagé enregistré automatiquement
-adminPageDraftJoin: Rejoindre le brouillon partagé
-adminPageDraftOffline: Brouillon partagé hors ligne. Gardez cet onglet ouvert.
-adminPageDraftPending: Synchronisation du brouillon partagé…
-adminPageDraftStale: Une nouvelle version a été enregistrée. Le brouillon précédent reste dans cet onglet.
-adminPageDraftUpdated: Brouillon partagé mis à jour par un autre participant
+adminPageDraftClassic: Passer en mode classique
+adminPageDraftConnected: Modifications enregistrées
+adminPageDraftJoin: Mode collaboratif
+adminPageDraftOffline: Hors ligne. Gardez cet onglet ouvert.
+adminPageDraftPending: Enregistrement des modifications…
+adminPageDraftSettings: Enregistrer les réglages
+adminPageDraftSettingsPending: Enregistrez le réglage de publication pour reprendre la sauvegarde en direct.
+adminPageDraftStale: Le contenu a changé hors de cette session. Vos retouches restent dans cet onglet.
+adminPageDraftUpdated: Contenu mis à jour par un autre participant
 adminPageEditLockRefresh: "Actualiser la page"
 adminPageEditLockWarning: "%user% est en train de modifier cette page. Vos modifications pourraient être écrasées."
 adminPageEditLockWarningSameUser: "Vous modifiez cette page dans un autre onglet ou navigateur."

@@ -13,9 +13,9 @@ use Doctrine\ORM\Event\PostUpdateEventArgs;
 use Doctrine\ORM\Events;
 use Doctrine\ORM\Mapping\Column;
 use Exception;
+use Pushword\Core\Collaboration\LiveWrite;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Entity\SharedTrait\IdInterface;
-use Pushword\Core\Entity\User;
 use Pushword\Core\EventListener\PageListener;
 use Pushword\Core\Service\RevisionCalculator;
 use Pushword\Core\Utils\Entity;
@@ -44,6 +44,7 @@ class Versionner
         private readonly EntityManagerInterface $entityManager,
         private readonly SerializerInterface $serializer,
         private readonly RevisionCalculator $revisions,
+        private readonly ?LiveWrite $liveWrite = null,
     ) {
         $this->fileSystem = new Filesystem();
     }
@@ -88,7 +89,18 @@ class Versionner
         }
 
         \assert($entity instanceof IdInterface); // every versionable type uses IdTrait
-        $this->createVersion($type, $entity, $action);
+        if (true === $this->liveWrite?->isActive($entity)) {
+            $previous = $this->liveWrite->previousPage();
+            if (null !== $previous) {
+                [$content, $editor] = $previous;
+                $this->createVersion($type, $entity, $action, $content, $editor);
+            }
+
+            return;
+        }
+
+        $editor = $entity instanceof Page ? $entity->editedBy?->getUserIdentifier() : null;
+        $this->createVersion($type, $entity, $action, $this->revisions->serialize($entity), $editor);
     }
 
     private function typeOf(object $entity): ?string
@@ -102,10 +114,9 @@ class Versionner
         return null;
     }
 
-    private function createVersion(string $type, IdInterface $entity, string $action): void
+    private function createVersion(string $type, IdInterface $entity, string $action, string $jsonContent, ?string $editor): void
     {
         $id = (int) $entity->id;
-        $jsonContent = $this->revisions->serialize($entity);
         $hash = sha1($jsonContent);
 
         // Idempotency: if the most recent snapshot already carries this hash,
@@ -118,7 +129,7 @@ class Versionner
         }
 
         $filename = $this->buildVersionFilename($hash);
-        $snapshot = $this->snapshotWithEditor($entity, $jsonContent);
+        $snapshot = $this->snapshotWithEditor($jsonContent, $editor);
         $this->fileSystem->dumpFile(
             $this->getVersionFile($type, $id, $filename),
             gzencode($snapshot, 1) ?: $snapshot,
@@ -126,7 +137,6 @@ class Versionner
 
         $this->pruneOldVersions($type, $id);
 
-        $editor = $entity instanceof Page ? $entity->editedBy?->getUserIdentifier() : null;
         $this->logActivity($type, $entity, $filename, $action, $editor);
     }
 
@@ -187,15 +197,15 @@ class Versionner
      * restore (no phantom User is created). Flat imports have no authenticated
      * editor, so editedBy stays null and nothing is injected.
      */
-    private function snapshotWithEditor(IdInterface $entity, string $jsonContent): string
+    private function snapshotWithEditor(string $jsonContent, ?string $editor): string
     {
-        if (! $entity instanceof Page || ! $entity->editedBy instanceof User) {
+        if (null === $editor) {
             return $jsonContent;
         }
 
         /** @var array<string, mixed> $data */
         $data = json_decode($jsonContent, true, 512, \JSON_THROW_ON_ERROR);
-        $data['editedBy'] = ['username' => $entity->editedBy->getUserIdentifier()];
+        $data['editedBy'] = ['username' => $editor];
 
         return json_encode($data, \JSON_THROW_ON_ERROR);
     }

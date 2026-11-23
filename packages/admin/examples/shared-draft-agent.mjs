@@ -11,27 +11,35 @@ const url = new URL(address)
 const carousel = /^\/api\/repurpose\/\d+\/draft$/.test(url.pathname)
 const model = carousel ? carouselModel : markdownModel
 const doc = new Y.Doc()
-let revision
+let room = null
 let after = 0
 
-async function sync(update = null) {
+async function sync(write = false) {
+  const value = model.read(doc)
   const response = await fetch(url, {
     method: 'POST',
     redirect: 'error',
     headers: {
       'Content-Type': 'application/json',
       Authorization: 'Bearer ' + token,
-      ...(revision ? { 'If-Match': revision } : {}),
     },
-    body: JSON.stringify({ after, update }),
+    body: JSON.stringify({
+      room,
+      after,
+      ...(write ? {
+        snapshot: Buffer.from(Y.encodeStateAsUpdate(doc)).toString('base64'),
+        content: carousel ? JSON.stringify(value) : value,
+      } : {}),
+    }),
   })
-  if (!response.ok) throw new Error('Shared draft returned HTTP ' + response.status)
+  if (!response.ok) throw new Error('Live editing returned HTTP ' + response.status)
   const result = await response.json()
-  if (revision === undefined) seedDraft(doc, model, result.baseline)
-  revision = result.revision
+  if (room === null && !result.snapshot) seedDraft(doc, model, result.baseline)
+  if (result.snapshot) Y.applyUpdate(doc, Buffer.from(result.snapshot, 'base64'))
+  for (const update of result.legacyUpdates ?? []) Y.applyUpdate(doc, Buffer.from(update, 'base64'))
+  room = result.room
   after = result.after
-  for (const incoming of result.updates) Y.applyUpdate(doc, Buffer.from(incoming, 'base64'))
-  return result.more
+  return result.accepted
 }
 
 function replace(text) {
@@ -41,10 +49,9 @@ function replace(text) {
   return text.replace(search, () => replacement)
 }
 
-while (await sync()) { /* Read the next batch before editing. */ }
+await sync()
 if (search !== undefined) {
   const previous = model.read(doc)
-  const vector = Y.encodeStateVector(doc)
   if (carousel) {
     if (!field?.startsWith('/')) throw new Error('A carousel edit requires a JSON pointer such as /slides/0/title.')
     const next = structuredClone(previous)
@@ -57,8 +64,9 @@ if (search !== undefined) {
   } else {
     doc.transact(() => model.write(doc, previous, replace(previous)))
   }
-  let more = await sync(Buffer.from(Y.encodeStateAsUpdate(doc, vector)).toString('base64'))
-  while (more) more = await sync()
+  let saved = false
+  for (let attempt = 0; attempt < 5 && !saved; attempt++) saved = await sync(true)
+  if (!saved) throw new Error('Could not save the edit while other participants were writing.')
 }
 
 const draft = model.read(doc)

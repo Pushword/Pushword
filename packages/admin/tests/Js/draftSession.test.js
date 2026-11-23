@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import * as Y from 'yjs'
 import { afterEach, expect, it, vi } from 'vitest'
-import { carouselModel, draftCarousel, equalJson, markdownModel, openDraft, reconcileJson, textChange } from '../../src/Resources/assets/admin.draftSession.js'
+import { carouselModel, draftCarousel, equalJson, markdownModel, openDraft, reconcileJson, seedDraft, textChange } from '../../src/Resources/assets/admin.draftSession.js'
 
 const sessions = []
 
@@ -11,15 +11,35 @@ afterEach(() => {
 })
 
 function sharedRoom(baseline) {
-  const updates = []
-  const room = { offline: false, stale: false }
+  const id = 'a'.repeat(32)
+  const room = { offline: false, stale: false, invalid: false, content: baseline, legacyUpdates: [] }
+  let cursor = 0
+  let snapshot = null
   vi.stubGlobal('fetch', vi.fn(async (_url, { body, headers }) => {
     if (room.offline) throw new Error('Connection interrupted')
     if (room.stale) return new Response(null, { status: 409 })
-    expect(headers['If-Match']).toBe('1')
-    const { after, update } = JSON.parse(body)
-    if (update && !updates.includes(update)) updates.push(update)
-    return Response.json({ revision: '1', baseline: after === 0 ? baseline : null, after: updates.length, updates: updates.slice(after), more: false })
+    const message = JSON.parse(body)
+    const joining = message.room === null
+    if (joining) expect(headers['If-Match']).toBe('1')
+    else expect(message.room).toBe(id)
+    const accepted = Boolean(message.snapshot && message.after === cursor)
+    if (accepted && room.invalid) {
+      return Response.json({ violations: [{ path: 'slides', message: 'Invalid' }] }, { status: 422 })
+    }
+    if (accepted) {
+      room.content = message.content
+      snapshot = message.snapshot
+      cursor++
+    }
+    return Response.json({
+      revision: String(cursor + 1),
+      room: id,
+      baseline: joining && snapshot === null ? baseline : null,
+      after: cursor,
+      snapshot: !accepted && (joining || message.after < cursor) ? snapshot : null,
+      accepted,
+      legacyUpdates: joining && snapshot === null ? room.legacyUpdates : [],
+    })
   }))
   return room
 }
@@ -58,7 +78,8 @@ it('merges edits in the same sentence, keeps pending edits on disconnect, and re
   expect(await alice.flush()).toBe(true)
   expect(await bob.flush()).toBe(true)
   expect(await alice.flush()).toBe(true)
-  expect(alice.value).toBe('Alpha lovely middle omega ending.')
+  expect(room.content).toBe('Alpha lovely middle omega ending.')
+  expect(alice.value).toBe(room.content)
   expect(bob.value).toBe(alice.value)
   const reopened = participant('Alpha middle omega.')
   expect(await reopened.flush()).toBe(true)
@@ -112,4 +133,34 @@ it('keeps empty title text mergeable instead of replacing the slide field', () =
   carouselModel.write(doc, original, next)
   carouselModel.write(doc, next, original)
   expect(carouselModel.read(doc)).toEqual(original)
+})
+
+it('keeps a rejected projection local and submits it after the editor corrects it', async () => {
+  const room = sharedRoom('First version')
+  const editor = participant(room.content)
+  expect(await editor.flush()).toBe(true)
+  room.invalid = true
+  editor.type('Invalid version')
+  expect(await editor.flush()).toBe(false)
+  expect(editor.status).toHaveBeenLastCalledWith('invalid', [{ path: 'slides', message: 'Invalid' }])
+  expect(room.content).toBe('First version')
+  expect(editor.value).toBe('Invalid version')
+  room.invalid = false
+  editor.type('Corrected version')
+  expect(await editor.flush()).toBe(true)
+  expect(room.content).toBe('Corrected version')
+})
+
+it('imports the existing saved draft before writing its content to the database', async () => {
+  const room = sharedRoom('Alpha omega')
+  const previous = new Y.Doc()
+  seedDraft(previous, markdownModel, room.content)
+  const vector = Y.encodeStateVector(previous)
+  markdownModel.write(previous, room.content, 'Alpha archived omega')
+  room.legacyUpdates.push(btoa(String.fromCharCode(...Y.encodeStateAsUpdate(previous, vector))))
+  const editor = participant(room.content)
+  expect(await editor.flush()).toBe(true)
+  expect(editor.value).toBe('Alpha archived omega')
+  expect(room.content).toBe(editor.value)
+  previous.destroy()
 })

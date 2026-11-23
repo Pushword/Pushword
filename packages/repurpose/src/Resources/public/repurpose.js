@@ -332,6 +332,7 @@
       saving: false,
       saveLabel: 'Save',
       draftState: '',
+      draftActive: false,
       exporting: false,
       exportLabel: 'Export .zip',
       exportingSvg: false,
@@ -388,8 +389,22 @@
         composing = active
       },
 
-      joinDraft: async function () {
-        if (draft || this.draftState === 'pending') return
+      toggleDraft: async function () {
+        if (this.saving) return
+        if (draft) {
+          this.saving = true
+          try {
+            if (this.draftState !== 'stale') await draft.flush()
+            draft.close()
+            draft = undefined
+            this.draftActive = false
+            this.draftState = ''
+          } finally {
+            this.saving = false
+          }
+          return
+        }
+        if (this.syncState || this.draftState === 'pending') return
         var self = this
         try {
           this.draftState = 'pending'
@@ -397,6 +412,7 @@
           var read = function () {
             try { return draftCarousel(self.payload()) } catch { return undefined }
           }
+          this.draftActive = true
           draft = openDraft({
             url: cfg.urls.draft,
             token: cfg.draftToken,
@@ -406,6 +422,13 @@
             view: {
               read,
               equal: equalJson,
+              saved(revision, complete) {
+                self.revision = revision
+                if (complete && self.dirty) {
+                  initialSpec = read()
+                  self.dirty = false
+                }
+              },
               wait: () => composing || switchingView || self._drag !== null || read() === undefined,
               apply(spec) {
                 if (self.view === 'source') {
@@ -418,7 +441,8 @@
                 self.normalize(false)
               },
             },
-            status(state) {
+            status(state, violations) {
+              if (violations) self.violations = violations
               if (state === 'connected' && self.draftState === 'updated') return
               lastDraftState = state
               self.draftState = state
@@ -426,12 +450,13 @@
             },
           })
         } catch {
+          this.draftActive = false
           this.draftState = 'offline'
         }
       },
 
       checkRevision: async function () {
-        if (document.hidden || this.saving || this._checkingRevision) {
+        if (draft || document.hidden || this.saving || this._checkingRevision) {
           return
         }
 
@@ -440,7 +465,7 @@
         try {
           var response = await fetch(this.urls.revision, { cache: 'no-store' })
           var current = response.ok ? (await response.json()).revision : null
-          if (this.saving || this.revision !== revision) {
+          if (draft || this.saving || this.revision !== revision) {
             return
           }
           if (404 === response.status) {
@@ -670,8 +695,10 @@
           return
         }
 
-        if (draft && !await draft.flush()) return
-        if (this.saving || this.syncState) return
+        if (draft) {
+          await draft.flush()
+          return
+        }
         var options
         try {
           options = jsonPost(this.payload())
@@ -695,11 +722,6 @@
           if (response.ok) {
             if (this.revision !== body.revision) {
               initialSpec = JSON.parse(options.body)
-              if (draft) {
-                draft.close()
-                draft = undefined
-                this.draftState = 'checkpoint'
-              }
             }
             this.revision = body.revision
             this.violations = []

@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Pushword\Repurpose\Controller;
 
-use Pushword\Core\Collaboration\DraftExchange;
 use Pushword\Repurpose\Entity\SocialPost;
+use Pushword\Repurpose\Service\CarouselLiveEditing;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -17,7 +17,7 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 final class RepurposeDraftController extends AbstractController
 {
     #[Route('/admin/repurpose/studio/{id}/draft', name: 'repurpose_studio_draft', requirements: ['id' => '\d+'], methods: ['POST'])]
-    public function sync(SocialPost $post, Request $request, DraftExchange $exchange): JsonResponse
+    public function sync(SocialPost $post, Request $request, CarouselLiveEditing $liveEditing): JsonResponse
     {
         if (! $this->isCsrfTokenValid('repurpose-draft-'.$post->id, $request->headers->get('X-Collaboration-Token'))) {
             return new JsonResponse(['error' => 'invalid_token'], Response::HTTP_FORBIDDEN);
@@ -25,6 +25,6 @@ final class RepurposeDraftController extends AbstractController
 
         $request->getSession()->save();
 
-        return $exchange->sync($request, 'repurpose:'.$post->id, $post->revision(), json_encode($post->spec, \JSON_THROW_ON_ERROR));
+        return $liveEditing->sync($request, $post);
     }
 }

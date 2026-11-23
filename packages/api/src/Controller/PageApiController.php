@@ -49,7 +49,7 @@ final class PageApiController extends AbstractApiController
     #[Route('/api/pages/{id}/draft', name: 'pushword_api_page_draft', requirements: ['id' => '\d+'], methods: ['POST'])]
     public function syncDraft(Page $page, Request $request, DraftExchange $exchange): JsonResponse
     {
-        return $exchange->sync($request, 'page:'.$page->id, (string) $page->writeVersion, $page->mainContent);
+        return $exchange->page($request, $page);
     }
 
     #[Route('/api/page/search', name: 'pushword_api_page_search', methods: ['GET'])]

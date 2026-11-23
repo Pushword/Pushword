@@ -12,13 +12,18 @@ use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Event\PostUpdateEventArgs;
 use Doctrine\ORM\Event\PreUpdateEventArgs;
 use Doctrine\ORM\Events;
+use Pushword\Core\Collaboration\LiveWrite;
 use Pushword\Repurpose\Doctrine\CompressedJsonType;
 use Pushword\Repurpose\Entity\SocialPost;
 
 #[AsEntityListener(event: Events::preUpdate, entity: SocialPost::class)]
 #[AsEntityListener(event: Events::postUpdate, entity: SocialPost::class)]
-final class SocialPostRevisionListener
+final readonly class SocialPostRevisionListener
 {
+    public function __construct(private LiveWrite $liveWrite)
+    {
+    }
+
     public function preUpdate(SocialPost $post, PreUpdateEventArgs $event): void
     {
         if ($event->hasChangedField('spec')) {
@@ -28,6 +33,10 @@ final class SocialPostRevisionListener
 
     public function postUpdate(SocialPost $post, PostUpdateEventArgs $event): void
     {
+        if ($this->liveWrite->isActive($post) && ! $this->liveWrite->archivesPrevious()) {
+            return;
+        }
+
         $entityManager = $event->getObjectManager();
         $changes = $entityManager->getUnitOfWork()->getEntityChangeSet($post);
         if (! isset($changes['spec'])) {

@@ -306,7 +306,14 @@ const start = (form, key) => {
       syncBanner.hidden = false
     }
 
+    form.addEventListener('pw:live-saved', ({ detail: field }) => {
+      if (baseline[field.name]?.[0] === field.value) return
+      baseline[field.name] = [field.value]
+      save()
+    })
+
     form.addEventListener('pw:page-revision', ({ detail: current }) => {
+      if (form.hasAttribute('data-pw-draft-active') && current !== null) return
       if (submitted !== null || (current !== null && Number(current) <= Number(revision.value))) return
       const canReload = !document.hidden && !interacted && !renderedStale
       if (current !== null && canReload && isSameState(serialize(form), baseline)) {
