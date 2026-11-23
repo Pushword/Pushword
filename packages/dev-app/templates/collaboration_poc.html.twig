@@ -1,0 +1,51 @@
+{% types {room: 'string'} %}
+<!doctype html>
+<html lang="{{ app.request.locale }}">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ 'collaborationPocTitle'|trans }}</title>
+    <style>
+        :root { color-scheme: light dark; font-family: system-ui, sans-serif; }
+        body { margin: 0; background: light-dark(#f4f6fa, #171b23); color: light-dark(#202634, #e2e7f1); }
+        main { box-sizing: border-box; max-width: 54rem; margin: auto; padding: 2rem 1rem; }
+        h1 { font-size: 1.6rem; margin: 1rem 0 .5rem; }
+        p { margin: 0 0 1.25rem; line-height: 1.5; max-width: 65ch; }
+        .actions { display: flex; gap: .5rem; flex-wrap: wrap; margin-bottom: 1.25rem; }
+        .actions > * { display: inline-block; padding: .45rem .75rem; border: 1px solid light-dark(#a5adba, #667187); border-radius: .35rem; background: light-dark(#fbfcff, #232a37); color: inherit; font: inherit; cursor: pointer; text-decoration: none; }
+        .actions > :hover { background: light-dark(#e8effb, #303c52); }
+        .actions > [aria-pressed="true"] { border-color: currentColor; }
+        :focus-visible { outline: 2px solid light-dark(#164cb1, #96baff); outline-offset: 2px; }
+        a { color: light-dark(#174794, #adcbff); }
+        .editor-header { display: flex; gap: .5rem 1rem; flex-wrap: wrap; justify-content: space-between; align-items: baseline; margin-bottom: .5rem; }
+        label { font-weight: 600; }
+        [role="status"] { font-size: .9rem; color: light-dark(#4b586e, #bac5d8); }
+        textarea { display: block; box-sizing: border-box; width: 100%; min-height: 18rem; padding: 1rem; border: 1px solid light-dark(#a5adba, #667187); border-radius: .35rem; background: light-dark(#fbfcff, #232a37); color: inherit; font: 1rem/1.6 ui-monospace, monospace; resize: vertical; }
+        textarea:disabled { opacity: .7; }
+    </style>
+    <script type="module" src="{{ versionedAsset('/bundles/pushwordadmin/collaborationPoc.js') }}"></script>
+</head>
+<body>
+<main
+    data-collaboration-poc
+    data-sync-url="{{ path('collaboration_poc_sync', {room: room}) }}"
+    data-sync-token="{{ csrf_token('collaboration_poc_' ~ room) }}"
+    data-status-connected="{{ 'collaborationPocConnected'|trans }}"
+    data-status-offline="{{ 'collaborationPocOffline'|trans }}"
+    data-status-paused="{{ 'collaborationPocPaused'|trans }}"
+>
+    <a href="{{ path('admin_page_index') }}">{{ 'collaborationPocBack'|trans }}</a>
+    <h1>{{ 'collaborationPocTitle'|trans }}</h1>
+    <p>{{ 'collaborationPocIntro'|trans }}</p>
+    <div class="actions">
+        <a href="{{ path('collaboration_poc_editor', {room: room}) }}" target="_blank" rel="noopener">{{ 'collaborationPocNewTab'|trans }}</a>
+        <button type="button" data-pause aria-pressed="false" disabled>{{ 'collaborationPocPause'|trans }}</button>
+    </div>
+    <div class="editor-header">
+        <label for="collaboration-body">{{ 'collaborationPocText'|trans }}</label>
+        <span role="status" id="collaboration-status">{{ 'collaborationPocConnecting'|trans }}</span>
+    </div>
+    <textarea id="collaboration-body" disabled aria-describedby="collaboration-status" placeholder="{{ 'collaborationPocPlaceholder'|trans }}"></textarea>
+</main>
+</body>
+</html>

@@ -2,6 +2,16 @@ easyadmin:
     resource: .
     type: easyadmin.routes
 
+when@dev:
+    collaboration_poc:
+        resource: ../src/Controller/CollaborationPocController.php
+        type: attribute
+
+when@test:
+    collaboration_poc:
+        resource: ../src/Controller/CollaborationPocController.php
+        type: attribute
+
 pushword_api:
     resource: "@PushwordApiBundle/ApiRoutes.yaml"
 

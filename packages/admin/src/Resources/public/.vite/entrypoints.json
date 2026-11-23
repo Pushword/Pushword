@@ -12,6 +12,15 @@
       "legacy": false,
       "preload": []
     },
+    "collaborationPoc": {
+      "css": [],
+      "dynamic": [],
+      "js": [
+        "/build/collaborationPoc.js"
+      ],
+      "legacy": false,
+      "preload": []
+    },
     "mediaFileDrop": {
       "css": [],
       "dynamic": [],

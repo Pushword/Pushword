@@ -25,6 +25,26 @@ composer assets          # build assets
 composer dev             # start the server
 ```
 
+## Live editing prototype
+
+In the development app, sign in and open `/admin/collaboration-poc`. Open a
+second tab from the prototype. Type in both tabs or pause sync in one, edit the
+same paragraph in both, and resume. The two copies converge through Yjs updates
+exchanged by HTTP every 300 ms.
+
+A token-authenticated agent can append a line to the same demo draft. From the
+monorepo root, set `PUSHWORD_TOKEN` to a development editor's API token and pass
+the full editor URL, including the room ID:
+
+```sh
+node packages/admin/examples/collaboration-agent.mjs "$ROOM_URL" "A line from the agent."
+```
+
+The route is available in the dev and test environments. The room stores a
+temporary Markdown draft in the app cache. Pending edits stay in the open tab
+during disconnection. Site pages, publishing and the block editor are outside
+this prototype.
+
 ## Documentation
 
 Visit [pushword.piedweb.com/installation](https://pushword.piedweb.com/installation).

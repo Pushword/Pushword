@@ -1,4 +1,10 @@
 {
+  "src/Resources/assets/admin.collaborationPoc.js": {
+    "file": "collaborationPoc.js",
+    "name": "collaborationPoc",
+    "src": "src/Resources/assets/admin.collaborationPoc.js",
+    "isEntry": true
+  },
   "src/Resources/assets/admin.js": {
     "file": "admin.js",
     "name": "admin",
