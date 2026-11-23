@@ -332,9 +332,11 @@ jobs:
         php: [8.5]
         node: [25, 24]
         stability: [prefer-stable]
-        # exclude:
-        #   - php: 8.5
-        #     node: 24
+        include:
+          - os: ubuntu-latest
+            php: 8.6
+            node: 24
+            stability: prefer-stable
 
     name: P${{ matrix.php }} - N${{ matrix.node }} - ${{ matrix.stability }} - ${{ matrix.os }}
 
@@ -357,7 +359,7 @@ jobs:
         with:
           php-version: ${{ matrix.php }}
           tools: pecl
-          extensions: dom, curl, libxml, mbstring, zip, pdo, sqlite, pdo_sqlite, bcmath, soap, intl, gd, exif, iconv, imagick, fileinfo
+          extensions: dom, curl, libxml, mbstring, zip, pdo, sqlite, pdo_sqlite, pdo_mysql, pdo_pgsql, bcmath, soap, intl, gd, exif, iconv, imagick, fileinfo, ffi
           coverage: none
 
       - name: Setup problem matchers
@@ -423,7 +425,7 @@ jobs:
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v4
         with:
-          name: phpunit-${{ matrix.node }}
+          name: phpunit-${{ matrix.php }}-${{ matrix.node }}
           overwrite: true
           path: junit-*.xml
           if-no-files-found: ignore

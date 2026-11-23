@@ -44,7 +44,7 @@
     }
   ],
   "require": {
-    "php": "~8.5.0",
+    "php": "~8.5.0 || ~8.6.0",
     "ext-gd": "*",
     "ext-zip": "*",
     "babdev/pagerfanta-bundle": "^4.0",

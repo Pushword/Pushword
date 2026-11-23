@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pushword\Flat\Tests\Sync;
 
 use Doctrine\ORM\EntityManager;
+use finfo;
 use Override;
 use PHPUnit\Framework\Attributes\Group;
 use Pushword\Core\Entity\Page;
@@ -141,11 +142,6 @@ final class EncodingTest extends KernelTestCase
         self::assertSame("Test: A Page's Title", $page->h1);
     }
 
-    /**
-     * @see https://github.com/.../issues/5
-     * finfo misdetects .md files containing JS code examples as application/javascript,
-     * causing them to be silently skipped during import.
-     */
     public function testMarkdownFileWithJsCodeBlockIsImported(): void
     {
         $content = <<<'MD'
@@ -162,21 +158,15 @@ final class EncodingTest extends KernelTestCase
             </code></pre>
             MD;
 
-        // Verify finfo actually misdetects this content
-        $tmpFile = tempnam(sys_get_temp_dir(), 'md_finfo_');
-        file_put_contents($tmpFile, $content);
-        $finfo = finfo_open(\FILEINFO_MIME_TYPE);
-        self::assertNotEmpty($finfo);
-        $mime = (string) finfo_file($finfo, $tmpFile);
-        unlink($tmpFile);
-        self::assertSame('application/javascript', $mime, 'Precondition: finfo should misdetect this .md content as JS');
+        $finfo = new finfo(\FILEINFO_MIME_TYPE);
+        self::assertContains($finfo->buffer($content), ['application/javascript', 'text/javascript'], 'Fileinfo should classify the Markdown fixture as JavaScript');
 
         $this->createMd('js-guide-test.md', $content);
 
         $this->pageSync->import('localhost.dev');
 
         $page = $this->em->getRepository(Page::class)->findOneBy(['slug' => 'js-guide-test', 'host' => 'localhost.dev']);
-        self::assertInstanceOf(Page::class, $page, '.md file misdetected as application/javascript should still be imported');
+        self::assertInstanceOf(Page::class, $page, 'Markdown classified as JavaScript should still be imported');
     }
 
     public function testSmartQuotesNormalizedOnExport(): void

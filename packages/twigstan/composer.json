@@ -19,7 +19,7 @@
     }
   ],
   "require": {
-    "php": "~8.5.0",
+    "php": "~8.5.0 || ~8.6.0",
     "pushword/core": "^1.0.108",
     "symfony/process": "^7.3 || ^8.0"
   },
