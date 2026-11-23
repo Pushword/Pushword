@@ -112,9 +112,8 @@ every page template or of Twig embedded in page content.
 
 ## Upstream tooling
 
-The isolated tool pins TwigStan 0.2.7, PHPStan 2.3.5 and Twig 3.30.0 without local
-patches. TwigStan 0.2.7 includes the inherited parent block context fix
-([#328](https://github.com/twigstan/twigstan/issues/328)).
+The isolated tool pins TwigStan, PHPStan and Twig in `tools/composer.json`.
+The package uses upstream releases without local patches.
 
 Attribute access on a value known to always be null is intentionally reported,
 including behind `??`, `|default` and `is defined`
@@ -122,10 +121,8 @@ including behind `??`, `|default` and `is defined`
 object, declare its actual nullable type at the PHP render point. If it is always
 null, remove the unreachable attribute access.
 
-Fifteen cases check inherited contexts, nullable objects with and without a value,
-and invalid-argument, missing-variable and null-access errors. They also check
-that guarded null access still renders its fallback. Run `composer test` in this
-package to check them.
+Run `composer test` in this package to check inherited contexts, nullable objects,
+template diagnostics and fallback rendering.
 
 When upgrading TwigStan, update the pinned constraint in `tools/composer.json`,
 run `composer update twigstan/twigstan` from `tools/`, then run the package tests.

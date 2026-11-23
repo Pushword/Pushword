@@ -4,8 +4,8 @@
   "type": "project",
   "license": "MIT",
   "require-dev": {
-    "phpstan/phpstan": "2.3.6",
-    "twig/twig": "3.30.0",
+    "phpstan/phpstan": "2.3.7",
+    "twig/twig": "3.31.0",
     "twigstan/twigstan": "0.2.8"
   },
   "config": {
