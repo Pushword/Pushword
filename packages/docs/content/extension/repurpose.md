@@ -61,8 +61,7 @@ ten. Drag to snap to nearby edges and centres, or hold **Alt** to move freely.
 Choose **+ Text** or press **T** in the preview, then click or tap where you want
 the text. Press **Enter** to place it at the centre of the focused slide. Right-click
 to add or paste text or act on the element under the pointer. On a focused text
-block, **Shift+F10** opens its menu. Choose **Crop image** to reposition a photo
-in its frame and adjust its zoom. Use **⋯** beside a slide number or in the slide
+block, **Shift+F10** opens its menu. Use **⋯** beside a slide number or in the slide
 list to duplicate a slide or insert one after it.
 
 ## Author with an agent
@@ -121,17 +120,14 @@ All emit compact JSON when run by an AI agent (`--format=agent`).
 
 ## Cropping
 
-A slide's `image` carries `focusX`/`focusY` (0..1 focal point) and `zoom` (≥ 1),
-applied at **render time** as an SVG clip, so the same numbers hold when the slide is
-re-rendered at another ratio. `media` must name a JPEG, PNG, GIF or WebP of the media
-library: anything else is a validation error, since the renderer could only paint it
-as a grey placeholder. An image uploaded moments ago, whose derivatives core still
-builds in the background, gets its `default` derivative built on first render.
+Open **Images** under a slide preview and choose **Free positioning**. Drag each
+image to move its frame, or use the **Frame** controls to set its position and size. Choose
+**Crop image** to move the photo inside that frame and adjust its zoom.
 
-In the studio, choose **Free positioning** under **Image layout** to drag images
-on the slide and resize their frames with **Width** and **Height**. Each entry in
-`images` can carry an `x`, `y`, `width` and `height` as fractions of the slide.
-The image fills that frame and keeps its own crop and zoom.
+In the spec, use `imageLayout: "free"` and give each entry in `images` an `x`, `y`,
+`width` and `height` as fractions of the slide. Keep `x + width` and `y + height`
+at or below 1. With any layout, `focusX` and `focusY` (0–1) and `zoom` (1–5) set
+the crop. `media` must name a JPEG, PNG, GIF or WebP in the media library.
 
 ## Text
 

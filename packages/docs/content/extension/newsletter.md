@@ -447,10 +447,11 @@ saved rows; the API returns `estimatedRecipients` on any draft campaign.
 
 ## Campaigns
 
-Write the body in Markdown (the block editor takes over when
-`pushword/admin-block-editor` is installed), pick an audience and optionally a
-segment, then **Send**. A future date schedules delivery; an empty or past date
-starts it immediately. `%name%` and `%email%` are substituted in
+Under **Write the newsletter**, choose an audience and write the subject, preview
+text and Markdown body. Install `pushword/admin-block-editor` to use the block
+editor. Use **Refine recipients** to add a segment. Open **Review and send** to
+check the email and authorize delivery. A future date schedules the send. An
+empty or past date starts it immediately. `%name%` and `%email%` are substituted in
 the subject and the body. The **analytics name** is the campaign's slug, derived
 from the subject when empty; the send date is prefixed to it when the campaign
 goes out.
@@ -516,10 +517,9 @@ by the editor-only API; internal notes are not added to catalogue/calendar metad
 
 ### Reviewing a campaign
 
-Open **Review** from the campaign catalogue to see the rendered email, audience,
-schedule and delivery results. The preview starts at desktop width. **Markdown
-source** and advanced settings stay collapsed; use **Edit** to change a draft,
-or **Send** to authorize delivery. Previewing sends no mail.
+Open **Review and send** from the campaign catalogue to check the rendered email,
+audience and schedule. The preview starts at desktop width. Open **Markdown source**
+to inspect the body, **Edit** to change the draft, or **Send** to authorize delivery.
 
 **More actions → Duplicate as draft** opens an unsaved copy of any campaign, including
 one already sent. Save it to create a new campaign. Content, translations, audience,
@@ -531,10 +531,9 @@ creates the draft and returns it with status 201; it requires an editor.
 
 ### Email design and live preview
 
-In **Choose the audience and design**, select an audience, then inherit its design
-or choose a built-in layout or [configured Twig preset](#preconfigured-twig-designs).
-The effective design updates when the audience changes. A campaign's choice applies
-to real and test sends without changing the audience or its automations.
+In **Design and sender**, inherit the selected audience's design or choose a built-in
+layout or [configured Twig preset](#preconfigured-twig-designs). The campaign's design
+applies to its live preview, test sends and delivery.
 
 The live preview uses the sending renderer with the unsaved audience, design,
 sender profile, subject, preview text, body and transactional setting, and Alex as
@@ -1323,15 +1322,11 @@ Statistics providers use the separate contract below; a catalogue entry alone do
 
 ## Statistics
 
-Open **Newsletter → Statistics**. Filter by audience, dates, observation window, click placement and
-report grouping: campaigns (including automation summaries), automation, step, or
-step and send occurrence. Native and external reports share this interface and keep
-both their source identifier and their link to the owning management tool. Detailed
-reports compare D+7 and D+30, with incomplete windows marked provisional. CSV exports
-the same selection, including measurement states, rate numerators and denominators.
-Its columns also record the date basis, observation window, grouping, bounds and
-observation time; the header schema stays the same for an empty selection.
-Dates use `pushword.editorial_timezone`; range ends are exclusive.
+Open **Newsletter → Statistics** and filter by date and audience. Use **Report options**
+to change the date basis, observation window, click placement or grouping. Detailed
+reports compare D+7 and D+30 and mark incomplete windows as provisional. The CSV exports
+the current selection with its filters, measurement states and rate calculations.
+Dates use `pushword.editorial_timezone` with exclusive end dates.
 
 **Sends in period** selects campaigns by first transport acceptance (completion when
 no recipient row remains), and drip messages by attempt date. Results then cover
