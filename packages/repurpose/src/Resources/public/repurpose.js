@@ -1170,20 +1170,23 @@
       },
       clearMedia: function (index, cell) {
         var slide = this.spec.slides[index]
-        if (slide && slide.images && slide.images[cell]) {
-          if ('free' === slide.imageLayout) {
-            this.finishCrop()
-            slide.images.splice(cell, 1)
-            this.ensureCells(slide)
-            if (!this.slideHasMedia(slide)) {
-              slide.overlay = 0
-            }
-          } else {
-            slide.images[cell].media = ''
-            if (this.crop?.slide === slide && this.crop.cell === cell) {
-              this.finishCrop()
-            }
+        var image = slide?.images?.[cell]
+        if (!image) {
+          return
+        }
+        if ('free' === slide.imageLayout) {
+          this.finishCrop()
+          slide.images.splice(cell, 1)
+          this.ensureCells(slide)
+          if (!this.slideHasMedia(slide)) {
+            slide.overlay = 0
           }
+          return
+        }
+
+        image.media = ''
+        if (this.crop?.slide === slide && this.crop.cell === cell) {
+          this.finishCrop()
         }
       },
       closeMediaModal: function () {

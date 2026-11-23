@@ -172,16 +172,20 @@ final class CarouselValidationTest extends KernelTestCase
         self::assertArrayHasKey('slides[0].title', $violations);
     }
 
-    public function testFocusPointOutOfRangeIsRejected(): void
+    public function testCropBoundsAreValidatedForLegacyImages(): void
     {
-        // Authored with the legacy singular `image` key — the factory wraps it into
-        // `images[0]`, so the violation surfaces there (proving back-compat too).
-        $violations = $this->violations([
-            'page' => 'x', 'network' => 'linkedin', 'format' => 'linkedin-4-5',
-            'slides' => [['title' => 'Hi', 'image' => ['media' => '1.jpg', 'focusX' => 2]]],
-        ]);
+        $spec = ['page' => 'x', 'network' => 'linkedin', 'format' => 'linkedin-4-5'];
+        $valid = ['media' => '1.jpg', 'focusX' => 0, 'focusY' => 1, 'zoom' => 5];
+        self::assertSame([], $this->violations([...$spec, 'slides' => [['image' => $valid]]]));
 
-        self::assertArrayHasKey('slides[0].images[0].focusX', $violations);
+        $invalidCrops = [
+            ['focusX' => -0.1, 'focusY' => 1.1, 'zoom' => 0.9],
+            ['focusX' => 1.1, 'focusY' => -0.1, 'zoom' => 5.1],
+        ];
+        foreach ($invalidCrops as $crop) {
+            $violations = $this->violations([...$spec, 'slides' => [['image' => ['media' => '1.jpg', ...$crop]]]]);
+            self::assertSame(['slides[0].images[0].focusX', 'slides[0].images[0].focusY', 'slides[0].images[0].zoom'], array_keys($violations));
+        }
     }
 
     /**

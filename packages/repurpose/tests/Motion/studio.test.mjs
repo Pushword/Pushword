@@ -555,6 +555,21 @@ test('switching from a split gives both images room to move and preserves existi
   assert.deepEqual(vertical.images.map(({x, y, width, height}) => [x, y, width, height]), [[0.25, 0.05, 0.5, 0.4], [0.25, 0.55, 0.5, 0.4]]);
 });
 
+test('removing an image from a split only closes the crop for the removed image', () => {
+  const slide = {imageLayout: 'split-h', images: [{media: 'a.jpg'}, {media: 'b.jpg'}]};
+  const document = {addEventListener: (_, callback) => callback(), querySelectorAll: () => []};
+  const state = studio({spec: {slides: [slide]}}, undefined, undefined, {document});
+  state.crop = {slide, cell: 1};
+
+  state.clearMedia(0, 0);
+  assert.equal(slide.images[0].media, '');
+  assert.equal(state.croppedImage.media, 'b.jpg');
+
+  state.clearMedia(0, 1);
+  assert.equal(slide.images[1].media, '');
+  assert.equal(state.crop, null);
+});
+
 test('dragging a free image moves the topmost rendered frame within the slide', () => {
   const first = {media: 'a.jpg', x: 0.2, y: 0.2, width: 0.4, height: 0.4};
   const second = {media: 'b.jpg', x: 0.3, y: 0.3, width: 0.5, height: 0.5};
@@ -613,6 +628,11 @@ test('dragging a free image moves the topmost rendered frame within the slide', 
   assert.equal(state.textSelection, null);
   state.deckTextMove({...event, clientX: 301});
   assert.equal(blocks[1].transformAttribute, undefined);
+  state.deckTextCancel({...event, pointerId: 6});
+  assert.equal(state._drag.pointerId, 5, 'another pointer cannot cancel the drag');
+  state.deckTextCancel(event);
+  assert.equal(state._drag, null);
+  state.deckTextDown(0, event);
   state.deckTextMove({...event, clientX: 350, clientY: 145});
   assert.equal(blocks[0].transformAttribute, undefined);
   assert.deepEqual(blocks[1].transformAttribute.match(/-?[\d.]+/g).map(value => Math.round(Number(value))), [100, -50]);
