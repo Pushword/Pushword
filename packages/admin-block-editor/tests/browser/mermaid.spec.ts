@@ -65,11 +65,15 @@ for (const width of [1280, 390, 320]) {
     await expect(block.locator('.pw-mermaid-preview svg')).toBeVisible()
     await block.getByRole('button', { name: 'Edit diagram' }).click()
     await expect(block.getByRole('textbox', { name: 'Mermaid source', exact: true })).toBeFocused()
-    const preview = (await block.locator('.pw-mermaid-preview').boundingBox())!
-    const code = (await block.locator('.pw-code-source').boundingBox())!
-    expect(preview.y + preview.height).toBeLessThanOrEqual(code.y + 1)
-    expect(preview.height).toBeLessThanOrEqual(160)
-    expect(await block.evaluate(element => element.scrollWidth)).toBeLessThanOrEqual(width)
+    // Monaco focus can scroll the page between calls. Measure both boxes in the same frame.
+    const layout = await block.evaluate(element => {
+      const preview = element.querySelector('.pw-mermaid-preview')!.getBoundingClientRect()
+      const code = element.querySelector('.pw-code-source')!.getBoundingClientRect()
+      return { previewBottom: preview.bottom, previewHeight: preview.height, codeTop: code.top, width: element.scrollWidth }
+    })
+    expect(layout.previewBottom).toBeLessThanOrEqual(layout.codeTop + 1)
+    expect(layout.previewHeight).toBeLessThanOrEqual(160)
+    expect(layout.width).toBeLessThanOrEqual(width)
     await page.keyboard.press('Control+a')
     await page.keyboard.type(source.replace('Relecture', 'Mobile'))
     await expect(block.locator('.pw-mermaid-preview svg')).toContainText('Mobile')
