@@ -1,7 +1,7 @@
 # Pushword
 
 A **Symfony CMS** for managing multiple sites and languages from one installation.
-Edit pages in the **admin**, in **Git**, or with an **AI agent**.
+Edit in the admin or keep your pages in Git. AI agents can edit through the REST API.
 
 [![Latest Version](https://img.shields.io/github/tag/pushword/pushword.svg?style=flat&label=release)](https://github.com/Pushword/Pushword/tags)
 [![Software License](https://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat)](LICENSE)
@@ -11,7 +11,7 @@ Edit pages in the **admin**, in **Git**, or with an **AI agent**.
 
 ## Quickstart
 
-You need PHP 8.5, Composer and the [required PHP extensions](https://pushword.piedweb.com/installation#requirements).
+You need PHP 8.5 with the [required PHP extensions](https://pushword.piedweb.com/installation#requirements) and Composer.
 
 ```shell
 composer create-project pushword/new pushword "^1.0"
@@ -25,18 +25,19 @@ For Docker and FrankenPHP setup, see the [installation guide](https://pushword.p
 
 ![A page open in the Pushword admin block editor](packages/docs/content/media/admin-blockeditor.png)
 
-## Why Pushword
+## Editing and publishing
 
-- **Edit in the admin.** Write with the block editor and manage pages and media across sites. Pages use Markdown with YAML front matter, and layouts use Twig.
-- **Review content changes in Git.** Flat syncs Markdown files with the database so you can work on the same pages in Git and in the admin. [Flat documentation](https://pushword.piedweb.com/extension/flat)
-- **Edit with an AI agent.** Agents can work on local Markdown files or edit a live site through the token-authenticated REST API. Page revisions protect against overwriting concurrent edits. [AI agent guide](https://pushword.piedweb.com/ai-agents)
-- **Export a static site.** Publish to GitHub Pages or serve the exported files with Apache or FrankenPHP. [Static Generator documentation](https://pushword.piedweb.com/extension/static-generator)
-- **Extend it in Symfony.** Build on events, entity filters and Twig components.
+Use the admin to manage pages and media across sites. Write in the block editor. Pages use Markdown with YAML front matter, and layouts use Twig.
+
+- Flat syncs Markdown files with the database. You can review changes in Git and edit the same pages in the admin. [Flat documentation](https://pushword.piedweb.com/extension/flat)
+- Agents can work on local Markdown files or edit a live site through the token-authenticated REST API. Page revisions protect against overwriting concurrent edits. [AI agent guide](https://pushword.piedweb.com/ai-agents)
+- Export a static site for GitHub Pages. You can serve the files with Apache or FrankenPHP too. [Static Generator documentation](https://pushword.piedweb.com/extension/static-generator)
+- Extend Pushword with Symfony events and entity filters, or use Twig components in templates.
 
 ## Extensions
 
 The `pushword/new` starter includes the admin and block editor, Flat, the API, static export and page revision history.
-Add optional bundles such as Search, Newsletter or Quiz individually with Composer. [Browse all extensions](https://pushword.piedweb.com/extensions)
+Add Search or Newsletter individually with Composer. Install Quiz the same way. [Browse all extensions](https://pushword.piedweb.com/extensions)
 
 To install all maintained bundles together on an existing Pushword site, use the aggregate package.
 
@@ -56,7 +57,7 @@ read-only to its own repository for distribution. Issues and pull requests belon
 
 If you're interested in contributing to Pushword, please read our [contributing docs](https://pushword.piedweb.com/contribute) before submitting a pull request.
 
-If Pushword is useful to you, starring the repository is the simplest way to help others find it.
+If Pushword is useful to you, star the repository so others can find it.
 You can also support its maintenance on [Liberapay](https://liberapay.com/RobinPiedWeb).
 
 ## Credits
@@ -66,7 +67,7 @@ You can also support its maintenance on [Liberapay](https://liberapay.com/RobinP
 
 ## License
 
-The MIT License (MIT). Please see [License File](https://pushword.piedweb.com/license) for more information.
+Pushword is MIT-licensed. See the [License File](https://pushword.piedweb.com/license) for the terms.
 
 <p align="center"><a href="https://dev.piedweb.com">
 <img src="https://raw.githubusercontent.com/Pushword/Pushword/f5021f4c5d5d3ab3f2858ec2e4bdd70818806c6a/packages/admin/src/Resources/assets/logo.svg" width="200" height="200" alt="PHP Packages Open Source" />
