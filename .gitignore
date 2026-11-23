@@ -23,6 +23,7 @@ packages/admin-monaco-editor/dist
 /.phpunit.cache*
 coverage
 coverage*.xml
+**/reports/mutation/
 /debug
 /debug-container
 /drivers

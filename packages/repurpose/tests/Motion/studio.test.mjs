@@ -13,7 +13,10 @@ function studio(config = {}, fetch, confirm, globals = {}) {
     messages: {videoInvalid: 'Choose a video', audioInvalid: 'Choose audio'},
     ...config,
   }, Alpine: {data: (_, value) => { factory = value; }}, addEventListener() {}, removeEventListener() {}};
-  vm.runInNewContext(source, {window, fetch, document: {addEventListener: (_, callback) => callback()}, ...globals});
+  vm.runInNewContext(source, {
+    __stryker__: {activeMutant: process.env.__STRYKER_ACTIVE_MUTANT__},
+    window, fetch, document: {addEventListener: (_, callback) => callback()}, ...globals,
+  });
   return factory();
 }
 function selection(fileName, eventOrigin = origin) {
@@ -201,19 +204,20 @@ test('arrow keys move the keyboard-focused text in slide pixels and keep it sele
   state._previewTargets = state.previewTargets();
   let block;
   const canvas = {
-    focus() { active = this; },
+    focus() { active = canvas; },
     querySelector: selector => selector === 'svg' ? block.ownerSVGElement : block,
     querySelectorAll: () => [block],
   };
   function renderBlock(x, y) {
-    return {
+    const element = {
       matches: () => true,
       getAttribute: () => 'texts.0',
       getBBox: () => ({x, y, width: 150, height: 26}),
       ownerSVGElement: canvasSvg(),
       setAttribute() {}, removeAttribute() {},
-      focus() { active = this; },
+      focus() { active = element; },
     };
+    return element;
   }
   block = renderBlock(100, 470);
   state.canvasTextFocus(0, {target: block});

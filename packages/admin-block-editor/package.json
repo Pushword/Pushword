@@ -15,8 +15,6 @@
     "@playwright/test": "^1.65.1",
     "@pushword/js-helper": "file:../js-helper",
     "@sotaproject/strikethrough": "^1.0.1",
-    "@stryker-mutator/core": "10.1.1",
-    "@stryker-mutator/vitest-runner": "10.1.1",
     "@types/he": "^1.2.3",
     "@types/node": "^24.19.2",
     "autoprefixer": "^10.6",
@@ -39,7 +37,7 @@
     "build:converter": "vite build --config vite.config.converter.mjs && rm src/Command/convert-json-to-markdown-built/style.css",
     "watch": "vite build --watch",
     "test": "vitest run",
-    "test:mutation": "node tests/run-mutation.mjs",
+    "test:mutation": "node ../../.scripts/test-js-mutation.mjs admin-block-editor",
     "test:browser": "playwright test",
     "test:windows": "node tests/browser/windows.mjs",
     "test:watch": "vitest"

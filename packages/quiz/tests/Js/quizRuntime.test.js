@@ -574,6 +574,19 @@ function completeAssessment(indices) {
 describe('numeric assessment', () => {
   const realFetch = window.fetch
   afterEach(() => { window.fetch = realFetch })
+
+  it('opens the first question without moving focus', () => {
+    document.body.innerHTML = '<button type="button">Previous control</button>' + assessmentQuiz()
+    const previousControl = document.querySelector('button')
+    previousControl.focus()
+
+    bootRuntime()
+
+    const questions = document.querySelectorAll('.pw-quiz-q')
+    expect(Array.from(questions, (question) => question.hidden)).toEqual([false, true, true, true])
+    expect(document.activeElement).toBe(previousControl)
+  })
+
   it('uses the minimum for every combination and emits an outcome without recording by default', () => {
     const calls = mockFetch()
     for (let n = 0; n < 256; n++) {
@@ -623,13 +636,17 @@ describe('numeric assessment', () => {
     expect(document.querySelector('.pw-quiz-result').hidden).toBe(true)
     expect(window.localStorage.getItem('pwQuizDone:assessment')).toBeNull()
   })
-  it('rejects stale knowledge attempts and out-of-range saved answer indices', () => {
-    for (const saved of [{a: [0,0,0,0]}, {mode: 'assessment', a: [0,0,0,9]}]) {
-      window.localStorage.setItem('pwQuizDone:assessment', JSON.stringify(saved))
-      document.body.innerHTML = assessmentQuiz()
-      bootRuntime()
-      expect(document.querySelector('.pw-quiz-result').hidden).toBe(true)
-    }
+  it.each([
+    ['a legacy knowledge attempt', { a: [0, 0, 0, 0] }],
+    ['a saved quiz attempt', { mode: 'quiz', a: [0, 0, 0, 0] }],
+    ['an answer index equal to the answer count', { mode: 'assessment', a: [0, 0, 0, 4] }],
+    ['a negative answer index', { mode: 'assessment', a: [0, 0, 0, -1] }],
+    ['a fractional answer index', { mode: 'assessment', a: [0, 0, 0, 0.5] }],
+  ])('rejects %s', (_case, saved) => {
+    window.localStorage.setItem('pwQuizDone:assessment', JSON.stringify(saved))
+    document.body.innerHTML = assessmentQuiz()
+    bootRuntime()
+    expect(document.querySelector('.pw-quiz-result').hidden).toBe(true)
   })
   it('records an explicitly enabled assessment and suppresses comparisons', async () => {
     const calls = mockFetch({share: 80})

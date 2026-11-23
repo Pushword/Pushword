@@ -6,6 +6,7 @@ import {
   insertImage,
   insertLink,
   isLinkTarget,
+  lineRangeAt,
   linkifyPaste,
   selectedLinesRange,
   shiftHeading,
@@ -38,6 +39,12 @@ describe('wordRangeAt', () => {
 
   it('stays empty between two spaces', () => {
     expect(wordRangeAt('a  b', 2)).toEqual([2, 2])
+  })
+})
+
+describe('lineRangeAt', () => {
+  it.each([3, 5])('keeps the first line bounds at offset %i', (offset) => {
+    expect(lineRangeAt('alpha\nbeta', offset)).toEqual([0, 5])
   })
 })
 

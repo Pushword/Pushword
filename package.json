@@ -10,18 +10,23 @@
     "lint:fix": "eslint . --fix",
     "lint:errors": "eslint . --quiet",
     "format": "prettier --write .",
+    "test:mutation": "node .scripts/test-js-mutation.mjs",
     "type-check": "tsc --noEmit"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@pushword/js-helper": "file:packages/js-helper",
+    "@stryker-mutator/core": "10.1.1",
+    "@stryker-mutator/vitest-runner": "10.1.1",
     "@types/node": "^24.19.2",
     "@typescript-eslint/eslint-plugin": "^8.73.0",
     "@typescript-eslint/parser": "^8.73.0",
     "eslint": "^10.15.0",
     "globals": "^17.14.0",
     "typescript": "^6.0.3",
-    "typescript-eslint": "^8.73.0"
+    "typescript-eslint": "^8.73.0",
+    "vite": "8.3.8",
+    "vitest": "5.1.1"
   },
   "resolutions": {
     "**/@tailwindcss/typography/postcss-selector-parser": "6.1.5"

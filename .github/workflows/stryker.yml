@@ -3,16 +3,32 @@ name: JavaScript mutation tests
 on:
   pull_request:
     paths:
+      - 'packages/admin/src/Resources/assets/**/*.js'
       - 'packages/admin-block-editor/src/assets/**/*.ts'
-      - 'packages/admin-block-editor/tests/run-mutation.mjs'
-      - 'packages/admin-block-editor/stryker.config.mjs'
+      - 'packages/admin-monaco-editor/**/*.js'
+      - 'packages/js-helper/src/**/*.js'
+      - 'packages/newsletter/src/Resources/assets/**/*.js'
+      - 'packages/quiz/src/Resources/public/quiz.js'
+      - 'packages/repurpose/src/Resources/motion/src/**/*.mjs'
+      - 'packages/repurpose/src/Resources/public/repurpose.js'
+      - 'packages/repurpose/examples/nord/*.mjs'
+      - '.scripts/test-js-mutation.mjs'
+      - '.github/scripts/js-mutation.test.mjs'
       - '.github/workflows/stryker.yml'
   push:
     branches: [main]
     paths:
+      - 'packages/admin/src/Resources/assets/**/*.js'
       - 'packages/admin-block-editor/src/assets/**/*.ts'
-      - 'packages/admin-block-editor/tests/run-mutation.mjs'
-      - 'packages/admin-block-editor/stryker.config.mjs'
+      - 'packages/admin-monaco-editor/**/*.js'
+      - 'packages/js-helper/src/**/*.js'
+      - 'packages/newsletter/src/Resources/assets/**/*.js'
+      - 'packages/quiz/src/Resources/public/quiz.js'
+      - 'packages/repurpose/src/Resources/motion/src/**/*.mjs'
+      - 'packages/repurpose/src/Resources/public/repurpose.js'
+      - 'packages/repurpose/examples/nord/*.mjs'
+      - '.scripts/test-js-mutation.mjs'
+      - '.github/scripts/js-mutation.test.mjs'
       - '.github/workflows/stryker.yml'
 
 concurrency:
@@ -23,12 +39,46 @@ permissions:
   contents: read
 
 jobs:
-  stryker:
-    name: StrykerJS
+  changes:
+    name: Find changed JavaScript packages
     runs-on: ubuntu-latest
-    timeout-minutes: 15
     env:
       DIFF_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+    outputs:
+      packages: ${{ steps.changes.outputs.packages }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Fetch comparison base
+        run: git fetch --no-tags --depth=1 origin "$DIFF_BASE"
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+
+      - name: Select changed packages
+        id: changes
+        run: |
+          node --test .github/scripts/js-mutation.test.mjs
+          packages=$(node .scripts/test-js-mutation.mjs --list-changed "$DIFF_BASE")
+          printf 'packages=%s\n' "$packages" >> "$GITHUB_OUTPUT"
+
+  stryker:
+    name: StrykerJS - ${{ matrix.package }}
+    needs: changes
+    if: needs.changes.outputs.packages != '[]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        package: ${{ fromJSON(needs.changes.outputs.packages) }}
+    env:
+      DIFF_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+      MUTATION_PACKAGE: ${{ matrix.package }}
 
     steps:
       - name: Checkout
@@ -42,10 +92,24 @@ jobs:
         with:
           node-version: 24
           cache: yarn
-          cache-dependency-path: packages/admin-block-editor/yarn.lock
+          cache-dependency-path: |
+            yarn.lock
+            packages/${{ matrix.package }}/yarn.lock
 
-      - name: Install editor dependencies
-        run: yarn --cwd packages/admin-block-editor install --frozen-lockfile
+      - name: Install StrykerJS
+        run: yarn install --frozen-lockfile
 
-      - name: Mutate changed TypeScript lines
-        run: yarn --cwd packages/admin-block-editor test:mutation --diff "$DIFF_BASE"
+      - name: Install package dependencies
+        if: matrix.package != 'repurpose'
+        run: yarn --cwd "packages/$MUTATION_PACKAGE" install --frozen-lockfile
+
+      - name: Install FFmpeg for motion audio tests
+        if: matrix.package == 'repurpose'
+        timeout-minutes: 5
+        run: |
+          sudo sed -i '\|^http://|d' /etc/apt/apt-mirrors.txt
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
+
+      - name: Mutate changed JavaScript lines
+        run: yarn test:mutation "$MUTATION_PACKAGE" --diff "$DIFF_BASE"

@@ -66,6 +66,7 @@ test('frame-addressed animations clamp and do not depend on playback order', () 
   assert.equal(entranceOpacity(25, 12), 1);
   assert.equal(entranceOpacity(0, 0), 1);
   assert.equal(entranceOpacity(0, 1), 1);
+  assert.equal(entranceOpacity(0, 2), 0);
   assert.deepEqual(layerStyle('none', 10, 30, 90), {});
   assert.deepEqual(layerStyle('rise', 0, 30, 90), {opacity: 0, transform: 'translateY(4%)'});
   assert.deepEqual(layerStyle('rise', 14, 30, 90), {opacity: 1, transform: 'translateY(0%)'});
