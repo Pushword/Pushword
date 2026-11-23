@@ -121,12 +121,12 @@
     "villfa/invert-color": "^0.5"
   },
   "require-dev": {
-    "brianium/paratest": "^7.19 <7.26.1",
+    "brianium/paratest": "^7.30",
     "composer/composer": "*",
     "dbrekelmans/bdi": "^1.4",
     "dragonmantank/cron-expression": "^3.6",
     "friendsofphp/php-cs-fixer": "*",
-    "laravel/pao": "^1.0",
+    "laravel/pao": "^1.1.6",
     "league/flysystem-memory": "^3.31",
     "monorepo-php/monorepo": "*",
     "pentatrion/vite-bundle": "^8.2",
