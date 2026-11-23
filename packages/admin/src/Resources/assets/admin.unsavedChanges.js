@@ -32,6 +32,7 @@ const isTracked = (element) =>
   '' !== element.name &&
   !element.disabled &&
   !['file', 'submit', 'button', 'reset'].includes(element.type) &&
+  !element.hasAttribute('data-pw-page-revision') &&
   !element.name.endsWith('[_token]')
 
 const isMultiSelect = (element) => 'SELECT' === element.tagName && element.multiple
@@ -167,9 +168,14 @@ const start = (form, key) => {
   const bannerMessage = document.getElementById('pw-unsaved-message')
   const restoreButton = document.getElementById('pw-unsaved-restore')
   const discardButton = document.getElementById('pw-unsaved-discard')
+  const revision = form.querySelector('[data-pw-page-revision]')
+  const syncBanner = document.getElementById('pw-page-sync-banner')
+  const openLatest = document.getElementById('pw-page-sync-reload')
 
   let baseline = serialize(form)
   let writeTimeout = null
+  let submitted = null
+  let interacted = false
 
   // Fades out before hiding, so dismissing reads as an answer rather than a
   // repaint. The class is inert under prefers-reduced-motion (no transition),
@@ -210,6 +216,8 @@ const start = (form, key) => {
   }
 
   const save = () => {
+    window.clearTimeout(writeTimeout)
+    writeTimeout = null
     const values = serialize(form)
 
     if (isSameState(values, baseline)) {
@@ -235,6 +243,8 @@ const start = (form, key) => {
   // The banner, hence both its buttons, only exists for changes worth offering:
   // edits this editor made that the form does not already show.
   const snapshot = read(key)
+  const renderedStale = revision && revision.value !== revision.dataset.pwServerRevision
+  if (renderedStale && snapshot?.baseline) baseline = snapshot.baseline
   const changes =
     null === snapshot ? {} : changedFields(snapshot.values, snapshot.baseline)
   const worthOffering = Object.entries(changes).some(
@@ -259,7 +269,7 @@ const start = (form, key) => {
     })
 
     discardButton?.addEventListener('click', forget)
-  } else if (null !== snapshot) {
+  } else if (null !== snapshot && !renderedStale) {
     // Nothing left worth offering: the save landed — here, in another tab, or
     // on the server. A submit clears nothing by itself, since its POST can
     // still be lost (an expired session has the firewall redirect it and drop
@@ -274,9 +284,65 @@ const start = (form, key) => {
 
   form.addEventListener('input', scheduleSave)
   form.addEventListener('change', scheduleSave)
+  form.addEventListener('submit', () => {
+    if (writeTimeout !== null) save()
+  })
+  window.addEventListener('pagehide', () => {
+    if (form.isConnected && writeTimeout !== null) save()
+  })
 
-  // Ctrl+S save: the form stays on screen, so the copy has to go explicitly —
-  // and only on a response that says the save landed.
+  if (revision && syncBanner) {
+    const changedMessage = document.getElementById('pw-page-sync-changed')
+    const deletedMessage = document.getElementById('pw-page-sync-deleted')
+    // Intent to edit matters even before a rich editor publishes its textarea value.
+    const registerInteraction = () => { interacted = true }
+    form.addEventListener('keydown', registerInteraction, { capture: true, once: true })
+    form.addEventListener('pointerdown', registerInteraction, { capture: true, once: true })
+
+    const showChange = (deleted = false) => {
+      changedMessage.hidden = deleted
+      deletedMessage.hidden = !deleted
+      openLatest.hidden = deleted
+      syncBanner.hidden = false
+    }
+
+    form.addEventListener('pw:page-revision', ({ detail: current }) => {
+      if (submitted !== null || (current !== null && Number(current) <= Number(revision.value))) return
+      const canReload = !document.hidden && !interacted && !renderedStale
+      if (current !== null && canReload && isSameState(serialize(form), baseline)) {
+        window.location.reload()
+        return
+      }
+      showChange(current === null)
+    })
+    openLatest.addEventListener('click', () => {
+      if (writeTimeout !== null) save()
+      window.open(window.location.href, '_blank', 'noopener')
+    })
+
+    form.addEventListener('htmx:before:request', () => {
+      if (writeTimeout !== null) save()
+      submitted = serialize(form)
+    })
+    form.addEventListener('htmx:error', () => { submitted = null })
+    form.addEventListener('htmx:after:request', (event) => {
+      const response = event.detail?.ctx?.response
+      if (response?.status === 409) showChange()
+      const savedRevision = response?.headers?.get('X-Pushword-Page-Revision')
+      if (savedRevision && submitted !== null) {
+        const hadChanges = !isSameState(submitted, baseline)
+        baseline = submitted
+        revision.value = savedRevision
+        syncBanner.hidden = true
+        if (hadChanges || writeTimeout !== null) save()
+      }
+      submitted = null
+    })
+
+    return
+  }
+
+  // Older template overrides have no revision field or sync banner.
   form.addEventListener('htmx:after:request', (event) => {
     const status = event?.detail?.ctx?.response?.status ?? 0
     if (status >= 200 && status < 400) forget()

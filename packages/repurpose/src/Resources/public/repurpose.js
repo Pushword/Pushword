@@ -17,7 +17,7 @@
   // A slider drag streams events, so a plain trailing debounce would only render
   // on release; the ceiling forces a preview at least this often mid-stream.
   var PREVIEW_MAX_WAIT_MS = 700
-  var REVISION_CHECK_MS = 10000
+  var REVISION_CHECK_MS = 3000
   var PLACED_TEXT_WIDTH = 0.36
   var SNAP_DISTANCE_PX = 6
   var ALIGNMENT_ANCHORS = [0, 0.5, 1]

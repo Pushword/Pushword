@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 namespace Pushword\Api\Tests\Controller;
 
+use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\ORM\Events;
 use Override;
 use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\TestWith;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Entity\User;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
@@ -98,6 +101,60 @@ final class PageApiControllerTest extends WebTestCase
         self::assertArrayNotHasKey('frontmatter', $body);
 
         $this->createdPageIds[] = $this->lookupPageId($host, $body['slug']);
+    }
+
+    #[TestWith([false])]
+    #[TestWith([true])]
+    public function testConcurrentWriteAfterIfMatchReturnsTheWinningPage(bool $deleted): void
+    {
+        $host = 'api-test-'.uniqid().'.example.com';
+        $this->request('POST', '/api/page/'.$host, [
+            'frontmatter' => ['slug' => 'concurrent', 'h1' => 'Initial title', 'locale' => 'en'],
+            'body' => 'Initial body',
+        ]);
+        $id = $this->lookupPageId($host, 'concurrent');
+        $this->createdPageIds[] = $id;
+        $revision = $this->currentRevision($host, 'concurrent');
+        $listener = new readonly class($this->em->getConnection(), $id, $deleted) {
+            public function __construct(private Connection $connection, private int $id, private bool $deleted)
+            {
+            }
+
+            public function preFlush(): void
+            {
+                if ($this->deleted) {
+                    $this->connection->delete('page', ['id' => $this->id]);
+
+                    return;
+                }
+
+                $this->connection->executeStatement('UPDATE page SET h1 = ?, write_version = write_version + 1 WHERE id = ?', ['Saved concurrently', $this->id]);
+            }
+        };
+        $events = $this->em->getEventManager();
+        $events->addEventListener([Events::preFlush], $listener);
+
+        try {
+            $response = $this->request('PUT', '/api/page/'.$host.'/concurrent', ['body' => 'Agent edit'], ['HTTP_IF_MATCH' => $revision]);
+        } finally {
+            $events->removeEventListener([Events::preFlush], $listener);
+        }
+
+        if ($deleted) {
+            self::assertSame(Response::HTTP_NOT_FOUND, $response->getStatusCode());
+
+            return;
+        }
+
+        self::assertSame(Response::HTTP_CONFLICT, $response->getStatusCode());
+        $conflict = $this->decode();
+        self::assertSame('revision_mismatch', $conflict['error']);
+        self::assertSame($revision, $conflict['your_revision']);
+        self::assertNotSame($revision, $conflict['current_revision']);
+        self::assertIsArray($conflict['current']);
+        self::assertSame('Initial body', $conflict['current']['body']);
+        self::assertIsArray($conflict['current']['frontmatter']);
+        self::assertSame('Saved concurrently', $conflict['current']['frontmatter']['h1']);
     }
 
     public function testAWriteDatedInTheFutureSaysThePageIsScheduled(): void

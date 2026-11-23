@@ -7,6 +7,7 @@ namespace Pushword\Admin\Controller;
 use DateTime;
 use DateTimeInterface;
 use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\ORM\OptimisticLockException;
 use Doctrine\ORM\QueryBuilder;
 use EasyCorp\Bundle\EasyAdminBundle\Attribute\AdminRoute;
 use EasyCorp\Bundle\EasyAdminBundle\Collection\FieldCollection;
@@ -15,6 +16,7 @@ use EasyCorp\Bundle\EasyAdminBundle\Config\Action;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Actions;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Filters;
+use EasyCorp\Bundle\EasyAdminBundle\Config\KeyValueStore;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Option\TextAlign;
 use EasyCorp\Bundle\EasyAdminBundle\Context\AdminContext;
 use EasyCorp\Bundle\EasyAdminBundle\Contracts\Field\FieldInterface;
@@ -45,6 +47,12 @@ use Pushword\Core\Utils\FlashBag;
 use Pushword\Core\Utils\TwigErrorExtractor;
 use Pushword\StaticGenerator\PushwordStaticGeneratorBundle;
 use Symfony\Component\DependencyInjection\Attribute\AutowireIterator;
+use Symfony\Component\Form\Extension\Core\Type\HiddenType;
+use Symfony\Component\Form\FormBuilderInterface;
+use Symfony\Component\Form\FormError;
+use Symfony\Component\Form\FormEvent;
+use Symfony\Component\Form\FormEvents;
+use Symfony\Component\Form\FormInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -57,6 +65,10 @@ use Twig\Error\SyntaxError;
 class PageCrudController extends AbstractAdminCrudController
 {
     protected const string FORM_FIELD_KEY = 'admin_page_form_fields';
+
+    private const string REVISION_FIELD = '_pwRevision';
+
+    private const string REVISION_HEADER = 'X-Pushword-Page-Revision';
 
     /**
      * @param iterable<PageCrudExtensionInterface> $extensions
@@ -74,6 +86,70 @@ class PageCrudController extends AbstractAdminCrudController
     public static function getEntityFqcn(): string
     {
         return Page::class;
+    }
+
+    /** @return FormBuilderInterface<Page> */
+    #[Override]
+    public function createEditFormBuilder(EntityDto $entityDto, KeyValueStore $formOptions, AdminContext $context): FormBuilderInterface
+    {
+        $builder = parent::createEditFormBuilder($entityDto, $formOptions, $context);
+        $page = $entityDto->getInstance();
+        if (! $page instanceof Page) {
+            return $builder;
+        }
+
+        $version = (string) $page->writeVersion;
+        $builder->add(self::REVISION_FIELD, HiddenType::class, [
+            'mapped' => false,
+            'data' => $version,
+            'attr' => ['data-pw-page-revision' => '', 'data-pw-server-revision' => $version],
+        ]);
+        $builder->addEventListener(FormEvents::POST_SUBMIT, function (FormEvent $event) use ($version): void {
+            $form = $event->getForm();
+            if ($version !== $form->get(self::REVISION_FIELD)->getData()) {
+                $form->addError(new FormError($this->translator->trans('adminPageRevisionConflict')));
+            }
+        });
+
+        return $builder;
+    }
+
+    #[Override]
+    public function edit(AdminContext $context): KeyValueStore|Response
+    {
+        $request = $context->getRequest();
+        $isShortcut = $request->isMethod('POST') && $request->headers->has('HX-Request');
+
+        try {
+            $response = parent::edit($context);
+        } catch (OptimisticLockException) {
+            if ($isShortcut) {
+                return new Response(status: Response::HTTP_CONFLICT);
+            }
+
+            $this->addFlash('warning', $this->translator->trans('adminPageRevisionConflict'));
+
+            return new RedirectResponse($request->getRequestUri(), Response::HTTP_SEE_OTHER);
+        }
+
+        if (! $isShortcut) {
+            return $response;
+        }
+
+        $savedRevision = $response instanceof Response ? $response->headers->get(self::REVISION_HEADER) : null;
+        if (null !== $savedRevision) {
+            return new Response(status: Response::HTTP_NO_CONTENT, headers: [self::REVISION_HEADER => $savedRevision]);
+        }
+
+        $form = $response instanceof KeyValueStore ? $response->get('edit_form') : null;
+        if ($form instanceof FormInterface) {
+            $revision = $form->get(self::REVISION_FIELD);
+            $current = $revision->getConfig()->getOption('data');
+
+            return new Response(status: $revision->getData() === $current ? Response::HTTP_UNPROCESSABLE_ENTITY : Response::HTTP_CONFLICT);
+        }
+
+        return $response;
     }
 
     #[Override]
@@ -428,12 +504,15 @@ class PageCrudController extends AbstractAdminCrudController
         string $action
     ): RedirectResponse {
         $action = $this->getAction(); // fix because $action always return 'edit'
+        $page = $context->getEntity()->getInstance();
 
-        if (Action::SAVE_AND_RETURN !== $action) {
-            return parent::getRedirectResponseAfterSave($context, $action);
+        $target = Action::SAVE_AND_RETURN === $action ? $this->redirectToPage($context) : null;
+        $response = $target ?? parent::getRedirectResponseAfterSave($context, $action);
+        if ($page instanceof Page && $context->getRequest()->headers->has('HX-Request')) {
+            $response->headers->set(self::REVISION_HEADER, (string) $page->writeVersion);
         }
 
-        return $this->redirectToPage($context) ?? parent::getRedirectResponseAfterSave($context, $action);
+        return $response;
     }
 
     public function getPageUrl(Page $page): string

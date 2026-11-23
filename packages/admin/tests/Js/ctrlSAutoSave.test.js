@@ -72,3 +72,34 @@ describe('initCtrlSAutoSave on htmx 4 events', () => {
     expect(indicator.dataset.state).toBe('error')
   })
 })
+
+it('runs the guarded shortcut through the form and confirms only a revision-bearing save', () => {
+  vi.useFakeTimers()
+  vi.stubGlobal('htmx', {})
+  try {
+    document.body.innerHTML =
+      '<span id="ind">Save</span>' +
+      '<form data-pw-ctrl-s-form="1" data-pw-ctrl-s-indicator="#ind">' +
+      '<input type="hidden" data-pw-page-revision>' +
+      '<button type="submit" data-pw-ctrl-s-submit hidden></button></form>'
+    const form = document.querySelector('form')
+    const submitted = vi.fn()
+    const triggered = vi.fn()
+    form.addEventListener('submit', submitted)
+    form.addEventListener('pw-ctrl-s-event', triggered)
+    initCtrlSAutoSave()
+
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 's', ctrlKey: true, cancelable: true }))
+    expect(submitted.mock.calls[0][0].submitter).toBe(form.querySelector('button'))
+    expect(triggered).toHaveBeenCalledOnce()
+
+    const complete = (response) => form.dispatchEvent(new CustomEvent('htmx:after:request', { detail: { ctx: { response } } }))
+    complete({status: 200, headers: new Headers()})
+    expect(document.querySelector('#ind').textContent).toBe('Save failed')
+    complete({status: 204, headers: new Headers({'X-Pushword-Page-Revision': '4'})})
+    expect(document.querySelector('#ind').textContent).toBe('Saved')
+  } finally {
+    vi.useRealTimers()
+    vi.unstubAllGlobals()
+  }
+})

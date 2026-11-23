@@ -321,6 +321,96 @@ describe('initUnsavedChangesRecovery', () => {
   })
 })
 
+describe('page revision changes', () => {
+  const syncBanner = () => document.getElementById('pw-page-sync-banner')
+  let form
+  let title
+  let revision
+
+  beforeEach(() => {
+    vi.useFakeTimers()
+    window.localStorage.clear()
+    form = render(
+      '<input name="page[h1]" value="Server title">' +
+        '<input type="hidden" name="page[_pwRevision]" value="3" data-pw-page-revision data-pw-server-revision="3">',
+    )
+    form.insertAdjacentHTML('beforebegin',
+      '<div id="pw-page-sync-banner" hidden>' +
+        '<span id="pw-page-sync-changed"></span><span id="pw-page-sync-deleted" hidden></span>' +
+        '<button type="button" id="pw-page-sync-reload"></button></div>',
+    )
+    title = form.elements['page[h1]']
+    revision = form.elements['page[_pwRevision]']
+  })
+
+  afterEach(() => {
+    vi.restoreAllMocks()
+    vi.useRealTimers()
+  })
+
+  const remoteRevision = (revision) => form.dispatchEvent(new CustomEvent('pw:page-revision', { detail: revision }))
+
+  const shortcutResponse = (status, savedRevision) => form.dispatchEvent(
+    new CustomEvent('htmx:after:request', {
+      detail: { ctx: { response: { status, headers: new Headers(savedRevision ? { 'X-Pushword-Page-Revision': savedRevision } : {}) } } },
+    }),
+  )
+
+  it('keeps work in the original tab and stores it before opening the latest revision', () => {
+    const open = vi.spyOn(window, 'open').mockImplementation(() => null)
+    initUnsavedChangesRecovery()
+    form.dispatchEvent(new Event('pointerdown'))
+    remoteRevision('3')
+    expect(syncBanner().hidden).toBe(true)
+    remoteRevision('4')
+    expect(syncBanner().hidden).toBe(false)
+
+    type(title, 'Local draft')
+    document.getElementById('pw-page-sync-reload').click()
+    expect(open).toHaveBeenCalledWith(window.location.href, '_blank', 'noopener')
+    expect(title.value).toBe('Local draft')
+    expect(revision.value).toBe('3')
+    expect(stored().values).toEqual({ 'page[h1]': ['Local draft'] })
+  })
+
+  it('keeps the rejected draft after a conflict or a login redirect', () => {
+    initUnsavedChangesRecovery()
+    type(title, 'Local draft')
+    form.dispatchEvent(new Event('htmx:before:request'))
+    shortcutResponse(409)
+    expect(syncBanner().hidden).toBe(false)
+    expect(revision.value).toBe('3')
+    expect(stored().values['page[h1]']).toEqual(['Local draft'])
+
+    form.dispatchEvent(new Event('htmx:before:request'))
+    shortcutResponse(200)
+    expect(stored().values['page[h1]']).toEqual(['Local draft'])
+  })
+
+  it('adopts the saved revision while retaining changes typed during the save', () => {
+    initUnsavedChangesRecovery()
+    type(title, 'Submitted title')
+    form.dispatchEvent(new Event('htmx:before:request'))
+    remoteRevision('4')
+    expect(syncBanner().hidden).toBe(true)
+    type(title, 'Typed afterward')
+    shortcutResponse(204, '4')
+    remoteRevision('3')
+
+    expect(syncBanner().hidden).toBe(true)
+    expect(revision.value).toBe('4')
+    expect(stored().values['page[h1]']).toEqual(['Typed afterward'])
+    expect(stored().baseline['page[h1]']).toEqual(['Submitted title'])
+  })
+
+  it('flushes a pending draft before navigating away', () => {
+    initUnsavedChangesRecovery()
+    type(title, 'Local draft')
+    window.dispatchEvent(new Event('pagehide'))
+    expect(stored().values['page[h1]']).toEqual(['Local draft'])
+  })
+})
+
 describe('initUnsavedChangesRecovery on checkboxes and multi-selects', () => {
   let form
 

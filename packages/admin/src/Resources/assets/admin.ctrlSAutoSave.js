@@ -16,6 +16,8 @@ export function initCtrlSAutoSave() {
   const indicator = indicatorSelector ? document.querySelector(indicatorSelector) : null
   const saveButton = buttonSelector ? document.querySelector(buttonSelector) : null
   const indicatorDefaultText = indicator ? indicator.textContent.trim() : ''
+  const shortcut = form.querySelector('[data-pw-ctrl-s-submit]')
+  const revision = form.querySelector('[data-pw-page-revision]')
 
   if (indicator) {
     indicator.dataset.pwCtrlSDefault =
@@ -69,6 +71,14 @@ export function initCtrlSAutoSave() {
     form.dispatchEvent(new Event(ctrlEvent, { bubbles: true }))
   }
 
+  if (shortcut) {
+    form.addEventListener('submit', (event) => {
+      if (event.submitter !== shortcut || event.defaultPrevented) return
+      event.preventDefault()
+      triggerAutosave()
+    })
+  }
+
   document.addEventListener(
     'keydown',
     (event) => {
@@ -79,7 +89,9 @@ export function initCtrlSAutoSave() {
       ) {
         if (!form.isConnected) return
         event.preventDefault()
-        triggerAutosave()
+        // Let the block editor finish writing the current Markdown first.
+        if (shortcut) form.requestSubmit(shortcut)
+        else triggerAutosave()
       }
     },
     true,
@@ -91,8 +103,12 @@ export function initCtrlSAutoSave() {
 
   form.addEventListener('htmx:after:request', (event) => {
     resetState()
-    const status = event?.detail?.ctx?.response?.status ?? 0
-    if (status >= 200 && status < 400) {
+    const response = event.detail?.ctx?.response
+    const status = response?.status ?? 0
+    const saved = revision
+      ? status === 204 && response.headers?.has('X-Pushword-Page-Revision')
+      : status >= 200 && status < 400
+    if (saved) {
       handleSuccess()
     } else {
       handleError()

@@ -96,9 +96,17 @@ The copy is dropped on a successful save or on *Discard*. It stays in that brows
 offered only to the account that typed it, and is cleared on sign-out. It is unrelated
 to the **Draft** toggle (a publication state stored in the database).
 
+The page editor checks the saved revision every three seconds and when you
+return to the tab. An untouched, visible editor reloads the latest version.
+If you've started editing, a banner lets you open the latest version in another
+tab. Your work stays in the original tab, and the new tab offers to restore your
+local draft. Review any overlapping fields before restoring. A stale form
+cannot save over a newer revision, including with `Ctrl+S`.
+
 A site overriding `@pwAdmin/page/edit.html.twig` has to carry over the
 `unsaved_changes_banner.html.twig` include and the form's `data-pw-unsaved-key`
-attribute, or the recovery has nowhere to render.
+attribute. Render all remaining form fields with `form_rest` or `form_end` so
+the revision field is submitted, and retain the sync banner and shortcut submit button.
 
 ## Uploading media
 

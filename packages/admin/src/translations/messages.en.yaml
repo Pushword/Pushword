@@ -198,6 +198,9 @@ adminPageRedirectFromPath: Path
 adminPageRedirectionFrom: From
 adminPageRedirectionTo: To
 adminPageRelatedPageLabel: "Associated Pages"
+adminPageRevisionConflict: 'This page changed since you opened it. Open the latest version before saving your edits.'
+adminPageRevisionDeleted: 'This page was deleted. Your unsaved edits are still in this tab.'
+adminPageRevisionReload: 'Open latest version'
 adminPageRevisions: Revisions
 adminSchedule: Schedule
 adminPageSearchExcreptHelp: '<small>Visible from search engine results pages (meta description) <span id="descWidth"></span></small>'

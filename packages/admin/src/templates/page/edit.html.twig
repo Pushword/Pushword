@@ -4,6 +4,11 @@
     {% include '@pwFlat/components/webhook_lock_banner.html.twig' ignore missing %}
     {% if entity.instance.id is defined and entity.instance.id %}
         {% include '@pwAdmin/components/edit_lock_banner.html.twig' %}
+        <div id="pw-page-sync-banner" class="pw-unsaved pw-unsaved--conflict" role="status" hidden>
+            <span class="pw-unsaved__message" id="pw-page-sync-changed">{{ 'adminPageRevisionConflict'|trans }}</span>
+            <span class="pw-unsaved__message" id="pw-page-sync-deleted" hidden>{{ 'adminPageRevisionDeleted'|trans }}</span>
+            <button type="button" class="btn btn-sm btn-primary" id="pw-page-sync-reload">{{ 'adminPageRevisionReload'|trans }}</button>
+        </div>
         {% include '@pwAdmin/components/unsaved_changes_banner.html.twig' %}
     {% endif %}
     {% include '@pwAdmin/components/broken_image_banner.html.twig' %}
@@ -33,6 +38,7 @@
 
     {{ form_start(edit_form, {attr: autosave_attrs}) }}
         {{ form_widget(edit_form) }}
+        <button type="submit" data-pw-ctrl-s-submit hidden formnovalidate></button>
     {{ form_end(edit_form) }}
 {% endblock %}
 

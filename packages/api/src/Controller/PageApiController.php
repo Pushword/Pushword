@@ -6,6 +6,8 @@ namespace Pushword\Api\Controller;
 
 use DateTimeInterface;
 use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\ORM\OptimisticLockException;
+use Doctrine\Persistence\ManagerRegistry;
 use Pushword\Api\Service\BodyPatcher;
 use Pushword\Api\Service\BodyPatchException;
 use Pushword\Api\Service\InvalidFrontmatterException;
@@ -31,6 +33,7 @@ final class PageApiController extends AbstractApiController
     public function __construct(
         private readonly PageRepository $pageRepository,
         private readonly EntityManagerInterface $entityManager,
+        private readonly ManagerRegistry $doctrine,
         private readonly PageFrontmatterMapper $mapper,
         private readonly PageWriter $pageWriter,
         private readonly RevisionCalculator $revisions,
@@ -276,6 +279,18 @@ final class PageApiController extends AbstractApiController
             $violations = $this->pageWriter->update($page, $frontmatter, $body, $this->getApiUser());
         } catch (InvalidFrontmatterException $invalidFrontmatterException) {
             return $this->invalidFrontmatter($invalidFrontmatterException);
+        } catch (OptimisticLockException) {
+            $current = $this->doctrine->resetManager()->find($page::class, $page->id);
+            if (! $current instanceof Page) {
+                return $this->notFound('Page not found');
+            }
+
+            return $this->respond([
+                'error' => 'revision_mismatch',
+                'your_revision' => $request->headers->get('If-Match'),
+                'current_revision' => $this->revisions->compute($current),
+                'current' => $this->buildPagePayload($current),
+            ], Response::HTTP_CONFLICT);
         }
 
         if (\count($violations) > 0) {

@@ -22,6 +22,15 @@ final class PageLockControllerTest extends AbstractAdminTestClass
         self::assertResponseRedirects();
     }
 
+    public function testMissingPageHasNoRevision(): void
+    {
+        $client = $this->loginUser();
+        $client->request(Request::METHOD_POST, '/admin/page/2147483647/lock/ping');
+
+        self::assertResponseStatusCodeSame(404);
+        self::assertSame('{"error":"Page not found"}', $client->getResponse()->getContent());
+    }
+
     public function testPingAcquiresLockForEditor(): void
     {
         $data = $this->ping($this->loginUser(), 1, 'tab-test');

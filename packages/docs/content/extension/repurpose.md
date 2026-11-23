@@ -51,9 +51,10 @@ studio, or act on the element under the pointer. For an image, choose **Crop ima
 to drag the photo inside its frame and adjust its zoom. The **⋯** beside a slide
 number or in the slide list offers **Duplicate slide** and **Insert slide after**.
 
-The Studio alerts you when another user or an agent saves the carousel. If you
-have unsaved edits, choose **Open latest version in a new tab**. Your draft stays
-in the original tab so you can review and reapply your changes.
+The Studio checks for changes every three seconds while the tab is visible and
+when you return to it. It alerts you when another user or an agent saves the
+carousel. If you have unsaved edits, choose **Open latest version in a new tab**.
+Your draft stays in the original tab so you can review and reapply your changes.
 
 ## Author with an agent
 

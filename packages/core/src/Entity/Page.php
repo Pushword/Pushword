@@ -33,6 +33,7 @@ use Pushword\Core\Repository\PageRepository;
 use Pushword\Core\Validator\Constraints\PagePropertiesSchema;
 use Stringable;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
+use Symfony\Component\Serializer\Attribute\Ignore;
 use Symfony\Component\Validator\Constraints as Assert;
 
 /**
@@ -77,6 +78,11 @@ class Page implements IdInterface, Taggable, Stringable, Weightable, CustomPrope
     use WeightTrait;
 
     use ExtensiblePropertiesTrait;
+
+    #[Ignore]
+    #[ORM\Version]
+    #[ORM\Column(type: Types::INTEGER, options: ['default' => 1])]
+    public private(set) int $writeVersion = 1;
 
     // --- Editor properties (inlined from PageEditorTrait) ---
 

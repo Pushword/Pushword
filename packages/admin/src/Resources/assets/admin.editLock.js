@@ -19,7 +19,7 @@ const generateTabId = () => {
  * Initialize the edit lock system for a page
  * @param {number} pageId - The ID of the page being edited
  */
-export function initEditLock(pageId) {
+export function initEditLock(pageId, form) {
   if (!pageId) return
 
   // Generate unique ID for this tab/browser instance
@@ -36,6 +36,7 @@ export function initEditLock(pageId) {
   const banner = document.getElementById('pw-edit-lock-banner')
   const bannerMessage = document.getElementById('pw-edit-lock-message')
   const bannerRefresh = document.getElementById('pw-edit-lock-refresh')
+  const revision = form?.querySelector('[data-pw-page-revision]')
 
   /**
    * Update the warning banner visibility and content
@@ -78,7 +79,7 @@ export function initEditLock(pageId) {
    * Ping the server to maintain lock or check status
    */
   const ping = async () => {
-    if (state.stopped) return
+    if (state.stopped || pending.size > 0) return
     const controller = new AbortController()
     pending.add(controller)
     try {
@@ -92,6 +93,11 @@ export function initEditLock(pageId) {
         signal: controller.signal,
       })
 
+      if (response.redirected) return
+      if (response.status === 404 && revision) {
+        form.dispatchEvent(new CustomEvent('pw:page-revision', { detail: null }))
+        return
+      }
       if (!response.ok) {
         console.warn('[EditLock] Ping failed:', response.status)
         return
@@ -102,8 +108,9 @@ export function initEditLock(pageId) {
 
       updateBanner(data.lockInfo, data.isOwner, data.isSameUser)
 
-      // Check if main editor has saved (for warned users)
-      if (!state.isOwner && data.lockInfo?.lastSavedAt) {
+      if (revision && typeof data.revision === 'string') {
+        form.dispatchEvent(new CustomEvent('pw:page-revision', { detail: data.revision }))
+      } else if (!state.isOwner && data.lockInfo?.lastSavedAt) {
         if (state.lastKnownSavedAt !== null && data.lockInfo.lastSavedAt > state.lastKnownSavedAt) {
           showSaveNotification()
         }
@@ -166,5 +173,5 @@ export function autoInitEditLock() {
 
   if (!pageId || isNaN(pageId)) return null
 
-  return initEditLock(pageId)
+  return initEditLock(pageId, form)
 }

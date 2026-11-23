@@ -197,6 +197,9 @@ adminPageRedirectFromPath: Chemin
 adminPageRedirectionFrom: De
 adminPageRedirectionTo: Vers
 adminPageRelatedPageLabel: 'Pages Associées'
+adminPageRevisionConflict: 'Cette page a changé depuis son ouverture. Ouvrez la dernière version avant d’enregistrer vos retouches.'
+adminPageRevisionDeleted: 'Cette page a été supprimée. Vos retouches sont toujours dans cet onglet.'
+adminPageRevisionReload: 'Ouvrir la dernière version'
 adminPageRevisions: Révisions
 adminSchedule: Planifier
 adminPageSearchExcreptHelp: '<small>Visible depuis les pages de résultats des moteurs de recherches (meta description) <span id="descWidth"></span></small>'

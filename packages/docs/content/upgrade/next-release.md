@@ -1,7 +1,8 @@
 ---
-title: ''
+title: 'page edits use revisions in the admin'
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
+run: 'doctrine:schema:update --force'
 ---
 
 <!--
@@ -34,3 +35,9 @@ belongs in the feature doc, which you link to instead.
 
 Several changes land here between two tags: append to the file, do not replace it.
 -->
+
+**Concerns:** `pushword/core`
+
+## Page editing revisions
+
+Apply the schema update before opening the admin. If you override the page edit form, render the hidden revision field and keep the sync banner and shortcut submit button from the [admin template](/extension/admin#saving-and-recovering-changes).
