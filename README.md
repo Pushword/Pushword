@@ -1,6 +1,7 @@
 # Pushword
 
-A **Symfony CMS** to rapidly create, manage and maintain your websites — from the **admin**, from **Git**, or from your **AI agent**.
+A **Symfony CMS** for managing multiple sites and languages from one installation.
+Edit pages in the **admin**, in **Git**, or with an **AI agent**.
 
 [![Latest Version](https://img.shields.io/github/tag/pushword/pushword.svg?style=flat&label=release)](https://github.com/Pushword/Pushword/tags)
 [![Software License](https://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat)](LICENSE)
@@ -8,50 +9,40 @@ A **Symfony CMS** to rapidly create, manage and maintain your websites — from 
 [![Code Coverage](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2FPushword%2FPushword%2Fbadges%2Fcoverage.json)](https://github.com/Pushword/Pushword/actions/workflows/run-tests.yml)
 [![Total Downloads](https://img.shields.io/packagist/dt/pushword/core.svg?style=flat)](https://packagist.org/packages/pushword/core)
 
-## Why Pushword
+## Quickstart
 
-- **Content is Markdown + Twig.** Pages are Markdown with front matter; templates are plain Twig. No proprietary field builder to learn.
-- **Multi-site and multi-language** from one app and one admin.
-- **SQLite by default.** No database server to provision — and no migrations to run.
-- **Database or flat files.** With [Flat](https://pushword.piedweb.com/extension/flat), content lives as Markdown in Git and the admin stays usable.
-- **Deployable as a static site.** [Static Generator](https://pushword.piedweb.com/extension/static-generator) exports the whole site for GitHub Pages, Apache or FrankenPHP.
-- **Extensible where it matters** — events, entity filters and Twig components, all documented.
-
-## Installation
+You need PHP 8.5, Composer and the [required PHP extensions](https://pushword.piedweb.com/installation#requirements).
 
 ```shell
 composer create-project pushword/new pushword "^1.0"
-
 cd pushword
 php -S 127.0.0.1:8004 -t public/
 ```
 
-Full requirements and the FrankenPHP setup are in the [installation guide](https://pushword.piedweb.com/installation).
+The installer sets up SQLite by default and adds demo content. Open the [demo site](http://127.0.0.1:8004/)
+and sign in to [the admin](http://127.0.0.1:8004/admin) with the account you create during installation.
+For Docker and FrankenPHP setup, see the [installation guide](https://pushword.piedweb.com/installation).
+
+![A page open in the Pushword admin block editor](packages/docs/content/media/admin-blockeditor.png)
+
+## Why Pushword
+
+- **Edit in the admin.** Write with the block editor and manage pages and media across sites. Pages use Markdown with YAML front matter, and layouts use Twig.
+- **Review content changes in Git.** Flat syncs Markdown files with the database so you can work on the same pages in Git and in the admin. [Flat documentation](https://pushword.piedweb.com/extension/flat)
+- **Edit with an AI agent.** Agents can work on local Markdown files or edit a live site through the token-authenticated REST API. Page revisions protect against overwriting concurrent edits. [AI agent guide](https://pushword.piedweb.com/ai-agents)
+- **Export a static site.** Publish to GitHub Pages or serve the exported files with Apache or FrankenPHP. [Static Generator documentation](https://pushword.piedweb.com/extension/static-generator)
+- **Extend it in Symfony.** Build on events, entity filters and Twig components.
 
 ## Extensions
 
-Officially maintained bundles, installable one by one:
+The `pushword/new` starter includes the admin and block editor, Flat, the API, static export and page revision history.
+Add optional bundles such as Search, Newsletter or Quiz individually with Composer. [Browse all extensions](https://pushword.piedweb.com/extensions)
 
-| | |
-|---|---|
-| [Admin](https://pushword.piedweb.com/extension/admin) | Manage pages, media and users (EasyAdmin) |
-| [Flat](https://pushword.piedweb.com/extension/flat) | Turn Pushword into a flat-file, Git-based CMS |
-| [API](https://pushword.piedweb.com/extension/api) | Token-authenticated REST API, OpenAPI-described |
-| [Search](https://pushword.piedweb.com/extension/search) | SQLite full-text search via Loupe, zero infra |
-| [Static Generator](https://pushword.piedweb.com/extension/static-generator) | Export the site as static files |
-| [Page Scanner](https://pushword.piedweb.com/extension/page-scanner) | Find dead links, 404s and redirects |
-| [Newsletter](https://pushword.piedweb.com/extension/newsletter) | Audiences, campaigns and automations |
-| [Version](https://pushword.piedweb.com/extension/version) | Page versioning and diffs |
-
-See [all extensions](https://pushword.piedweb.com/extensions) for the rest — block editor, snippets, quizzes, comments and more.
-
-To add every maintained bundle to an existing Pushword site in one package:
+To install all maintained bundles together on an existing Pushword site, use the aggregate package.
 
 ```shell
 composer require "pushword/pushword:^1.0"
 ```
-
-The `pushword/new` project above remains the way to create a new site.
 
 ## Documentation
 
