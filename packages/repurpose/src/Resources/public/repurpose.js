@@ -1040,7 +1040,7 @@
         this.revealSlide(slideIndex, false)
         var index = this.previewIndexOf(slide)
         this.$nextTick(() => {
-          document.querySelectorAll('.slide-canvas')[index]?.scrollIntoView({ block: 'nearest', inline: 'nearest' })
+          this.scrollPreviewTo(index)
           document.getElementById('rp-crop-done')?.focus({ preventScroll: true })
         })
       },
@@ -1632,6 +1632,27 @@
             control.focus({ preventScroll: true })
           }
         })
+      },
+      scrollPreviewTo: function (index) {
+        var canvas = document.getElementById('rp-slide-canvas-' + index)
+        if (!canvas) {
+          return null
+        }
+        var deck = canvas.closest('.deck')
+        var canvasBox = canvas.getBoundingClientRect()
+        var deckBox = deck.getBoundingClientRect()
+        if (canvasBox.left < deckBox.left || canvasBox.right > deckBox.right) {
+          deck.scrollLeft += canvasBox.left - deckBox.left
+        }
+        // Keep the toolbar below the sticky header when returning to the preview.
+        var toolbar = deck.closest('.deck-wrap').querySelector('.preview-toolbar')
+        var toolbarTop = toolbar.getBoundingClientRect().top
+        var headerBottom = document.querySelector('header').getBoundingClientRect().bottom
+        if (toolbarTop < headerBottom || canvasBox.bottom > innerHeight) {
+          scrollBy(0, toolbarTop - headerBottom - 16)
+        }
+
+        return canvas
       },
       // Dwelling on a slide in the deck syncs the panel to it — long enough that
       // a mouse merely crossing the deck does not jump the panel around.

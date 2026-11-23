@@ -210,11 +210,36 @@
     .media-picker__meta { display: flex; flex-direction: column; gap: .4rem; min-width: 0; }
     .media-picker__name { font-size: .74rem; color: var(--muted-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .media-picker.is-empty .media-picker__name { color: var(--muted); font-style: italic; }
-    .image-cell + .image-cell { margin-top: .55rem; padding-top: .55rem; border-top: 1px dashed var(--line-2); }
     .media-picker__actions { display: flex; gap: .35rem; }
     .btn-xs { border: 1px solid var(--line-2); background: var(--panel); color: var(--muted-2); border-radius: 6px; padding: .375rem .625rem; min-height: 32px; font-size: .8125rem; font-weight: 600; cursor: pointer; }
     .btn-xs:hover { border-color: var(--muted); color: var(--text); }
     .btn-xs.danger:hover { color: var(--bad); border-color: var(--bad); }
+
+    .image-controls, .image-cell { display: grid; grid-template-columns: minmax(0, 1fr); }
+    .image-controls { gap: .75rem; margin-block: .5rem; }
+    .image-layout, .image-frame-fields { min-inline-size: 0; margin: 0; padding: 0; border: 0; }
+    .image-layout legend, .image-frame-fields legend { margin-bottom: .5rem; padding: 0; font-size: .875rem; font-weight: 600; }
+    .image-layout-option { display: flex; align-items: center; gap: .5rem; min-height: 44px; padding: .5rem .625rem; background: var(--field); border: 1px solid var(--line-2); border-radius: 8px; font-size: .8125rem; line-height: 1.4; cursor: pointer; }
+    .image-layout-option:hover { border-color: var(--muted); }
+    .image-layout-option:has(input:checked) { background: #e7f1ff; border-color: var(--accent); color: #084298; font-weight: 600; }
+    .image-layout-option:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
+    .image-layout-option input { flex: 0 0 auto; width: 1rem; height: 1rem; margin: 0; accent-color: var(--accent); scroll-margin-block: 10rem; }
+    .image-layout-option input:focus { box-shadow: none; }
+    .image-cell { gap: .875rem; padding: .75rem; border-radius: 8px; background: var(--field); }
+    .image-cell .media-picker { align-items: flex-start; }
+    .image-cell .media-picker__thumb { border: 0; box-shadow: inset 0 0 0 1px #21252926; }
+    .image-cell .media-picker__meta { flex: 1; gap: .5rem; }
+    .image-cell .media-picker__name { color: var(--text); font-size: .8125rem; font-weight: 600; }
+    .image-cell .media-picker.is-empty .media-picker__name { color: var(--muted-2); font-style: normal; }
+    .image-cell .media-picker__actions { flex-wrap: wrap; }
+    .image-slot-name { color: var(--muted-2); font-size: .8125rem; }
+    .image-cell .field > input { margin-block-start: auto; }
+    .image-crop-settings > summary { padding-block: .25rem; color: var(--muted-2); font-size: .8125rem; cursor: pointer; }
+    .image-crop-settings > .grid2 { margin-top: .5rem; }
+    .image-controls > .btn-xs { justify-self: start; }
+    .image-preview-return { display: none; }
+    .btn-xs.image-secondary { border-color: transparent; background: transparent; font-weight: 400; }
+    .btn-xs.image-secondary:hover { border-color: transparent; text-decoration: underline; }
 
     .rp-modal { position: fixed; inset: 0; width: 100%; height: 100%; max-width: none; max-height: none; margin: 0; border: 0; color: var(--text); background: #0b1120b3; padding: 3vh 3vw; }
     .rp-modal[open] { display: flex; }
@@ -329,6 +354,7 @@
       .studio-context { flex: 1 1 100%; }
       .layout { grid-template-columns: minmax(0, 1fr); }
       .deck-wrap { position: static; }
+      .image-preview-return { display: inline-block; }
     }
     @media (max-width: 720px) {
       header { gap: .6rem; padding: .75rem 1rem; }
@@ -359,6 +385,7 @@
       header .back { display: inline-flex; align-items: center; }
       input[type=text], input[type=number], input[type=datetime-local], textarea, select { min-height: 44px; font-size: 1rem; }
       input[type=range], input[type=color], .switch, .slide-item__head { min-height: 44px; }
+      .image-crop-settings > summary { min-height: 44px; padding-block: .75rem; }
     }
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after { animation: none !important; transition: none !important; }
@@ -532,7 +559,7 @@
             <div class="slide" @pointerenter="hoverSlide(i)" @pointerleave="hoverSlideLeave()">
               <figure>
                 <div class="slide-frame" :class="{ 'is-cropping': crop && previewMatches(i, crop.slide) }">
-                  <div class="slide-canvas" x-html="svg" role="group" :aria-label="messages.canvasSlide + ' ' + (i + 1)"
+                  <div class="slide-canvas" x-html="svg" role="group" x-bind:id="'rp-slide-canvas-' + i" :aria-label="messages.canvasSlide + ' ' + (i + 1)"
                        :tabindex="canvasEditing && previewSlideIndex(i) >= 0 ? 0 : null"
                        x-effect="svg && syncCanvas(i, $el, canvasEditing && previewSlideIndex(i) >= 0)"
                        @click="deckTextClick(i, $event)" @pointerdown="deckTextDown(i, $event)"
@@ -545,7 +572,10 @@
                   <div class="crop-frame" x-show="crop && previewMatches(i, crop.slide)" x-cloak aria-hidden="true" :style="crop ? cropFrame(crop.slide) : {}"></div>
                 </div>
                 <figcaption @contextmenu="openPreviewSlideMenu(i, $event)">
-                  <span>{{ 'repurposeCanvasSlide'|trans }} <span x-text="i + 1"></span> / <span x-text="slides.length"></span></span>
+                  <span x-bind:id="'rp-slide-label-' + i">{{ 'repurposeCanvasSlide'|trans }} <span x-text="i + 1"></span> / <span x-text="slides.length"></span></span>
+                  <button type="button" class="btn-xs image-secondary" x-show="canvasEditing && !crop && previewSlideIndex(i) >= 0" x-cloak
+                          x-bind:aria-describedby="'rp-slide-label-' + i"
+                          x-on:click="revealControl(previewSlideIndex(i), '.image-layout', 0, 'input:checked')">{{ 'repurposeCanvasImageSettings'|trans }}</button>
                   <button type="button" class="icon-btn" x-show="canvasEditing && previewSlideIndex(i) >= 0" x-cloak aria-haspopup="menu"
                           :aria-expanded="actionMenu && actionMenu.trigger === $el ? 'true' : 'false'" aria-label="{{ 'repurposeCanvasSlideActions'|trans }}"
                           @click.stop="openPreviewSlideMenu(i, $event)">⋯</button>
@@ -919,61 +949,89 @@
                     </div>
                   </div>
 
-                  <div class="field" x-id="['field']">
-                    <label :for="$id('field')">Image layout</label>
-                    <select x-bind:value="slide.imageLayout" x-on:change="setImageLayout(slide, $event.target.value)" x-init="$nextTick(() => $el.value = slide.imageLayout)" x-bind:id="$id('field')">
-                      <template x-for="l in vocab.imageLayouts.filter(layout => layout !== 'free')" :key="l"><option :value="l" x-text="l"></option></template>
-                      <option value="free">{{ 'repurposeCanvasFreeImageLayout'|trans }}</option>
-                    </select>
-                    <span class="preview-hint" x-show="slide.imageLayout === 'free' && slideHasMedia(slide)" x-cloak>{{ 'repurposeCanvasImageMoveHint'|trans }}</span>
-                  </div>
+                  <div class="image-controls">
+                    {% set imageLayoutLabels = {
+                      full: 'repurposeCanvasImageLayoutFull'|trans,
+                      'split-v': 'repurposeCanvasImageLayoutStacked'|trans,
+                      'split-h': 'repurposeCanvasImageLayoutSideBySide'|trans,
+                      free: 'repurposeCanvasFreeImageLayout'|trans,
+                    } %}
+                    <fieldset class="image-layout">
+                      <legend>{{ 'repurposeCanvasImageLayout'|trans }}</legend>
+                      <div class="grid2">
+                        <template x-for="mode in vocab.imageLayouts" x-bind:key="mode">
+                          <label class="image-layout-option">
+                            <input type="radio" x-bind:name="'rp-image-layout-' + i" x-bind:value="mode"
+                                   x-bind:checked="slide.imageLayout === mode" x-on:change="setImageLayout(slide, mode)">
+                            <span x-text="({{ imageLayoutLabels|json_encode|e('html_attr') }})[mode]"></span>
+                          </label>
+                        </template>
+                      </div>
+                    </fieldset>
+                    <div class="preview-hint" x-show="slide.imageLayout === 'free' && slideHasMedia(slide)" x-cloak>
+                      {{ 'repurposeCanvasImageMoveHint'|trans }}
+                      <button type="button" class="btn-xs image-secondary image-preview-return" x-show="canvasEditing && previewIndexOf(slide) >= 0" x-cloak
+                              x-on:click="scrollPreviewTo(previewIndexOf(slide))?.focus({ preventScroll: true })">{{ 'repurposeCanvasImagePreview'|trans }}</button>
+                    </div>
 
-                  <template x-for="k in imageSlots(slide)" :key="k">
-                    <div class="image-cell">
-                      <div class="field" x-id="['field']">
-                        <label :for="$id('field')">Image <span class="val" x-show="cellCount(slide) > 1" x-text="slide.imageLayout === 'free' ? k + 1 : (k === 0 ? 'A' : 'B')"></span></label>
-                        <div class="media-picker" :class="!cellImage(slide, k).media && 'is-empty'">
-                          <div class="media-picker__thumb" :style="cellImage(slide, k).media ? ('background-image:url(\'' + thumbUrl(cellImage(slide, k).media) + '\')') : ''"></div>
+                    <template x-for="k in imageSlots(slide)" x-bind:key="k">
+                      <div class="image-cell">
+                        <span class="image-slot-name" x-show="cellCount(slide) > 1" x-cloak>
+                          {{ 'repurposeCanvasImage'|trans }} <span x-text="slide.imageLayout === 'free' ? k + 1 : (k === 0 ? 'A' : 'B')"></span>
+                        </span>
+                        <div class="media-picker" x-bind:class="!cellImage(slide, k).media && 'is-empty'">
+                          <div class="media-picker__thumb" x-show="cellImage(slide, k).media" x-cloak aria-hidden="true"
+                               x-bind:style="{'background-image': cellImage(slide, k).media ? 'url(' + thumbUrl(cellImage(slide, k).media) + ')' : ''}"></div>
                           <div class="media-picker__meta">
-                            <span class="media-picker__name" x-text="cellImage(slide, k).media || 'No image'"></span>
+                            <span class="media-picker__name" x-bind:title="cellImage(slide, k).media"
+                                  x-text="cellImage(slide, k).media || {{ 'repurposeCanvasImageEmpty'|trans|json_encode|e('html_attr') }}"></span>
                             <div class="media-picker__actions">
-                              <button type="button" class="btn-xs" @click="pickMedia(i, k, 'choose')" :id="$id('field')">Choose</button>
-                              <button type="button" class="btn-xs" @click="pickMedia(i, k, 'upload')">Upload</button>
-                              <button type="button" class="btn-xs" x-show="cellImage(slide, k).media" @click="beginCrop(i, k)">{{ 'repurposeCanvasCropImage'|trans }}</button>
-                              <button type="button" class="btn-xs danger" x-show="cellImage(slide, k).media || (slide.imageLayout === 'free' && cellCount(slide) > 1)" @click="clearMedia(i, k)">Remove</button>
+                              <button type="button" class="btn-xs" x-on:click="beginCrop(i, k)"
+                                      x-show="cellImage(slide, k).media" x-cloak>{{ 'repurposeCanvasCropImage'|trans }}</button>
+                              <button type="button" class="btn-xs" x-on:click="pickMedia(i, k, 'choose')"
+                                      x-bind:class="cellImage(slide, k).media && 'image-secondary'"
+                                      x-text="cellImage(slide, k).media ? {{ 'repurposeCanvasImageReplace'|trans|json_encode|e('html_attr') }} : {{ 'repurposeCanvasImageChoose'|trans|json_encode|e('html_attr') }}"></button>
+                              <button type="button" class="btn-xs image-secondary" x-on:click="pickMedia(i, k, 'upload')">{{ 'repurposeCanvasImageUpload'|trans }}</button>
+                              <button type="button" class="btn-xs image-secondary danger" x-on:click="clearMedia(i, k)"
+                                      x-show="cellImage(slide, k).media || (slide.imageLayout === 'free' && cellCount(slide) > 1)" x-cloak
+                                      x-text="cellImage(slide, k).media ? {{ 'repurposeCanvasImageRemove'|trans|json_encode|e('html_attr') }} : {{ 'repurposeCanvasImageRemoveSlot'|trans|json_encode|e('html_attr') }}"></button>
                             </div>
                           </div>
                         </div>
-                      </div>
-                      <div class="grid2" x-show="cellImage(slide, k).media">
-                        <div class="field" x-id="['field']">
-                          <label :for="$id('field')">Focus X <span class="val" x-text="Number(cellImage(slide, k).focusX ?? 0.5).toFixed(2)"></span></label>
-                          <input type="range" min="0" max="1" step="0.01" x-model.number="cellImage(slide, k).focusX" :id="$id('field')">
-                        </div>
-                        <div class="field" x-id="['field']">
-                          <label :for="$id('field')">Focus Y <span class="val" x-text="Number(cellImage(slide, k).focusY ?? 0.5).toFixed(2)"></span></label>
-                          <input type="range" min="0" max="1" step="0.01" x-model.number="cellImage(slide, k).focusY" :id="$id('field')">
-                        </div>
-                        <div class="field full" x-id="['field']">
-                          <label :for="$id('field')">Zoom <span class="val" x-text="Number(cellImage(slide, k).zoom ?? 1).toFixed(2)"></span></label>
-                          <input type="range" min="1" max="5" step="0.1" x-model.number="cellImage(slide, k).zoom" :id="$id('field')">
-                        </div>
-                      </div>
-                      <template x-if="slide.imageLayout === 'free' && cellImage(slide, k).media">
-                        <div class="grid2">
-                          {% for key, limit in {x: 'width', y: 'height', width: 'x', height: 'y'} %}
-                            <div class="field" x-id="['field']">
-                              <label x-bind:for="$id('field')">{{ ('repurposeCanvasImage' ~ key|capitalize)|trans }} <span class="val" x-text="Math.round(cellImage(slide, k).{{ key }} * 100) + '%'" aria-hidden="true"></span></label>
-                              <input type="range" min="{{ key in ['width', 'height'] ? '0.05' : '0' }}" step="0.01"
-                                     x-bind:max="1 - cellImage(slide, k).{{ limit }}" x-model.number="cellImage(slide, k).{{ key }}" x-bind:id="$id('field')">
+                        <template x-if="slide.imageLayout === 'free' && cellImage(slide, k).media">
+                          <fieldset class="image-frame-fields">
+                            <legend>{{ 'repurposeCanvasImageFrame'|trans }}</legend>
+                            <div class="grid2">
+                              {% for key, limit in {x: 'width', y: 'height', width: 'x', height: 'y'} %}
+                                <div class="field" x-id="['field']">
+                                  <label x-bind:for="$id('field')">{{ ('repurposeCanvasImage' ~ key|capitalize)|trans }} <span class="val" x-text="Math.round(cellImage(slide, k).{{ key }} * 100) + '%'" aria-hidden="true"></span></label>
+                                  <input type="range" min="{{ key in ['width', 'height'] ? '0.05' : '0' }}" step="0.01"
+                                         x-bind:max="1 - cellImage(slide, k).{{ limit }}" x-model.number="cellImage(slide, k).{{ key }}" x-bind:id="$id('field')">
+                                </div>
+                              {% endfor %}
                             </div>
-                          {% endfor %}
-                        </div>
-                      </template>
-                    </div>
-                  </template>
-                  <button class="btn-xs" type="button" x-show="slide.imageLayout === 'free' && slide.images.every(image => image.media)" x-cloak
-                          x-on:click="addImage(slide)">{{ 'repurposeCanvasAddImage'|trans }}</button>
+                          </fieldset>
+                        </template>
+                        <details class="image-crop-settings" x-show="cellImage(slide, k).media" x-cloak>
+                          <summary>{{ 'repurposeCanvasImageCropSettings'|trans }}</summary>
+                          <div class="grid2">
+                            {% for key, label in {focusX: 'repurposeCanvasImageFocusX', focusY: 'repurposeCanvasImageFocusY'} %}
+                              <div class="field" x-id="['field']">
+                                <label x-bind:for="$id('field')">{{ label|trans }} <span class="val" x-text="Number(cellImage(slide, k).{{ key }} ?? 0.5).toFixed(2)" aria-hidden="true"></span></label>
+                                <input type="range" min="0" max="1" step="0.01" x-model.number="cellImage(slide, k).{{ key }}" x-bind:id="$id('field')">
+                              </div>
+                            {% endfor %}
+                            <div class="field full" x-id="['field']">
+                              <label x-bind:for="$id('field')">{{ 'repurposeCanvasImageZoom'|trans }} <span class="val" x-text="Number(cellImage(slide, k).zoom ?? 1).toFixed(2)" aria-hidden="true"></span></label>
+                              <input type="range" min="1" max="5" step="0.1" x-model.number="cellImage(slide, k).zoom" x-bind:id="$id('field')">
+                            </div>
+                          </div>
+                        </details>
+                      </div>
+                    </template>
+                    <button class="btn-xs" type="button" x-show="slide.imageLayout === 'free' && slide.images.every(image => image.media)" x-cloak
+                            x-on:click="addImage(slide)">{{ 'repurposeCanvasAddImage'|trans }}</button>
+                  </div>
 
                   <template x-for="(t, k) in slide.texts" :key="k">
                     <div class="free-text">

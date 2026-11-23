@@ -435,6 +435,54 @@ test('slide duplication and insertion follow the target and respect the network 
   assert.equal(state.spec.slides.length, 4);
 });
 
+test('opening crop scrolls the selected slide into view below the sticky header', () => {
+  const slides = [{images: [{}]}, {images: [{media: 'photo.jpg'}]}];
+  let canvasBox = {left: 420, right: 810, bottom: 320};
+  let toolbarTop = -200;
+  const toolbar = {getBoundingClientRect: () => ({top: toolbarTop})};
+  const deck = {
+    scrollLeft: 25,
+    getBoundingClientRect: () => ({left: 16, right: 374}),
+    closest: selector => selector === '.deck-wrap' ? {
+      querySelector: name => name === '.preview-toolbar' ? toolbar : null,
+    } : null,
+  };
+  const canvas = {getBoundingClientRect: () => canvasBox, closest: selector => selector === '.deck' ? deck : null};
+  const pageScroll = [];
+  let finishedButtonFocused = false;
+  const done = {focus: ({preventScroll}) => { finishedButtonFocused = preventScroll; }};
+  const state = studio({spec: {slides}}, undefined, undefined, {
+    innerHeight: 844,
+    scrollBy: (x, y) => pageScroll.push([x, y]),
+    document: {
+      addEventListener: (_, callback) => callback(),
+      getElementById: id => ({'rp-slide-canvas-1': canvas, 'rp-crop-done': done})[id],
+      querySelector: selector => selector === 'header' ? {getBoundingClientRect: () => ({bottom: 138})} : null,
+    },
+  });
+  state.$nextTick = callback => callback();
+  state._previewTargets = state.previewTargets();
+
+  state.beginCrop(1, 0);
+  assert.equal(state.croppedImage, slides[1].images[0]);
+  assert.equal(deck.scrollLeft, 429);
+  assert.deepEqual(pageScroll, [[0, -354]]);
+  assert.equal(finishedButtonFocused, true);
+  assert.equal(state.scrollPreviewTo(0), null, 'an unrendered slide cannot scroll the page');
+
+  canvasBox = {left: 18, right: 374, bottom: 844};
+  toolbarTop = 138;
+  assert.equal(state.scrollPreviewTo(1), canvas);
+  assert.equal(deck.scrollLeft, 429, 'a fully visible preview keeps its horizontal position');
+  assert.equal(pageScroll.length, 1, 'a fully visible preview keeps its vertical position');
+
+  canvasBox = {left: 12, right: 368, bottom: 895};
+  toolbarTop = 160;
+  state.scrollPreviewTo(1);
+  assert.equal(deck.scrollLeft, 425);
+  assert.deepEqual(pageScroll[1], [0, 6]);
+});
+
 test('the image context menu and crop drag target the clicked cell even over the slide overlay', () => {
   const first = {media: 'first.jpg', focusX: 0.5, focusY: 0.5};
   const second = {media: 'second.jpg', focusX: 0.5, focusY: 0.6};
