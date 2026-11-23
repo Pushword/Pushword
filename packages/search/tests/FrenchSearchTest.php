@@ -146,7 +146,7 @@ final class FrenchSearchTest extends TestCase
     public function testHitsDropTheRawContentAndKeepAReadableSnippet(): void
     {
         $results = $this->indexedSearcher()->search(self::HOST, 'acompte');
-        $hit = array_values(array_filter($results['hits'], static fn (array $h): bool => 2 === $h['id']))[0] ?? null;
+        $hit = array_find($results['hits'], static fn (array $h): bool => 2 === $h['id']);
 
         self::assertNotNull($hit);
         self::assertArrayNotHasKey('content', $hit);

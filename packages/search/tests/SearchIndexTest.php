@@ -190,9 +190,9 @@ final class SearchIndexTest extends KernelTestCase
         try {
             $container->get(Indexer::class)->reindexHost(self::HOST);
             $hits = $searcher->search(self::HOST, $nonce)['hits'];
-            $hit = array_filter($hits, static fn (array $h): bool => $h['id'] === $page->id);
+            $hit = array_find($hits, static fn (array $h): bool => $h['id'] === $page->id);
 
-            self::assertSame('FRALP'.$page->id, array_values($hit)[0]['productCode']);
+            self::assertSame('FRALP'.$page->id, $hit['productCode'] ?? null);
         } finally {
             $em->remove($page);
             $em->flush();
@@ -222,9 +222,9 @@ final class SearchIndexTest extends KernelTestCase
 
         try {
             $hits = $searcher->search(self::HOST, $nonce)['hits'];
-            $hit = array_filter($hits, static fn (array $h): bool => $h['id'] === $page->id);
+            $hit = array_find($hits, static fn (array $h): bool => $h['id'] === $page->id);
 
-            self::assertSame('INC'.$page->id, array_values($hit)[0]['productCode']);
+            self::assertSame('INC'.$page->id, $hit['productCode'] ?? null);
         } finally {
             $em->remove($page);
             $em->flush();
@@ -295,7 +295,7 @@ final class SearchIndexTest extends KernelTestCase
             // Premise: the render-time Typographer curled the source
             // apostrophe before indexing.
             $hits = $searcher->search(self::HOST, 'l’aventure'.$nonce)['hits'];
-            $hit = array_values(array_filter($hits, static fn (array $h): bool => $h['id'] === $page->id))[0] ?? null;
+            $hit = array_find($hits, static fn (array $h): bool => $h['id'] === $page->id);
             self::assertNotNull($hit, 'Curly-apostrophe query found nothing');
             self::assertIsArray($hit['_formatted']);
             self::assertIsString($hit['_formatted']['content']);
@@ -339,7 +339,8 @@ final class SearchIndexTest extends KernelTestCase
         try {
             $container->get(Indexer::class)->reindexHost(self::HOST);
             $hits = $searcher->search(self::HOST, $nonce)['hits'];
-            $hit = array_values(array_filter($hits, static fn (array $h): bool => $h['id'] === $page->id))[0];
+            $hit = array_find($hits, static fn (array $h): bool => $h['id'] === $page->id);
+            self::assertNotNull($hit);
 
             self::assertArrayNotHasKey('content', $hit);
             self::assertIsArray($hit['_formatted']);

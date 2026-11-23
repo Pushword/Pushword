@@ -190,13 +190,14 @@ final class UndoBrowserTest extends AbstractPantherAdminTest
         $driver = $client->getWebDriver();
         self::assertInstanceOf(RemoteWebDriver::class, $driver);
         $devTools = new ChromeDevToolsDriver($driver);
+        $upperKey = strtoupper($key);
         // WebDriver sendKeys maps Ctrl+Z to Ctrl+W on an AZERTY desktop.
         foreach (['keyDown', 'keyUp'] as $type) {
             $devTools->execute('Input.dispatchKeyEvent', [
                 'type' => $type,
                 'key' => $key,
-                'code' => 'Key'.strtoupper($key),
-                'windowsVirtualKeyCode' => ord(strtoupper($key)),
+                'code' => 'Key'.$upperKey,
+                'windowsVirtualKeyCode' => ord($upperKey[0]),
                 'modifiers' => 2,
             ]);
         }

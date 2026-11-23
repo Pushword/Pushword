@@ -866,7 +866,7 @@ class PageRepository extends ServiceEntityRepository implements ObjectRepository
             $afterId = 0;
 
             while ([] !== ($rows = $this->findContentRowsReferencingBatch($chunk, $afterId))) {
-                $afterId = $rows[array_key_last($rows)]['id'];
+                $afterId = array_last($rows)['id'];
 
                 foreach ($rows as $row) {
                     if (isset($yielded[$row['id']])) {

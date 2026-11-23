@@ -50,6 +50,6 @@ final class SchemaForeignKeyNamesListenerTest extends TestCase
 
         $listener->postGenerateSchema($event);
 
-        self::assertSame($generated, array_values($event->getSchema()->getTable('source')->getForeignKeys())[0]);
+        self::assertSame($generated, array_first($event->getSchema()->getTable('source')->getForeignKeys()));
     }
 }

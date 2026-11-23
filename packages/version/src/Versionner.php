@@ -377,7 +377,7 @@ class Versionner
 
         sort($versions); // uniqid prefix is chronological
 
-        return $versions[array_key_last($versions)];
+        return array_last($versions);
     }
 
     /**

@@ -75,7 +75,7 @@ final class ArrayCriteriaReader
             throw new InvalidArgumentException('An empty group would compile to "()"; write the condition or leave it out.');
         }
 
-        return \is_array(array_values($row)[0]);
+        return \is_array(array_first($row));
     }
 
     /** @param array<mixed> $row */

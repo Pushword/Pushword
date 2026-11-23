@@ -2,12 +2,9 @@
 
 declare(strict_types=1);
 
-use Rector\CodeQuality\Rector\Identical\FlipTypeControlToUseExclusiveTypeRector;
 use Rector\Config\RectorConfig;
 use Rector\DeadCode\Rector\ClassMethod\RemoveUselessReturnTagRector;
 use Rector\DeadCode\Rector\Node\RemoveNonExistingVarAnnotationRector;
-use Rector\Php81\Rector\FuncCall\NullToStrictStringFuncCallArgRector;
-use Rector\TypeDeclaration\Rector\StmtsAwareInterface\DeclareStrictTypesRector;
 
 $paths = [
     __DIR__.'/src',
@@ -17,7 +14,7 @@ $paths = [
 
 return RectorConfig::configure()
     ->withImportNames(removeUnusedImports: true)
-    ->withPhpSets(php83: true)
+    ->withPhpSets(php85: true)
     ->withParallel()
     ->withPaths($paths)
     ->withRootFiles()
@@ -33,23 +30,15 @@ return RectorConfig::configure()
         codingStyle: true,
         typeDeclarations: true,
         typeDeclarationDocblocks: true,
-        instanceOf: true,
-        earlyReturn: true,
         doctrineCodeQuality: true,
         symfonyCodeQuality: true,
-        // symfonyConfigs: true
     )
     ->withAttributesSets(
         symfony: true,
         doctrine: true,
         phpunit: true,
     )
-    ->withRules([
-        DeclareStrictTypesRector::class,
-    ])
     ->withSkip([
-        NullToStrictStringFuncCallArgRector::class,
-        FlipTypeControlToUseExclusiveTypeRector::class,
         RemoveUselessReturnTagRector::class,
         RemoveNonExistingVarAnnotationRector::class,
     ])

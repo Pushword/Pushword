@@ -66,7 +66,7 @@ final readonly class PreparedSplitContent
             }
         }
 
-        $this->body = $body.$segments[array_key_last($segments)];
+        $this->body = $body.array_last($segments);
         $this->headings = $headings;
         $this->toc = new ListRenderer(new Matcher(), ['currentClass' => 'active', 'ancestorClass' => 'active_ancestor'])->render($this->getMenu());
     }
