@@ -184,13 +184,14 @@ test.describe('touch controls', () => {
       '.pw-editor-mode',
       '.pw-editor-diagnostics summary',
       '.pw-settings-toggle',
-      '.page-actions .btn',
+      '.page-actions .btn:visible',
     ]) {
       const heights = await page
         .locator(selector)
         .evaluateAll((elements) =>
           elements.map((el) => el.getBoundingClientRect().height),
         )
+      expect(heights.length, selector).toBeGreaterThan(0)
       for (const height of heights) expect(height).toBeGreaterThanOrEqual(44)
     }
     await page.locator('.pw-outline-opener').click()

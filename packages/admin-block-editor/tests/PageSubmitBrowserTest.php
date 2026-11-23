@@ -48,9 +48,8 @@ final class PageSubmitBrowserTest extends AbstractPantherAdminTest
             window.EditorJsExportMarkdown.prototype.exportToMarkdown = async () => paragraph.textContent;
             JS);
         $form = $client->findElement(WebDriverBy::cssSelector('.ea-edit-form'));
-        $client->findElement(WebDriverBy::cssSelector('.action-saveAndContinue'))->click();
+        $client->findElement(WebDriverBy::cssSelector('.action-saveAndReturn'))->click();
         $client->wait(self::timeoutLong())->until(WebDriverExpectedCondition::stalenessOf($form));
-        $client->waitFor('.ce-paragraph', self::timeoutLong());
         $client->request('GET', $this->generateAdminUrl('admin_page_edit', ['id' => $pageId]));
         $client->waitFor('.ce-paragraph', self::timeoutLong());
 

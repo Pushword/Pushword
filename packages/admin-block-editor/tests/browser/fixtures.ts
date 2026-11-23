@@ -126,14 +126,12 @@ export async function expectInsertionPreservesLayout(page: Page): Promise<void> 
 export async function saveAndReload(page: Page): Promise<void> {
   await page.evaluate(() => document.fonts.ready)
   const formUrl = page.url()
-  const response = page.waitForResponse(response =>
-    response.request().method() === 'POST' && response.url() === formUrl,
-  )
-  await Promise.all([
-    page.waitForEvent('domcontentloaded'),
-    page.locator('.action-saveAndContinue').click(),
+  const [response] = await Promise.all([
+    page.waitForResponse(response => response.request().method() === 'POST' && response.url() === formUrl),
+    page.keyboard.press('ControlOrMeta+s'),
   ])
-  expect((await response).status(), 'The edit form must redirect after saving').toBe(302)
-  // The redirect loads persisted content; another reload can abort editor workers.
+  expect(response.status(), 'The shortcut must save without leaving the editor').toBe(204)
+  expect(response.headers()).toHaveProperty('x-pushword-page-revision')
+  await page.reload()
   await waitForEditor(page)
 }
