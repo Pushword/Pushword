@@ -194,6 +194,31 @@ property is removed — deleting a line in the file is an edit.
 - `400` — empty body, malformed YAML, or a document that does not open with `---`.
 - `422` and `428` are JSON errors, identical to the JSON endpoints.
 
+### Live shared drafts
+
+A bearer-authenticated editor can use the same Yjs draft as the admin through
+`POST /api/pages/{id}/draft` for a page body or
+`POST /api/repurpose/{id}/draft` for a carousel. The latter requires the
+Repurpose extension. Open the draft with `{"after":0}`. The response supplies
+the saved `baseline` (Markdown or JSON text), a draft `revision`, and the
+first batch of base64 Yjs updates.
+
+Send the returned revision in `If-Match` on later requests and the last
+returned cursor in `after`. Add a base64 Yjs `update` to share a change.
+Read further batches while `more` is true. An HTTP 409 means the draft's
+base revision changed. Reopen the current version and reconcile any pending
+edits before sending them again. The shared draft does not create history
+entries. Saving the page or carousel records a checkpoint.
+
+From the Pushword repository, with the admin JavaScript dependencies installed,
+use `packages/admin/examples/shared-draft-agent.mjs` to read or edit a draft.
+The script reads the API token from `PUSHWORD_TOKEN`.
+
+```sh
+node packages/admin/examples/shared-draft-agent.mjs https://example.test/api/pages/42/draft "old sentence" "new sentence"
+node packages/admin/examples/shared-draft-agent.mjs https://example.test/api/repurpose/7/draft "Old title" "New title" /slides/0/title
+```
+
 ### The editor sync client — `GET /api/editor/sync.js`
 
 The Node client that editor repos run as a Claude Code PostToolUse hook is served by the

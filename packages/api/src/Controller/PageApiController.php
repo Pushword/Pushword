@@ -13,6 +13,7 @@ use Pushword\Api\Service\BodyPatchException;
 use Pushword\Api\Service\InvalidFrontmatterException;
 use Pushword\Api\Service\PageFrontmatterMapper;
 use Pushword\Api\Service\PageWriter;
+use Pushword\Core\Collaboration\DraftExchange;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Entity\ValueObject\PageRedirection;
 use Pushword\Core\PropertySchema\PagePropertySchemaRegistry;
@@ -43,6 +44,12 @@ final class PageApiController extends AbstractApiController
         private readonly EditorialTimezone $editorialTimezone,
         private readonly string $deleteStrategy = 'hard',
     ) {
+    }
+
+    #[Route('/api/pages/{id}/draft', name: 'pushword_api_page_draft', requirements: ['id' => '\d+'], methods: ['POST'])]
+    public function syncDraft(Page $page, Request $request, DraftExchange $exchange): JsonResponse
+    {
+        return $exchange->sync($request, 'page:'.$page->id, (string) $page->writeVersion, $page->mainContent);
     }
 
     #[Route('/api/page/search', name: 'pushword_api_page_search', methods: ['GET'])]

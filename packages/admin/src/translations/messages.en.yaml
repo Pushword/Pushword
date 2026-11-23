@@ -146,6 +146,13 @@ adminPageCustomPropertiesLabel: "Other parameters"
 adminPageEditMessageHelp: "Previous edit on %lastEditDatetime% <br> <em>%lastEditMessage%</em>"
 adminPageEditMessageHelpVersionned: 'Previous edit on %lastEditDatetime% <br> <em>%lastEditMessage%</em> <br><a href="%seeVersionLink%">See history</a>'
 adminPageEditMessageLabel: "Reason of modification"
+adminPageDraftCheckpoint: Version checkpoint saved.
+adminPageDraftConnected: Shared draft saved automatically
+adminPageDraftJoin: Join shared draft
+adminPageDraftOffline: Shared draft offline. Keep this tab open.
+adminPageDraftPending: Syncing shared draft…
+adminPageDraftStale: A new version was recorded. Your previous draft remains in this tab.
+adminPageDraftUpdated: Shared draft updated by another participant
 adminPageEditLockRefresh: "Refresh page"
 adminPageEditLockWarning: "%user% is currently editing this page. Your changes may be overwritten."
 adminPageEditLockWarningSameUser: "You are editing this page in another tab or browser."

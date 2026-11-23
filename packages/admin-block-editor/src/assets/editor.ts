@@ -303,11 +303,19 @@ export class editorJs {
     const boundInput = boundInputOf(config.holder!)
     if (boundInput) {
       this.saveBeforeSubmit(boundInput.form)
+      const applyDraft = async (markdown: string) => {
+        await initialization
+        // @ts-ignore Same window global the initial parse uses.
+        await new window.EditorJsParseMarkdown(editor, markdown).parseMarkdown()
+        await this.editorjsSave(config.holder!)
+      }
       boundInput.pwEditor = {
         setValue: (markdown: string) => {
-          // @ts-ignore same window global the initial parse above goes through
+          // @ts-ignore Same window global the initial parse uses.
           void new window.EditorJsParseMarkdown(editor, markdown).parseMarkdown()
         },
+        applyDraft,
+        flushDraft: () => initialization.then(() => this.editorjsSave(config.holder!)),
       }
     }
 

@@ -1,9 +1,25 @@
 {
+  "_yjs.js": {
+    "file": "yjs.js",
+    "name": "yjs"
+  },
   "src/Resources/assets/admin.collaborationPoc.js": {
     "file": "collaborationPoc.js",
     "name": "collaborationPoc",
     "src": "src/Resources/assets/admin.collaborationPoc.js",
-    "isEntry": true
+    "isEntry": true,
+    "imports": [
+      "_yjs.js"
+    ]
+  },
+  "src/Resources/assets/admin.draftSession.js": {
+    "file": "draftSession.js",
+    "name": "draftSession",
+    "src": "src/Resources/assets/admin.draftSession.js",
+    "isEntry": true,
+    "imports": [
+      "_yjs.js"
+    ]
   },
   "src/Resources/assets/admin.js": {
     "file": "admin.js",
@@ -19,5 +35,15 @@
     "name": "mediaFileDrop",
     "src": "src/Resources/assets/admin.mediaFileDrop.js",
     "isEntry": true
+  },
+  "src/Resources/assets/admin.pageDraft.js": {
+    "file": "pageDraft.js",
+    "name": "pageDraft",
+    "src": "src/Resources/assets/admin.pageDraft.js",
+    "isEntry": true,
+    "imports": [
+      "src/Resources/assets/admin.draftSession.js",
+      "src/Resources/assets/admin.draftSession.js"
+    ]
   }
 }

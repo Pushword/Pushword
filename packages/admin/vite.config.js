@@ -13,6 +13,8 @@ const filesToCopy = [
 const input = {
   admin: resolve(import.meta.dirname, 'src/Resources/assets/admin.js'),
   collaborationPoc: resolve(import.meta.dirname, 'src/Resources/assets/admin.collaborationPoc.js'),
+  pageDraft: resolve(import.meta.dirname, 'src/Resources/assets/admin.pageDraft.js'),
+  draftSession: resolve(import.meta.dirname, 'src/Resources/assets/admin.draftSession.js'),
   mediaFileDrop: resolve(import.meta.dirname, 'src/Resources/assets/admin.mediaFileDrop.js'),
 }
 
@@ -29,6 +31,7 @@ export default defineConfig({
   ],
   build: {
     rolldownOptions: {
+      preserveEntrySignatures: 'strict',
       input: input,
       output: {
         entryFileNames: '[name].js',

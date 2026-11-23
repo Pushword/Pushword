@@ -10,7 +10,11 @@ declare global {
    * changes recovery in pushword/admin; MonacoHelper implements it too.
    */
   interface HTMLElement {
-    pwEditor?: { setValue: (value: string) => void }
+    pwEditor?: {
+      setValue: (value: string) => void
+      applyDraft?: (value: string) => Promise<void>
+      flushDraft?: () => Promise<unknown>
+    }
   }
 
   interface Window {

@@ -365,11 +365,13 @@
     }
   </style>
 </head>
-<body x-data="repurposeStudio()" x-on:focus.window="checkRevision()" x-on:visibilitychange.document="checkRevision()" @keydown.window="editorKey($event)">
+<body x-data="repurposeStudio()" @compositionstart="draftComposition(true)" @compositionend="draftComposition(false)" x-on:focus.window="checkRevision()" x-on:visibilitychange.document="checkRevision()" @keydown.window="editorKey($event)">
   <script>
     window.RP_STUDIO = {
       spec: {{ specJs|raw }},
       revision: {{ post.revision()|json_encode|raw }},
+      draftToken: {{ csrf_token('repurpose-draft-' ~ post.id)|json_encode|raw }},
+      draftModule: {{ versionedAsset('/bundles/pushwordadmin/draftSession.js')|json_encode|raw }},
       slideLimit: {{ slideLimit|json_encode|raw }},
       slides: {{ slidesJs|raw }},
       video: {{ videoJs|raw }},
@@ -401,6 +403,7 @@
       networkUrls: {{ networkUrlsJs|raw }},
       urls: {
         preview: {{ path('repurpose_studio_preview', {id: post.id})|json_encode|raw }},
+        draft: {{ path('repurpose_studio_draft', {id: post.id})|json_encode|raw }},
         revision: {{ path('repurpose_studio_revision', {id: post.id})|json_encode|raw }},
         save: {{ path('repurpose_studio_save', {id: post.id})|json_encode|raw }},
         export: {{ path('repurpose_studio_export', {id: post.id})|json_encode|raw }},
@@ -437,6 +440,12 @@
         </div>
       </details>
       <a class="btn" href="{{ path('repurpose_history_index', {id: post.id}) }}" target="_blank" rel="noopener" aria-label="{{ 'repurposeHistoryOpen'|trans }}">{{ 'repurposeHistory'|trans }}</a>
+      <button class="btn" type="button" @click="joinDraft()" x-show="!draftState || draftState === 'checkpoint'" x-cloak>{{ 'repurposeDraftJoin'|trans }}</button>
+      <span x-show="draftState" x-cloak role="status">
+        {% for state in ['pending', 'connected', 'updated', 'offline', 'stale', 'checkpoint'] %}
+          <span x-show="draftState === '{{ state }}'">{{ ('repurposeDraft' ~ state|capitalize)|trans }}</span>
+        {% endfor %}
+      </span>
       <button class="btn primary studio-save" type="button" @click="save()" :disabled="saving || syncState !== ''" x-text="saveLabel">Save</button>
     </div>
     <div class="notice studio-sync" x-show="syncState" x-cloak>

@@ -276,6 +276,11 @@
 
   function studio() {
     var cfg = window.RP_STUDIO || {}
+    var draft
+    var initialSpec
+    var lastDraftState
+    var composing = false
+    var switchingView = false
 
     return {
       spec: cfg.spec || { slides: [] },
@@ -326,6 +331,7 @@
       syncState: '',
       saving: false,
       saveLabel: 'Save',
+      draftState: '',
       exporting: false,
       exportLabel: 'Export .zip',
       exportingSvg: false,
@@ -349,6 +355,7 @@
 
       init: function () {
         this.normalize()
+        initialSpec = this.payload()
         this._previewTargets = this.previewTargets()
         this._boundDragMove = this.deckTextMove.bind(this)
         this._boundDragUp = this.deckTextUp.bind(this)
@@ -356,16 +363,71 @@
         this.deckOpen = '0' !== this._store('rp-studio-deckOpen')
         this.$watch('spec', function () {
           this.dirty = true
+          draft?.capture()
           if ('visual' === this.view) {
             this.schedulePreview()
           }
         }.bind(this))
         window.addEventListener('message', this.onMediaMessage.bind(this))
         this._revisionTimer = setInterval(this.checkRevision.bind(this), REVISION_CHECK_MS)
+        this._draftUnload = (event) => {
+          if (!draft || !this.dirty || ['connected', 'updated'].includes(lastDraftState)) return
+          event.preventDefault()
+          event.returnValue = ''
+        }
+        window.addEventListener('beforeunload', this._draftUnload)
       },
 
       destroy: function () {
         clearInterval(this._revisionTimer)
+        window.removeEventListener('beforeunload', this._draftUnload)
+        draft?.close()
+      },
+
+      draftComposition(active) {
+        composing = active
+      },
+
+      joinDraft: async function () {
+        if (draft || this.draftState === 'pending') return
+        var self = this
+        try {
+          this.draftState = 'pending'
+          var { carouselModel, draftCarousel, equalJson, openDraft, reconcileJson } = await import(cfg.draftModule)
+          var read = function () {
+            try { return draftCarousel(self.payload()) } catch { return undefined }
+          }
+          draft = openDraft({
+            url: cfg.urls.draft,
+            token: cfg.draftToken,
+            revision: this.revision,
+            model: carouselModel,
+            initial: draftCarousel(initialSpec),
+            view: {
+              read,
+              equal: equalJson,
+              wait: () => composing || switchingView || self._drag !== null || read() === undefined,
+              apply(spec) {
+                if (self.view === 'source') {
+                  self.setSource(JSON.stringify(spec, null, 2))
+                  self.dirty = true
+                  self.schedulePreview()
+                  return
+                }
+                reconcileJson(self.spec, spec)
+                self.normalize(false)
+              },
+            },
+            status(state) {
+              if (state === 'connected' && self.draftState === 'updated') return
+              lastDraftState = state
+              self.draftState = state
+              if (state === 'stale') self.syncState = 'changed'
+            },
+          })
+        } catch {
+          this.draftState = 'offline'
+        }
       },
 
       checkRevision: async function () {
@@ -393,7 +455,7 @@
         }
       },
 
-      normalize: function () {
+      normalize: function (resetSlides = true) {
         var self = this
         var def = function (obj, key, value) {
           if (undefined === obj[key]) {
@@ -458,7 +520,7 @@
           })
         })
         // UI-only: first slide expanded, the rest collapsed (kept out of the spec).
-        this.slidesOpen = s.slides.map(function (_, i) { return 0 === i })
+        this.slidesOpen = s.slides.map((_, i) => resetSlides ? i === 0 : (this.slidesOpen[i] ?? i === 0))
       },
 
       get hashtagsText() {
@@ -608,6 +670,8 @@
           return
         }
 
+        if (draft && !await draft.flush()) return
+        if (this.saving || this.syncState) return
         var options
         try {
           options = jsonPost(this.payload())
@@ -629,6 +693,14 @@
 
           var body = await response.json()
           if (response.ok) {
+            if (this.revision !== body.revision) {
+              initialSpec = JSON.parse(options.body)
+              if (draft) {
+                draft.close()
+                draft = undefined
+                this.draftState = 'checkpoint'
+              }
+            }
             this.revision = body.revision
             this.violations = []
             try {
@@ -1970,11 +2042,13 @@
           this.placingText = false
           this.crop = null
           this.removedText = null
+          switchingView = true
           this.view = 'source'
           var self = this
           this.$nextTick(function () {
             self.ensureSourceEditor()
             self.setSource(text)
+            switchingView = false
           })
           return
         }
@@ -2008,6 +2082,7 @@
         textarea.addEventListener('input', function () {
           if ('source' === self.view) {
             self.dirty = true
+            draft?.capture()
             self.schedulePreview()
           }
         })

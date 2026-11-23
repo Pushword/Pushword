@@ -36,6 +36,12 @@ for one carousel or a list filtered to that page and host for several.
 Choose **Preview** to enlarge the cover or **Studio** to edit it. The studio's
 source card links back to the page editor; standalone carousels have no source.
 
+Choose **Join shared draft** to co-edit a saved carousel from the Studio. The
+draft is saved automatically. Reopen the Studio and join again to resume it.
+**Save** records a checkpoint in the carousel's version history. If another
+participant saves first, the Studio keeps the previous draft open and offers
+the latest version in a separate tab.
+
 Open **Version history** in the Studio to compare a saved carousel with the
 current version or another saved version. **Restore version** restores the
 entire carousel specification, including its source page, slides, caption and

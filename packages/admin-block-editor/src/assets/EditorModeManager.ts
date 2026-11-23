@@ -9,6 +9,7 @@ import { modeButtonsOf } from './modeButtons'
  */
 export class EditorModeManager {
   private readonly editorId: string
+  private blockEditorBinding?: HTMLInputElement['pwEditor']
   private monacoInstance: any = null
 
   // Constantes
@@ -114,6 +115,7 @@ export class EditorModeManager {
     mode: string,
   ): HTMLTextAreaElement {
     const textarea = document.createElement('textarea')
+    this.blockEditorBinding = input.pwEditor
     textarea.id = input.id
     textarea.name = input.name
     textarea.value = content
@@ -130,6 +132,7 @@ export class EditorModeManager {
     const input = document.createElement('input')
     input.type = 'hidden'
     input.id = textarea.id
+    input.pwEditor = this.blockEditorBinding
     input.name = textarea.name
     input.setAttribute('data-editorjs', textarea.getAttribute('data-editorjs') || '')
     return input
@@ -208,6 +211,7 @@ export class EditorModeManager {
         return
       }
 
+      input.setAttribute('data-pw-editor-switching', '')
       editorInstance.saver
         .save()
         .then(async (outputData: OutputData) => {
@@ -245,6 +249,7 @@ export class EditorModeManager {
             error: saveError,
           })
         })
+        .finally(() => input.removeAttribute('data-pw-editor-switching'))
     } catch (error) {
       logger.error('Erreur lors de la transition vers Markdown', {
         editorId: this.editorId,
@@ -257,8 +262,8 @@ export class EditorModeManager {
    * Passe de Markdown à EditorJS
    */
   private async switchFrom(format: string = 'markdown'): Promise<void> {
+    const textarea = this.getEditorInput() as HTMLTextAreaElement
     try {
-      const textarea = this.getEditorInput() as HTMLTextAreaElement
       if (!textarea) {
         logger.error('Textarea non trouvé pour la transition depuis Markdown', {
           editorId: this.editorId,
@@ -274,6 +279,7 @@ export class EditorModeManager {
         return
       }
 
+      textarea.setAttribute('data-pw-editor-switching', '')
       const textareaContent = monacoInstance.getValue()
 
       if (format === 'markdown')
@@ -318,6 +324,8 @@ export class EditorModeManager {
         error,
       })
       throw error
+    } finally {
+      textarea?.removeAttribute('data-pw-editor-switching')
     }
   }
 
@@ -335,6 +343,10 @@ export class EditorModeManager {
    */
   public toggleEditor(): void {
     const currentMode = this.getCurrentMode()
+    if (
+      currentMode !== this.EDITOR_MODES.JSON &&
+      this.getEditorInput()?.form?.hasAttribute('data-pw-draft-active')
+    ) return
     this.showOrHideBtn(true)
 
     if (currentMode === this.EDITOR_MODES.MARKDOWN) {

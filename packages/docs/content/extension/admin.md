@@ -108,6 +108,23 @@ A site overriding `@pwAdmin/page/edit.html.twig` has to carry over the
 attribute. Render all remaining form fields with `form_rest` or `form_end` so
 the revision field is submitted, and retain the sync banner and shortcut submit button.
 
+## Shared page drafts
+
+On a saved Markdown page, choose **Join shared draft**. Editor.js and Monaco in Markdown
+mode share the body, and another participant's edits appear in the editor.
+Draft changes are saved automatically and can be recovered by joining the
+same draft again. Save the page to record a checkpoint in the page history
+when the Version extension is enabled.
+
+A regular save starts a new revision. If another editor or agent records one
+while you are typing, Pushword keeps your work in your tab and offers the
+latest version in a separate tab. Review your changes before applying them to
+a draft for that version. The draft only covers the body; other form fields
+use the existing browser recovery and revision checks.
+
+The draft store lives in the Pushword var directory. Keep it writable on the
+instance that serves the admin and API so draft autosaves survive restarts.
+
 ## Uploading media
 
 On a new or existing media form, choose a file or drop it anywhere on the page.

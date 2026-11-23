@@ -69,6 +69,13 @@ repurposeCanvasTextTool: "+ Text"
 repurposeCanvasUndo: "Undo"
 repurposeConfirmationCancel: Cancel
 repurposeEditSourcePage: Edit source page
+repurposeDraftCheckpoint: Version checkpoint saved.
+repurposeDraftConnected: Shared draft saved automatically
+repurposeDraftJoin: Join shared draft
+repurposeDraftOffline: Shared draft offline. Keep this tab open.
+repurposeDraftPending: Syncing shared draft…
+repurposeDraftStale: A new version was recorded. Your previous draft remains in this tab.
+repurposeDraftUpdated: Shared draft updated by another participant
 repurposeExport: 'Export'
 repurposeFormat: 'Format'
 repurposeHelpEffect: "Applies to the whole deck. Each slide can override this effect."

@@ -14,6 +14,7 @@ use Pushword\Core\Entity\Page;
 use Pushword\Core\Entity\User;
 use Pushword\Core\Tests\PathTrait;
 use Pushword\Repurpose\Entity\SocialPost;
+use Pushword\Repurpose\Entity\SocialPostRevision;
 use Pushword\Repurpose\Model\FontPairing;
 use Pushword\Repurpose\Service\AudioAssetResolver;
 use Pushword\Repurpose\Service\CarouselFactory;
@@ -101,6 +102,41 @@ final class RepurposeStudioControllerTest extends WebTestCase
 
         $em->flush();
         parent::tearDown();
+    }
+
+    public function testStudioAndAgentShareDraftUpdatesWithoutCreatingHistory(): void
+    {
+        $update = base64_encode(random_bytes(8));
+        $post = $this->persistPost();
+        $revision = $post->revision();
+        $browserUrl = '/admin/repurpose/studio/'.$post->id.'/draft';
+        $apiUrl = '/api/repurpose/'.$post->id.'/draft';
+        $this->client->request(Request::METHOD_GET, '/admin/repurpose/studio/'.$post->id);
+        $html = (string) $this->client->getResponse()->getContent();
+        self::assertSame(1, preg_match('/draftToken: "([^"]+)"/', $html, $matches));
+        $token = $matches[1];
+
+        $this->client->jsonRequest(Request::METHOD_POST, $browserUrl, ['after' => 0, 'update' => $update], ['HTTP_IF_MATCH' => $revision]);
+        self::assertResponseStatusCodeSame(403);
+        self::assertSame('{"error":"invalid_token"}', $this->client->getResponse()->getContent());
+        $this->client->jsonRequest(Request::METHOD_POST, $browserUrl, ['after' => 0, 'update' => $update], ['HTTP_X_COLLABORATION_TOKEN' => $token, 'HTTP_IF_MATCH' => $revision]);
+        self::assertResponseIsSuccessful();
+
+        $this->client->jsonRequest(Request::METHOD_POST, $apiUrl, ['after' => 0]);
+        self::assertResponseStatusCodeSame(401);
+        $this->client->jsonRequest(Request::METHOD_POST, $apiUrl, ['after' => 0], ['HTTP_AUTHORIZATION' => 'Bearer '.$this->testToken]);
+        self::assertResponseIsSuccessful();
+        $body = json_decode((string) $this->client->getResponse()->getContent(), true);
+        self::assertIsArray($body);
+        self::assertSame([$update], $body['updates']);
+        self::assertSame($revision, $body['revision']);
+        self::assertIsString($body['baseline']);
+        self::assertSame($post->spec, json_decode($body['baseline'], true));
+
+        $saved = $this->em->find(SocialPost::class, $post->id);
+        self::assertInstanceOf(SocialPost::class, $saved);
+        self::assertSame($revision, $saved->revision());
+        self::assertSame(0, $this->em->getRepository(SocialPostRevision::class)->count(['post' => $post->id]));
     }
 
     public function testStudioRendersTheEditorShell(): void
