@@ -6,6 +6,8 @@ namespace Pushword\Core\Tests\Collaboration;
 
 use PHPUnit\Framework\TestCase;
 use Pushword\Core\Collaboration\LivePresence;
+use Pushword\Core\Entity\User;
+use ReflectionProperty;
 use Symfony\Component\Cache\Adapter\ArrayAdapter;
 use Symfony\Component\Clock\MockClock;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -67,5 +69,60 @@ final class LivePresenceTest extends TestCase
         $request->setMethod(Request::METHOD_DELETE);
         $presence->sync($request, $page, $never);
         self::assertFalse($presence->isActive($page));
+    }
+
+    public function testListsOtherAccountsAndDistinguishesApiPresenceForTheSameAccount(): void
+    {
+        $clock = new MockClock();
+        $presence = new LivePresence(new ArrayAdapter(), $clock, new LockFactory(new InMemoryStore()));
+        $viewer = new User();
+        $viewer->email = 'robin@example.tld';
+        $viewer->username = '  ';
+
+        $editor = new User();
+        $editor->username = 'Élodie';
+
+        $id = new ReflectionProperty(User::class, 'id');
+        $id->setValue($viewer, 1);
+        $id->setValue($editor, 2);
+
+        $document = 'page:1';
+        $request = Request::create('/draft', Request::METHOD_POST, server: ['HTTP_X_COLLABORATION_TAB' => str_repeat('a', 32)]);
+        $join = static fn (): JsonResponse => new JsonResponse(['revision' => '1']);
+
+        $presence->sync($request, $document, $join);
+        $presence->sync($request, $document, $join, $viewer);
+        self::assertSame(['collaborative' => true, 'participants' => []], $presence->snapshot($document, $viewer));
+        $presence->recordApi($document, $viewer, new JsonResponse([], Response::HTTP_CONFLICT));
+        self::assertSame([], $presence->snapshot($document, $viewer)['participants']);
+
+        $presence->sync($request, $document, $join, $editor);
+        $clock->sleep(5);
+        $request->headers->set('X-Collaboration-Tab', str_repeat('b', 32));
+        $presence->sync($request, $document, $join, $editor);
+        self::assertSame([['id' => 2, 'name' => 'Élodie', 'api' => false]], $presence->snapshot($document, $viewer)['participants']);
+        $clock->sleep(3);
+        $presence->recordApi($document, $viewer, $join());
+        $presence->recordApi($document, $editor, $join());
+        self::assertSame(['collaborative' => false, 'participants' => []], $presence->snapshot('page:2', $viewer));
+
+        $request->setMethod(Request::METHOD_DELETE);
+        $request->headers->set('X-Collaboration-Tab', str_repeat('a', 32));
+
+        $presence->sync($request, $document, $join, $viewer);
+        $request->headers->set('X-Collaboration-Tab', str_repeat('b', 32));
+        $presence->sync($request, $document, $join, $editor);
+        self::assertSame([
+            ['id' => 2, 'name' => 'Élodie', 'api' => false],
+            ['id' => 1, 'name' => 'robin', 'api' => true],
+            ['id' => 2, 'name' => 'Élodie', 'api' => true],
+        ], $presence->snapshot($document, $viewer)['participants']);
+        $clock->sleep(4);
+        self::assertSame([
+            ['id' => 1, 'name' => 'robin', 'api' => true],
+            ['id' => 2, 'name' => 'Élodie', 'api' => true],
+        ], $presence->snapshot($document, $viewer)['participants']);
+        $clock->sleep(8);
+        self::assertSame(['collaborative' => false, 'participants' => []], $presence->snapshot($document, $viewer));
     }
 }

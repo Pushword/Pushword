@@ -146,12 +146,14 @@ adminPageCustomPropertiesLabel: "Other parameters"
 adminPageEditMessageHelp: "Previous edit on %lastEditDatetime% <br> <em>%lastEditMessage%</em>"
 adminPageEditMessageHelpVersionned: 'Previous edit on %lastEditDatetime% <br> <em>%lastEditMessage%</em> <br><a href="%seeVersionLink%">See history</a>'
 adminPageEditMessageLabel: "Reason of modification"
+adminPageDraftApiParticipant: '%name% via API'
 adminPageDraftClassic: Switch to classic mode
 adminPageDraftConnected: Changes saved
 adminPageDraftInvalid: The collaborative save was rejected. Your edits are still in the editor.
 adminPageDraftJoin: Collaborative mode
 adminPageDraftJoinActive: Join live editing
 adminPageDraftOffline: Offline. Keep this tab open.
+adminPageDraftParticipants: Active collaborators
 adminPageDraftPending: Saving changes…
 adminPageDraftPresence: Someone else is editing collaboratively.
 adminPageDraftSettings: Save settings

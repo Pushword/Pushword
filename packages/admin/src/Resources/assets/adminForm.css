@@ -27,6 +27,69 @@
   gap: 0.5rem;
 }
 
+.pw-page-draft:not([hidden]) {
+  display: contents;
+}
+
+.pw-page-draft-message {
+  flex-basis: 100%;
+  grid-column: 1 / -1;
+  color: var(--bs-secondary-color);
+  font-size: var(--pw-text-sm);
+  overflow-wrap: anywhere;
+}
+
+@media (min-width: 768px) {
+  .pw-page-draft-message {
+    text-align: end;
+  }
+}
+
+.pw-page-draft-message:empty {
+  display: none;
+}
+
+.pw-page-draft-participants:not([hidden]) {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.pw-page-draft-avatar {
+  position: relative;
+  display: grid;
+  place-items: center;
+  inline-size: 2rem;
+  block-size: 2rem;
+  border-radius: 50%;
+  background: hsl(var(--pw-avatar-hue) 60% 90%);
+  color: hsl(var(--pw-avatar-hue) 55% 24%);
+  font-weight: 600;
+}
+
+.ea-dark-scheme .pw-page-draft-avatar {
+  background: hsl(var(--pw-avatar-hue) 40% 25%);
+  color: hsl(var(--pw-avatar-hue) 70% 88%);
+}
+
+.pw-page-draft-api {
+  position: absolute;
+  inset-block-end: -0.125rem;
+  inset-inline-end: -0.125rem;
+  display: grid;
+  place-items: center;
+  inline-size: 1rem;
+  block-size: 1rem;
+  border-radius: 50%;
+  background: var(--bs-body-bg);
+  color: var(--bs-body-color);
+}
+
+.pw-page-draft-api .icon {
+  inline-size: 0.75rem;
+  block-size: 0.75rem;
+}
+
 /* Hide the "Edit Page" h1 on edit, keeping it for screen readers. It used to be
    pushed off with a -10144px margin, which took the whole form with it as soon as
    the header stopped being a flex row (under 768px) and left the page blank. */
@@ -302,7 +365,8 @@ body.ea-new .content-header {
   }
 
   .ea-edit .page-actions > :only-child,
-  .ea-new .page-actions > :only-child {
+  .ea-new .page-actions > :only-child,
+  .pw-page-draft-toggle {
     grid-column: 1 / -1;
   }
 

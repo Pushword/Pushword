@@ -91,9 +91,12 @@ all remaining fields with `form_rest` or `form_end` to submit the revision.
 
 ## Collaborative page editing
 
-On a saved Markdown page, choose **Collaborative mode**. Editor.js and Monaco
-merge and save body changes as you type. Other editors see an invitation to
-join and can bring local edits from a revision the session still holds.
+On a saved Markdown page, choose **Collaborative mode** in the page action bar.
+Editor.js and Monaco merge and save body changes as you type. Other editors
+see an invitation to join and can bring local edits from a revision the session
+still holds. Once you join, the action bar shows the initials of active
+collaborators. The code icon marks sessions using the collaborative API,
+including sessions authenticated with your account.
 
 Live saves follow the page's publication status. Use **Save settings** for
 other fields. Changing the publication date pauses live saves until you save

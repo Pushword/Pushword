@@ -37,6 +37,9 @@ export function initEditLock(pageId, form) {
   const bannerMessage = document.getElementById('pw-edit-lock-message')
   const bannerRefresh = document.getElementById('pw-edit-lock-refresh')
   const revision = form?.querySelector('[data-pw-page-revision]')
+  const reportPresence = ({ collaborative = false, participants = [] } = {}) => {
+    form.dispatchEvent(new CustomEvent('pw:collaboration-presence', { detail: { collaborative, participants } }))
+  }
 
   /**
    * Update the warning banner visibility and content
@@ -95,7 +98,7 @@ export function initEditLock(pageId, form) {
 
       if (response.redirected) return
       if (response.status === 404 && revision) {
-        form.dispatchEvent(new CustomEvent('pw:collaboration-presence', { detail: false }))
+        reportPresence()
         form.dispatchEvent(new CustomEvent('pw:page-revision', { detail: null }))
         return
       }
@@ -110,7 +113,7 @@ export function initEditLock(pageId, form) {
       updateBanner(data.lockInfo, data.isOwner, data.isSameUser)
 
       if (revision && typeof data.revision === 'string') {
-        form.dispatchEvent(new CustomEvent('pw:collaboration-presence', { detail: data.collaborative === true }))
+        reportPresence(data)
         form.dispatchEvent(new CustomEvent('pw:page-revision', { detail: data.revision }))
       } else if (!state.isOwner && data.lockInfo?.lastSavedAt) {
         if (state.lastKnownSavedAt !== null && data.lockInfo.lastSavedAt > state.lastKnownSavedAt) {

@@ -13,8 +13,11 @@ afterEach(() => {
 function pageDraftForm() {
   document.body.innerHTML = `
     <div data-pw-page-draft data-url="/draft" data-token="csrf" data-pending="Saving"
-      data-connected="Saved" data-classic="Classic mode" data-settings-pending="Save settings first">
+      data-connected="Saved" data-classic="Classic mode" data-settings-pending="Save settings first"
+      data-api-participant="%name% via API">
       <button type="button">Join</button><span role="status"></span>
+      <ul data-pw-collaboration-participants hidden></ul>
+      <template><li><span data-pw-collaboration-initial role="img"></span><span data-pw-collaboration-api></span></li></template>
     </div>
     <form data-pw-page-revision-form>
       <input data-pw-page-revision value="1">
@@ -38,6 +41,10 @@ function confirmSave(form, revision, current) {
   form.dispatchEvent(new CustomEvent('htmx:after:request', {
     detail: { ctx: { response: new Response(null, { headers: { 'X-Pushword-Page-Revision': current } }) } },
   }))
+}
+
+function reportPresence(form, collaborative, participants = []) {
+  form.dispatchEvent(new CustomEvent('pw:collaboration-presence', { detail: { collaborative, participants } }))
 }
 
 it('brings a body edit undone during a classic save into collaborative mode', async () => {
@@ -229,14 +236,59 @@ it('offers live editing without switching modes or changing local edits', () => 
   bindPageDraft(controls)
   body.value = 'My local edits'
 
-  form.dispatchEvent(new CustomEvent('pw:collaboration-presence', { detail: true }))
+  reportPresence(form, true)
   expect(notice.hidden).toBe(false)
   expect(button.textContent).toBe('Join live editing')
   expect(button.getAttribute('aria-pressed')).toBe('false')
   expect(body.value).toBe('My local edits')
   expect(form.querySelector('[data-pw-page-revision]').value).toBe('4')
 
-  form.dispatchEvent(new CustomEvent('pw:collaboration-presence', { detail: false }))
+  reportPresence(form, false)
   expect(notice.hidden).toBe(true)
   expect(button.textContent).toBe('Collaborative mode')
+})
+
+it('shows current collaborators with a separate API badge only in collaborative mode', async () => {
+  const { controls, form, button, status } = pageDraftForm()
+  const fetch = vi.fn(async (_url, { method }) => method === 'DELETE'
+    ? new Response(null, { status: 204 })
+    : Response.json({
+      room: 'room', baseline: 'Original body', after: 0, revision: '1', snapshot: null, accepted: false,
+    }))
+  vi.stubGlobal('fetch', fetch)
+  bindPageDraft(controls)
+
+  const roster = controls.querySelector('[data-pw-collaboration-participants]')
+  const editor = { id: 2, name: 'E\u0301lodie', api: false }
+  const api = { id: 1, name: 'Robin $&', api: true }
+  reportPresence(form, true, [editor, api])
+  expect(roster.hidden).toBe(true)
+  expect(roster.children).toHaveLength(0)
+
+  button.click()
+  await vi.waitFor(() => expect(status.textContent).toBe('Saved'))
+  expect(roster.hidden).toBe(false)
+  const [browserAvatar, apiAvatar] = roster.children
+  expect(browserAvatar.textContent).toBe('É')
+  expect(browserAvatar.querySelector('[data-pw-collaboration-api]')).toBeNull()
+  expect(apiAvatar.textContent).toBe('R')
+  expect(apiAvatar.title).toBe('Robin $& via API')
+  expect(apiAvatar.querySelector('[role="img"]').getAttribute('aria-label')).toBe('Robin $& via API')
+  expect(apiAvatar.querySelector('[data-pw-collaboration-api]')).not.toBeNull()
+  const hues = [browserAvatar, apiAvatar].map((avatar) => avatar.style.getPropertyValue('--pw-avatar-hue'))
+  expect(hues.every((hue) => /^\d{1,3}$/.test(hue) && Number(hue) < 360)).toBe(true)
+  expect(new Set(hues).size).toBe(2)
+  reportPresence(form, true, [editor, api])
+  expect(roster.firstElementChild).toBe(browserAvatar)
+  reportPresence(form, true, [api])
+  expect(roster.children).toHaveLength(1)
+  expect(roster.firstElementChild.title).toBe(apiAvatar.title)
+  reportPresence(form, true)
+  expect(roster.hidden).toBe(true)
+  reportPresence(form, true, [api])
+  expect(roster.hidden).toBe(false)
+
+  button.click()
+  await vi.waitFor(() => expect(button.getAttribute('aria-pressed')).toBe('false'))
+  expect(roster.hidden).toBe(true)
 })

@@ -145,12 +145,14 @@ adminPageCustomPropertiesLabel: 'Autres paramètres'
 adminPageEditMessageHelp: 'Précédente modification le %lastEditDatetime% <br> <em>%lastEditMessage%</em>'
 adminPageEditMessageHelpVersionned: 'Précédente modification le %lastEditDatetime% <br> <em>%lastEditMessage%</em> <br><a href="%seeVersionLink%">Voir l''historique</a>'
 adminPageEditMessageLabel: "Motif d'édition"
+adminPageDraftApiParticipant: '%name% via l’API'
 adminPageDraftClassic: Passer en mode classique
 adminPageDraftConnected: Modifications enregistrées
 adminPageDraftInvalid: La sauvegarde collaborative a été refusée. Vos retouches restent dans l’éditeur.
 adminPageDraftJoin: Mode collaboratif
 adminPageDraftJoinActive: Rejoindre la coédition
 adminPageDraftOffline: Hors ligne. Gardez cet onglet ouvert.
+adminPageDraftParticipants: Participants actifs
 adminPageDraftPending: Enregistrement des modifications…
 adminPageDraftPresence: Un autre éditeur est en mode collaboratif.
 adminPageDraftSettings: Enregistrer les réglages

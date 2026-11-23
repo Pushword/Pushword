@@ -1,5 +1,41 @@
 {% extends '@EasyAdmin/crud/edit.html.twig' %}
 
+{% block page_actions_wrapper %}
+    <div class="page-actions">
+        {{ block('page_actions') }}
+        {% if entity.instance.id is defined and entity.instance.id and liveEditingAvailable() %}
+            <div class="pw-page-draft" data-pw-page-draft
+                 data-url="{{ path('pushword_page_draft', {id: entity.instance.id}) }}"
+                 data-token="{{ csrf_token('page-draft-' ~ entity.instance.id) }}"
+                 data-settings="{{ 'adminPageDraftSettings'|trans }}"
+                 data-settings-pending="{{ 'adminPageDraftSettingsPending'|trans }}"
+                 data-join="{{ 'adminPageDraftJoinActive'|trans }}"
+                 data-classic="{{ 'adminPageDraftClassic'|trans }}"
+                 data-api-participant="{{ 'adminPageDraftApiParticipant'|trans }}"
+                 data-too-large="{{ 'adminPageDraftTooLarge'|trans }}"
+                 {% for state in ['pending', 'connected', 'updated', 'offline', 'stale', 'invalid'] %}
+                     data-{{ state }}="{{ ('adminPageDraft' ~ state|capitalize)|trans }}"
+                 {% endfor %}>
+                <div class="pw-page-draft-toggle d-flex flex-wrap align-items-center justify-content-end gap-2">
+                    <button type="button" class="btn btn-secondary btn-outline" aria-pressed="false">{{ 'adminPageDraftJoin'|trans }}</button>
+                    <ul class="pw-page-draft-participants list-unstyled mb-0" data-pw-collaboration-participants
+                        aria-label="{{ 'adminPageDraftParticipants'|trans }}" hidden></ul>
+                </div>
+                <span class="pw-page-draft-message" role="status"></span>
+                <span class="pw-page-draft-message" role="status" data-pw-collaboration-notice hidden>{{ 'adminPageDraftPresence'|trans }}</span>
+                <template>
+                    <li class="pw-page-draft-avatar">
+                        <span role="img" data-pw-collaboration-initial></span>
+                        <span class="pw-page-draft-api" data-pw-collaboration-api aria-hidden="true">
+                            <twig:ea:Icon name="internal:code" />
+                        </span>
+                    </li>
+                </template>
+            </div>
+        {% endif %}
+    </div>
+{% endblock %}
+
 {% block main %}
     {% include '@pwFlat/components/webhook_lock_banner.html.twig' ignore missing %}
     {% if entity.instance.id is defined and entity.instance.id %}
@@ -10,23 +46,6 @@
             <button type="button" class="btn btn-sm btn-primary" id="pw-page-sync-reload">{{ 'adminPageRevisionReload'|trans }}</button>
         </div>
         {% include '@pwAdmin/components/unsaved_changes_banner.html.twig' %}
-        {% if liveEditingAvailable() %}
-            <div class="mb-2" data-pw-page-draft
-                 data-url="{{ path('pushword_page_draft', {id: entity.instance.id}) }}"
-                 data-token="{{ csrf_token('page-draft-' ~ entity.instance.id) }}"
-                 data-settings="{{ 'adminPageDraftSettings'|trans }}"
-                 data-settings-pending="{{ 'adminPageDraftSettingsPending'|trans }}"
-                 data-join="{{ 'adminPageDraftJoinActive'|trans }}"
-                 data-classic="{{ 'adminPageDraftClassic'|trans }}"
-                 data-too-large="{{ 'adminPageDraftTooLarge'|trans }}"
-                 {% for state in ['pending', 'connected', 'updated', 'offline', 'stale', 'invalid'] %}
-                     data-{{ state }}="{{ ('adminPageDraft' ~ state|capitalize)|trans }}"
-                 {% endfor %}>
-                <button type="button" class="btn btn-sm btn-secondary" aria-pressed="false">{{ 'adminPageDraftJoin'|trans }}</button>
-                <span role="status"></span>
-                <span role="status" data-pw-collaboration-notice hidden>{{ 'adminPageDraftPresence'|trans }}</span>
-            </div>
-        {% endif %}
     {% endif %}
     {% include '@pwAdmin/components/broken_image_banner.html.twig' %}
     {{ parent() }}

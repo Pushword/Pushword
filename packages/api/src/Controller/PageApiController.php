@@ -14,6 +14,7 @@ use Pushword\Api\Service\InvalidFrontmatterException;
 use Pushword\Api\Service\PageFrontmatterMapper;
 use Pushword\Api\Service\PageWriter;
 use Pushword\Core\Collaboration\DraftExchange;
+use Pushword\Core\Collaboration\LivePresence;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Entity\ValueObject\PageRedirection;
 use Pushword\Core\PropertySchema\PagePropertySchemaRegistry;
@@ -47,9 +48,13 @@ final class PageApiController extends AbstractApiController
     }
 
     #[Route('/api/pages/{id}/draft', name: 'pushword_api_page_draft', requirements: ['id' => '\d+'], methods: ['POST'])]
-    public function syncDraft(Page $page, Request $request, DraftExchange $exchange): JsonResponse
+    public function syncDraft(Page $page, Request $request, DraftExchange $exchange, LivePresence $presence): JsonResponse
     {
-        return $exchange->page($request, $page);
+        $user = $this->getApiUser();
+        $response = $exchange->page($request, $page);
+        $presence->recordApi('page:'.$page->id, $user, $response);
+
+        return $response;
     }
 
     #[Route('/api/page/search', name: 'pushword_api_page_search', methods: ['GET'])]

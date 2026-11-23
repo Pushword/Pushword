@@ -110,17 +110,18 @@ it('forwards collaborative presence independently of the saved revision', async 
   document.body.innerHTML = '<form><input data-pw-page-revision value="4"></form>'
   const form = document.querySelector('form')
   const presence = vi.fn()
+  const participants = [{ id: 7, name: 'Élodie', api: true }]
   form.addEventListener('pw:collaboration-presence', presence)
   fetchMock.mockResolvedValueOnce({
     ok: true,
-    json: async () => ({ isOwner: true, lockInfo: null, revision: '4', collaborative: true }),
+    json: async () => ({ isOwner: true, lockInfo: null, revision: '4', collaborative: true, participants }),
   }).mockResolvedValueOnce({
     ok: false,
     status: 404,
   })
   lock = initEditLock(1, form)
   await vi.advanceTimersByTimeAsync(0)
-  expect(presence.mock.calls[0][0].detail).toBe(true)
+  expect(presence.mock.calls[0][0].detail).toEqual({ collaborative: true, participants })
   await vi.advanceTimersByTimeAsync(3000)
-  expect(presence.mock.calls[1][0].detail).toBe(false)
+  expect(presence.mock.calls[1][0].detail).toEqual({ collaborative: false, participants: [] })
 })

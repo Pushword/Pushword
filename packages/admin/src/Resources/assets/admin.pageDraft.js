@@ -17,6 +17,8 @@ export function bindPageDraft(controls) {
   const button = controls.querySelector('button')
   const status = controls.querySelector('[role="status"]')
   const invitation = controls.querySelector('[data-pw-collaboration-notice]')
+  const roster = controls.querySelector('[data-pw-collaboration-participants]')
+  const avatarTemplate = controls.querySelector('template')
   const revision = form.querySelector('[data-pw-page-revision]')
   const body = () => form.querySelector('[name$="[mainContent]"]')
   if (!body() || isLegacyBlockContent(body().value)) {
@@ -42,6 +44,8 @@ export function bindPageDraft(controls) {
   let busy = false
   let stale = false
   let collaborative = false
+  let participants = []
+  let renderedParticipants = ''
   const modeLabel = button.textContent
   const view = {
     saved(current, complete) {
@@ -99,15 +103,36 @@ export function bindPageDraft(controls) {
     form.addEventListener('pw:baseline-ready', () => { initial = body().value }, { once: true })
   }
 
-  function updateInvitation() {
+  function updatePresence() {
     const show = collaborative && !session
     if (invitation) invitation.hidden = !show
     if (!session) button.textContent = show && invitation ? controls.dataset.join : modeLabel
+
+    if (!roster) return
+    roster.hidden = !session || participants.length === 0
+    if (roster.hidden) return
+
+    const current = JSON.stringify(participants)
+    if (current === renderedParticipants) return
+    roster.replaceChildren(...participants.map(({ id, name, api }) => {
+      const avatar = avatarTemplate.content.firstElementChild.cloneNode(true)
+      const initial = avatar.querySelector('[data-pw-collaboration-initial]')
+      const label = api ? controls.dataset.apiParticipant.replace('%name%', () => name) : name
+      const [first] = name.normalize()
+      initial.textContent = first.toUpperCase()
+      initial.setAttribute('aria-label', label)
+      avatar.title = label
+      avatar.style.setProperty('--pw-avatar-hue', String((id * 137) % 360))
+      if (!api) avatar.querySelector('[data-pw-collaboration-api]').remove()
+      return avatar
+    }))
+    renderedParticipants = current
   }
 
   form.addEventListener('pw:collaboration-presence', (event) => {
-    collaborative = event.detail === true
-    updateInvitation()
+    collaborative = event.detail.collaborative
+    participants = event.detail.participants
+    updatePresence()
   })
 
   function leave() {
@@ -115,7 +140,7 @@ export function bindPageDraft(controls) {
     session = null
     collaborative = false
     button.setAttribute('aria-pressed', 'false')
-    updateInvitation()
+    updatePresence()
     delete form.dataset.pwDraftActive
     for (const [label, text] of saveLabels) label.textContent = text
     if (!stale) status.textContent = ''
@@ -147,7 +172,7 @@ export function bindPageDraft(controls) {
         view,
         status: display,
       })
-      updateInvitation()
+      updatePresence()
     } catch {
       display('offline')
     } finally {

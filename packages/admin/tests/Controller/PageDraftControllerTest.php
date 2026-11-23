@@ -34,6 +34,7 @@ final class PageDraftControllerTest extends AbstractAdminTestClass
 
         try {
             $crawler = $client->request(Request::METHOD_GET, $this->generateAdminUrl('admin_page_edit', ['id' => $id]));
+            self::assertSelectorExists('.page-actions [data-pw-page-draft] button[type="button"]');
             $draft = $crawler->filter('[data-pw-page-draft]');
             $url = $draft->attr('data-url');
             $token = $draft->attr('data-token');
@@ -53,6 +54,7 @@ final class PageDraftControllerTest extends AbstractAdminTestClass
                 $snapshot = json_decode((string) $client->getResponse()->getContent(), true);
                 self::assertIsArray($snapshot);
                 self::assertTrue($snapshot['collaborative']);
+                self::assertSame([], $snapshot['participants']);
                 self::assertSame($revision, $snapshot['revision']);
             } finally {
                 $client->request(Request::METHOD_DELETE, $url, server: $headers);
@@ -63,6 +65,17 @@ final class PageDraftControllerTest extends AbstractAdminTestClass
             $snapshot = json_decode((string) $client->getResponse()->getContent(), true);
             self::assertIsArray($snapshot);
             self::assertFalse($snapshot['collaborative']);
+
+            $user = self::getContainer()->get(UserRepository::class)->findOneBy(['email' => 'admin@example.tld']);
+            self::assertNotNull($user?->apiToken);
+            $client->jsonRequest(Request::METHOD_POST, '/api/pages/'.$id.'/draft', ['after' => 0], ['HTTP_AUTHORIZATION' => 'Bearer '.$user->apiToken]);
+            self::assertResponseIsSuccessful();
+            $client->jsonRequest(Request::METHOD_POST, $ping, ['tabId' => 'classic']);
+            self::assertResponseIsSuccessful();
+            $snapshot = json_decode((string) $client->getResponse()->getContent(), true);
+            self::assertIsArray($snapshot);
+            self::assertTrue($snapshot['collaborative']);
+            self::assertSame([['id' => $user->id, 'name' => $user->username ?: 'admin', 'api' => true]], $snapshot['participants']);
         } finally {
             $state = $em->find(LiveEditingState::class, 'page:'.$id);
             if ($state instanceof LiveEditingState) {

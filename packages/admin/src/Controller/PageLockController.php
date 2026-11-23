@@ -75,7 +75,7 @@ final class PageLockController extends AbstractController
             'isOwner' => $acquired,
             'isSameUser' => $isSameUser,
             'revision' => (string) $version,
-            'collaborative' => $this->presence->isActive('page:'.$pageId),
+            ...$this->presence->snapshot('page:'.$pageId, $user),
         ]);
     }
 }
