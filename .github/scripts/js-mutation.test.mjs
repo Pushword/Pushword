@@ -14,13 +14,23 @@ function fixture(t) {
   const script = '.scripts/test-js-mutation.mjs'
   copyFileSync(new URL(`../../${script}`, import.meta.url), join(cwd, script))
 
+  function write(files) {
+    for (const [path, contents] of Object.entries(files)) {
+      const file = join(cwd, path)
+      mkdirSync(dirname(file), { recursive: true })
+      writeFileSync(file, contents)
+    }
+  }
+
+  function run(...args) {
+    return execFileSync(process.execPath, [script, ...args], { cwd, encoding: 'utf8' }).trim()
+  }
+
   return {
+    write,
+    run,
     commit(files) {
-      for (const [path, contents] of Object.entries(files)) {
-        const file = join(cwd, path)
-        mkdirSync(dirname(file), { recursive: true })
-        writeFileSync(file, contents)
-      }
+      write(files)
       const paths = Object.keys(files)
       git('add', '--', ...paths)
       git('-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.invalid',
@@ -28,9 +38,7 @@ function fixture(t) {
       return git('rev-parse', 'HEAD')
     },
     changedPackages(base) {
-      return JSON.parse(execFileSync(
-        process.execPath, [script, '--list-changed', base], { cwd, encoding: 'utf8' },
-      ))
+      return JSON.parse(run('--list-changed', base))
     },
   }
 }
@@ -66,4 +74,29 @@ test('ignores test files, declarations, generated bundles and deletion-only hunk
     'packages/admin/src/Resources/public/admin.js': 'export const value = 1\n',
   })
   assert.deepEqual(repo.changedPackages(base), [])
+})
+
+test('runs only the Studio suite when every mutation targets Studio', (t) => {
+  const repo = fixture(t)
+  const studio = 'src/Resources/public/repurpose.js'
+  const motion = 'src/Resources/motion/src/example.mjs'
+  repo.write({
+    'node_modules/@stryker-mutator/core/bin/stryker.js':
+      "console.log(JSON.parse(require('node:fs').readFileSync('stryker.config.json')).commandRunner.command)",
+  })
+  const base = repo.commit({
+    'packages/repurpose/examples/nord/example.mjs': '',
+    'packages/repurpose/src/Resources/font/example.txt': '',
+    'packages/repurpose/tests/Motion/studio.test.mjs': '',
+    [`packages/repurpose/${motion}`]: 'export const value = 1\n',
+    [`packages/repurpose/${studio}`]: 'export const value = 1\n',
+  })
+  repo.commit({ [`packages/repurpose/${studio}`]: 'export const value = 2\n' })
+
+  const studioTests = 'node --test tests/Motion/studio.test.mjs'
+  const allMotionTests = 'node --test tests/Motion/*.test.mjs'
+  assert.equal(repo.run('repurpose', '--diff', base), studioTests)
+  assert.equal(repo.run('repurpose', '--mutate', studio), studioTests)
+  assert.equal(repo.run('repurpose', '--mutate', `${studio}:1-1,${motion}:1-1`), allMotionTests)
+  assert.equal(repo.run('repurpose'), allMotionTests)
 })

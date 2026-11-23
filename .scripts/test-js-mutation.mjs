@@ -5,6 +5,7 @@ import { dirname, join } from 'node:path'
 
 const repoDir = dirname(import.meta.dirname)
 const packagesDir = join(repoDir, 'packages')
+const studioSource = 'src/Resources/public/repurpose.js'
 const projects = {
   admin: {
     sources: ['src/Resources/assets/**/*.js'],
@@ -40,8 +41,8 @@ const projects = {
     vitest: { configFile: 'vitest.config.js', related: false },
   },
   repurpose: {
-    sources: ['src/Resources/motion/src/**/*.mjs', 'src/Resources/public/repurpose.js', 'examples/nord/*.mjs'],
-    entries: ['src/Resources/motion', 'src/Resources/public/repurpose.js', 'src/Resources/font', 'examples/nord', 'tests/Motion'],
+    sources: ['src/Resources/motion/src/**/*.mjs', studioSource, 'examples/nord/*.mjs'],
+    entries: ['src/Resources/motion', studioSource, 'src/Resources/font', 'examples/nord', 'tests/Motion'],
     command: 'node --test tests/Motion/*.test.mjs',
   },
 }
@@ -75,9 +76,21 @@ function changedLines(name, commit) {
   })
 }
 
-function config(project, packageDir) {
-  const runner = project.command
-    ? { testRunner: 'command', coverageAnalysis: 'off', commandRunner: { command: project.command } }
+function onlyMutatesStudio(args) {
+  const option = args.indexOf('--mutate')
+  const targets = option === -1 ? undefined : args[option + 1]
+
+  return targets?.split(',').every((target) => target.split(':')[0] === studioSource) ?? false
+}
+
+function config(name, packageDir, args) {
+  const project = projects[name]
+  // Studio has its own suite. The motion tests include an FFmpeg render.
+  const command = name === 'repurpose' && onlyMutatesStudio(args)
+    ? 'node --test tests/Motion/studio.test.mjs'
+    : project.command
+  const runner = command
+    ? { testRunner: 'command', coverageAnalysis: 'off', commandRunner: { command } }
     : {
         testRunner: 'vitest',
         plugins: [import.meta.resolve('@stryker-mutator/vitest-runner')],
@@ -114,7 +127,7 @@ function runMutation(name, args) {
     for (const sibling of project.siblings ?? []) {
       symlinkSync(join(packagesDir, sibling), join(workspace, sibling), 'dir')
     }
-    writeFileSync(join(copy, 'stryker.config.json'), JSON.stringify(config(project, packageDir)))
+    writeFileSync(join(copy, 'stryker.config.json'), JSON.stringify(config(name, packageDir, args)))
 
     const cli = join(repoDir, 'node_modules/@stryker-mutator/core/bin/stryker.js')
     const result = spawnSync(process.execPath, [cli, 'run', '--inPlace', ...args], {
