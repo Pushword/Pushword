@@ -1,8 +1,7 @@
 ---
-title: 'page edits use revisions in the admin; carousels keep a version history; new page and snippet snapshots use gzip; collaborative editing saves live'
+title: ''
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
-run: 'doctrine:schema:update --force'
 ---
 
 <!--
@@ -35,21 +34,3 @@ belongs in the feature doc, which you link to instead.
 
 Several changes land here between two tags: append to the file, do not replace it.
 -->
-
-**Concerns:** `pushword/admin`, `pushword/core`, `pushword/repurpose`, `pushword/version`
-
-## Page editing revisions
-
-Apply the schema update before opening the admin. If you override the page edit form, render the hidden revision field and keep the sync banner and shortcut submit button from the [admin template](/extension/admin#saving-and-recovering-changes).
-
-## Carousel version history
-
-**Sites with Repurpose.** Apply the schema update before editing carousels to create the compressed archive. The first edit archives the existing specification and makes it available in [Version history](/extension/repurpose#in-the-admin).
-
-## Compressed page and snippet snapshots
-
-**Sites with Version.** New version files contain gzip-compressed JSON. If your tools read `pushword_version.storage_dir` directly, update them to decode gzip files and accept existing plain JSON snapshots.
-
-## Collaborative editing
-
-Apply the schema update before using [collaborative mode](/extension/admin#collaborative-page-editing). Make Node.js 24 available on the PHP web process's PATH with process execution enabled to expose collaborative mode.
