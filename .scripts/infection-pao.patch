@@ -1,0 +1,12 @@
+--- a/src/TestFramework/PhpUnit/Adapter/PhpUnitAdapter.php
++++ b/src/TestFramework/PhpUnit/Adapter/PhpUnitAdapter.php
+@@ -109,2 +109,9 @@ public function testsPass(string $output): bool
+     {
++        // Laravel PAO emits one JSON summary after any PHPUnit bootstrap output.
++        $lines = explode("\n", rtrim($output));
++        $summary = json_decode($lines[array_key_last($lines)], true);
++        if (is_array($summary) && ($summary['tool'] ?? null) === 'phpunit' && is_int($summary['tests'] ?? null)) {
++            return ($summary['result'] ?? null) === 'passed';
++        }
++
+         if (preg_match('/failures!/i', $output) === 1) {

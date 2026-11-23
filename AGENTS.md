@@ -47,6 +47,7 @@ composer reset-dev-app                # reset demo
   ```
 
   The script requires PCOV, as does `composer test-coverage`, and downloads a pinned Infection PHAR on first use. Review surviving and uncovered mutations on the changed behavior. Add tests for meaningful gaps and rerun the check. Report the counts and explain any remaining relevant mutants or changes that cannot be meaningfully mutated. The parallel Mutation tests workflow runs `./.scripts/test-mutation --diff <base-commit>` on changed PHP lines with the unit suite.
+- For changes to the block editor's TypeScript behavior, run StrykerJS during the test audit. From the repository root, use `yarn --cwd packages/admin-block-editor test:mutation --mutate src/assets/path/to/file.ts`. Add tests for meaningful survivors and rerun the check. The parallel JavaScript mutation tests workflow runs StrykerJS on changed lines with the editor's Vitest suite.
 - Never skip tests (`markTestSkipped`, `@group skip`) — fix them.
 - Clear cache after each change: `composer console cache:clear`. It does not reach the Markdown fragment pool (`var/cache/pushword-pools`, kept across deploys on purpose): a change to rendered output must bump `MarkdownParser::CACHE_VERSION` (TOC: `SplitContent::TOC_CACHE_VERSION`). That cache, and the static build's skip-unchanged, rely on renders being byte-deterministic: no `random()` in a render path, and a content-hash cache that never hits means entropy leaked into the output.
 - Comments and docs in English only.

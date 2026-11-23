@@ -610,6 +610,23 @@ describe('MarkdownUtils.chunkMarkdown loose lists', () => {
     expect(texts('1) one\n\n   more')).toEqual(['1) one\n\n   more'])
   })
 
+  it.each(['12. one', '-   one'])('counts the full marker and spacing in %s', (item) => {
+    const list = `${item}\n\n    more`
+    expect(texts(`${list}\n\nafter`)).toEqual([list, 'after'])
+  })
+
+  it('does not carry a list marker into later chunks', () => {
+    expect(texts('- one\n\nparagraph\n\n    code')).toEqual(['- one', 'paragraph', '    code'])
+  })
+
+  it('requires a list marker at the start of the line', () => {
+    expect(texts('paragraph - one\n\n    code')).toEqual(['paragraph - one', '    code'])
+  })
+
+  it('does not count spaces after a nonbreaking space as list indentation', () => {
+    expect(texts('- one\n\n\u00A0  after')).toEqual(['- one', '\u00A0  after'])
+  })
+
   it('measures against the first item, so a return to a shallower sub-item stays in', () => {
     const list = '- a\n\n  - b\n\n    - c\n\n  - d'
 
@@ -710,6 +727,21 @@ describe('MarkdownUtils.chunkMarkdown fenced code', () => {
 
   it('ignores a backtick fence whose info string holds a backtick', () => {
     expect(texts('``` a`b\n\nafter')).toEqual(['``` a`b', 'after'])
+  })
+
+  it('allows a backtick in a tilde fence info string', () => {
+    const code = '~~~ a`b\nfirst\n\nsecond\n~~~'
+    expect(texts(`${code}\n\nafter`)).toEqual([code, 'after'])
+  })
+
+  it.each(['~~~', '``` text'])('keeps %s inside an open backtick fence', (inner) => {
+    const code = ['```', 'first', inner, '', 'second', '```'].join('\n')
+    expect(texts(`${code}\n\nafter`)).toEqual([code, 'after'])
+  })
+
+  it('accepts trailing whitespace on a closing fence', () => {
+    const code = '```\nfirst\n```  \t'
+    expect(texts(`${code}\n\nafter`)).toEqual([code, 'after'])
   })
 
   it('treats a four-space indented run as code, not a fence', () => {

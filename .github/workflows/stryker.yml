@@ -1,0 +1,51 @@
+name: JavaScript mutation tests
+
+on:
+  pull_request:
+    paths:
+      - 'packages/admin-block-editor/src/assets/**/*.ts'
+      - 'packages/admin-block-editor/tests/run-mutation.mjs'
+      - 'packages/admin-block-editor/stryker.config.mjs'
+      - '.github/workflows/stryker.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'packages/admin-block-editor/src/assets/**/*.ts'
+      - 'packages/admin-block-editor/tests/run-mutation.mjs'
+      - 'packages/admin-block-editor/stryker.config.mjs'
+      - '.github/workflows/stryker.yml'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  stryker:
+    name: StrykerJS
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      DIFF_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Fetch comparison base
+        run: git fetch --no-tags --depth=1 origin "$DIFF_BASE"
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: yarn
+          cache-dependency-path: packages/admin-block-editor/yarn.lock
+
+      - name: Install editor dependencies
+        run: yarn --cwd packages/admin-block-editor install --frozen-lockfile
+
+      - name: Mutate changed TypeScript lines
+        run: yarn --cwd packages/admin-block-editor test:mutation --diff "$DIFF_BASE"

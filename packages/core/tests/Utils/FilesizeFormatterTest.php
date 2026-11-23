@@ -26,8 +26,10 @@ final class FilesizeFormatterTest extends TestCase
         yield 'bytes' => [500, '500 '];
         yield 'kilobytes' => [1024, '1 K'];
         yield 'kilobytes fractional' => [1536, '1.5 K'];
+        yield 'kilobytes rounded to two places' => [1380, '1.35 K'];
         yield 'megabytes' => [1048576, '1 M'];
         yield 'gigabytes' => [1073741824, '1 G'];
+        yield 'terabytes' => [1_099_511_627_776, '1 T'];
         yield 'string input' => ['2048', '2 K'];
         yield 'float input' => [2048.0, '2 K'];
     }

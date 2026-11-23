@@ -83,7 +83,14 @@ echo json_encode([
 ], JSON_THROW_ON_ERROR);
 ' -- "${source_dirs[@]}" > "$run_dir/infection.json"
 
-# Infection reads PHPUnit's text output to identify escaped mutants.
-PAO_DISABLE=1 php "$phar" run --configuration="$run_dir/infection.json" \
+# Apply the PHPUnit result parser fix to a copy of the verified release.
+adapter=src/TestFramework/PhpUnit/Adapter/PhpUnitAdapter.php
+php -r 'new Phar($argv[1])->extractTo($argv[2], $argv[3]);' "$phar" "$run_dir/tool" "$adapter"
+patch --silent --batch --fuzz=0 -p1 -d "$run_dir/tool" < .scripts/infection-pao.patch
+cp "$phar" "$run_dir/infection.phar"
+php -d phar.readonly=0 -r 'new Phar($argv[1])->addFile($argv[2], $argv[3]);' \
+    "$run_dir/infection.phar" "$run_dir/tool/$adapter" "$adapter"
+
+php "$run_dir/infection.phar" run --configuration="$run_dir/infection.json" \
     --no-interaction --no-progress --threads=1 \
     --with-uncovered --with-timeouts "${infection_args[@]}"
