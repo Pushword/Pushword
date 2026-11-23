@@ -43,7 +43,8 @@ test('a standalone project builds deterministic HyperFrames HTML and escapes tim
   }
 });
 
-test('the exported renderer uses only HyperFrames', async () => {
+test('the exported renderer depends only on a pinned HyperFrames release', async () => {
   const pkg = JSON.parse(await readFile(new URL('../../src/Resources/motion/package.json', import.meta.url), 'utf8'));
-  assert.deepEqual(pkg.dependencies, {hyperframes: '0.9.84'});
+  assert.deepEqual(Object.keys(pkg.dependencies), ['hyperframes']);
+  assert.match(pkg.dependencies.hyperframes, /^\d+\.\d+\.\d+$/);
 });

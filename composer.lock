@@ -4587,16 +4587,16 @@
         },
         {
             "name": "pushword/dev-app",
-            "version": "1.0.125",
+            "version": "1.0.126",
             "source": {
                 "type": "git",
                 "url": "https://github.com/Pushword/dev-app.git",
-                "reference": "f739aa0ae25d80af0bdd82b813c1dcbf21e4ad11"
+                "reference": "7972a48d89ef18e462af2da74c0dbcc1a65da4d4"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/Pushword/dev-app/zipball/f739aa0ae25d80af0bdd82b813c1dcbf21e4ad11",
-                "reference": "f739aa0ae25d80af0bdd82b813c1dcbf21e4ad11",
+                "url": "https://api.github.com/repos/Pushword/dev-app/zipball/7972a48d89ef18e462af2da74c0dbcc1a65da4d4",
+                "reference": "7972a48d89ef18e462af2da74c0dbcc1a65da4d4",
                 "shasum": ""
             },
             "require": {
@@ -4637,7 +4637,7 @@
                     "type": "liberapay"
                 }
             ],
-            "time": "2026-11-22T18:02:22+00:00"
+            "time": "2026-11-23T08:15:32+00:00"
         },
         {
             "name": "sensiolabs/ansi-to-html",
@@ -14920,16 +14920,16 @@
         },
         {
             "name": "phpstan/phpstan-strict-rules",
-            "version": "2.1.1",
+            "version": "2.1.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/phpstan/phpstan-strict-rules.git",
-                "reference": "fe4a0afae773eedf178fab17ed9361c0061d2804"
+                "reference": "c250a77b36059007de360f28522f0e7b687b8572"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/phpstan/phpstan-strict-rules/zipball/fe4a0afae773eedf178fab17ed9361c0061d2804",
-                "reference": "fe4a0afae773eedf178fab17ed9361c0061d2804",
+                "url": "https://api.github.com/repos/phpstan/phpstan-strict-rules/zipball/c250a77b36059007de360f28522f0e7b687b8572",
+                "reference": "c250a77b36059007de360f28522f0e7b687b8572",
                 "shasum": ""
             },
             "require": {
@@ -14966,9 +14966,9 @@
             ],
             "support": {
                 "issues": "https://github.com/phpstan/phpstan-strict-rules/issues",
-                "source": "https://github.com/phpstan/phpstan-strict-rules/tree/2.1.1"
+                "source": "https://github.com/phpstan/phpstan-strict-rules/tree/2.1.2"
             },
-            "time": "2026-11-02T08:16:15+00:00"
+            "time": "2026-11-23T09:01:11+00:00"
         },
         {
             "name": "phpstan/phpstan-symfony",
