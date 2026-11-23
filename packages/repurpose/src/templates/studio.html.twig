@@ -446,7 +446,8 @@
           <span x-show="draftState === '{{ state }}'">{{ ('repurposeDraft' ~ state|capitalize)|trans }}</span>
         {% endfor %}
       </span>
-      <button class="btn primary studio-save" type="button" @click="save()" :disabled="saving || syncState !== ''" x-text="saveLabel">Save</button>
+      <button class="btn primary studio-save" type="button" aria-keyshortcuts="Control+S Meta+S" title="Ctrl+S / ⌘S"
+              @click="save()" :disabled="saving || syncState !== ''" x-text="saveLabel">Save</button>
     </div>
     <div class="notice studio-sync" x-show="syncState" x-cloak>
       <span role="alert">

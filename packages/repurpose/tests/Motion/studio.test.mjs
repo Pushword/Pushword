@@ -110,6 +110,50 @@ test('a successful save keeps edits typed during the request and ignores an olde
   assert.equal(state.dirty, true);
 });
 
+for (const [view, shortcut] of [['visual', {key: 's', ctrlKey: true}], ['source', {key: 'S', metaKey: true}]]) {
+  test(`the save shortcut submits the current ${view} edit`, async () => {
+    const revision = '"1-1"';
+    const requests = [];
+    const state = studio({revision, urls: {save: '/save'}}, async (url, options) => {
+      requests.push(url);
+      assert.equal(options.headers['If-Match'], revision);
+      assert.equal(JSON.parse(options.body).slides[0].title, 'Edited title');
+      return {ok: true, json: async () => ({revision: '"1-2"'})};
+    }, undefined, {setTimeout() {}});
+    state.view = view;
+    if (view === 'source') {
+      state.$refs = {source: {value: '{"slides":[{"title":"Edited title"}]}'}};
+    } else {
+      state.spec.slides[0].title = 'Edited title';
+    }
+
+    let prevented = false;
+    await state.editorKey({...shortcut, preventDefault() { prevented = true; }});
+
+    assert.equal(prevented, true);
+    assert.deepEqual(requests, ['/save']);
+    assert.equal(state.revision, '"1-2"');
+    assert.equal(state.saveLabel, 'Saved ✓');
+  });
+}
+
+test('the save shortcut leaves other keys alone and ignores key repeats', () => {
+  const state = studio();
+  state.view = 'source';
+  state.save = () => assert.fail('Unexpected save');
+  let prevented = 0;
+  const press = (key, modifiers) => state.editorKey({key, ...modifiers, preventDefault() { prevented += 1; }});
+
+  press('s');
+  press('a', {ctrlKey: true});
+  press('s', {ctrlKey: true, altKey: true});
+  press('S', {ctrlKey: true, shiftKey: true});
+  assert.equal(prevented, 0);
+
+  press('s', {ctrlKey: true, repeat: true});
+  assert.equal(prevented, 1);
+});
+
 test('a selected block snaps to nearby guides on both axes unless Alt is held', async () => {
   const moved = {content: 'Move this', x: 0.1, y: 0.2, width: 0.3};
   const preview = ['<svg/>'];

@@ -1057,6 +1057,11 @@
       },
 
       editorKey: function (event) {
+        if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 's' && !event.altKey && !event.shiftKey) {
+          event.preventDefault()
+          if (!event.repeat) return this.save()
+          return
+        }
         if (!this.canvasEditing) {
           return
         }
