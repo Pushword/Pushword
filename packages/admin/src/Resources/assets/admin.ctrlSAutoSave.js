@@ -85,7 +85,8 @@ export function initCtrlSAutoSave() {
     })
   }
 
-  document.addEventListener(
+  // Editor controls can stop key events during window capture.
+  window.addEventListener(
     'keydown',
     (event) => {
       if (

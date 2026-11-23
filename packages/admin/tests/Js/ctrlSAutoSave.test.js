@@ -33,10 +33,11 @@ describe('initCtrlSAutoSave on htmx 4 events', () => {
     vi.unstubAllGlobals()
   })
 
-  it('Ctrl+S dispatches the trigger event on the form', () => {
+  it('Ctrl+S saves even when an editor control stops the event at window capture', () => {
     const triggered = vi.fn()
     form.addEventListener('pw-ctrl-s-event', triggered)
-    document.dispatchEvent(
+    window.addEventListener('keydown', (event) => event.stopPropagation(), { capture: true, once: true })
+    form.dispatchEvent(
       new KeyboardEvent('keydown', { key: 's', ctrlKey: true, cancelable: true }),
     )
     expect(triggered).toHaveBeenCalledOnce()
