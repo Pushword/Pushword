@@ -278,6 +278,7 @@
     var cfg = window.RP_STUDIO || {}
     var draft
     var initialSpec
+    var initialRevision = cfg.revision
     var lastDraftState
     var composing = false
     var switchingView = false
@@ -414,7 +415,7 @@
         try {
           var source = this.view === 'source'
           var value = source ? this.sourceText() : JSON.stringify(this.payload())
-          if (!source && value === JSON.stringify(initialSpec)) {
+          if (!source && this.revision === initialRevision && value === JSON.stringify(initialSpec)) {
             this.clearRecovery()
             return true
           }
@@ -517,11 +518,15 @@
               saved(revision, complete) {
                 self.revision = revision
                 self.syncState = ''
-                if (complete && self.dirty) {
-                  initialSpec = read()
-                  self.dirty = false
-                  self.clearRecovery()
+                if (!self.dirty) return
+                if (!complete) {
+                  self.keepRecovery()
+                  return
                 }
+                initialSpec = read()
+                initialRevision = revision
+                self.dirty = false
+                self.clearRecovery()
               },
               wait: () => composing || switchingView || self._drag !== null || read() === undefined,
               apply(spec) {
@@ -814,6 +819,7 @@
           if (response.ok) {
             if (this.revision !== body.revision) {
               initialSpec = JSON.parse(options.body)
+              initialRevision = body.revision
             }
             this.revision = body.revision
             this.violations = []
@@ -822,7 +828,11 @@
             } catch {
               this.dirty = true
             }
-            if (!this.dirty) this.clearRecovery()
+            if (this.dirty) {
+              this.keepRecovery()
+            } else {
+              this.clearRecovery()
+            }
             this.saveLabel = 'Saved ✓'
             this.live = { state: 'ok', text: 'saved' }
           } else {

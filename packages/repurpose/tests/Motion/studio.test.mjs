@@ -1,26 +1,46 @@
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {test} from 'node:test';
-import vm from 'node:vm';
 
 const source = readFileSync(new URL('../../src/Resources/public/repurpose.js', import.meta.url), 'utf8');
 const origin = 'https://example.test';
 function studio(config = {}, fetch, confirm, globals = {}) {
   let factory;
-  const window = {location: {origin}, confirm, RP_STUDIO: {
+  const window = {location: {origin}, confirm, localStorage: globals.localStorage, RP_STUDIO: {
     spec: {slides: [{title: 'Test', images: [{}]}]},
     urls: {mediaIndex: '/admin/media', mediaUpload: '/admin/media/new'},
     messages: {videoInvalid: 'Choose a video', audioInvalid: 'Choose audio'},
     ...config,
   }, Alpine: {data: (_, value) => { factory = value; }}, addEventListener() {}, removeEventListener() {}};
-  vm.runInNewContext(source, {
+  const context = {
     __stryker__: {activeMutant: process.env.__STRYKER_ACTIVE_MUTANT__},
     window, fetch, document: {addEventListener: (_, callback) => callback()}, ...globals,
-  });
+  };
+  new Function(...Object.keys(context), source)(...Object.values(context));
   return factory();
 }
 function selection(fileName, eventOrigin = origin) {
   return {origin: eventOrigin, data: {type: 'pw-media-picker-select', media: {fileName}}};
+}
+
+function recoveryStorage() {
+  return {
+    getItem(key) { return this[key] ?? null; },
+    setItem(key, value) { this[key] = value; },
+    removeItem(key) { delete this[key]; },
+  };
+}
+
+function studioWithRecovery(localStorage, config, fetch) {
+  let specChanged;
+  const state = studio({recoveryKey: 'carousel:1:', urls: {save: '/save', draft: '/draft'}, ...config},
+    fetch, undefined, {localStorage, setInterval() {}, setTimeout() {}});
+  state.$watch = (_, listener) => { specChanged = listener; };
+  state.init();
+  return {state, editTitle(title) {
+    state.spec.slides[0].title = title;
+    specChanged();
+  }};
 }
 
 test('a revision check detects another save while keeping the local draft intact', async () => {
@@ -110,22 +130,83 @@ test('a successful save keeps edits typed during the request and ignores an olde
   assert.equal(state.dirty, true);
 });
 
+test('reopening Studio restores an edit typed during a successful classic save', async () => {
+  const storage = recoveryStorage();
+  let respond;
+  const fetch = () => new Promise(resolve => { respond = resolve; });
+  const {state, editTitle} = studioWithRecovery(storage, {revision: '"1-1"'}, fetch);
+
+  editTitle('First edit');
+  const firstSave = state.save();
+  editTitle('Late edit');
+  respond({ok: true, json: async () => ({revision: '"1-2"'})});
+  await firstSave;
+
+  const {state: reopened} = studioWithRecovery(storage, {revision: '"1-2"', spec: {slides: [{title: 'First edit'}]}}, fetch);
+  assert.equal(reopened.recovery?.revision, '"1-2"');
+  reopened.restoreRecovery();
+  assert.equal(reopened.spec.slides[0].title, 'Late edit');
+  assert.equal(reopened.dirty, true);
+
+  const finalSave = reopened.save();
+  respond({ok: true, json: async () => ({revision: '"1-3"'})});
+  await finalSave;
+  assert.equal(reopened.dirty, false);
+  assert.equal(studioWithRecovery(storage, {revision: '"1-3"'}).state.recovery, null);
+});
+
+test('a partial live save keeps a pending revert recoverable at the acknowledged revision', async () => {
+  const storage = recoveryStorage();
+  const draftModule = 'data:text/javascript,' + encodeURIComponent(`
+    export const carouselModel = {};
+    export const draftCarousel = spec => spec;
+    export const equalJson = () => false;
+    export const reconcileJson = Object.assign;
+    export function openDraft({view}) {
+      let complete = false;
+      return {capture() {}, flush() {
+        view.saved(complete ? '"1-3"' : '"1-2"', complete);
+        complete = true;
+      }};
+    }
+  `);
+  const {state, editTitle} = studioWithRecovery(storage, {revision: '"1-1"', draftModule});
+  await state.toggleDraft();
+  assert.equal(state.draftActive, true);
+
+  editTitle('Acknowledged first');
+  editTitle('Test');
+  assert.equal(studioWithRecovery(storage, {revision: '"1-1"'}).state.recovery, null);
+  await state.save();
+
+  const saved = {revision: '"1-2"', spec: {slides: [{title: 'Acknowledged first'}]}};
+  const {state: reopened} = studioWithRecovery(storage, saved);
+  assert.equal(reopened.recovery?.revision, '"1-2"');
+  assert.equal(JSON.parse(reopened.recovery.value).slides[0].title, 'Test');
+
+  await state.save();
+  assert.equal(state.dirty, false);
+  assert.equal(studioWithRecovery(storage, {revision: '"1-3"'}).state.recovery, null);
+});
+
 for (const [view, shortcut] of [['visual', {key: 's', ctrlKey: true}], ['source', {key: 'S', metaKey: true}]]) {
   test(`the save shortcut submits the current ${view} edit`, async () => {
+    const storage = recoveryStorage();
     const revision = '"1-1"';
     const requests = [];
-    const state = studio({revision, urls: {save: '/save'}}, async (url, options) => {
+    const {state} = studioWithRecovery(storage, {revision}, async (url, options) => {
       requests.push(url);
       assert.equal(options.headers['If-Match'], revision);
       assert.equal(JSON.parse(options.body).slides[0].title, 'Edited title');
       return {ok: true, json: async () => ({revision: '"1-2"'})};
-    }, undefined, {setTimeout() {}});
+    });
     state.view = view;
     if (view === 'source') {
       state.$refs = {source: {value: '{"slides":[{"title":"Edited title"}]}'}};
     } else {
       state.spec.slides[0].title = 'Edited title';
     }
+    assert.equal(state.keepRecovery(), true);
 
     let prevented = false;
     await state.editorKey({...shortcut, preventDefault() { prevented = true; }});
@@ -134,6 +215,7 @@ for (const [view, shortcut] of [['visual', {key: 's', ctrlKey: true}], ['source'
     assert.deepEqual(requests, ['/save']);
     assert.equal(state.revision, '"1-2"');
     assert.equal(state.saveLabel, 'Saved ✓');
+    assert.equal(studioWithRecovery(storage, {revision: '"1-2"'}).state.recovery, null);
   });
 }
 
