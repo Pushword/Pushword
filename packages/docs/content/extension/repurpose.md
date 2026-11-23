@@ -27,54 +27,43 @@ Each carousel has a database record. Flat-file sites can sync the same spec at
 
 ## In the admin
 
-From a page without carousels, choose **Repurpose** to create a draft. Existing
-carousels appear in the page editor's sidebar with their network and status;
-each opens in the studio. The page list shows their count, opening the studio
-for one carousel or a list filtered to that page and host for several.
+Choose **Repurpose** from a page to start a draft. Open existing carousels from
+the page editor's sidebar, the count in the page list, or **Social carousels**.
+In Studio, the source card links back to the page editor.
 
-**Social carousels** groups each cover, title, network and source in one column.
-Choose **Preview** to enlarge the cover or **Studio** to edit it. The studio's
-source card links back to the page editor; standalone carousels have no source.
+### Save, collaborate and restore
 
-Choose **Collaborative mode** to co-edit a saved carousel from the Studio.
-Valid changes go straight to the database. Other editors viewing the same
-content see an invitation to join when a participant enters collaborative mode. The history keeps a restore point
-before each period of editing. A pause of five minutes or thirty minutes of
-continuous editing starts a new period. Switch back to classic mode to save
-manually. The browser keeps unsaved edits for recovery after reloading.
-Restore a draft against the same revision, or download it to reconcile
-with a newer saved carousel.
+In classic mode, choose **Save** or press **Ctrl+S** (**⌘S** on Mac). Studio checks
+for newer saves every three seconds while the tab is visible. If someone else
+saves first, choose **Open latest version in a new tab** to review their version
+while keeping your edits in the original tab.
 
-Open **Version history** in the Studio to compare a saved carousel with the
-current version or another saved version. **Restore version** restores the
-entire carousel specification, including its source page, slides, caption and
-publishing settings. The previous state stays available in the history.
+Choose **Collaborative mode** to save valid changes automatically and let other
+editors join. The first change, a pause of five minutes, or thirty minutes of
+continuous editing starts a new history checkpoint. After reloading, restore the
+browser's unsaved draft if its revision still matches, or download it to reapply
+your edits to the latest version.
 
-History is stored per carousel in the database and includes changes made in the
-Studio, through the API, and by flat-file imports. Each archived specification is
-compressed and loaded when selected for comparison or restoration. For existing
-carousels, the first edit archives the state that was saved before the edit.
-Versions reference media from the library. Deleting a carousel also deletes its history.
+Open **Version history** to compare saved versions with one another or with the
+current carousel. **Restore version** restores the full specification, including
+its source page and publishing settings, and archives the previous state. History
+includes edits from Studio, the API and flat-file imports. Versions reference media
+in the library. Deleting a carousel also deletes its history.
 
-The studio opens at the network's mobile feed width. Use the zoom slider or
-Ctrl+scroll to resize the preview. Click a text block or focus it with **Tab** to
-show its outline. Double-click it, press **Enter**, or choose **Edit text** to edit
-its content. **Arrow keys** move it one slide pixel at a time. **Shift + Arrow**
-moves it ten. While dragging, the block snaps to nearby guides for the edges and
-centres of other elements. Hold **Alt** while dragging for free positioning.
+### Edit slides
 
-Choose **+ Text**, or press **T** when the preview has focus, then click or tap
-where you want to type. On a focused slide, **Enter** places it in the centre so
-you can fine-tune X and Y in the panel.
-Right-click a spot on the slide to add text there, paste a text box copied in the
-studio, or act on the element under the pointer. For an image, choose **Crop image**
-to drag the photo inside its frame and adjust its zoom. The **⋯** beside a slide
-number or in the slide list offers **Duplicate slide** and **Insert slide after**.
+Studio opens at the network's mobile feed width. Use the zoom slider or
+**Ctrl+scroll** to resize the preview. Click a text block or focus it with **Tab**
+to select it. Double-click, press **Enter**, or choose **Edit text** to edit it.
+**Arrow keys** move the block one slide pixel at a time. Hold **Shift** to move it
+ten. Drag to snap to nearby edges and centres, or hold **Alt** to move freely.
 
-The Studio checks for changes every three seconds while the tab is visible and
-when you return to it. It alerts you when another user or an agent saves the
-carousel. If you have unsaved edits, choose **Open latest version in a new tab**.
-Your draft stays in the original tab so you can review and reapply your changes.
+Choose **+ Text** or press **T** in the preview, then click or tap where you want
+the text. Press **Enter** to place it at the centre of the focused slide. Right-click
+to add or paste text or act on the element under the pointer. On a focused text
+block, **Shift+F10** opens its menu. Choose **Crop image** to reposition a photo
+in its frame and adjust its zoom. Use **⋯** beside a slide number or in the slide
+list to duplicate a slide or insert one after it.
 
 ## Author with an agent
 

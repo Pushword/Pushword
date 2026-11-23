@@ -289,6 +289,53 @@ test('arrow keys move the keyboard-focused text in slide pixels and keep it sele
   assert.equal(text.y, 0.93);
 });
 
+test('text menus open at the keyboard focus, pointer or sidebar button', () => {
+  const state = studio({spec: {slides: [{texts: [{content: 'Edit me'}]}]}}, undefined, undefined, {clearTimeout() {}});
+  state.$nextTick = () => {};
+  state._previewTargets = state.previewTargets();
+  let focused;
+  const canvas = {
+    matches: () => true,
+    querySelector: () => canvasSvg(),
+    getBoundingClientRect: () => ({left: 100, bottom: 320}),
+    focus(options) { focused = [canvas, options.preventScroll]; },
+  };
+  const block = {
+    isConnected: true,
+    closest: () => block,
+    getAttribute: () => 'texts.0',
+    getBoundingClientRect: () => ({left: 150, bottom: 190}),
+    focus(options) { focused = [block, options.preventScroll]; },
+  };
+  const openWithKeyboard = () => state.canvasKey(0, {
+    type: 'keydown', key: 'F10', shiftKey: true, target: block, currentTarget: canvas, preventDefault() {},
+  });
+
+  openWithKeyboard();
+  assert.deepEqual(Array.from(state.actionMenu.items), ['duplicateText', 'copyText', 'textSettings', 'removeText']);
+  assert.equal(state.actionMenu.left, 150);
+  assert.equal(state.actionMenu.top, 194);
+  state.closeActionMenu();
+  assert.deepEqual(focused, [block, true]);
+
+  openWithKeyboard();
+  block.isConnected = false;
+  state.closeActionMenu();
+  assert.deepEqual(focused, [canvas, true], 'focus returns to the canvas if a preview replaced the text');
+
+  state.openCanvasMenu(0, {
+    type: 'contextmenu', target: block, currentTarget: canvas, clientX: 188, clientY: 170, preventDefault() {},
+  });
+  assert.equal(state.actionMenu.left, 188);
+  assert.equal(state.actionMenu.top, 170);
+  state.closeActionMenu();
+
+  const button = {getBoundingClientRect: () => ({left: 340, bottom: 240})};
+  state.openTextMenu(0, 0, {type: 'click', target: block, currentTarget: button, clientX: 350, clientY: 235});
+  assert.equal(state.actionMenu.left, 340);
+  assert.equal(state.actionMenu.top, 244);
+});
+
 test('placed text uses the SVG position, fits the edge and only exists while it has content', () => {
   const state = studio({spec: {slides: [{texts: []}]}}, undefined, undefined, {performance: {now: () => 1000}});
   state._previewTargets = state.previewTargets();

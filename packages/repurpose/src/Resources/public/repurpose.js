@@ -1261,7 +1261,7 @@
         var ref = block && block.getAttribute('data-rp-edit')
         var textIndex = ref && ref.startsWith('texts.') ? this.previewTextIndex(index, slide, Number(ref.slice(6))) : -1
         if (textIndex >= 0) {
-          this.openTextMenu(slideIndex, textIndex, event)
+          this.openTextMenu(slideIndex, textIndex, event, keyboard)
           return
         }
 
@@ -1281,11 +1281,11 @@
         this.openActionMenu(event, { slide: slide, svg: svg, point: point, ref: ref, cell: cell, items: items }, keyboard)
       },
 
-      openTextMenu: function (slideIndex, textIndex, event) {
+      openTextMenu: function (slideIndex, textIndex, event, keyboard = false) {
         var slide = this.spec.slides[slideIndex]
         this.openActionMenu(event, { slide: slide, text: slide.texts[textIndex], items: [
           'duplicateText', 'copyText', 'textSettings', 'removeText',
-        ] })
+        ] }, keyboard)
       },
 
       openSlideMenu: function (index, event) {
@@ -1314,10 +1314,12 @@
         this.placingText = false
         this.crop = null
         clearTimeout(this._hoverTimer)
-        var rect = trigger.getBoundingClientRect()
+        var focusTarget = keyboard ? event.target : null
+        var rect = (focusTarget || trigger).getBoundingClientRect()
         var atPointer = 'contextmenu' === event.type && !keyboard
         this.actionMenu = Object.assign(target, {
           trigger: trigger,
+          focusTarget: focusTarget,
           left: atPointer ? event.clientX : rect.left,
           top: atPointer ? event.clientY : rect.bottom + 4,
         })
@@ -1336,7 +1338,8 @@
         var menu = this.actionMenu
         this.actionMenu = null
         if (menu && restoreFocus) {
-          menu.trigger.focus({ preventScroll: true })
+          var target = menu.focusTarget?.isConnected ? menu.focusTarget : menu.trigger
+          target.focus({ preventScroll: true })
         }
       },
 
