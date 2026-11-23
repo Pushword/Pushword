@@ -119,6 +119,8 @@
     .slide svg g[data-rp-edit] { cursor: grab; touch-action: none; }
     .slide svg g[data-rp-edit]:hover { opacity: .82; }
     .slide svg g[data-rp-edit]:active { cursor: grabbing; }
+    .slide-canvas[tabindex]:has([data-rp-free-image]) { cursor: grab; touch-action: none; }
+    .slide-canvas[tabindex]:has([data-rp-free-image]):active { cursor: grabbing; }
     .is-placing .slide-canvas, .is-placing .slide svg g[data-rp-edit] { cursor: crosshair; }
     .is-cropping .slide-canvas, .is-cropping svg g[data-rp-edit] { cursor: grab; touch-action: none; }
     .is-cropping .slide-canvas:active, .is-cropping svg g[data-rp-edit]:active { cursor: grabbing; }
@@ -392,7 +394,7 @@
         canvasSlide: {{ 'repurposeCanvasSlide'|trans|json_encode(constant('JSON_HEX_TAG') b-or constant('JSON_HEX_APOS') b-or constant('JSON_HEX_QUOT'))|raw }},
         canvasTextLabel: {{ 'repurposeCanvasTextLabel'|trans|json_encode(constant('JSON_HEX_TAG') b-or constant('JSON_HEX_APOS') b-or constant('JSON_HEX_QUOT'))|raw }},
         canvasActions: {
-          {% for action in ['convertText', 'copyText', 'cropImage', 'duplicateSlide', 'duplicateText', 'insertSlide', 'pasteHere', 'removeText', 'replaceImage', 'textHere', 'textSettings'] %}
+          {% for action in ['convertText', 'copyText', 'cropImage', 'duplicateSlide', 'duplicateText', 'freeImageLayout', 'insertSlide', 'pasteHere', 'removeText', 'replaceImage', 'textHere', 'textSettings'] %}
             {{ action }}: {{ ('repurposeCanvas' ~ action|first|upper ~ action|slice(1))|trans|json_encode(constant('JSON_HEX_TAG') b-or constant('JSON_HEX_APOS') b-or constant('JSON_HEX_QUOT'))|raw }},
           {% endfor %}
         }
@@ -919,15 +921,17 @@
 
                   <div class="field" x-id="['field']">
                     <label :for="$id('field')">Image layout</label>
-                    <select x-model="slide.imageLayout" @change="crop = null; ensureCells(slide)" x-init="$nextTick(() => $el.value = slide.imageLayout)" :id="$id('field')">
-                      <template x-for="l in vocab.imageLayouts" :key="l"><option :value="l" x-text="l"></option></template>
+                    <select x-bind:value="slide.imageLayout" x-on:change="setImageLayout(slide, $event.target.value)" x-init="$nextTick(() => $el.value = slide.imageLayout)" x-bind:id="$id('field')">
+                      <template x-for="l in vocab.imageLayouts.filter(layout => layout !== 'free')" :key="l"><option :value="l" x-text="l"></option></template>
+                      <option value="free">{{ 'repurposeCanvasFreeImageLayout'|trans }}</option>
                     </select>
+                    <span class="preview-hint" x-show="slide.imageLayout === 'free' && slideHasMedia(slide)" x-cloak>{{ 'repurposeCanvasImageMoveHint'|trans }}</span>
                   </div>
 
                   <template x-for="k in imageSlots(slide)" :key="k">
                     <div class="image-cell">
                       <div class="field" x-id="['field']">
-                        <label :for="$id('field')">Image <span class="val" x-show="cellCount(slide) > 1" x-text="k === 0 ? 'A' : 'B'"></span></label>
+                        <label :for="$id('field')">Image <span class="val" x-show="cellCount(slide) > 1" x-text="slide.imageLayout === 'free' ? k + 1 : (k === 0 ? 'A' : 'B')"></span></label>
                         <div class="media-picker" :class="!cellImage(slide, k).media && 'is-empty'">
                           <div class="media-picker__thumb" :style="cellImage(slide, k).media ? ('background-image:url(\'' + thumbUrl(cellImage(slide, k).media) + '\')') : ''"></div>
                           <div class="media-picker__meta">
@@ -936,7 +940,7 @@
                               <button type="button" class="btn-xs" @click="pickMedia(i, k, 'choose')" :id="$id('field')">Choose</button>
                               <button type="button" class="btn-xs" @click="pickMedia(i, k, 'upload')">Upload</button>
                               <button type="button" class="btn-xs" x-show="cellImage(slide, k).media" @click="beginCrop(i, k)">{{ 'repurposeCanvasCropImage'|trans }}</button>
-                              <button type="button" class="btn-xs danger" x-show="cellImage(slide, k).media" @click="clearMedia(i, k)">Remove</button>
+                              <button type="button" class="btn-xs danger" x-show="cellImage(slide, k).media || (slide.imageLayout === 'free' && cellCount(slide) > 1)" @click="clearMedia(i, k)">Remove</button>
                             </div>
                           </div>
                         </div>
@@ -955,8 +959,21 @@
                           <input type="range" min="1" max="5" step="0.1" x-model.number="cellImage(slide, k).zoom" :id="$id('field')">
                         </div>
                       </div>
+                      <template x-if="slide.imageLayout === 'free' && cellImage(slide, k).media">
+                        <div class="grid2">
+                          {% for key, limit in {x: 'width', y: 'height', width: 'x', height: 'y'} %}
+                            <div class="field" x-id="['field']">
+                              <label x-bind:for="$id('field')">{{ ('repurposeCanvasImage' ~ key|capitalize)|trans }} <span class="val" x-text="Math.round(cellImage(slide, k).{{ key }} * 100) + '%'" aria-hidden="true"></span></label>
+                              <input type="range" min="{{ key in ['width', 'height'] ? '0.05' : '0' }}" step="0.01"
+                                     x-bind:max="1 - cellImage(slide, k).{{ limit }}" x-model.number="cellImage(slide, k).{{ key }}" x-bind:id="$id('field')">
+                            </div>
+                          {% endfor %}
+                        </div>
+                      </template>
                     </div>
                   </template>
+                  <button class="btn-xs" type="button" x-show="slide.imageLayout === 'free' && slide.images.every(image => image.media)" x-cloak
+                          x-on:click="addImage(slide)">{{ 'repurposeCanvasAddImage'|trans }}</button>
 
                   <template x-for="(t, k) in slide.texts" :key="k">
                     <div class="free-text">

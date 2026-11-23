@@ -128,6 +128,11 @@ library: anything else is a validation error, since the renderer could only pain
 as a grey placeholder. An image uploaded moments ago, whose derivatives core still
 builds in the background, gets its `default` derivative built on first render.
 
+In the studio, choose **Free positioning** under **Image layout** to drag images
+on the slide and resize their frames with **Width** and **Height**. Each entry in
+`images` can carry an `x`, `y`, `width` and `height` as fractions of the slide.
+The image fills that frame and keeps its own crop and zoom.
+
 ## Text
 
 The layout stack (`tagline`/`title`/`paragraph`) is anchored by `layout` × `align`

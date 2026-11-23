@@ -21,13 +21,14 @@
   var PLACED_TEXT_WIDTH = 0.36
   var SNAP_DISTANCE_PX = 6
   var ALIGNMENT_ANCHORS = [0, 0.5, 1]
+  var FREE_IMAGE_FRAME = { x: 0.25, y: 0.25, width: 0.5, height: 0.5 }
   var ARROW_DIRECTIONS = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] }
 
   function clamp(value, min, max) {
     return Math.max(min, Math.min(value, max))
   }
 
-  function textPosition(value, limit) {
+  function framePosition(value, limit) {
     return clamp(Number(value.toFixed(6)), 0, limit)
   }
 
@@ -264,7 +265,6 @@
       } else {
         delete slide.images
       }
-      // 'full' is the model default; a split layout is a real override worth storing.
       dropDefaults(slide, { imageLayout: 'full' })
       // The factory defaults overlay to 0.35 when the slide keeps an image (0 otherwise),
       // so only that value is prunable — an explicit 0 over an image must be stored.
@@ -634,11 +634,6 @@
             def(t, 'highlight', '')
           })
           self.ensureCells(slide)
-          slide.images.forEach(function (img) {
-            def(img, 'focusX', 0.5)
-            def(img, 'focusY', 0.5)
-            def(img, 'zoom', 1)
-          })
         })
         // UI-only: first slide expanded, the rest collapsed (kept out of the spec).
         this.slidesOpen = s.slides.map((_, i) => resetSlides ? i === 0 : (this.slidesOpen[i] ?? i === 0))
@@ -709,6 +704,7 @@
         return this.spec.slides.map(function (slide) {
           return {
             slide: slide,
+            images: (slide.images || []).filter(image => image?.media),
             texts: (slide.texts || []).filter(hasText).map(text => ({
               text: text, x: text.x ?? 0.08, y: text.y ?? 0.08,
             })),
@@ -966,10 +962,13 @@
         return (this.urls.mediaThumb || '').replace('RPFILENAME', encodeURIComponent(filename))
       },
 
-      // Image cells: one for a `full` slide, two for a split layout. The editor
-      // renders a picker + focus/zoom controls per cell, each bound to images[k].
       cellCount: function (slide) {
-        return slide && slide.imageLayout && 'full' !== slide.imageLayout ? 2 : 1
+        switch (slide.imageLayout) {
+          case 'free': return Math.max(1, slide.images.length)
+          case 'split-h':
+          case 'split-v': return 2
+          default: return 1
+        }
       },
       imageCellAt: function (slide, point) {
         switch (slide.imageLayout) {
@@ -978,12 +977,54 @@
           default: return 0
         }
       },
+      freeImageAt: function (index, svg, point) {
+        var rendered = this._previewTargets[index].images
+        var frame = svg.viewBox.baseVal
+        for (var block of Array.from(svg.querySelectorAll('[data-rp-free-image]')).reverse()) {
+          var rect = block.querySelector('[data-rp-guide="image"]')
+          var transforms = block.transform.baseVal
+          var offset = transforms.numberOfItems ? transforms.getItem(0).matrix : null
+          var x = rect.x.baseVal.value / frame.width
+          var y = rect.y.baseVal.value / frame.height
+          var width = rect.width.baseVal.value / frame.width
+          var height = rect.height.baseVal.value / frame.height
+          var left = x + (offset?.e ?? 0) / frame.width
+          var top = y + (offset?.f ?? 0) / frame.height
+          if (point.x >= left && point.x <= left + width && point.y >= top && point.y <= top + height) {
+            return { image: rendered[Number(block.getAttribute('data-rp-free-image'))], block: block, x: x, y: y, width: width, height: height }
+          }
+        }
+        return null
+      },
+      setImageLayout: function (slide, layout) {
+        this.finishCrop()
+        if ('free' === layout && ['split-h', 'split-v'].includes(slide.imageLayout)) {
+          var [start, size] = 'split-h' === slide.imageLayout ? ['x', 'width'] : ['y', 'height']
+          slide.images.slice(0, 2).forEach(function (image, cell) {
+            if (Object.keys(FREE_IMAGE_FRAME).some(key => image[key] != null)) {
+              return
+            }
+            image[start] = cell * 0.5 + 0.05
+            image[size] = 0.4
+          })
+        }
+        slide.imageLayout = layout
+        this.ensureCells(slide)
+      },
+      addImage: function (slide) {
+        slide.images.push({})
+        this.ensureCells(slide)
+      },
       get croppedImage() {
         return this.crop ? this.crop.slide.images[this.crop.cell] : null
       },
       cropFrame: function (slide) {
         var cell = this.crop.cell
         switch (slide.imageLayout) {
+          case 'free': {
+            var image = this.croppedImage
+            return { left: image.x * 100 + '%', top: image.y * 100 + '%', width: image.width * 100 + '%', height: image.height * 100 + '%' }
+          }
           case 'split-h': return { left: cell * 50 + '%', top: '0', width: '50%', height: '100%' }
           case 'split-v': return { left: '0', top: cell * 50 + '%', width: '100%', height: '50%' }
           default: return { left: '0', top: '0', width: '100%', height: '100%' }
@@ -1013,21 +1054,26 @@
           document.querySelectorAll('.slide-canvas')[index]?.focus({ preventScroll: true })
         }
       },
-      startCropDrag: function (event) {
+      startCropDrag: function (index, event) {
         var svg = event.currentTarget.querySelector('svg')
         var point = svg && slidePoint(svg, event)
-        if (!point || this.imageCellAt(this.crop.slide, point) !== this.crop.cell) {
+        if (!point) {
           return
         }
-        var image = svg.querySelector('[data-rp-image="' + this.crop.cell + '"] > image')
+        var free = 'free' === this.crop.slide.imageLayout
+        var hit = free ? this.freeImageAt(index, svg, point) : null
+        if (free ? !hit || hit.image !== this.croppedImage : this.imageCellAt(this.crop.slide, point) !== this.crop.cell) {
+          return
+        }
+        var image = free ? hit.block.querySelector('image') : svg.querySelector('[data-rp-image="' + this.crop.cell + '"] > image')
         if (!image) {
           return
         }
         var frame = svg.viewBox.baseVal
         var box = svg.getBoundingClientRect()
         var imageFrame = this.cropFrame(this.crop.slide)
-        var width = frame.width * parseFloat(imageFrame.width) / 100
-        var height = frame.height * parseFloat(imageFrame.height) / 100
+        var width = frame.width * (hit?.width ?? parseFloat(imageFrame.width) / 100)
+        var height = frame.height * (hit?.height ?? parseFloat(imageFrame.height) / 100)
         var crop = this.croppedImage
         event.preventDefault()
         this.startDrag({
@@ -1062,8 +1108,18 @@
       ensureCells: function (slide) {
         slide.images = Array.isArray(slide.images) ? slide.images : []
         while (slide.images.length < this.cellCount(slide)) {
-          slide.images.push({ focusX: 0.5, focusY: 0.5, zoom: 1 })
+          slide.images.push({})
         }
+        slide.images.forEach(function (image) {
+          image.focusX ??= 0.5
+          image.focusY ??= 0.5
+          image.zoom ??= 1
+          if ('free' === slide.imageLayout) {
+            for (var key of Object.keys(FREE_IMAGE_FRAME)) {
+              image[key] ??= FREE_IMAGE_FRAME[key]
+            }
+          }
+        })
       },
       // A cell's image object, created on demand so the sliders always bind to a
       // real (reactive) node even before a media file is chosen.
@@ -1115,9 +1171,18 @@
       clearMedia: function (index, cell) {
         var slide = this.spec.slides[index]
         if (slide && slide.images && slide.images[cell]) {
-          slide.images[cell].media = ''
-          if (this.crop?.slide === slide && this.crop.cell === cell) {
+          if ('free' === slide.imageLayout) {
             this.finishCrop()
+            slide.images.splice(cell, 1)
+            this.ensureCells(slide)
+            if (!this.slideHasMedia(slide)) {
+              slide.overlay = 0
+            }
+          } else {
+            slide.images[cell].media = ''
+            if (this.crop?.slide === slide && this.crop.cell === cell) {
+              this.finishCrop()
+            }
           }
         }
       },
@@ -1187,7 +1252,7 @@
         if ('Escape' === event.key) {
           if (this.actionMenu) {
             this.closeActionMenu()
-          } else if (this._drag?.selection) {
+          } else if (this._drag?.selection || this._drag?.freeImage) {
             this.deckTextCancel({ pointerId: this._drag.pointerId })
           } else {
             this.placingText = false
@@ -1269,13 +1334,18 @@
         if (this.copiedText) {
           items.push('pasteHere')
         }
-        var cell = this.imageCellAt(slide, point)
+        var free = 'free' === slide.imageLayout
+        var hit = free && !keyboard ? this.freeImageAt(index, svg, point) : null
+        var cell = free ? slide.images.indexOf(hit?.image) : this.imageCellAt(slide, point)
         if (ref && !ref.startsWith('texts.') && slide[ref]) {
           items.unshift('convertText')
         } else if (!keyboard && slide.images[cell] && slide.images[cell].media) {
           items.push('replaceImage')
-          if (svg.querySelector('[data-rp-image="' + cell + '"]')) {
+          if (free ? hit.block.querySelector('image') : svg.querySelector('[data-rp-image="' + cell + '"]')) {
             items.push('cropImage')
+          }
+          if (!free) {
+            items.push('freeImageLayout')
           }
         }
         this.openActionMenu(event, { slide: slide, svg: svg, point: point, ref: ref, cell: cell, items: items }, keyboard)
@@ -1397,6 +1467,7 @@
             break
           case 'replaceImage': this.pickMedia(index, menu.cell, 'choose'); break
           case 'cropImage': this.beginCrop(index, menu.cell); break
+          case 'freeImageLayout': this.setImageLayout(slide, 'free'); break
           case 'duplicateSlide': this.duplicateSlide(index); break
           case 'insertSlide': this.addSlide(index); break
         }
@@ -1662,8 +1733,8 @@
         }
       },
       commitTextPosition: function (selected, position) {
-        var x = textPosition(position.x, this.textRightLimit(selected))
-        var y = textPosition(position.y, 0.95)
+        var x = framePosition(position.x, this.textRightLimit(selected))
+        var y = framePosition(position.y, 0.95)
         var current = this.textCoordinates(selected)
         if (x !== current.x || y !== current.y) {
           if (selected.field) {
@@ -1698,12 +1769,15 @@
         var slide = this.spec.slides[slideIndex]
         if (this.crop) {
           if (this.crop.slide === slide) {
-            this.startCropDrag(event)
+            this.startCropDrag(index, event)
           }
           return
         }
         var selected = this.selectText(index, event.target.closest('[data-rp-edit]'))
         if (!selected) {
+          if (slide?.imageLayout === 'free') {
+            this.startFreeImageDrag(index, slide, event)
+          }
           return
         }
         var svg = selected.block.ownerSVGElement
@@ -1722,6 +1796,28 @@
           y0: position.y,
           screenWidth: frame.width * matrix.a,
           screenHeight: frame.height * matrix.d,
+        })
+      },
+      startFreeImageDrag: function (index, slide, event) {
+        var svg = event.currentTarget.querySelector('svg')
+        var point = svg && slidePoint(svg, event)
+        var hit = point && this.freeImageAt(index, svg, point)
+        if (!hit?.image?.media || !slide.images.includes(hit.image)) {
+          return
+        }
+        var frame = svg.viewBox.baseVal
+        var matrix = svg.getScreenCTM()
+        event.preventDefault()
+        this.textSelection = null
+        event.currentTarget.focus({ preventScroll: true })
+        this.closeActionMenu(false)
+        this.startDrag({
+          freeImage: hit.image, block: hit.block, pointerId: event.pointerId, moved: false,
+          previousTransform: hit.block.getAttribute('transform'),
+          startX: event.clientX, startY: event.clientY, x0: hit.x, y0: hit.y,
+          startLeft: hit.image.x, startTop: hit.image.y,
+          screenWidth: frame.width * matrix.a, screenHeight: frame.height * matrix.d,
+          width: frame.width, height: frame.height,
         })
       },
       startDrag: function (drag) {
@@ -1743,7 +1839,7 @@
           }
           d.moved = true
           this.closeTextPop()
-          if (!d.image) {
+          if (d.selection) {
             d.guides = this._showAlignmentGuides(d.selection.block)
           }
         }
@@ -1751,6 +1847,14 @@
           d.nx = d.overflowX > 0.1 ? clamp(d.x0 - dx * d.unit / d.overflowX, 0, 1) : d.x0
           d.ny = d.overflowY > 0.1 ? clamp(d.y0 - dy * d.unit / d.overflowY, 0, 1) : d.y0
           d.block.setAttribute('transform', 'translate(' + (d.x0 - d.nx) * d.overflowX + ' ' + (d.y0 - d.ny) * d.overflowY + ')')
+          return
+        }
+        if (d.freeImage) {
+          d.nx = framePosition(d.startLeft + dx / d.screenWidth, 1 - d.freeImage.width)
+          d.ny = framePosition(d.startTop + dy / d.screenHeight, 1 - d.freeImage.height)
+          var xShift = (d.nx - d.x0) * d.width
+          var yShift = (d.ny - d.y0) * d.height
+          d.block.setAttribute('transform', `translate(${xShift} ${yShift})`)
           return
         }
         var selected = d.selection
@@ -1809,15 +1913,23 @@
         if (d.image) {
           d.image.focusX = Number(d.nx.toFixed(4))
           d.image.focusY = Number(d.ny.toFixed(4))
+        } else if (d.freeImage) {
+          d.freeImage.x = d.nx
+          d.freeImage.y = d.ny
         } else {
           this.commitTextPosition(d.selection, d.position)
         }
       },
       deckTextCancel: function (event) {
         var d = this._endDrag(event)
-        if (d?.moved && d.image) {
+        if (!d?.moved) {
+          return
+        }
+        if (d.previousTransform) {
+          d.block.setAttribute('transform', d.previousTransform)
+        } else if (d.image || d.freeImage) {
           d.block.removeAttribute('transform')
-        } else if (d?.moved) {
+        } else {
           this.renderTextPosition(d.selection, this.textCoordinates(d.selection))
         }
       },

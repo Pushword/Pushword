@@ -57,7 +57,7 @@ repurpose:
       noImage: 'Un voile ne s''applique qu''au-dessus d''une image ; cette slide n''en a pas.'
     textScale:
       range: 'textScale doit être entre 0,5 et 2.'
-    empty: 'Une slide doit afficher au moins un texte ou une image de fond.'
+    empty: 'Une slide doit afficher au moins un texte ou une image.'
   text:
     content:
       empty: 'Un texte libre a besoin d''un contenu.'
@@ -79,6 +79,8 @@ repurpose:
       notFound: 'Aucune image « %media% » dans la médiathèque (JPEG, PNG, GIF ou WebP).'
     focus:
       range: 'Un point focal doit être entre 0 et 1.'
+    frame:
+      outsideSlide: 'Le cadre de l’image doit tenir dans la diapositive.'
     zoom:
       range: 'Le zoom doit être entre 1 et 5.'
   video:

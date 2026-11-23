@@ -108,8 +108,8 @@
                 "textScale": { "type": "number", "minimum": 0.5, "maximum": 2, "default": 1 },
                 "background": { "enum": ["none", "dots", "rings", "waves", "scales", "chevron", "hexagon", "triangles", "plus", "diamonds", "memphis", "sketchy", "paper"], "description": "Overrides the deck's background effect for this slide; omit to inherit the deck effect." },
                 "palette": { "$ref": "#/$defs/palette" },
-                "imageLayout": { "enum": ["full", "split-v", "split-h"], "default": "full", "description": "How the slide's images fill the frame: one covering it (full), two stacked vertically (split-v) or side by side (split-h). Split layouts require two images." },
-                "images": { "type": "array", "items": { "$ref": "#/$defs/image" }, "description": "The slide's background image(s): one for `full`, two for a split layout, each with its own focal point and zoom. (The legacy singular `image` key is still accepted and treated as a one-element list.)" },
+                "imageLayout": { "enum": ["full", "split-v", "split-h", "free"], "default": "full", "description": "One image covering the slide (full), two stacked vertically (split-v) or side by side (split-h), or images positioned individually (free). Split layouts require two images." },
+                "images": { "type": "array", "items": { "$ref": "#/$defs/image" }, "description": "Images in draw order, each with its own focal point and zoom. The legacy singular image key is accepted as a one-element list." },
                 "texts": { "type": "array", "items": { "$ref": "#/$defs/text" }, "description": "Freely positioned text boxes drawn over the layout stack, placed by fractional coordinates so they survive a format change." }
             }
         },
@@ -137,7 +137,11 @@
                 "media": { "type": "string", "description": "Media filename from the site library." },
                 "focusX": { "type": "number", "minimum": 0, "maximum": 1, "default": 0.5, "description": "Horizontal focal point kept in frame." },
                 "focusY": { "type": "number", "minimum": 0, "maximum": 1, "default": 0.5, "description": "Vertical focal point kept in frame." },
-                "zoom": { "type": "number", "minimum": 1, "maximum": 5, "default": 1, "description": "Punch-in relative to cover-fit (1 = fill)." }
+                "zoom": { "type": "number", "minimum": 1, "maximum": 5, "default": 1, "description": "Punch-in relative to cover-fit (1 = fill)." },
+                "x": { "type": "number", "minimum": 0, "maximum": 1, "default": 0.25, "description": "Left edge in the free layout, as a fraction of slide width. x + width must stay at or below 1." },
+                "y": { "type": "number", "minimum": 0, "maximum": 1, "default": 0.25, "description": "Top edge in the free layout, as a fraction of slide height. y + height must stay at or below 1." },
+                "width": { "type": "number", "minimum": 0.05, "maximum": 1, "default": 0.5, "description": "Image frame width in the free layout, as a fraction of slide width." },
+                "height": { "type": "number", "minimum": 0.05, "maximum": 1, "default": 0.5, "description": "Image frame height in the free layout, as a fraction of slide height." }
             }
         },
         "hex": { "type": "string", "pattern": "^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$" }

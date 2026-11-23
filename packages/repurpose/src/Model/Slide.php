@@ -21,12 +21,10 @@ class Slide
     public const array ALIGNS = ['left', 'center', 'right'];
 
     /**
-     * How a slide's images fill the frame: one image covering it (`full`), or two
-     * stacked vertically (`split-v`) / side by side (`split-h`). The list is the
-     * seam for further multi-image layouts (grids, thirds…) — each is just a set
-     * of sub-frames the renderer places images into.
+     * Images cover the slide (`full`), fill two cells (`split-v`, `split-h`),
+     * or use their own frames (`free`).
      */
-    public const array IMAGE_LAYOUTS = ['full', 'split-v', 'split-h'];
+    public const array IMAGE_LAYOUTS = ['full', 'split-v', 'split-h', 'free'];
 
     /**
      * @param list<SlideImage> $images
@@ -120,7 +118,7 @@ class Slide
     #[Assert\Callback]
     public function validateSplitImages(ExecutionContextInterface $context): void
     {
-        if ('full' !== $this->imageLayout && \count($this->images) < 2) {
+        if (\in_array($this->imageLayout, ['split-v', 'split-h'], true) && \count($this->images) < 2) {
             $context->buildViolation('repurpose.slide.split.needsTwoImages')
                 ->atPath('images')
                 ->addViolation();

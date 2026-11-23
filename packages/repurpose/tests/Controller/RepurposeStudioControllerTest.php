@@ -272,6 +272,27 @@ final class RepurposeStudioControllerTest extends WebTestCase
         self::assertSame('A brand new headline', $firstSlide['title']);
     }
 
+    public function testSaveAndPreviewKeepFreeImageFrames(): void
+    {
+        $post = $this->persistPost();
+        $spec = $this->validSpec();
+        $spec['slides'] = [['imageLayout' => 'free', 'images' => [
+            ['media' => '1.jpg', 'x' => 0.1, 'y' => 0.2, 'width' => 0.45, 'height' => 0.6],
+        ]]];
+        $this->saveSpec($post, $spec);
+        self::assertResponseIsSuccessful();
+
+        $reloaded = $this->em->getRepository(SocialPost::class)->find($post->id);
+        self::assertInstanceOf(SocialPost::class, $reloaded);
+        self::assertEquals($spec['slides'], $reloaded->spec['slides']);
+
+        $body = $this->postJson('/admin/repurpose/studio/'.$post->id.'/preview', $spec);
+        self::assertResponseIsSuccessful();
+        self::assertIsArray($body['slides']);
+        self::assertIsString($body['slides'][0]);
+        self::assertStringContainsString('<rect x="108" y="270" width="486" height="810"', $body['slides'][0]);
+    }
+
     public function testStudioAndApiRejectStaleEditsAndShareTheCurrentRevision(): void
     {
         $post = $this->persistPost();

@@ -142,13 +142,15 @@ final readonly class SlideRenderer
         }
 
         $layers = [];
-        foreach ($this->imageFrames($slide->imageLayout, $width, $height) as $sub => $cell) {
+        $free = 'free' === $slide->imageLayout;
+        foreach ($this->imageFrames($slide, $width, $height) as $sub => $cell) {
             $image = $slide->images[$sub] ?? null;
             if (null === $image) {
                 continue;
             }
 
-            $layers['images.'.$sub] = $this->renderOneImage($image, $cell, $index, $sub);
+            $body = $this->renderOneImage($image, $cell, $index, $sub);
+            $layers['images.'.$sub] = $free ? '<g data-rp-free-image="'.$sub.'">'.$body.'</g>' : $body;
         }
 
         // One overlay across the whole frame — it darkens every cell together, so
@@ -168,9 +170,12 @@ final readonly class SlideRenderer
      *
      * @return list<array{0: float, 1: float, 2: float, 3: float}>
      */
-    private function imageFrames(string $layout, int $width, int $height): array
+    private function imageFrames(Slide $slide, int $width, int $height): array
     {
-        return match ($layout) {
+        return match ($slide->imageLayout) {
+            'free' => array_map(static fn (SlideImage $image): array => [
+                $image->x * $width, $image->y * $height, $image->width * $width, $image->height * $height,
+            ], $slide->images),
             'split-v' => [[0.0, 0.0, (float) $width, $height / 2], [0.0, $height / 2, (float) $width, $height / 2]],
             'split-h' => [[0.0, 0.0, $width / 2, (float) $height], [$width / 2, 0.0, $width / 2, (float) $height]],
             default => [[0.0, 0.0, (float) $width, (float) $height]],

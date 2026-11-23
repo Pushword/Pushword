@@ -106,6 +106,27 @@ final class CarouselValidationTest extends KernelTestCase
         self::assertArrayHasKey('slides[0].overlay', $violations);
     }
 
+    public function testFreeImageFramesFitInsideTheSlide(): void
+    {
+        $spec = ['page' => 'x', 'network' => 'linkedin', 'format' => 'linkedin-4-5'];
+        $image = ['media' => '1.jpg', 'x' => 0.4, 'y' => 0.3, 'width' => 0.6, 'height' => 0.7];
+        self::assertSame([], $this->violations([...$spec, 'slides' => [['imageLayout' => 'free', 'images' => [$image]]]]));
+
+        $violations = $this->violations([...$spec, 'slides' => [[
+            'imageLayout' => 'free',
+            'images' => [
+                [...$image, 'width' => 0.61, 'height' => 0.71],
+                ['media' => '1.jpg', 'x' => -0.2, 'y' => -0.2, 'width' => 1.1, 'height' => 1.1],
+                ['media' => '1.jpg', 'x' => 1.1, 'y' => 1.1, 'width' => 0.04, 'height' => 0.04],
+            ],
+        ]]]);
+        foreach ([['width', 'height'], ['x', 'y', 'width', 'height'], ['x', 'y', 'width', 'height']] as $index => $fields) {
+            foreach ($fields as $field) {
+                self::assertArrayHasKey('slides[0].images['.$index.'].'.$field, $violations);
+            }
+        }
+    }
+
     public function testFreeTextAloneMakesASlideNonEmpty(): void
     {
         $violations = $this->violations([

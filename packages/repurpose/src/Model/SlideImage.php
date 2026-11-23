@@ -6,12 +6,11 @@ namespace Pushword\Repurpose\Model;
 
 use Pushword\Repurpose\Validator\LibraryImage;
 use Symfony\Component\Validator\Constraints as Assert;
+use Symfony\Component\Validator\Context\ExecutionContextInterface;
 
 /**
- * The background image of a slide, addressed by media filename plus a focal point
- * and zoom. The crop is computed at render time from these three numbers (never
- * baked into a cached derivative), so the same values stay correct when the slide
- * is re-rendered at another ratio — see {@see \Pushword\Repurpose\Service\SlideGeometry}.
+ * An image cropped to its frame at render time. The free layout defines that
+ * frame as fractions of the slide, so it can be rendered at any output ratio.
  */
 class SlideImage
 {
@@ -28,6 +27,26 @@ class SlideImage
         /** ≥ 1, relative to cover-fit: 1.0 fills the frame, 1.4 punches in 40%. */
         #[Assert\Range(notInRangeMessage: 'repurpose.image.zoom.range', min: 1, max: 5)]
         public float $zoom = 1.0,
+        #[Assert\Range(min: 0, max: 1)]
+        public float $x = 0.25,
+        #[Assert\Range(min: 0, max: 1)]
+        public float $y = 0.25,
+        #[Assert\Range(min: 0.05, max: 1)]
+        public float $width = 0.5,
+        #[Assert\Range(min: 0.05, max: 1)]
+        public float $height = 0.5,
     ) {
+    }
+
+    #[Assert\Callback]
+    public function validateFrame(ExecutionContextInterface $context): void
+    {
+        if ($this->x + $this->width > 1.0) {
+            $context->buildViolation('repurpose.image.frame.outsideSlide')->atPath('width')->addViolation();
+        }
+
+        if ($this->y + $this->height > 1.0) {
+            $context->buildViolation('repurpose.image.frame.outsideSlide')->atPath('height')->addViolation();
+        }
     }
 }

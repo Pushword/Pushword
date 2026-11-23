@@ -57,7 +57,7 @@ repurpose:
       noImage: 'An overlay only applies over an image; this slide has none.'
     textScale:
       range: 'textScale must be between 0.5 and 2.'
-    empty: 'A slide must show at least a text field or a background image.'
+    empty: 'A slide must show at least a text field or an image.'
   text:
     content:
       empty: 'A free text needs content.'
@@ -79,6 +79,8 @@ repurpose:
       notFound: 'No image named "%media%" in the media library (JPEG, PNG, GIF or WebP).'
     focus:
       range: 'A focal point must be between 0 and 1.'
+    frame:
+      outsideSlide: 'The image frame must fit inside the slide.'
     zoom:
       range: 'Zoom must be between 1 and 5.'
   video:

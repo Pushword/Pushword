@@ -230,6 +230,29 @@ final class SlideRendererTest extends KernelTestCase
         self::assertStringNotContainsString('nope-top', $svg);
     }
 
+    public function testFreeImageFramesScaleWithTheSlideAndDrawInSpecOrder(): void
+    {
+        $spec = ['page' => 'x', 'network' => 'linkedin', 'slides' => [[
+            'imageLayout' => 'free', 'images' => [
+                ['media' => 'missing-a.jpg', 'x' => 0.1, 'y' => 0.2, 'width' => 0.3, 'height' => 0.4],
+                ['media' => 'missing-b.jpg'],
+                ['media' => 'missing-c.jpg', 'x' => 0, 'y' => 0, 'width' => 1, 'height' => 0.05],
+            ],
+        ]]];
+        $svg = $this->render([...$spec, 'format' => 'linkedin-4-5']);
+        $doc = new DOMDocument();
+        self::assertTrue($doc->loadXML($svg), 'a slide with free images yields well-formed SVG');
+        preg_match_all('/<g data-rp-free-image="(\d+)"><rect x="([\d.]+)" y="([\d.]+)" width="([\d.]+)" height="([\d.]+)"/', $svg, $frames, \PREG_SET_ORDER);
+        self::assertSame([
+            ['0', '108', '270', '324', '540'],
+            ['1', '270', '337.5', '540', '675'],
+            ['2', '0', '0', '1080', '67.5'],
+        ], array_map(static fn (array $frame): array => \array_slice($frame, 1), $frames));
+
+        $square = $this->render([...$spec, 'network' => 'instagram', 'format' => 'instagram-1-1']);
+        self::assertStringContainsString('<g data-rp-free-image="0"><rect x="108" y="216" width="324" height="432"', $square);
+    }
+
     public function testSplitHorizontalSetsTwoImageCellsSideBySide(): void
     {
         $svg = $this->render([

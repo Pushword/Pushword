@@ -200,6 +200,10 @@ final class CarouselFactory
             focusX: $this->float($raw['focusX'] ?? null, 0.5),
             focusY: $this->float($raw['focusY'] ?? null, 0.5),
             zoom: $this->float($raw['zoom'] ?? null, 1.0),
+            x: $this->float($raw['x'] ?? null, 0.25),
+            y: $this->float($raw['y'] ?? null, 0.25),
+            width: $this->float($raw['width'] ?? null, 0.5),
+            height: $this->float($raw['height'] ?? null, 0.5),
         );
     }
 
