@@ -95,6 +95,9 @@ jobs:
       - name: Editor unit tests
         run: cd packages/admin-block-editor && yarn test
 
+      - name: Flat editor sync tests
+        run: node --test packages/flat/tests/Editor/*.test.mjs
+
       - name: Install quiz dependencies
         run: cd packages/quiz && yarn install --frozen-lockfile
 

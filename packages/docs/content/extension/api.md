@@ -240,6 +240,8 @@ instance itself, so every client is byte-identical to the server it talks to —
 the local copy on each snapshot pull. It holds no YAML (raw bytes out, canonical bytes
 back via the endpoints above) and reads `PUSHWORD_API_BASE` plus `PUSHWORD_TOKEN_FILE`
 (default `<project>/.token`) from the environment; nothing per-site is baked in.
+The client opts into [collaborative editing protection](#collaborative-editing)
+and keeps the local file intact if the server returns `423`.
 
 {id=translations}
 ### Link translations (hreflang)
