@@ -96,8 +96,29 @@ final class SocialPostListTest extends WebTestCase
         self::assertSame($modal->filter('h2')->attr('id'), $modal->attr('aria-labelledby'));
         self::assertCount(2, $modal->filter('[data-bs-dismiss="modal"]'));
         self::assertSame('/admin/repurpose/studio/'.$this->post->id, $modal->filter('a')->attr('href'));
-        self::assertCount(1, $row->filter('td.actions .action-edit'));
-        self::assertCount(0, $row->filter('td.actions.actions-as-dropdown'));
+        $actions = $row->filter('td.actions');
+        $studio = $actions->filter('a.action-edit:not(.dropdown-item)[aria-label="Studio"]');
+        self::assertSame('Studio', $studio->text());
+        $delete = $actions->filter('.pw-row-menu .dropdown-item[data-action-name="delete"][data-action-confirmation="true"]');
+        self::assertCount(1, $delete);
+        self::assertSame('/admin/social-post/'.$this->post->id.'/delete', parse_url($delete->attr('formaction') ?? '', \PHP_URL_PATH));
+        self::assertCount(0, $actions->filter('.action-delete:not(.dropdown-item)'));
+
+        $this->client->click($studio->link());
+        self::assertResponseRedirects('/admin/repurpose/studio/'.$this->post->id);
+    }
+
+    public function testAnEditorCanOpenTheStudioWithoutADeleteMenu(): void
+    {
+        $this->user->setRoles(['ROLE_EDITOR']);
+        $this->em->flush();
+        $this->client->loginUser($this->user);
+
+        $this->client->request(Request::METHOD_GET, '/admin/social-post', ['query' => $this->post->page]);
+
+        self::assertResponseIsSuccessful();
+        self::assertSelectorExists('td.actions a.action-edit');
+        self::assertSelectorNotExists('td.actions .pw-row-menu, td.actions .action-delete');
     }
 
     public function testUntitledPageCarouselFallsBackToItsSource(): void

@@ -38,6 +38,7 @@ class SocialPostCrudController extends AbstractCrudController
             ->setEntityLabelInSingular('repurpose.label.singular')
             ->setEntityLabelInPlural('repurpose.label.plural')
             ->showEntityActionsInlined()
+            ->overrideTemplate('crud/index', '@PushwordRepurpose/admin/index.html.twig')
             ->setDefaultSort(['updatedAt' => 'DESC'])
             ->setSearchFields(['page', 'network', 'host']);
     }
@@ -74,7 +75,6 @@ class SocialPostCrudController extends AbstractCrudController
                 ->setLabel('repurpose.action.new')
                 ->setIcon('fas fa-wand-magic-sparkles'))
             ->update(Crud::PAGE_INDEX, Action::EDIT, $toStudio)
-            ->update(Crud::PAGE_INDEX, Action::DELETE, static fn (Action $action): Action => $action->addCssClass('pw-action-delete'))
             ->update(Crud::PAGE_DETAIL, Action::EDIT, $toStudio)
             ->setPermission(Action::DELETE, 'ROLE_PUSHWORD_ADMIN');
     }

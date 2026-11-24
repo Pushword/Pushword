@@ -31,7 +31,13 @@
   {% if section != 'campaign' %}
     {{ parent() }}
   {% elseif has_entity_actions %}
-    {{ include('@PushwordNewsletter/admin/_campaign_row_actions.html.twig', {entity: entity}, with_context: false) }}
+    {{ include('@pwAdmin/crud/compact_row_actions.html.twig', {
+      entity: entity,
+      iconAction: 'edit',
+      primaryAction: 'detail',
+      primaryLabel: entity.instance.isDraft ? null : 'newsletter.statistics.reviewCampaign'|trans,
+      menuLabel: 'newsletter.workspace.rowActions'|trans({'%id%': entity.primaryKeyValueAsString}),
+    }, with_context: false) }}
   {% endif %}
 {% endblock %}
 

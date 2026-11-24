@@ -1,0 +1,7 @@
+{% extends '@pwAdmin/crud/index.html.twig' %}
+
+{% block entity_actions %}
+  {% if has_entity_actions %}
+    {{ include('@pwAdmin/crud/compact_row_actions.html.twig', {entity: entity, primaryAction: 'detail'}, with_context: false) }}
+  {% endif %}
+{% endblock %}

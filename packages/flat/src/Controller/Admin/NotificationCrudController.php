@@ -48,6 +48,7 @@ final class NotificationCrudController extends AbstractCrudController
             ->setDefaultSort(['createdAt' => 'DESC'])
             ->setPageTitle(Crud::PAGE_INDEX, 'flatNotificationIndexTitle')
             ->setPageTitle(Crud::PAGE_DETAIL, static fn (AdminNotification $n): TranslatableMessage => new TranslatableMessage('flatNotificationDetailTitle', ['%id%' => $n->id]))
+            ->overrideTemplate('crud/index', '@PushwordFlat/admin/notification_index.html.twig')
             ->showEntityActionsInlined();
     }
 
