@@ -5,7 +5,7 @@
   "license": "MIT",
   "require-dev": {
     "phpstan/phpstan": "2.3.7",
-    "twig/twig": "3.31.0",
+    "twig/twig": "3.31.1",
     "twigstan/twigstan": "0.2.8"
   },
   "config": {
