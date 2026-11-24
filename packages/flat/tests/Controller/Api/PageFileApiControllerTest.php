@@ -8,12 +8,14 @@ use DateTime;
 use Doctrine\ORM\EntityManagerInterface;
 use Override;
 use PHPUnit\Framework\Attributes\Group;
+use Pushword\Core\Collaboration\LivePresence;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Entity\User;
 use Pushword\Core\Site\SiteRegistry;
 use Pushword\Flat\Serializer\PageFileSerializer;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -379,7 +381,33 @@ final class PageFileApiControllerTest extends WebTestCase
         self::assertStringStartsWith('text/javascript', (string) $response->headers->get('Content-Type'));
         self::assertStringContainsString('no-store', (string) $response->headers->get('Cache-Control'));
         self::assertStringContainsString('PUSHWORD_API_BASE', (string) $response->getContent());
+        self::assertStringContainsString(LivePresence::RESPECT_COLLABORATION, (string) $response->getContent());
         self::assertStringNotContainsString('parseYaml', (string) $response->getContent(), 'the shipped client holds no YAML');
+    }
+
+    public function testProtectedPageFileSaveKeepsTheSharedPageWhileAnEditorIsPresent(): void
+    {
+        $page = $this->persistPage(static fn (Page $page): null => null);
+        $export = $this->serializer->serialize($page);
+        $file = str_replace('Default body.', 'Edited in the snapshot.', $export);
+        $presence = self::getContainer()->get(LivePresence::class);
+        $join = Request::create('/draft', Request::METHOD_POST, server: ['HTTP_X_COLLABORATION_TAB' => str_repeat('b', 32)]);
+        $ready = static fn (): JsonResponse => new JsonResponse([]);
+        $presence->sync($join, 'page:'.$page->id, $ready);
+
+        $path = '/api/content/page/'.$page->host.'/'.$page->slug;
+        $headers = $this->server() + ['HTTP_IF_MATCH' => $this->revisionOf($export), 'HTTP_X_PUSHWORD_RESPECT_COLLABORATION' => '1'];
+        $this->client->request(Request::METHOD_PUT, $path, server: $headers, content: $file);
+        self::assertResponseStatusCodeSame(Response::HTTP_LOCKED);
+        self::assertJsonStringEqualsJsonString(json_encode(['error' => 'collaboration_active', 'id' => $page->id], \JSON_THROW_ON_ERROR), (string) $this->client->getResponse()->getContent());
+        $this->em->refresh($page);
+        self::assertSame('Default body.', $page->mainContent);
+
+        $join->setMethod(Request::METHOD_DELETE);
+        $presence->sync($join, 'page:'.$page->id, $ready);
+        $this->client->request(Request::METHOD_PUT, $path, server: $headers, content: $file);
+        self::assertResponseIsSuccessful();
+        self::assertStringContainsString('Edited in the snapshot.', (string) $this->client->getResponse()->getContent());
     }
 
     // ----- helpers -----

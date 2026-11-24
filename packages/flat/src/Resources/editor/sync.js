@@ -20,6 +20,7 @@
  *   - 200 → local file overwritten with the canonical server text (fresh revision)
  *   - 409 → local file overwritten with the server's current canonical text;
  *           re-apply the edit on the fresh bytes
+ *   - 423 → the shared session is active; local edits are kept
  *   - 401/403 → bails immediately
  *   - no `revision:` in the front matter → hard failure: the file is not a
  *     real snapshot. In hook mode this exits 2 (blocking) so the message is
@@ -211,6 +212,11 @@ async function syncOne(filePath, verbose) {
         return 409;
     }
 
+    if (status === 423) {
+        stderr(`✗ ${rel}: collaborative editing is active. Local edits were kept. Use the shared draft API for Markdown edits.`);
+        return 423;
+    }
+
     if (status === 401 || status === 403) {
         stderr(`✗ auth failed (${status}) — check ${tokenPath()}`);
         return status;
@@ -261,6 +267,7 @@ async function apiCall(method, urlPath, revision, bodyText) {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'text/markdown; charset=UTF-8',
         'Accept': 'text/markdown',
+        'X-Pushword-Respect-Collaboration': '1',
         // Cloudflare bot rule 403s default Node fetch UAs on PUT.
         'User-Agent': 'pushword-editor-sync/2.0',
     };

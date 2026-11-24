@@ -7,6 +7,7 @@ namespace Pushword\Flat\Controller\Api;
 use Pushword\Api\Controller\AbstractApiController;
 use Pushword\Api\Service\InvalidFrontmatterException;
 use Pushword\Api\Service\PageWriter;
+use Pushword\Core\Collaboration\LivePresence;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Repository\PageRepository;
 use Pushword\Core\Service\RevisionCalculator;
@@ -20,10 +21,8 @@ use Symfony\Component\Yaml\Exception\ParseException;
 
 /**
  * Raw-markdown intake for pages: the request body is a flat `.md` file, parsed
- * and serialized server-side by {@see PageFileSerializer}, so clients never own
- * the YAML format. Every response body is the canonical file text a fresh flat
- * export would write — including on 409, so a client can overwrite its local
- * copy and re-apply.
+ * and serialized server-side by {@see PageFileSerializer}. Successful writes
+ * and revision conflicts return the canonical text of a fresh flat export.
  *
  * The write itself goes through the same {@see PageWriter} operation as the
  * JSON endpoints (same If-Match revision, validation, editedBy stamping); only
@@ -40,6 +39,7 @@ final class PageFileApiController extends AbstractApiController
         private readonly PageFileSerializer $serializer,
         private readonly PageWriter $pageWriter,
         private readonly RevisionCalculator $revisions,
+        private readonly LivePresence $presence,
     ) {
     }
 
@@ -51,6 +51,11 @@ final class PageFileApiController extends AbstractApiController
             return $this->notFound('Page not found');
         }
 
+        return $this->presence->guardPageWrite($request, $page, fn (): Response => $this->updateFile($page, $request));
+    }
+
+    private function updateFile(Page $page, Request $request): Response
+    {
         $expected = $request->headers->get('If-Match');
         if (null === $expected || '' === $expected) {
             return $this->respond(['error' => 'Missing If-Match header'], Response::HTTP_PRECONDITION_REQUIRED);
@@ -194,6 +199,7 @@ final class PageFileApiController extends AbstractApiController
                         'description' => 'The server parses and re-serializes the file, so clients hold no YAML: send the bytes, write the response bytes back. A front-matter key missing from the upload (vs the current canonical file) is reset — a file is a total document, not a patch.',
                         'parameters' => [
                             ['name' => 'If-Match', 'in' => 'header', 'required' => true, 'schema' => ['type' => 'string'], 'description' => 'The `revision:` value from the file'],
+                            ['name' => LivePresence::RESPECT_COLLABORATION, 'in' => 'header', 'schema' => ['type' => 'string', 'enum' => ['1']], 'description' => 'Refuse a classic save while collaborative editing is active.'],
                         ],
                         'requestBody' => ['required' => true, 'content' => $markdownBody],
                         'responses' => [
@@ -202,6 +208,7 @@ final class PageFileApiController extends AbstractApiController
                             '404' => ['description' => 'Page not found'],
                             '409' => ['description' => "Revision mismatch — the body is the server's current canonical file text; overwrite the local file and re-apply", 'content' => ['text/markdown' => ['schema' => ['type' => 'string']]]],
                             '422' => ['description' => 'invalid_frontmatter or validation error (JSON)'],
+                            '423' => ['description' => 'Collaborative editing is active (collaboration_active)'],
                             '428' => ['description' => 'Missing If-Match header'],
                         ],
                     ],

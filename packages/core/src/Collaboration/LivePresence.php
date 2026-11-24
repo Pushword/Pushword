@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pushword\Core\Collaboration;
 
 use Psr\Cache\CacheItemPoolInterface;
+use Pushword\Core\Entity\Page;
 use Pushword\Core\Entity\User;
 use Symfony\Component\Clock\ClockInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
@@ -19,6 +20,8 @@ use Symfony\Component\Lock\LockFactory;
  */
 final readonly class LivePresence
 {
+    public const string RESPECT_COLLABORATION = 'X-Pushword-Respect-Collaboration';
+
     private const int LIFETIME = 12;
 
     public function __construct(
@@ -42,26 +45,46 @@ final readonly class LivePresence
         }
 
         if ($request->isMethod(Request::METHOD_DELETE)) {
-            if (null !== $tab) {
-                $this->update($document, $tab, false);
+            if (null === $tab) {
+                return new JsonResponse(null, Response::HTTP_NO_CONTENT);
             }
 
-            return new JsonResponse(null, Response::HTTP_NO_CONTENT);
+            return $this->locked($document, function () use ($document, $tab): JsonResponse {
+                $this->update($document, $tab, false);
+
+                return new JsonResponse(null, Response::HTTP_NO_CONTENT);
+            });
         }
 
-        $response = $exchange();
-        if (null !== $tab && $response->isSuccessful()) {
-            $this->update($document, $tab, true, $user);
-        }
-
-        return $response;
+        return null === $tab ? $exchange() : $this->syncParticipant($document, $tab, $exchange, $user);
     }
 
-    public function recordApi(string $document, User $user, JsonResponse $response): void
+    /** @param callable(): JsonResponse $exchange */
+    public function syncApi(string $document, User $user, callable $exchange): JsonResponse
     {
-        if ($response->isSuccessful()) {
-            $this->update($document, 'api:'.$user->id, true, $user, api: true);
+        return $this->syncParticipant($document, 'api:'.$user->id, $exchange, $user, api: true);
+    }
+
+    /**
+     * @template T of Response
+     *
+     * @param callable(): T $save
+     *
+     * @return T|JsonResponse
+     */
+    public function guardPageWrite(Request $request, Page $page, callable $save): Response
+    {
+        if ('1' !== $request->headers->get(self::RESPECT_COLLABORATION)) {
+            return $save();
         }
+
+        $document = 'page:'.$page->id;
+
+        // A participant must register its successful join before another
+        // request can check presence and perform a classic save.
+        return $this->locked($document, fn () => $this->isActive($document)
+            ? new JsonResponse(['error' => 'collaboration_active', 'id' => $page->id], Response::HTTP_LOCKED)
+            : $save());
     }
 
     public function isActive(string $document): bool
@@ -89,31 +112,55 @@ final readonly class LivePresence
         return ['collaborative' => [] !== $active, 'participants' => array_values($participants)];
     }
 
+    /** @param callable(): JsonResponse $exchange */
+    private function syncParticipant(string $document, string $tab, callable $exchange, ?User $user, bool $api = false): JsonResponse
+    {
+        return $this->locked($document, function () use ($document, $tab, $exchange, $user, $api): JsonResponse {
+            $response = $exchange();
+            if ($response->isSuccessful()) {
+                $this->update($document, $tab, true, $user, $api);
+            }
+
+            return $response;
+        });
+    }
+
     private function update(string $document, string $tab, bool $present, ?User $user = null, bool $api = false): void
     {
-        $key = $this->key($document);
-        $lock = $this->locks->createLock($key);
+        $item = $this->cache->getItem($this->key($document));
+        $active = $this->activeTabs($item->get());
+
+        if ($present) {
+            $expiresAt = $this->clock->now()->getTimestamp() + self::LIFETIME;
+            $active[$tab] = $user instanceof User ? [
+                'expiresAt' => $expiresAt,
+                'participant' => [
+                    'id' => $user->id,
+                    'name' => trim($user->username ?? '') ?: explode('@', $user->email, 2)[0],
+                    'api' => $api,
+                ],
+            ] : $expiresAt;
+        } else {
+            unset($active[$tab]);
+        }
+
+        $this->cache->save($item->set($active)->expiresAfter(self::LIFETIME));
+    }
+
+    /**
+     * @template T of Response
+     *
+     * @param callable(): T $operation
+     *
+     * @return T
+     */
+    private function locked(string $document, callable $operation): Response
+    {
+        $lock = $this->locks->createLock($this->key($document));
         $lock->acquire(true);
 
         try {
-            $item = $this->cache->getItem($key);
-            $active = $this->activeTabs($item->get());
-
-            if ($present) {
-                $expiresAt = $this->clock->now()->getTimestamp() + self::LIFETIME;
-                $active[$tab] = $user instanceof User ? [
-                    'expiresAt' => $expiresAt,
-                    'participant' => [
-                        'id' => $user->id,
-                        'name' => trim($user->username ?? '') ?: explode('@', $user->email, 2)[0],
-                        'api' => $api,
-                    ],
-                ] : $expiresAt;
-            } else {
-                unset($active[$tab]);
-            }
-
-            $this->cache->save($item->set($active)->expiresAfter(self::LIFETIME));
+            return $operation();
         } finally {
             $lock->release();
         }

@@ -196,6 +196,17 @@ property is removed — deleting a line in the file is an edit.
 
 ### Collaborative editing
 
+An editor token can fetch `GET /api/page/{host}/{slug}?return=editing` for a
+live `{"id":42,"collaborative":true}` response. The flag reports current
+collaborative presence, even when nobody has saved a change. Check this route
+before editing a page from a downloaded snapshot.
+
+Send `X-Pushword-Respect-Collaboration: 1` with classic page updates
+(`PUT` and `PATCH` on the JSON API, `PUT` on the Markdown file API). If a
+session is active when the save is attempted, Pushword returns `423` with
+`{"error":"collaboration_active","id":42}` before writing the page.
+Keep the local edits and apply Markdown changes through the shared session.
+
 Use a bearer token with `POST /api/pages/{id}/draft` or, with Repurpose
 installed, `POST /api/repurpose/{id}/draft`. The API shares the admin's Yjs session.
 

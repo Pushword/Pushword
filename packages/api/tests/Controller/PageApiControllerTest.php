@@ -10,10 +10,12 @@ use Doctrine\ORM\Events;
 use Override;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\TestWith;
+use Pushword\Core\Collaboration\LivePresence;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Entity\User;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -101,6 +103,41 @@ final class PageApiControllerTest extends WebTestCase
         self::assertArrayNotHasKey('frontmatter', $body);
 
         $this->createdPageIds[] = $this->lookupPageId($host, $body['slug']);
+    }
+
+    #[TestWith([Request::METHOD_PUT])]
+    #[TestWith([Request::METHOD_PATCH])]
+    public function testLiveStatusAndProtectedJsonUpdatesFollowCollaborationPresence(string $method): void
+    {
+        [$host, $slug, $revision] = $this->createTestPage();
+        $id = $this->lookupPageId($host, $slug);
+        $path = '/api/page/'.$host.'/'.$slug;
+        $status = $this->request('GET', $path.'?return=editing');
+        self::assertSame(['id' => $id, 'collaborative' => false], $this->decode());
+        self::assertStringContainsString('no-store', (string) $status->headers->get('Cache-Control'));
+
+        $presence = self::getContainer()->get(LivePresence::class);
+        $join = Request::create('/draft', Request::METHOD_POST, server: ['HTTP_X_COLLABORATION_TAB' => str_repeat('a', 32)]);
+        $ready = static fn (): JsonResponse => new JsonResponse([]);
+        $presence->sync($join, 'page:'.$id, $ready);
+        $this->request('GET', $path.'?return=editing');
+        self::assertSame(['id' => $id, 'collaborative' => true], $this->decode());
+
+        $edit = ['frontmatter' => ['h1' => 'Updated title']];
+        $headers = ['HTTP_IF_MATCH' => $revision, 'HTTP_X_PUSHWORD_RESPECT_COLLABORATION' => '1'];
+        self::assertSame(Response::HTTP_LOCKED, $this->request($method, $path, $edit, $headers)->getStatusCode());
+        self::assertSame(['error' => 'collaboration_active', 'id' => $id], $this->decode());
+        self::assertSame($revision, $this->currentRevision($host, $slug));
+
+        $join->setMethod(Request::METHOD_DELETE);
+        $presence->sync($join, 'page:'.$id, $ready);
+        $this->request('GET', $path.'?return=editing');
+        self::assertSame(['id' => $id, 'collaborative' => false], $this->decode());
+        self::assertSame(Response::HTTP_OK, $this->request($method, $path, $edit, $headers)->getStatusCode());
+        $this->request('GET', $path);
+        $frontmatter = $this->decode()['frontmatter'];
+        self::assertIsArray($frontmatter);
+        self::assertSame('Updated title', $frontmatter['h1']);
     }
 
     #[TestWith([false])]

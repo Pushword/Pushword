@@ -1,5 +1,5 @@
 ---
-title: ''
+title: 'snapshot sync protects active collaborative page sessions'
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -34,3 +34,9 @@ belongs in the feature doc, which you link to instead.
 
 Several changes land here between two tags: append to the file, do not replace it.
 -->
+
+**Concerns:** `pushword/api` `pushword/core` `pushword/flat`
+
+## Snapshot sync and collaborative sessions
+
+Refresh the editor sync script from `GET /api/editor/sync.js` to keep local edits when a [collaborative session](/extension/api#collaborative-editing) blocks a classic save.

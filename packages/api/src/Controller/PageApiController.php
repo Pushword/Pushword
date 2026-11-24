@@ -43,18 +43,15 @@ final class PageApiController extends AbstractApiController
         private readonly BodyPatcher $bodyPatcher,
         private readonly PagePropertySchemaRegistry $schemaRegistry,
         private readonly EditorialTimezone $editorialTimezone,
+        private readonly LivePresence $presence,
         private readonly string $deleteStrategy = 'hard',
     ) {
     }
 
     #[Route('/api/pages/{id}/draft', name: 'pushword_api_page_draft', requirements: ['id' => '\d+'], methods: ['POST'])]
-    public function syncDraft(Page $page, Request $request, DraftExchange $exchange, LivePresence $presence): JsonResponse
+    public function syncDraft(Page $page, Request $request, DraftExchange $exchange): JsonResponse
     {
-        $user = $this->getApiUser();
-        $response = $exchange->page($request, $page);
-        $presence->recordApi('page:'.$page->id, $user, $response);
-
-        return $response;
+        return $this->presence->syncApi('page:'.$page->id, $this->getApiUser(), static fn (): JsonResponse => $exchange->page($request, $page));
     }
 
     #[Route('/api/page/search', name: 'pushword_api_page_search', methods: ['GET'])]
@@ -221,16 +218,23 @@ final class PageApiController extends AbstractApiController
         }
 
         return match ($request->getMethod()) {
-            'GET' => $this->doGet($page),
-            'PUT' => $this->doUpdate($page, $request),
-            'PATCH' => $this->doPatch($page, $request),
+            'GET' => $this->doGet($page, $request),
+            'PUT' => $this->presence->guardPageWrite($request, $page, fn (): JsonResponse => $this->doUpdate($page, $request)),
+            'PATCH' => $this->presence->guardPageWrite($request, $page, fn (): JsonResponse => $this->doPatch($page, $request)),
             'DELETE' => $this->doDelete($page, $request),
             default => $this->respond(['error' => 'Method not allowed'], Response::HTTP_METHOD_NOT_ALLOWED),
         };
     }
 
-    private function doGet(Page $page): JsonResponse
+    private function doGet(Page $page, Request $request): JsonResponse
     {
+        if ('editing' === $request->query->get('return')) {
+            return $this->respond([
+                'id' => $page->id,
+                'collaborative' => $this->presence->isActive('page:'.$page->id),
+            ], headers: ['Cache-Control' => 'private, no-store']);
+        }
+
         return $this->respond($this->buildPagePayload($page), Response::HTTP_OK, ['ETag' => $this->revisions->compute($page)]);
     }
 
@@ -496,6 +500,20 @@ final class PageApiController extends AbstractApiController
             'schema' => ['type' => 'string', 'enum' => ['minimal', 'full'], 'default' => 'minimal'],
             'description' => 'Write responses return {revision, updatedAt} by default (create also echoes the normalized slug, a future publishedAt adds scheduled: true and publishedAt); use `full` for the complete Page payload.',
         ];
+        $respectCollaboration = [
+            'name' => LivePresence::RESPECT_COLLABORATION,
+            'in' => 'header',
+            'schema' => ['type' => 'string', 'enum' => ['1']],
+            'description' => 'Refuse a classic save while collaborative editing is active.',
+        ];
+        $editingSchema = [
+            'type' => 'object',
+            'properties' => [
+                'id' => ['type' => 'integer'],
+                'collaborative' => ['type' => 'boolean'],
+            ],
+            'required' => ['id', 'collaborative'],
+        ];
 
         return [
             'paths' => [
@@ -542,8 +560,13 @@ final class PageApiController extends AbstractApiController
                     ],
                     'get' => [
                         'summary' => 'Get a page',
+                        'parameters' => [
+                            ['name' => 'return', 'in' => 'query', 'schema' => ['type' => 'string', 'enum' => ['editing']], 'description' => 'Return just the page ID and current collaborative presence.'],
+                        ],
                         'responses' => [
-                            '200' => ['description' => 'Page', 'content' => ['application/json' => ['schema' => ['$ref' => '#/components/schemas/Page']]]],
+                            '200' => ['description' => 'Page or live editing status', 'content' => ['application/json' => [
+                                'schema' => ['anyOf' => [['$ref' => '#/components/schemas/Page'], $editingSchema]],
+                            ]]],
                             '404' => ['description' => 'Not found'],
                         ],
                     ],
@@ -552,12 +575,14 @@ final class PageApiController extends AbstractApiController
                         'parameters' => [
                             ['name' => 'If-Match', 'in' => 'header', 'required' => true, 'schema' => ['type' => 'string']],
                             $returnParam,
+                            $respectCollaboration,
                         ],
                         'requestBody' => ['content' => $writeBody],
                         'responses' => [
                             '200' => ['description' => 'Updated (minimal write response by default, full Page with ?return=full)'],
                             '409' => ['description' => 'Revision mismatch, includes fresh page'],
                             '422' => ['description' => 'Validation error'],
+                            '423' => ['description' => 'Collaborative editing is active (collaboration_active)'],
                             '428' => ['description' => 'Missing If-Match header'],
                         ],
                     ],
@@ -566,12 +591,14 @@ final class PageApiController extends AbstractApiController
                         'parameters' => [
                             ['name' => 'If-Match', 'in' => 'header', 'required' => true, 'schema' => ['type' => 'string']],
                             $returnParam,
+                            $respectCollaboration,
                         ],
                         'requestBody' => ['content' => $patchBody],
                         'responses' => [
                             '200' => ['description' => 'Patched (minimal write response by default, full Page with ?return=full)'],
                             '400' => ['description' => 'Neither edits nor frontmatter provided'],
                             '409' => ['description' => 'Revision mismatch, includes fresh page'],
+                            '423' => ['description' => 'Collaborative editing is active (collaboration_active)'],
                             '422' => ['description' => 'patch_failed (find not_found/ambiguous) or validation error'],
                             '428' => ['description' => 'Missing If-Match header'],
                         ],
