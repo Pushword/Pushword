@@ -1,0 +1,44 @@
+{% set edit = entity.actions|filter(action => action.name == 'edit')|first %}
+{% set review = entity.actions|filter(action => action.name == 'detail')|first %}
+{% set more = entity.actions|filter(action => action.name not in ['edit', 'detail']) %}
+
+<td class="actions actions-as-dropdown">
+  <div class="d-inline-flex align-items-center gap-2">
+    {% if edit %}
+      {% set editLabel = edit.label|trans %}
+      <twig:ea:Button color="default" variant="ghost" htmlElement="a" href="{{ edit.linkUrl }}" icon="{{ edit.icon }}"
+        class="{{ edit.cssClass }}" {{ ...edit.htmlAttributes|ea_html_attrs|filter(v => v is not null) }}
+        aria-label="{{ editLabel }}" title="{{ editLabel }}" data-bs-toggle="tooltip" />
+    {% endif %}
+    {% if review %}
+      {% set reviewLabel = entity.instance.isDraft ? review.label|trans : 'newsletter.statistics.reviewCampaign'|trans %}
+      <twig:ea:Button color="default" variant="outline" htmlElement="a" href="{{ review.linkUrl }}" icon="{{ review.icon }}"
+        class="action-detail ms-0" {{ ...review.htmlAttributes|ea_html_attrs|filter(v => v is not null) }}>
+        {{ reviewLabel }}
+      </twig:ea:Button>
+    {% endif %}
+    {% if more is not empty %}
+      <twig:ea:ActionMenu class="dropdown-actions pw-row-menu">
+        <twig:ea:ActionMenu:Button withoutDropdownToggleMarker data-bs-popper-config='{"strategy":"fixed"}'
+          aria-label="{{ 'newsletter.workspace.rowActions'|trans({'%id%': entity.primaryKeyValueAsString}) }}">
+          <twig:ea:Icon name="internal:dots-horizontal" />
+        </twig:ea:ActionMenu:Button>
+        <twig:ea:ActionMenu:Overlay>
+          <twig:ea:ActionMenu:ActionList align="end" hasSubmenus="{{ more|filter(item => item.isActionGroup)|length > 0 }}">
+            {% for item in more %}
+              {% if item.isActionGroup %}
+                <twig:ea:ActionMenu:ActionList:ItemGroup group="{{ item }}" entity="{{ entity }}" />
+              {% elseif item.isRenderedAsForm %}
+                <li>{{ include(item.templatePath, {action: item, entity: entity, isIncludedInDropdown: true}, with_context: false) }}</li>
+              {% else %}
+                <twig:ea:ActionMenu:ActionList:Item class="{{ item.cssClass }} dropdown-item-variant-{{ item.color.value }}"
+                  url="{{ item.linkUrl }}" icon="{{ item.icon }}" htmlAttributes="{{ item.htmlAttributes|ea_html_attrs }}"
+                  label="{{ item.label|trans }}" />
+              {% endif %}
+            {% endfor %}
+          </twig:ea:ActionMenu:ActionList>
+        </twig:ea:ActionMenu:Overlay>
+      </twig:ea:ActionMenu>
+    {% endif %}
+  </div>
+</td>

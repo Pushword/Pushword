@@ -1,5 +1,6 @@
 {% extends '@pwAdmin/crud/index.html.twig' %}
 
+{% set section = ea().crud.entityFqcn|split('\\')|last|lower %}
 {% set isFiltered = ea.search.query|default('')|trim is not empty or app.request.query.all('filters') is not empty %}
 {% set isInitialEmpty = entities is empty and not isFiltered %}
 
@@ -18,7 +19,6 @@
 {% endblock %}
 
 {% block main %}
-  {% set section = ea.crud.entityFqcn|split('\\')|last|lower %}
   {% if section in ['automation', 'campaign'] and not isInitialEmpty %}
     {{ include('@PushwordNewsletter/admin/_status_filters.html.twig') }}
   {% endif %}
@@ -27,12 +27,19 @@
   </div>
 {% endblock %}
 
+{% block entity_actions %}
+  {% if section != 'campaign' %}
+    {{ parent() }}
+  {% elseif has_entity_actions %}
+    {{ include('@PushwordNewsletter/admin/_campaign_row_actions.html.twig', {entity: entity}, with_context: false) }}
+  {% endif %}
+{% endblock %}
+
 {% block table_body_empty %}
   {% set isFiltered = ea.search.query|default('')|trim is not empty or app.request.query.all('filters') is not empty %}
   {% if isFiltered %}
     {{ parent() }}
   {% else %}
-    {% set section = ea.crud.entityFqcn|split('\\')|last|lower %}
     {% set newAction = global_actions|filter(action => action.name in ['new', 'optIn'])|first %}
     {% set emptyIcon = {automation: 'fa-bolt', emailblock: 'fa-cubes'}[section] ?? 'fa-envelope-open-text' %}
     <tr class="no-results">

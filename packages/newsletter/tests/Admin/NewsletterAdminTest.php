@@ -726,14 +726,31 @@ final class NewsletterAdminTest extends AbstractAdminTestClass
         $audience = $this->seed();
         $campaign = $this->campaign($audience, 'Review this draft');
         $scheduled = $this->campaign($audience, 'Already scheduled')->schedule(new DateTimeImmutable('+1 day'));
+        $sent = $this->campaign($audience, 'Already sent')->markSending(2)->markSent();
         $this->entityManager()->flush();
 
         $crawler = $client->request(Request::METHOD_GET, '/admin/newsletter/campaign');
+        foreach ([$scheduled, $sent] as $otherCampaign) {
+            $row = $crawler->filter('tr[data-id="'.$otherCampaign->id.'"]');
+            self::assertSame('Review campaign', $row->filter('a.action-detail')->text());
+        }
+
+        $sentRow = $crawler->filter('tr[data-id="'.$sent->id.'"]');
+        self::assertCount(1, $sentRow->filter('.dropdown-menu [data-action-name="recipients"]'));
+
         $crawler = $client->click($crawler->filter('.pw-newsletter-status')->selectLink('Drafts')->link());
         self::assertResponseIsSuccessful();
         self::assertCount(0, $crawler->filter('tr[data-id="'.$scheduled->id.'"]'));
         $row = $crawler->filter('tr[data-id="'.$campaign->id.'"]');
         self::assertSame('Review and send', $row->filter('a.action-detail')->text());
+        $edit = $row->filter('a.action-edit');
+        self::assertSame('Edit', $edit->attr('aria-label'));
+        self::assertSame('', $edit->text());
+        self::assertSame('/admin/newsletter/campaign/'.$campaign->id.'/edit', parse_url($edit->link()->getUri(), \PHP_URL_PATH));
+        self::assertCount(1, $row->filter('td.actions [data-bs-toggle="dropdown"][aria-label="Actions for row '.$campaign->id.'"]'));
+        $delete = $row->filter('.dropdown-menu [data-action-name="delete"][data-action-confirmation="true"]');
+        self::assertSame('/admin/newsletter/campaign/'.$campaign->id.'/delete', parse_url($delete->attr('formaction') ?? '', \PHP_URL_PATH));
+        self::assertCount(0, $row->filter('.dropdown-menu [data-action-name="recipients"]'));
         self::assertCount(0, $row->filter('form[method="post"]'));
 
         $client->click($row->filter('a.action-detail')->link());
