@@ -517,9 +517,11 @@ by the editor-only API; internal notes are not added to catalogue/calendar metad
 
 ### Reviewing a campaign
 
-Open **Review and send** from the campaign catalogue to check the rendered email,
-audience and schedule. The preview starts at desktop width. Open **Markdown source**
-to inspect the body, **Edit** to change the draft, or **Send** to authorize delivery.
+In the campaign catalogue, open **Review and send** for a draft or **Review campaign**
+after authorizing delivery. The preview starts at desktop width and shows the rendered
+email, audience and schedule. Open **Markdown source** to inspect the body or **Send**
+to authorize delivery. The pencil in the campaign row opens **Edit**. Its **Actions**
+menu contains **Delete** and, once recipients are available, **Recipients**.
 
 **More actions → Duplicate as draft** opens an unsaved copy of any campaign, including
 one already sent. Save it to create a new campaign. Content, translations, audience,
