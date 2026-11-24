@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pushword\AdminBlockEditor\Tests;
 
 use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\TestWith;
 use Pushword\Admin\Tests\AbstractAdminTestClass;
 use Pushword\Core\Entity\Media;
 use Pushword\Core\Entity\Page;
@@ -110,14 +111,34 @@ final class ControllerTest extends AbstractAdminTestClass
         // does'nt throw error = markdown rendering is working
     }
 
-    private function createNewPage(): ?int
+    #[TestWith(['admin-block-editor.test', true])]
+    #[TestWith(['pushword.piedweb.com', false])]
+    public function testLinkSuggestionsUseTheEditedPageSite(string $host, bool $offersLoginLink): void
+    {
+        $client = $this->loginUser();
+        $id = $this->createNewPage($host, 'editor-link-suggestions');
+
+        $crawler = $client->request(Request::METHOD_GET, '/admin/page/'.$id.'/edit');
+        self::assertResponseIsSuccessful();
+
+        $config = $crawler->filter('script[data-pw-editorjs-config]')->text();
+        self::assertStringContainsString(json_encode(['uri' => '/editor-link-suggestions', 'title' => 'Test editorJsPage']), $config);
+        $loginLink = json_encode(['uri' => '/login', 'title' => 'Log in']);
+        if ($offersLoginLink) {
+            self::assertStringContainsString($loginLink, $config);
+        } else {
+            self::assertStringNotContainsString($loginLink, $config);
+        }
+    }
+
+    private function createNewPage(string $host = 'admin-block-editor.test', string $slug = 'test'): ?int
     {
         $em = self::getContainer()->get('doctrine.orm.default_entity_manager');
 
         $page = new Page();
         $page->h1 = 'Test editorJsPage';
-        $page->slug = 'test';
-        $page->host = 'admin-block-editor.test';
+        $page->slug = $slug;
+        $page->host = $host;
         $page->locale = 'en';
         $page->mainContent = file_get_contents(__DIR__.'/content/content.json');
 

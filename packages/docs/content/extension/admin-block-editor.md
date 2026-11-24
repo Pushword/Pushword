@@ -80,6 +80,21 @@ callback, history keeps the saved block data as is.
 
 ### Link tool
 
+Add `editorjs_extra_links` to a site under `pushword.apps` to suggest application routes
+and other URLs alongside CMS pages in the link field.
+
+```yaml
+pushword:
+  apps:
+    - hosts: [pro.example.com]
+      editorjs_extra_links:
+        - { uri: /membership, title: Membership }
+        - { uri: 'https://example.com/help', title: Help center }
+```
+
+Editors can search these suggestions by title or URL when editing a page on that site.
+Use a path starting with `/` for a route on the same site and a full URL for another site.
+
 The link tool's config (`link` in `editorjsConfig.tools`) takes three keys:
 
 - `availableDesigns` — label => class, the *Style* list (defaults: button, button

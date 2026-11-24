@@ -89,6 +89,8 @@ pushword:
       # Offered in the PagesList block's format select; rendered by
       # templates/component/pages_list_testVariant.html.twig.
       pages_list_displays: [testVariant]
+      editorjs_extra_links:
+        - { uri: /login, title: Log in }
 
 static_generator:
   static_symlink: false
