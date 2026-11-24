@@ -93,6 +93,10 @@ final class QuizTagTest extends KernelTestCase
     {
         self::bootKernel();
 
-        return self::getContainer()->get(Twig::class)->createTemplate($template)->render();
+        $twig = self::getContainer()->get(Twig::class);
+        // Compile the tag in this run, including when Infection replaces its node.
+        $twig->setCache(false);
+
+        return $twig->createTemplate($template)->render();
     }
 }

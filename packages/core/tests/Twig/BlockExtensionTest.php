@@ -13,6 +13,7 @@ use function Safe\preg_match;
 
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\DomCrawler\Crawler;
+use Twig\Environment;
 
 #[Group('integration')]
 final class BlockExtensionTest extends KernelTestCase
@@ -181,6 +182,19 @@ final class BlockExtensionTest extends KernelTestCase
 
         self::assertStringContainsString('grid sm:grid-cols-3', $html);
         self::assertStringContainsString('aspect-square object-cover', $html);
+    }
+
+    public function testRenderGalleryKeepsTheCustomGridClassPrefix(): void
+    {
+        $twig = self::getContainer()->get(Environment::class);
+        $html = $twig->render('@Pushword/component/images_gallery.html.twig', [
+            'images' => [],
+            'gallery_id' => 1,
+            'grid_cols' => '3',
+            'default_gallery_class' => 'custom-cols-',
+        ]);
+
+        self::assertStringContainsString('class="custom-cols-3 gap-1 ', $html);
     }
 
     /** Components take an optional anchor; an absent one must add no attribute at all. */
