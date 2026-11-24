@@ -9,6 +9,7 @@ export default {
   output: {
     path: path.resolve(__dirname, 'dist'),
     filename: 'app.js',
+    chunkFilename: '[id].[contenthash].app.js',
   },
   resolve: {
     alias: {
