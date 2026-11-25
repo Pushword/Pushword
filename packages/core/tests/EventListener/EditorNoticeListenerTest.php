@@ -42,7 +42,7 @@ final class EditorNoticeListenerTest extends TestCase
             $response,
         );
 
-        (new EditorNoticeListener($security, $translator))($event);
+        new EditorNoticeListener($security, $translator)($event);
 
         return $event->getResponse();
     }

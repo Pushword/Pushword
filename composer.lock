@@ -4587,16 +4587,16 @@
         },
         {
             "name": "pushword/dev-app",
-            "version": "1.0.129",
+            "version": "1.0.130",
             "source": {
                 "type": "git",
                 "url": "https://github.com/Pushword/dev-app.git",
-                "reference": "c2f2b9e3d9ac6e5b22c03f8f1ec784cbea2e5951"
+                "reference": "9b7fd557f3685d11316167764137363bf824e2b7"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/Pushword/dev-app/zipball/c2f2b9e3d9ac6e5b22c03f8f1ec784cbea2e5951",
-                "reference": "c2f2b9e3d9ac6e5b22c03f8f1ec784cbea2e5951",
+                "url": "https://api.github.com/repos/Pushword/dev-app/zipball/9b7fd557f3685d11316167764137363bf824e2b7",
+                "reference": "9b7fd557f3685d11316167764137363bf824e2b7",
                 "shasum": ""
             },
             "require": {
@@ -4637,7 +4637,7 @@
                     "type": "liberapay"
                 }
             ],
-            "time": "2026-11-23T19:45:42+00:00"
+            "time": "2026-11-24T21:50:21+00:00"
         },
         {
             "name": "sensiolabs/ansi-to-html",
@@ -16103,16 +16103,16 @@
         },
         {
             "name": "rector/rector",
-            "version": "2.8.5",
+            "version": "2.9.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/rectorphp/rector.git",
-                "reference": "bf2982e3e2b8dfbcb43e5589fa301431cb1e479e"
+                "reference": "8a06053cae42915224f9357566162ccb1076001a"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/rectorphp/rector/zipball/bf2982e3e2b8dfbcb43e5589fa301431cb1e479e",
-                "reference": "bf2982e3e2b8dfbcb43e5589fa301431cb1e479e",
+                "url": "https://api.github.com/repos/rectorphp/rector/zipball/8a06053cae42915224f9357566162ccb1076001a",
+                "reference": "8a06053cae42915224f9357566162ccb1076001a",
                 "shasum": ""
             },
             "require": {
@@ -16148,7 +16148,7 @@
             ],
             "support": {
                 "issues": "https://github.com/rectorphp/rector/issues",
-                "source": "https://github.com/rectorphp/rector/tree/2.8.5"
+                "source": "https://github.com/rectorphp/rector/tree/2.9.2"
             },
             "funding": [
                 {
@@ -16156,7 +16156,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2026-11-14T23:24:35+00:00"
+            "time": "2026-11-24T23:34:02+00:00"
         },
         {
             "name": "sebastian/cli-parser",

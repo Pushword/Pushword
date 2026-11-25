@@ -44,7 +44,7 @@ final class EditorAutoLinkListenerTest extends TestCase
             $response,
         );
 
-        (new EditorAutoLinkListener($security, $translator))($event);
+        new EditorAutoLinkListener($security, $translator)($event);
 
         return $event->getResponse();
     }

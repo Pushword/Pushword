@@ -78,7 +78,7 @@ final class AdminNoindexListenerTest extends WebTestCase
     {
         $response = new Response();
         $event = new ResponseEvent(self::createStub(HttpKernelInterface::class), $request, $type, $response);
-        (new AdminNoindexListener())($event);
+        new AdminNoindexListener()($event);
 
         return $response;
     }
