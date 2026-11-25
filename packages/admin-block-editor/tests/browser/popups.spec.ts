@@ -239,6 +239,11 @@ test('Enter in Anchor restores selected link text in another block', async ({ ed
     const text = element.firstChild!
     window.getSelection()!.setBaseAndExtent(text, 8, text, 17)
   })
+  const link = page.locator('.ce-popover--inline.ce-popover--opened')
+    .getByRole('button', { name: 'Link', exact: true })
+  // A pending selection update can hide the settings button after the next hover.
+  await expect(link).toBeVisible()
+  await expect(page.locator('.ce-toolbar--opened')).toHaveCount(0)
 
   const panel = await openSettings(page, 1, false)
   const anchor = panel.getByLabel('Anchor', { exact: true })
@@ -248,8 +253,7 @@ test('Enter in Anchor restores selected link text in another block', async ({ ed
   await expect(panel).toBeHidden()
   await expect(paragraph).toBeFocused()
   expect(await page.evaluate(() => window.getSelection()!.toString())).toBe('programme')
-  await page.locator('.ce-popover--inline.ce-popover--opened')
-    .getByRole('button', { name: 'Link', exact: true }).click()
+  await link.click()
   const url = page.getByRole('combobox', { name: 'Page or URL' })
   await url.fill('#programme')
   await url.press('Enter')
