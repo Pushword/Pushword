@@ -16,6 +16,7 @@ Package names omit `pushword/`; `js-helper` is the npm package
 
 | Version | Packages | What changed |
 | --- | --- | --- |
+| [1.0.131](/upgrade/1.0.131) | `api` `core` `flat` | Markdown patches use the shared draft and classic page updates respect co-editing |
 | [1.0.130](/upgrade/1.0.130) | `api` `core` `flat` | snapshot sync protects active collaborative page sessions |
 | [1.0.129](/upgrade/1.0.129) | `admin` `newsletter` | page editing uses one Save button; admin SMS tests are immediate and campaign quotas exclude tests |
 | [1.0.127](/upgrade/1.0.127) | `admin` `core` `repurpose` `version` | page edits use revisions in the admin; carousels keep a version history; new page and snippet snapshots use gzip; collaborative editing saves live — run `doctrine:schema:update --force` |
