@@ -20,7 +20,7 @@ validation and token permissions.
 | Change one sentence                         | `PATCH` with anchored find/replace, instead of resending the whole page                                           |
 | Avoid overwriting a human                   | `If-Match` on every write; a stale write gets `409` and the current page                                          |
 | Check its own work                          | `POST /api/page/preview`, `pw:flat:lint`, validation errors as `422`, [page scan](/extension/page-scanner)        |
-| Keep SEO intact                             | Deleting a page requires a redirection; the [link graph](/extension/api#link-graph) reports orphans and depth     |
+| Keep SEO / GEO intact                       | Deleting a page requires a redirection; the [link graph](/extension/api#link-graph) reports orphans and depth     |
 | Map a whole site                            | `pw:ai-index` exports pages and media as CSV ([AI content index](/ai-index))                                      |
 
 ## Three ways to edit

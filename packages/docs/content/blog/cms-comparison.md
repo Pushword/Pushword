@@ -18,7 +18,7 @@ when none of those briefs applies:
 - **WordPress** if non-technical people must run the site alone, you need a specific plugin (WooCommerce above all), or you want to hire from its large talent pool. Its tutorials and plugin directory can shorten launch time.
 - **Sulu** if you have Symfony expertise and need workflows, granular permissions or audit trails.
 - **Statamic** if your team is Laravel-native and visual editing matters most. Its Control Panel and Live Preview are its main advantages here, and the Pro licence buys commercial support. Price it per site before committing: multi-site is a Pro feature at $349 per site, with $99/year for updates after the first year if you renew.
-- **Pushword** if none of those briefs applies. It has no licence fee, can serve several sites and locales from one install, includes SEO tooling, and can sync Markdown to your own git for developers and agents.
+- **Pushword** if none of those briefs applies. It has no licence fee, can serve several sites and locales from one install, includes SEO / GEO tooling, and can sync Markdown to your own git for developers and agents.
 
 The sections below explain where those choices differ.
 
@@ -26,7 +26,7 @@ The sections below explain where those choices differ.
 
 | CMS           | Best For                                              | Philosophy                               | Community Size                   |
 | ------------- | ----------------------------------------------------- | ---------------------------------------- | -------------------------------- |
-| **Pushword**  | Developers wanting modern PHP + flat-file flexibility | Symfony bundles; SEO tooling built in   | Small, shipping since Dec 2020   |
+| **Pushword**  | Developers wanting modern PHP + flat-file flexibility | Symfony bundles; SEO / GEO tooling built in | Small, shipping since Dec 2020   |
 | **WordPress** | Non-technical users, plugin ecosystem                 | Accessibility, large community           | Very large                        |
 | **Statamic**  | Laravel developers, content-focused sites             | Flat-file default; paid Pro tier        | Medium (growing)                 |
 | **Sulu**      | Enterprise, complex content structures                | Headless-first, enterprise features      | Small/Niche (enterprise-focused) |
@@ -92,22 +92,22 @@ Pushword, Statamic and Sulu include multilingual support natively. WordPress use
 
 For projects with three or more languages, native support avoids a separate multilingual plugin.
 
-## SEO and performance
+## SEO / GEO and performance
 
 | Feature                 | Pushword                        | WordPress                    | Statamic                            | Sulu                     |
 | ----------------------- | ------------------------------- | ---------------------------- | ----------------------------------- | ------------------------ |
 | **Static Generation**   | Static Generator extension      | Plugins (WP2Static, etc.)    | First-party SSG addon               | Custom implementation    |
-| **SEO Tools**           | Built-in (meta, schema, robots) | Core basics; plugins for more | SEO Pro addon                     | SEO fields and templates |
+| **SEO / GEO tools**     | Built-in (meta, schema, robots) | Core basics; plugins for more | SEO Pro addon                     | Metadata fields and templates |
 | **Image Optimization**  | Auto WebP conversion            | Plugins (Smush, Imagify)     | Transform API                       | Manual                   |
 | **HTTP Caching**        | Symfony HTTP Cache              | Plugins (WP Super Cache)     | Static caching                      | Symfony Cache            |
 | **Dead Link Detection** | Page Scanner extension          | Plugins                      | Addon or custom check               | Custom check             |
 | **Schema Markup**       | Native support                  | Plugins (Yoast, RankMath)    | SEO Pro addon                       | Developer-dependent      |
 
-### SEO and caching in practice
+### SEO / GEO and caching in practice
 
-**Pushword** was built by an SEO/GEO consultant, with content optimization baked into core. Meta management, schema generation, and clean URL structures require no third-party plugins. The Page Scanner extension audits internal links and detects broken links. The Static Generator extension can export HTML for static hosting; actual response and paint times depend on the site, host, network and browser.
+**Pushword** was built by an SEO / GEO consultant, with content optimization baked into core. Meta management, schema generation, and clean URL structures require no third-party plugins. The Page Scanner extension audits internal links and detects broken links. The Static Generator extension can export HTML for static hosting; actual response and paint times depend on the site, host, network and browser.
 
-**WordPress** includes basic SEO controls; teams often add plugins for more advanced workflows:
+For SEO / GEO work, **WordPress** includes basic controls. Teams often add plugins for more advanced workflows:
 
 - **Yoast SEO**: Metadata and content analysis
 - **Rank Math**: Metadata and structured-data tooling
@@ -116,7 +116,7 @@ Plugins can add maintenance work and, depending on their implementation, runtime
 
 **Statamic** offers static caching and an SEO Pro addon for metadata workflows. Compare deployed sites under the same hosting and content conditions before treating one CMS as inherently faster: flat-file storage alone does not determine page speed.
 
-**Sulu** includes SEO fields and Symfony caching infrastructure. Projects can extend its SEO output in templates or bundles when their requirements go beyond the defaults.
+**Sulu** includes metadata fields and Symfony caching infrastructure. Projects can customize the metadata for SEO / GEO in templates or bundles when their requirements go beyond the defaults.
 
 ## Editor experience
 
@@ -240,7 +240,7 @@ The smaller audience means fewer tutorials and fewer people to call for help. It
 
 ### Pushword
 
-**Philosophy**: A Symfony-bundle CMS built by an SEO professional. Developers can use Flat for a Markdown workflow; editors can work in the admin.
+**Philosophy**: A Symfony-bundle CMS built by an SEO / GEO professional. Developers can use Flat for a Markdown workflow; editors can work in the admin.
 
 **Architecture**: Page-oriented with Symfony DI, services, events. Flat-file content (YAML/markdown) version-controllable. Optional block editor via extensions. Headless-capable through API.
 
@@ -253,7 +253,7 @@ The smaller audience means fewer tutorials and fewer people to call for help. It
 - **Publication hold**: stage edits to a published page while the static site keeps serving the previous version until you release the hold and regenerate
 - **Page & snippet versioning**: side-by-side diff, restore, and time-slider timeline
 - **Token-authenticated REST API** (Page, Media, redirections) with OpenAPI docs and optimistic concurrency for scripted editing
-- SEO-first design (built by SEO consultant)
+- Designed for SEO / GEO (built by an SEO / GEO consultant)
 - Static site generation built-in extension
 - MIT license, fully open-source
 - Git-friendly content workflows
@@ -272,7 +272,7 @@ The smaller audience means fewer tutorials and fewer people to call for help. It
 
 - Developers who value modern PHP practices
 - Teams using flat-file Git workflows
-- SEO-critical projects and content-driven sites
+- Projects that rely on SEO / GEO and content-driven sites
 - Symfony-based stacks
 - Documentation websites
 - Performance-critical applications
@@ -454,7 +454,7 @@ Statamic offers visual editing and commercial support. Pushword offers built-in 
 | Criterion         | Winner            | Notes                    |
 | ----------------- | ----------------- | ------------------------ |
 | Setup speed       | WordPress         | Hours vs. days           |
-| SEO readiness     | Pushword          | Built-in, no plugins     |
+| SEO / GEO readiness | Pushword        | Built-in, no plugins     |
 | Performance       | Pushword/Statamic | Static generation option |
 | Visual editing    | Statamic          | Live Preview             |
 | Editing throughput | Pushword         | Markdown, keyboard, bulk-editable |
@@ -518,7 +518,7 @@ Statamic offers visual editing and commercial support. Pushword offers built-in 
 - Flat-file / Git-based workflows matter for your team
 - **AI-assisted editing is important**: Your team uses Cursor, Claude Code, Copilot or similar tools to edit content files directly
 - **Bulk content operations are needed**: Mass find/replace, scripted updates, CLI-based content management
-- SEO is a primary concern
+- SEO / GEO is a primary concern
 - Multi-site or i18n required without plugins
 - Controlled publishing is needed (per-page publication hold plus version diffs)
 - Headless or scripted editing via a token REST API (CI, external tooling)

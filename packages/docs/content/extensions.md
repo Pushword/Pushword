@@ -26,7 +26,7 @@ name: Extensions
 - [Page Update Notifier](/extension/page-update-notifier)
   Send an email when a page changes.
 - [Quiz](/extension/quiz)
-  Build SEO-rendered quizzes and personality tests with an optional conversion form.
+  Build quizzes and personality tests rendered server-side for SEO / GEO, with an optional conversion form.
 - [Repurpose](/extension/repurpose)
   Render validated social carousel specs as SVG, PNG or PDF.
 - [Search](/extension/search)

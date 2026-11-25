@@ -69,7 +69,7 @@ What it covers:
 - Advanced installation and deployment, including FrankenPHP, Docker and static hosting
 - Migrating an existing site into Pushword
 - Bespoke development: custom extensions, entity filters, templates, admin behaviour
-- An architecture or SEO review of a site already running on Pushword
+- An architecture or SEO / GEO review of a site already running on Pushword
 
 **Rate:** $160 per hour. Anything larger than an afternoon is quoted as a fixed price
 before work starts.

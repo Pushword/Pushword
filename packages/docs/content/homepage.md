@@ -86,8 +86,8 @@ raw: 1
     <div class="flex gap-5">
       <span class="font-mono text-2xl font-light tabular-nums text-[oklch(45%_0.13_35)] leading-none pt-1">03</span>
       <div>
-        <dt class="text-lg font-semibold mb-2 text-stone-900 dark:text-stone-100">SEO-first design</dt>
-        <dd class="text-stone-600 dark:text-stone-300">Built by an SEO consultant. Meta, schema, dead-link detection, internal linking, OpenGraph: all built in.</dd>
+        <dt class="text-lg font-semibold mb-2 text-stone-900 dark:text-stone-100">Designed for SEO / GEO</dt>
+        <dd class="text-stone-600 dark:text-stone-300">Built by an SEO / GEO consultant. Meta, schema, dead-link detection, internal linking, OpenGraph: all built in.</dd>
       </div>
     </div>
 
