@@ -14,7 +14,7 @@ function pageDraftForm() {
   document.body.innerHTML = `
     <div data-pw-page-draft data-url="/draft" data-token="csrf" data-pending="Saving"
       data-connected="Saved" data-classic="Classic mode" data-settings-pending="Save settings first"
-      data-api-participant="%name% via API">
+      data-stale="Session ended" data-offline="Offline" data-api-participant="%name% via API">
       <button type="button">Join</button><span role="status"></span>
       <ul data-pw-collaboration-participants hidden></ul>
       <template><li><span data-pw-collaboration-initial role="img"></span><span data-pw-collaboration-api></span></li></template>
@@ -119,6 +119,41 @@ it('keeps the room when a settings save fails and leaves after the retry succeed
   form.dispatchEvent(new Event('htmx:before:request'))
   confirmSave(form, revision, '2')
   expect(button.getAttribute('aria-pressed')).toBe('false')
+  expect(status.textContent).toBe('')
+  expect(fetch).toHaveBeenLastCalledWith('/draft', expect.objectContaining({ method: 'DELETE' }))
+})
+
+it.each(['join', 'poll', 'leave', 'leave preparation'])('returns to classic mode and keeps local edits on a conflict during %s', async (action) => {
+  const { controls, form, body, revision, button, status } = pageDraftForm()
+  const { promise, resolve } = Promise.withResolvers()
+  let conflict = action === 'join'
+  const fetch = vi.fn(async (_url, { method }) => {
+    if (method === 'DELETE') return new Response(null, { status: 204 })
+    if (conflict) return Response.json({ revision: '2' }, { status: 409 })
+    return Response.json({
+      room: 'room', baseline: body.defaultValue, after: 0, revision: '1', snapshot: null, accepted: false,
+    })
+  })
+  vi.stubGlobal('fetch', fetch)
+  bindPageDraft(controls)
+
+  button.click()
+  if (action !== 'join') await vi.waitFor(() => expect(status.textContent).toBe('Saved'))
+  if (action === 'leave preparation') body.pwEditor = { flushDraft: () => promise }
+  body.value = 'Local edit'
+  body.dispatchEvent(new Event('input', { bubbles: true }))
+  conflict = true
+  if (action.startsWith('leave')) button.click()
+
+  await vi.waitFor(() => expect(status.textContent).toBe('Session ended'))
+  resolve()
+  await promise
+  expect(status.textContent).toBe('Session ended')
+  expect(button.getAttribute('aria-pressed')).toBe('false')
+  expect(button.textContent).toBe('Join')
+  expect(form.hasAttribute('data-pw-draft-active')).toBe(false)
+  expect(body.value).toBe('Local edit')
+  expect(revision.value).toBe('1')
   expect(fetch).toHaveBeenLastCalledWith('/draft', expect.objectContaining({ method: 'DELETE' }))
 })
 

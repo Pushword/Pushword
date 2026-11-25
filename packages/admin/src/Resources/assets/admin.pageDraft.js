@@ -38,7 +38,6 @@ export function bindPageDraft(controls) {
   let approved = null
   let submitted = null
   let busy = false
-  let stale = false
   let collaborative = false
   let participants = []
   let renderedParticipants = ''
@@ -88,7 +87,7 @@ export function bindPageDraft(controls) {
   }
 
   function display(state) {
-    if (state === 'stale') stale = true
+    if (state === 'stale') leave()
     if (state === 'pending' && publicationPending()) state = 'settingsPending'
     const message = controls.dataset[state]
     if (state === 'connected' && status.textContent === controls.dataset.updated) return
@@ -132,13 +131,14 @@ export function bindPageDraft(controls) {
   })
 
   function leave() {
-    session?.close()
+    if (!session) return
+    session.close()
     session = null
     collaborative = false
     button.setAttribute('aria-pressed', 'false')
     updatePresence()
     delete form.dataset.pwDraftActive
-    if (!stale) status.textContent = ''
+    status.textContent = ''
   }
 
   button.addEventListener('click', async () => {
@@ -148,12 +148,11 @@ export function bindPageDraft(controls) {
     try {
       await body()?.pwEditor?.flushDraft?.()
       if (!joining) {
-        if (!stale && !publicationPending()) await session?.flush()
+        if (!publicationPending()) await session?.flush()
         leave()
         return
       }
 
-      stale = false
       button.textContent = controls.dataset.classic
       button.setAttribute('aria-pressed', 'true')
       form.dataset.pwDraftActive = ''
