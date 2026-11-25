@@ -302,6 +302,23 @@ test('touch settings and insertion remain usable on small and short screens', as
   }
 })
 
+test('Enter in Anchor closes touch settings and returns to the text', async ({ editorPage: page }) => {
+  await render(page, [{ type: 'paragraph', data: { text: 'Touch editing.' } }])
+  const paragraph = page.locator('.ce-paragraph')
+  await paragraph.tap()
+  await paragraph.evaluate(element => window.getSelection()!.collapse(element.firstChild, 6))
+
+  await page.locator('.ce-toolbar__settings-btn').tap()
+  const anchor = page.getByLabel('Anchor', { exact: true })
+  await anchor.fill('#mobile-section')
+  await anchor.press('Enter')
+
+  await expect(anchor).toBeHidden()
+  await expect(paragraph).toBeFocused()
+  await page.keyboard.type('screen ')
+  await expect(paragraph).toHaveText('Touch screen editing.')
+})
+
 test('table column options respond to touch without a hover', async ({
   editorPage: page,
 }) => {

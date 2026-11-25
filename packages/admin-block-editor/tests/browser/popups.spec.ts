@@ -1,11 +1,11 @@
-import { test, expect, render } from './fixtures'
+import { test, expect, render, saveAndReload } from './fixtures'
 import type { Locator, Page } from '@playwright/test'
 
-async function openSettings(page: Page, block = 0): Promise<Locator> {
+async function openSettings(page: Page, block = 0, focusBlock = true): Promise<Locator> {
   const target = page.locator('.ce-block').nth(block)
   await target.scrollIntoViewIfNeeded()
   await target.hover()
-  await target.locator('[contenteditable]').first().focus()
+  if (focusBlock) await target.locator('[contenteditable]').first().focus()
   await page.locator('.ce-toolbar__settings-btn').click()
   const panel = page.locator('.ce-settings .ce-popover--opened > .ce-popover__container')
   await expect(panel).toBeVisible()
@@ -226,6 +226,91 @@ test('block settings keep labels, alignment state and a translated deletion conf
   await expect(page.locator('.ce-block')).toHaveCount(2)
   await page.keyboard.press('Escape')
   await expect(panel).toBeHidden()
+})
+
+test('Enter in Anchor restores selected link text in another block', async ({ editorPage: page }) => {
+  await render(page, [
+    { type: 'paragraph', data: { text: 'See the programme for details.' } },
+    { type: 'header', data: { text: 'Programme', level: 2 } },
+  ])
+  const paragraph = page.locator('.ce-paragraph').first()
+  await paragraph.focus()
+  await paragraph.evaluate(element => {
+    const text = element.firstChild!
+    window.getSelection()!.setBaseAndExtent(text, 8, text, 17)
+  })
+
+  const panel = await openSettings(page, 1, false)
+  const anchor = panel.getByLabel('Anchor', { exact: true })
+  await anchor.fill('#programme')
+  await anchor.press('Enter')
+
+  await expect(panel).toBeHidden()
+  await expect(paragraph).toBeFocused()
+  expect(await page.evaluate(() => window.getSelection()!.toString())).toBe('programme')
+  await page.locator('.ce-popover--inline.ce-popover--opened')
+    .getByRole('button', { name: 'Link', exact: true }).click()
+  const url = page.getByRole('combobox', { name: 'Page or URL' })
+  await url.fill('#programme')
+  await url.press('Enter')
+
+  await expect(paragraph.getByRole('link', { name: 'programme' })).toHaveAttribute('href', '#programme')
+  await expect(page.locator('.ce-block')).toHaveCount(2)
+  await saveAndReload(page)
+  await expect(paragraph.getByRole('link', { name: 'programme' })).toHaveAttribute('href', '#programme')
+  await expect((await openSettings(page, 1)).getByLabel('Anchor', { exact: true })).toHaveValue('programme')
+})
+
+test('Enter in Anchor returns to the exact caret before typing resumes', async ({ editorPage: page }) => {
+  await render(page, [
+    { type: 'paragraph', data: { text: 'Before after' } },
+    { type: 'paragraph', data: { text: 'Anchored paragraph' } },
+  ])
+  const paragraph = page.locator('.ce-paragraph').first()
+  await paragraph.focus()
+  await paragraph.evaluate(element => window.getSelection()!.collapse(element.firstChild, 7))
+
+  const panel = await openSettings(page, 1, false)
+  const anchor = panel.getByLabel('Anchor', { exact: true })
+  await anchor.fill('#section')
+  await anchor.press('Enter')
+
+  await expect(panel).toBeHidden()
+  await expect(paragraph).toBeFocused()
+  await page.keyboard.type('and ')
+  await expect(paragraph).toHaveText('Before and after')
+  await expect(page.locator('.ce-block')).toHaveCount(2)
+  await page.keyboard.press('Enter')
+  await expect(page.locator('.ce-paragraph')).toHaveText(['Before and ', 'after', 'Anchored paragraph'])
+})
+
+test('Enter in Anchor puts the caret at the end of the block when editing starts in settings', async ({ editorPage: page }) => {
+  await render(page, [{ type: 'header', data: { text: 'Programme', level: 2 } }])
+  await page.locator('[id$="_h1"]').focus()
+
+  const panel = await openSettings(page, 0, false)
+  const anchor = panel.getByLabel('Anchor', { exact: true })
+  await anchor.fill('#programme')
+  await anchor.press('Enter')
+
+  await expect(panel).toBeHidden()
+  const heading = page.locator('.ce-header')
+  await expect(heading).toBeFocused()
+  await page.keyboard.type(' 2027')
+  await expect(heading).toHaveText('Programme 2027')
+})
+
+test('Enter in Anchor returns to the settings control for a block without editable text', async ({ editorPage: page }) => {
+  await render(page, [{ type: 'pages_list', data: { kw: 'children' } }])
+  await page.locator('[id$="_h1"]').focus()
+
+  const panel = await openSettings(page, 0, false)
+  const anchor = panel.getByLabel('Anchor', { exact: true })
+  await anchor.fill('#index')
+  await anchor.press('Enter')
+
+  await expect(panel).toBeHidden()
+  await expect(page.locator('.ce-toolbar__settings-btn')).toBeFocused()
 })
 
 test('insertion search filters tools and reports an empty search', async ({

@@ -1,5 +1,5 @@
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
-import { setupEditorPopovers } from './editorPopovers'
+import { settingsInputConfirmations, setupEditorPopovers } from './editorPopovers'
 
 beforeAll(() => {
   document.body.innerHTML =
@@ -80,6 +80,22 @@ describe('popover accessibility', () => {
     } finally {
       document.removeEventListener('keydown', flipper, true)
     }
+  })
+
+  it('confirms a registered settings input on plain Enter', () => {
+    document.body.innerHTML = '<div class="ce-settings"><div class="ce-popover-item-html"><input></div></div>'
+    const field = document.querySelector('input')!
+    const confirm = vi.fn()
+    settingsInputConfirmations.set(field, confirm)
+
+    for (const key of [{ key: 'Tab' }, { key: 'Escape' }, { key: 'Enter', isComposing: true }, { key: 'Enter', shiftKey: true }]) {
+      field.dispatchEvent(new KeyboardEvent('keydown', { ...key, bubbles: true, cancelable: true }))
+    }
+    expect(confirm).not.toHaveBeenCalled()
+
+    const enter = new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true })
+    expect(field.dispatchEvent(enter)).toBe(false)
+    expect(confirm).toHaveBeenCalledOnce()
   })
 
   it('adds one mobile search field, filters tools and restores them after an empty search', async () => {

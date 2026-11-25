@@ -1,4 +1,5 @@
 import { API, BlockAPI } from '@editorjs/editorjs'
+import { settingsInputConfirmations } from './editorPopovers'
 import make from './make'
 
 export interface TextTuneOptions {
@@ -15,6 +16,7 @@ interface TextTuneField {
   placeholder: string
   /** What is stored from what was typed; the field keeps showing the raw text. */
   clean: (value: string) => string
+  confirm?: () => void
 }
 
 /** A block tune holding one string, typed into a field of the block settings. */
@@ -53,6 +55,9 @@ export default abstract class TextTune {
       this.data = this.field.clean(input.value)
       this.block.dispatchChange()
     })
+    if (this.field.tag === 'input' && this.field.confirm) {
+      settingsInputConfirmations.set(input as HTMLInputElement, this.field.confirm)
+    }
     wrapper.appendChild(input)
 
     return wrapper

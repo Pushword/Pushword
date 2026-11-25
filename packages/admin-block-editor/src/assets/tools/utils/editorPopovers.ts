@@ -12,6 +12,7 @@ const inlineToolNames: Record<string, string> = {
 }
 
 let started = false
+export const settingsInputConfirmations = new WeakMap<HTMLInputElement, () => void>()
 
 function fitPopover(panel: HTMLElement): void {
   if (!panel.offsetHeight) return
@@ -50,8 +51,10 @@ export function setupEditorPopovers(labels: Record<string, string> = {}): void {
         ['Enter', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(event.key)
       ) {
         event.stopPropagation()
-        if (event.key === 'Enter' && control instanceof HTMLInputElement)
+        if (event.key === 'Enter' && control instanceof HTMLInputElement) {
           event.preventDefault()
+          if (!event.shiftKey) settingsInputConfirmations.get(control)?.()
+        }
       }
     },
     true,

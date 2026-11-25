@@ -3,6 +3,7 @@ import AnchorTune from '../AnchorTune/AnchorTune'
 import ClassTune from '../ClassTune/ClassTune'
 import HashIcon from '../AnchorTune/Hash.svg?raw'
 import ClassIcon from '../ClassTune/Class.svg?raw'
+import { settingsInputConfirmations } from './editorPopovers'
 
 type TuneField = HTMLInputElement | HTMLTextAreaElement
 
@@ -46,6 +47,72 @@ function parsed(svg: string): string {
 function type(field: TuneField, value: string): void {
   field.value = value
   field.dispatchEvent(new Event('input'))
+}
+
+function anchorConfirmationFixture({
+  originText,
+  targetEditable = true,
+  withSettingsTrigger = false,
+}: {
+  originText?: string
+  targetEditable?: boolean
+  withSettingsTrigger?: boolean
+} = {}): {
+  origin: { id: string; holder: HTMLElement }
+  target: { id: string; holder: HTMLElement; dispatchChange: () => void }
+  api: {
+    toolbar: { toggleBlockSettings: ReturnType<typeof vi.fn> }
+    blocks: { getBlockByElement: ReturnType<typeof vi.fn> }
+    caret: { setToBlock: ReturnType<typeof vi.fn> }
+  }
+  confirm: () => void
+  originField: HTMLElement
+  trigger: HTMLButtonElement | undefined
+} {
+  document.body.replaceChildren()
+  const editor = document.createElement('div')
+  editor.className = 'codex-editor'
+  editor.innerHTML = `
+    <div class="ce-block origin-block"><div class="ce-block__content">
+      <div class="origin-field" contenteditable="true"></div>
+    </div></div>
+    <div class="ce-block target-block"><div class="ce-block__content">
+      <div class="target-field" ${targetEditable ? 'contenteditable="true"' : ''}></div>
+    </div></div>
+    ${withSettingsTrigger ? '<button class="ce-toolbar__settings-btn"></button>' : ''}`
+  const originField = editor.querySelector<HTMLElement>('.origin-field')!
+  const targetField = editor.querySelector<HTMLElement>('.target-field')!
+  originField.textContent = originText ?? 'Select this text'
+  targetField.textContent = 'Target text'
+  const origin = {
+    id: 'origin',
+    holder: editor.querySelector<HTMLElement>('.origin-block')!,
+  }
+  const target = {
+    id: 'target',
+    holder: editor.querySelector<HTMLElement>('.target-block')!,
+    dispatchChange: vi.fn(),
+  }
+  const api = {
+    i18n: { t: (key: string) => key },
+    toolbar: { toggleBlockSettings: vi.fn() },
+    blocks: { getBlockByElement: vi.fn(() => origin) },
+    caret: { setToBlock: vi.fn() },
+  }
+  document.body.append(editor)
+  const tool = new AnchorTune({ api: api as any, data: '', block: target as any })
+  const input = tool.render().querySelector<HTMLInputElement>('.cdx-anchor-tune-input')!
+  const confirm = settingsInputConfirmations.get(input)
+  if (!confirm) throw new Error('Anchor confirmation was not registered')
+
+  return {
+    origin,
+    target,
+    api,
+    confirm,
+    originField,
+    trigger: editor.querySelector<HTMLButtonElement>('.ce-toolbar__settings-btn') ?? undefined,
+  }
 }
 
 describe('AnchorTune', () => {
@@ -103,6 +170,71 @@ describe('AnchorTune', () => {
     // Editor.js calls render() again each time the block settings open.
     expect(fieldOf(tool.render()).value).toBe('MyAnchor')
   })
+
+  it('registers its input confirmation for plain Enter', () => {
+    const { field } = tune(AnchorTune)
+
+    expect(settingsInputConfirmations.get(field as HTMLInputElement)).toEqual(expect.any(Function))
+  })
+
+  it('closes and restores a selection in a different text block', () => {
+    const { origin, api, confirm, originField } = anchorConfirmationFixture({
+      originText: 'See the programme',
+    })
+    const selection = window.getSelection()!
+    const text = originField.firstChild!
+    document.body.appendChild(document.createElement('input')).focus()
+    api.toolbar.toggleBlockSettings.mockImplementation(() => {
+      selection.setBaseAndExtent(text, 8, text, 17)
+    })
+    api.caret.setToBlock.mockImplementation(() => selection.removeAllRanges())
+
+    confirm()
+
+    expect(api.toolbar.toggleBlockSettings).toHaveBeenCalledWith(false)
+    expect(api.blocks.getBlockByElement).toHaveBeenCalledWith(originField)
+    expect(api.caret.setToBlock).toHaveBeenCalledWith(origin)
+    expect(document.activeElement).toBe(originField)
+    expect(selection.toString()).toBe('programme')
+  })
+
+  it('returns to the end of the target text block when no selection is available', () => {
+    const { target, api, confirm } = anchorConfirmationFixture()
+    window.getSelection()!.removeAllRanges()
+
+    confirm()
+
+    expect(api.toolbar.toggleBlockSettings).toHaveBeenCalledWith(false)
+    expect(api.caret.setToBlock).toHaveBeenCalledWith(target.id, 'end')
+  })
+
+  it('uses the text fallback if the restored range is outside this editor', () => {
+    const { target, api, confirm } = anchorConfirmationFixture()
+    const otherField = document.body.appendChild(document.createElement('div'))
+    otherField.contentEditable = 'true'
+    otherField.textContent = 'Another editor'
+    window.getSelection()!.selectAllChildren(otherField)
+
+    confirm()
+
+    expect(api.blocks.getBlockByElement).not.toHaveBeenCalled()
+    expect(api.caret.setToBlock).toHaveBeenCalledWith(target.id, 'end')
+  })
+
+  it('returns focus to the settings control when the target has no editable text', () => {
+    const { api, confirm, trigger } = anchorConfirmationFixture({
+      targetEditable: false,
+      withSettingsTrigger: true,
+    })
+    window.getSelection()!.removeAllRanges()
+
+    confirm()
+
+    expect(api.toolbar.toggleBlockSettings).toHaveBeenCalledWith(false)
+    expect(api.caret.setToBlock).not.toHaveBeenCalled()
+    expect(trigger!.getAttribute('tabindex')).toBe('-1')
+    expect(document.activeElement).toBe(trigger)
+  })
 })
 
 describe('ClassTune', () => {
@@ -156,5 +288,11 @@ describe('ClassTune', () => {
     type(field, 'grid gap-4')
 
     expect(fieldOf(tool.render()).value).toBe('grid gap-4')
+  })
+
+  it('does not register a textarea as an input confirmation', () => {
+    const { field } = tune(ClassTune)
+
+    expect(settingsInputConfirmations.get(field as HTMLInputElement)).toBeUndefined()
   })
 })
