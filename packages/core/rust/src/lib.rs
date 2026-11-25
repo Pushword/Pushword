@@ -802,7 +802,7 @@ fn write_encoded_email(output: &mut dyn Write, email: &str) -> fmt::Result {
     let (local, domain) = email.split_once('@').expect("matched e-mail has an @ sign");
     write!(
         output,
-        "<span class=nojs>{local}{}{domain}</span> <span class=\"cea hidden\">{}</span>",
+        "<span class=nojs>{local}{}{domain}</span><span class=\"cea hidden\">{}</span>",
         include_str!("email-at.svg").trim_end(),
         rot13_link(email)
     )
@@ -1444,6 +1444,16 @@ mod tests {
             markdown_if_supported("contact@example.com", "")
                 .is_some_and(|html| html.contains("class=\"cea hidden\""))
         );
+    }
+
+    #[test]
+    fn obfuscated_email_preserves_adjacent_punctuation() {
+        let html = markdown_if_supported("Contact (contact@example.com).", "")
+            .expect("parenthesized emails should render natively");
+        assert!(html.starts_with("<p>Contact (<span class=nojs>contact"));
+        assert!(html.ends_with(
+            "example.com</span><span class=\"cea hidden\">pbagnpg@rknzcyr.pbz</span>).</p>\n"
+        ));
     }
 
     #[test]

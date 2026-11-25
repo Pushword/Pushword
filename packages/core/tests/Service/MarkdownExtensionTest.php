@@ -249,11 +249,12 @@ final class MarkdownExtensionTest extends KernelTestCase
             'contact@example.com for info.',
             'for info contact@example.com.',
             'for info contact@example.com',
+            'Contact (contact@example.com).',
         ];
         foreach ($toTest as $text) {
             $parser = $this->getMarkdownParser();
             $result = $parser->transform($text);
-            self::assertStringContainsString('<span', $result);
+            self::assertStringContainsString('example.com</span><span class="cea hidden">', $result);
             self::assertStringNotContainsString('contact@example.com', $result);
         }
     }
@@ -266,12 +267,14 @@ final class MarkdownExtensionTest extends KernelTestCase
         $result = trim($parser->transform($text));
         self::assertStringStartsWith('<p>for info {{ mail(&quot;contact@example.com&quot;) }}', $result);
 
-        $text = self::getContainer()->get('twig')->render(self::getContainer()->get('twig')->createTemplate('Contact {{ mail("contact@example.com") }}.'));
-        self::assertStringEndsWith('example.com</span> <span class="cea hidden">pbagnpg@rknzcyr.pbz</span>.', $text);
+        $twig = self::getContainer()->get('twig');
+        $text = $twig->render($twig->createTemplate('Contact ({{ mail("contact@example.com") }}).'));
+        self::assertStringStartsWith('Contact (<span class=nojs>contact', $text);
+        self::assertStringEndsWith('example.com</span><span class="cea hidden">pbagnpg@rknzcyr.pbz</span>).', $text);
 
         $parser = $this->getMarkdownParser();
         $result = trim($parser->transform($text));
-        self::assertStringEndsWith('example.com</span> <span class="cea hidden">pbagnpg@rknzcyr.pbz</span>.</p>', $result);
+        self::assertStringEndsWith('example.com</span><span class="cea hidden">pbagnpg@rknzcyr.pbz</span>).</p>', $result);
     }
 
     public function testMailWithoutArgument(): void

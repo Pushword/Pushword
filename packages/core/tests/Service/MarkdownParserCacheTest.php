@@ -94,6 +94,24 @@ final class MarkdownParserCacheTest extends KernelTestCase
         self::assertSame('POISONED', $parser->transform($markdown));
     }
 
+    public function testRendererVersionBumpMissesLegacyFragment(): void
+    {
+        $pool = new ArrayAdapter();
+        $parser = $this->buildParser($pool);
+        $markdown = 'A **cached** paragraph.';
+
+        // Version 42 is the fragment version used before the email renderer fix.
+        $legacy = $pool->getItem('pw_md.'.hash('xxh3', '42|'.$markdown));
+        $legacy->set('STALE HTML');
+
+        $pool->save($legacy);
+
+        $fresh = $parser->transform($markdown);
+
+        self::assertNotSame('STALE HTML', $fresh);
+        self::assertSame('<p>A <strong>cached</strong> paragraph.</p>', trim($fresh));
+    }
+
     public function testImageFreeFragmentSurvivesMediaVersionBump(): void
     {
         $pool = new ArrayAdapter();
