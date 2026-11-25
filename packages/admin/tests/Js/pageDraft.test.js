@@ -123,7 +123,7 @@ it('keeps the room when a settings save fails and leaves after the retry succeed
   expect(fetch).toHaveBeenLastCalledWith('/draft', expect.objectContaining({ method: 'DELETE' }))
 })
 
-it.each(['join', 'poll', 'leave', 'leave preparation'])('returns to classic mode and keeps local edits on a conflict during %s', async (action) => {
+it.each(['join', 'poll', 'leave', 'leave preparation', 'submit preparation'])('returns to classic mode and keeps local edits on a conflict during %s', async (action) => {
   const { controls, form, body, revision, button, status } = pageDraftForm()
   const { promise, resolve } = Promise.withResolvers()
   let conflict = action === 'join'
@@ -139,11 +139,14 @@ it.each(['join', 'poll', 'leave', 'leave preparation'])('returns to classic mode
 
   button.click()
   if (action !== 'join') await vi.waitFor(() => expect(status.textContent).toBe('Saved'))
-  if (action === 'leave preparation') body.pwEditor = { flushDraft: () => promise }
+  if (action.endsWith('preparation')) body.pwEditor = { flushDraft: () => promise }
   body.value = 'Local edit'
   body.dispatchEvent(new Event('input', { bubbles: true }))
   conflict = true
   if (action.startsWith('leave')) button.click()
+  const submit = vi.fn()
+  form.addEventListener('submit', submit)
+  if (action === 'submit preparation') form.requestSubmit()
 
   await vi.waitFor(() => expect(status.textContent).toBe('Session ended'))
   resolve()
@@ -154,6 +157,7 @@ it.each(['join', 'poll', 'leave', 'leave preparation'])('returns to classic mode
   expect(form.hasAttribute('data-pw-draft-active')).toBe(false)
   expect(body.value).toBe('Local edit')
   expect(revision.value).toBe('1')
+  expect(submit).not.toHaveBeenCalled()
   expect(fetch).toHaveBeenLastCalledWith('/draft', expect.objectContaining({ method: 'DELETE' }))
 })
 

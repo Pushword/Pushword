@@ -191,7 +191,7 @@ export function bindPageDraft(controls) {
     busy = true
     try {
       await body()?.pwEditor?.flushDraft?.()
-      if (await session.flush()) {
+      if (await session?.flush()) {
         approved = { revision: revision.value, body: view.read() }
         form.requestSubmit(event.submitter)
       }
