@@ -44,14 +44,15 @@ final class PageApiController extends AbstractApiController
         private readonly PagePropertySchemaRegistry $schemaRegistry,
         private readonly EditorialTimezone $editorialTimezone,
         private readonly LivePresence $presence,
+        private readonly DraftExchange $drafts,
         private readonly string $deleteStrategy = 'hard',
     ) {
     }
 
     #[Route('/api/pages/{id}/draft', name: 'pushword_api_page_draft', requirements: ['id' => '\d+'], methods: ['POST'])]
-    public function syncDraft(Page $page, Request $request, DraftExchange $exchange): JsonResponse
+    public function syncDraft(Page $page, Request $request): JsonResponse
     {
-        return $this->presence->syncApi('page:'.$page->id, $this->getApiUser(), static fn (): JsonResponse => $exchange->page($request, $page));
+        return $this->presence->syncApi('page:'.$page->id, $this->getApiUser(), fn (): JsonResponse => $this->drafts->page($request, $page));
     }
 
     #[Route('/api/page/search', name: 'pushword_api_page_search', methods: ['GET'])]
@@ -220,7 +221,7 @@ final class PageApiController extends AbstractApiController
         return match ($request->getMethod()) {
             'GET' => $this->doGet($page, $request),
             'PUT' => $this->presence->guardPageWrite($request, $page, fn (): JsonResponse => $this->doUpdate($page, $request)),
-            'PATCH' => $this->presence->guardPageWrite($request, $page, fn (): JsonResponse => $this->doPatch($page, $request)),
+            'PATCH' => $this->doPatch($page, $request),
             'DELETE' => $this->doDelete($page, $request),
             default => $this->respond(['error' => 'Method not allowed'], Response::HTTP_METHOD_NOT_ALLOWED),
         };
@@ -254,21 +255,41 @@ final class PageApiController extends AbstractApiController
 
     private function doPatch(Page $page, Request $request): JsonResponse
     {
-        $conflict = $this->checkIfMatch($request, $this->revisions->compute($page), fn (): array => $this->buildPagePayload($page));
-        if ($conflict instanceof JsonResponse) {
-            return $conflict;
-        }
-
         $data = $this->decodeJson($request);
         $frontmatter = $this->extractFrontmatter($data);
         $edits = $this->extractEdits($data);
 
-        if ([] === $edits && [] === $frontmatter) {
-            return $this->badRequest('Provide at least one of: edits, frontmatter');
-        }
+        $precondition = fn (): ?JsonResponse => $this->checkIfMatch($request, $this->revisions->compute($page), fn (): array => $this->buildPagePayload($page));
 
         try {
-            $body = [] === $edits ? null : $this->bodyPatcher->apply($page->mainContent, $edits);
+            if ([] === $frontmatter && [] !== $edits) {
+                $failure = $this->drafts->patchPage(
+                    $page,
+                    fn (): array|JsonResponse => $precondition() ?? $this->bodyPatcher->prepare($page->mainContent, $edits),
+                    function (string $body) use ($page): ?JsonResponse {
+                        $violations = $this->pageWriter->prepareUpdate($page, [], $body, $this->getApiUser());
+
+                        return 0 === \count($violations) ? null : $this->validationErrors($violations);
+                    },
+                );
+
+                return $failure ?? $this->pageUpdated($page, $request);
+            }
+
+            return $this->presence->guardPageWrite($request, $page, function () use ($page, $request, $precondition, $frontmatter, $edits): JsonResponse {
+                $failure = $precondition();
+                if ($failure instanceof JsonResponse) {
+                    return $failure;
+                }
+
+                if ([] === $frontmatter) {
+                    return $this->badRequest('Provide at least one of: edits, frontmatter');
+                }
+
+                $body = [] === $edits ? null : $this->bodyPatcher->apply($page->mainContent, $edits);
+
+                return $this->applyAndRespond($page, $frontmatter, $body, $request);
+            });
         } catch (BodyPatchException $bodyPatchException) {
             return $this->respond([
                 'error' => 'patch_failed',
@@ -278,9 +299,9 @@ final class PageApiController extends AbstractApiController
                     'matches' => $bodyPatchException->matches,
                 ],
             ], Response::HTTP_UNPROCESSABLE_ENTITY);
+        } catch (OptimisticLockException) {
+            return $this->pageWriteConflict($page, $request);
         }
-
-        return $this->applyAndRespond($page, $frontmatter, $body, $request);
     }
 
     /**
@@ -296,23 +317,33 @@ final class PageApiController extends AbstractApiController
         } catch (InvalidFrontmatterException $invalidFrontmatterException) {
             return $this->invalidFrontmatter($invalidFrontmatterException);
         } catch (OptimisticLockException) {
-            $current = $this->doctrine->resetManager()->find($page::class, $page->id);
-            if (! $current instanceof Page) {
-                return $this->notFound('Page not found');
-            }
-
-            return $this->respond([
-                'error' => 'revision_mismatch',
-                'your_revision' => $request->headers->get('If-Match'),
-                'current_revision' => $this->revisions->compute($current),
-                'current' => $this->buildPagePayload($current),
-            ], Response::HTTP_CONFLICT);
+            return $this->pageWriteConflict($page, $request);
         }
 
         if (\count($violations) > 0) {
             return $this->validationErrors($violations);
         }
 
+        return $this->pageUpdated($page, $request);
+    }
+
+    private function pageWriteConflict(Page $page, Request $request): JsonResponse
+    {
+        $current = $this->doctrine->resetManager()->find($page::class, $page->id);
+        if (! $current instanceof Page) {
+            return $this->notFound('Page not found');
+        }
+
+        return $this->respond([
+            'error' => 'revision_mismatch',
+            'your_revision' => $request->headers->get('If-Match'),
+            'current_revision' => $this->revisions->compute($current),
+            'current' => $this->buildPagePayload($current),
+        ], Response::HTTP_CONFLICT);
+    }
+
+    private function pageUpdated(Page $page, Request $request): JsonResponse
+    {
         return $this->writeResponse(
             $request,
             $this->buildMinimalPayload($page),
@@ -587,7 +618,8 @@ final class PageApiController extends AbstractApiController
                         ],
                     ],
                     'patch' => [
-                        'summary' => 'Token-efficient partial edit: anchored find/replace on the body and/or selective frontmatter merge',
+                        'summary' => 'Edit Markdown, including during co-editing, or merge frontmatter',
+                        'description' => 'Send only edits to apply anchored find/replace through the shared draft. A request with frontmatter is refused during active co-editing.',
                         'parameters' => [
                             ['name' => 'If-Match', 'in' => 'header', 'required' => true, 'schema' => ['type' => 'string']],
                             $returnParam,
@@ -598,9 +630,11 @@ final class PageApiController extends AbstractApiController
                             '200' => ['description' => 'Patched (minimal write response by default, full Page with ?return=full)'],
                             '400' => ['description' => 'Neither edits nor frontmatter provided'],
                             '409' => ['description' => 'Revision mismatch, includes fresh page'],
-                            '423' => ['description' => 'Collaborative editing is active. Apply Markdown changes via POST /api/pages/{id}/draft.'],
+                            '413' => ['description' => 'Updated shared draft exceeds the size limit'],
                             '422' => ['description' => 'patch_failed (find not_found/ambiguous) or validation error'],
+                            '423' => ['description' => 'Collaborative editing is active. Send Markdown edits without frontmatter.'],
                             '428' => ['description' => 'Missing If-Match header'],
+                            '503' => ['description' => 'The shared draft is temporarily unavailable'],
                         ],
                     ],
                     'delete' => [

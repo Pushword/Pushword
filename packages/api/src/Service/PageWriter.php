@@ -32,6 +32,21 @@ final readonly class PageWriter
      */
     public function update(Page $page, array $frontmatter, ?string $body, User $editor): ConstraintViolationListInterface
     {
+        $violations = $this->prepareUpdate($page, $frontmatter, $body, $editor);
+        if (0 === \count($violations)) {
+            $this->entityManager->flush();
+        }
+
+        return $violations;
+    }
+
+    /**
+     * @param array<string, mixed> $frontmatter
+     *
+     * @throws InvalidFrontmatterException
+     */
+    public function prepareUpdate(Page $page, array $frontmatter, ?string $body, User $editor): ConstraintViolationListInterface
+    {
         $this->mapper->applyFrontmatter($page, $frontmatter);
 
         if (null !== $body) {
@@ -40,12 +55,7 @@ final readonly class PageWriter
 
         $page->editedBy = $editor;
 
-        $violations = $this->validator->validate($page);
-        if (0 === \count($violations)) {
-            $this->entityManager->flush();
-        }
-
-        return $violations;
+        return $this->validator->validate($page);
     }
 
     /**

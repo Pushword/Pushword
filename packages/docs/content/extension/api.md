@@ -152,6 +152,12 @@ text.
 **Atomicity.** Edits apply all-or-nothing: if any edit fails, the page is left untouched
 and nothing is persisted.
 
+Use this endpoint for Markdown edits with or without a collaborator. A request
+with only `edits` updates the page's current shared draft, including when its
+participants are temporarily offline. The admin receives the edits through its
+normal sync. The `If-Match` check still applies and a stale revision returns
+`409`. A request with `frontmatter` returns `423` in full during active co-editing.
+
 ```json
 // 422 — a find was ambiguous
 { "error": "patch_failed", "edit": { "index": 0, "reason": "ambiguous", "matches": 2 } }
@@ -201,15 +207,16 @@ live `{"id":42,"collaborative":true}` response. The flag reports current
 collaborative presence, even when nobody has saved a change. Check this route
 before editing a page from a downloaded snapshot.
 
-Classic page updates (`PUT` and `PATCH` on the JSON API, `PUT` on the Markdown
-file API) return `423` with `{"error":"collaboration_active","id":42}` while a
-session is active. Keep the local edits and apply Markdown changes through the
-shared session. Save changes to other fields once the session has ended.
+Classic page updates (`PUT` on the JSON or Markdown file API, and `PATCH` with
+`frontmatter`) return `423` with `{"error":"collaboration_active","id":42}`
+while a session is active. Use a [Markdown-only PATCH](#patch) for body edits
+and save changes to other fields once the session has ended.
 An explicit `X-Pushword-Respect-Collaboration: 0` allows a classic write that
 may end the session.
 
-Use a bearer token with `POST /api/pages/{id}/draft` or, with Repurpose
-installed, `POST /api/repurpose/{id}/draft`. The API shares the admin's Yjs session.
+Clients exchanging Yjs snapshots use a bearer token with
+`POST /api/pages/{id}/draft` or, with Repurpose installed,
+`POST /api/repurpose/{id}/draft`. These routes share the admin's session.
 
 1. Send `{"after":0}` to join. The response gives you a `room`, an `after`
    cursor and a full base64 Yjs `snapshot` or a saved `baseline` (Markdown or

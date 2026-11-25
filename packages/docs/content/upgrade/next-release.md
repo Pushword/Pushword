@@ -1,5 +1,5 @@
 ---
-title: 'classic page API updates respect active co-editing by default'
+title: 'Markdown patches use the shared draft and classic page updates respect co-editing'
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
@@ -8,7 +8,7 @@ parentPage: upgrade
 
 ## Classic page API updates during co-editing
 
-Classic page updates return HTTP 423 during an active session. Use the [shared draft API](/extension/api#collaborative-editing) for Markdown edits or wait to change other fields.
+A [Markdown-only PATCH](/extension/api#patch) writes through the shared draft. A whole-page PUT or a PATCH that changes metadata returns HTTP 423 during an active session. Send Markdown edits on their own and save other fields once the session has ended.
 
 <!--
 The upgrade note for the next release. `.scripts/release` renames this file to

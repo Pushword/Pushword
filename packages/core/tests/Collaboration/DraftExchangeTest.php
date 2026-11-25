@@ -16,7 +16,9 @@ use Pushword\Version\Versionner;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Clock\MockClock;
 use Symfony\Component\Filesystem\Filesystem;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Lock\LockFactory;
 use Symfony\Component\Lock\Store\InMemoryStore;
 
@@ -190,5 +192,100 @@ final class DraftExchangeTest extends KernelTestCase
         $exchange = self::getContainer()->get(DraftExchange::class);
         $request = Request::create('/draft', Request::METHOD_POST, content: str_repeat('x', 4_194_305));
         self::assertSame(413, $exchange->page($request, new Page())->getStatusCode());
+    }
+
+    public function testServerPatchPreservesTheLegacyJournalAndRollsBackRejectedEdits(): void
+    {
+        self::bootKernel();
+        $em = self::getContainer()->get(EntityManagerInterface::class);
+        $filesystem = new Filesystem();
+        $directory = sys_get_temp_dir().'/pw-live-'.bin2hex(random_bytes(8));
+        $locks = new LockFactory(new InMemoryStore());
+        $exchange = new DraftExchange($em, $locks, new MockClock(), self::getContainer()->get(LiveWrite::class), $filesystem, $directory, new LiveProjection());
+        $page = new Page();
+        $page->host = 'localhost.dev';
+        $page->slug = 'server-patch-'.bin2hex(random_bytes(5));
+        $page->h1 = 'Server patch';
+        $page->mainContent = 'Initial text';
+
+        $em->persist($page);
+        $em->flush();
+
+        $document = 'page:'.$page->id;
+        $probe = $locks->createLock('live-editing-'.$document);
+
+        try {
+            $key = hash('sha256', $document.':'.$page->writeVersion);
+            // A Yjs update appending a suffix to the deterministic baseline.
+            $legacy = 'AgECAIQBCxIg4oCUIGxlZ2FjeSBzdWZmaXgBAQAEAQRib2R5DEluaXRpYWwgdGV4dAA=';
+            $filesystem->dumpFile($directory.'/collaboration/draft-'.$key.'.json', json_encode([$legacy], \JSON_THROW_ON_ERROR));
+            $rejected = new JsonResponse(['error' => 'invalid_content'], Response::HTTP_UNPROCESSABLE_ENTITY);
+            $prepare = static function () use ($probe): array {
+                self::assertFalse($probe->acquire());
+
+                return ['content' => 'Fresh text', 'replacements' => [['find' => 'Initial', 'replace' => 'Fresh']]];
+            };
+            $reject = static function (string $body) use ($page, $rejected): JsonResponse {
+                $page->mainContent = $body;
+
+                return $rejected;
+            };
+            self::assertSame($rejected, $exchange->patchPage($page, $prepare, $reject));
+            self::assertSame('Initial text', $page->mainContent);
+
+            $join = Request::create('/draft', Request::METHOD_POST, content: '{"after":0}');
+            self::assertSame(200, $exchange->page($join, $page)->getStatusCode());
+            $state = $em->find(LiveEditingState::class, $document);
+            self::assertInstanceOf(LiveEditingState::class, $state);
+            $room = $state->room;
+
+            $invalid = static fn (): array => ['content' => 'Mismatched projection', 'replacements' => $prepare()['replacements']];
+            $never = static fn (): never => self::fail('An invalid projection must not be applied.');
+            self::assertSame(422, $exchange->patchPage($page, $invalid, $never)?->getStatusCode());
+            self::assertSame($rejected, $exchange->patchPage($page, $prepare, $reject));
+            self::assertSame('Initial text', $page->mainContent);
+            self::assertSame(0, $state->cursor);
+
+            $apply = static function (string $body) use ($page): null {
+                $page->mainContent = $body;
+
+                return null;
+            };
+            self::assertNull($exchange->patchPage($page, $prepare, $apply));
+            $em->refresh($page);
+            $em->refresh($state);
+            self::assertSame('Fresh text — legacy suffix', $page->mainContent);
+            self::assertSame($room, $state->room);
+            self::assertSame(1, $state->cursor);
+            self::assertSame((string) $page->writeVersion, $state->revision);
+
+            // A separate writer changes the row while this entity still has its previous revision.
+            $em->getConnection()->executeStatement(
+                'UPDATE page SET main_content = ?, write_version = write_version + 1 WHERE id = ?',
+                ['Fresh text — external edit', $page->id],
+            );
+            $later = static function () use ($page): array {
+                self::assertSame('Fresh text — external edit', $page->mainContent);
+
+                return [
+                    'content' => 'Later text — external edit',
+                    'replacements' => [['find' => 'Fresh', 'replace' => 'Later']],
+                ];
+            };
+            self::assertNull($exchange->patchPage($page, $later, $apply));
+            self::assertSame('Later text — external edit', $page->mainContent);
+            self::assertSame(1, $state->cursor);
+            self::assertTrue($probe->acquire());
+            $probe->release();
+        } finally {
+            $filesystem->remove($directory);
+            $state = $em->find(LiveEditingState::class, $document);
+            if ($state instanceof LiveEditingState) {
+                $em->remove($state);
+            }
+
+            $em->remove($page);
+            $em->flush();
+        }
     }
 }

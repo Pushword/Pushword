@@ -10,7 +10,10 @@ use Doctrine\ORM\Events;
 use Override;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\TestWith;
+use Pushword\Core\Collaboration\DraftExchange;
 use Pushword\Core\Collaboration\LivePresence;
+use Pushword\Core\Collaboration\LiveProjection;
+use Pushword\Core\Entity\LiveEditingState;
 use Pushword\Core\Entity\Page;
 use Pushword\Core\Entity\User;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
@@ -60,6 +63,11 @@ final class PageApiControllerTest extends WebTestCase
         $container = $this->client->getContainer();
         $em = $container->get('doctrine.orm.default_entity_manager');
         foreach ($this->createdPageIds as $id) {
+            $state = $em->find(LiveEditingState::class, 'page:'.$id);
+            if ($state instanceof LiveEditingState) {
+                $em->remove($state);
+            }
+
             $page = $em->getRepository(Page::class)->find($id);
             if ($page instanceof Page) {
                 // Unlink first: translation rows point at the page from both sides.
@@ -140,9 +148,11 @@ final class PageApiControllerTest extends WebTestCase
         self::assertSame('Updated title', $frontmatter['h1']);
     }
 
-    #[TestWith([false])]
-    #[TestWith([true])]
-    public function testConcurrentWriteAfterIfMatchReturnsTheWinningPage(bool $deleted): void
+    #[TestWith([Request::METHOD_PUT, false])]
+    #[TestWith([Request::METHOD_PUT, true])]
+    #[TestWith([Request::METHOD_PATCH, false])]
+    #[TestWith([Request::METHOD_PATCH, true])]
+    public function testConcurrentWriteAfterIfMatchReturnsTheWinningPage(string $method, bool $deleted): void
     {
         $host = 'api-test-'.uniqid().'.example.com';
         $this->request('POST', '/api/page/'.$host, [
@@ -152,6 +162,13 @@ final class PageApiControllerTest extends WebTestCase
         $id = $this->lookupPageId($host, 'concurrent');
         $this->createdPageIds[] = $id;
         $revision = $this->currentRevision($host, 'concurrent');
+        $body = ['body' => 'Agent edit'];
+        if (Request::METHOD_PATCH === $method) {
+            $this->request(Request::METHOD_POST, '/api/pages/'.$id.'/draft', ['after' => 0]);
+            self::assertResponseIsSuccessful();
+            $body = ['edits' => [['find' => 'Initial body', 'replace' => 'Agent edit']]];
+        }
+
         $listener = new readonly class($this->em->getConnection(), $id, $deleted) {
             public function __construct(private Connection $connection, private int $id, private bool $deleted)
             {
@@ -172,9 +189,17 @@ final class PageApiControllerTest extends WebTestCase
         $events->addEventListener([Events::preFlush], $listener);
 
         try {
-            $response = $this->request('PUT', '/api/page/'.$host.'/concurrent', ['body' => 'Agent edit'], ['HTTP_IF_MATCH' => $revision]);
+            $response = $this->request($method, '/api/page/'.$host.'/concurrent', $body, ['HTTP_IF_MATCH' => $revision]);
         } finally {
             $events->removeEventListener([Events::preFlush], $listener);
+        }
+
+        if (Request::METHOD_PATCH === $method) {
+            $em = self::getContainer()->get(EntityManagerInterface::class);
+            $state = $em->find(LiveEditingState::class, 'page:'.$id);
+            self::assertInstanceOf(LiveEditingState::class, $state);
+            self::assertSame(0, $state->cursor);
+            self::assertNull($state->snapshot);
         }
 
         if ($deleted) {
@@ -681,6 +706,117 @@ final class PageApiControllerTest extends WebTestCase
         self::assertStringNotContainsString('90€', $fresh['body']);
     }
 
+    #[TestWith([true])]
+    #[TestWith([false])]
+    public function testMarkdownPatchUpdatesTheSameDraftWithOrWithoutPresence(bool $present): void
+    {
+        [$host, $slug] = $this->createDraftWithBody('Start middle end');
+        $revision = $this->currentRevision($host, $slug);
+        $page = $this->em->getRepository(Page::class)->findOneBy(['host' => $host, 'slug' => $slug]);
+        self::assertInstanceOf(Page::class, $page);
+        $path = '/api/page/'.$host.'/'.$slug;
+        $draftPath = '/api/pages/'.$page->id.'/draft';
+
+        if ($present) {
+            $this->request(Request::METHOD_POST, $draftPath, ['after' => 0]);
+            self::assertResponseIsSuccessful();
+            $draft = $this->decode();
+        } else {
+            $exchange = self::getContainer()->get(DraftExchange::class);
+            $request = Request::create($draftPath, Request::METHOD_POST, content: '{"after":0}');
+            $joined = $exchange->page($request, $page);
+            self::assertSame(Response::HTTP_OK, $joined->getStatusCode());
+            /** @var array{room: string} $draft */
+            $draft = json_decode((string) $joined->getContent(), true, flags: \JSON_THROW_ON_ERROR);
+        }
+
+        $this->request(Request::METHOD_GET, $path.'?return=editing');
+        self::assertSame($present, $this->decode()['collaborative']);
+
+        $patch = ['edits' => [
+            ['find' => 'Start', 'replace' => 'First'],
+            ['find' => 'end', 'replace' => 'last'],
+        ]];
+        $headers = ['HTTP_IF_MATCH' => $revision];
+        if ($present) {
+            $this->request(Request::METHOD_PATCH, $path, $patch + ['frontmatter' => ['h1' => 'Mixed edit']], $headers);
+            self::assertResponseStatusCodeSame(Response::HTTP_LOCKED);
+        }
+
+        $this->request(Request::METHOD_PATCH, $path, ['edits' => [...$patch['edits'], ['find' => 'absent']]], $headers);
+        self::assertResponseStatusCodeSame(Response::HTTP_UNPROCESSABLE_ENTITY);
+
+        $response = $this->request(Request::METHOD_PATCH, $path.'?return=full', $patch, $headers);
+        self::assertResponseIsSuccessful();
+        $saved = $this->decode();
+        self::assertSame('First middle last', $saved['body']);
+        self::assertSame($this->testUserEmail, $saved['updatedBy']);
+        self::assertSame($saved['revision'], $response->headers->get('ETag'));
+        self::assertNotSame($revision, $saved['revision']);
+        self::assertIsArray($saved['frontmatter']);
+        self::assertSame('Test', $saved['frontmatter']['h1']);
+
+        $this->request(Request::METHOD_PATCH, $path, $patch, $headers);
+        self::assertResponseStatusCodeSame(Response::HTTP_CONFLICT);
+        self::assertSame($saved['revision'], $this->decode()['current_revision']);
+
+        $this->request(Request::METHOD_POST, $draftPath, ['room' => $draft['room'], 'after' => 0]);
+        self::assertResponseIsSuccessful();
+        $polled = $this->decode();
+        self::assertSame($draft['room'], $polled['room']);
+        self::assertSame(1, $polled['after']);
+        self::assertIsString($polled['snapshot']);
+        $projected = self::getContainer()->get(LiveProjection::class)->resolve(false, '', $polled['snapshot'], null, null);
+        self::assertIsArray($projected);
+        self::assertSame('First middle last', $projected['content']);
+    }
+
+    public function testAnAuthorOnlyChangeKeepsTheDraftOnTheCurrentRevision(): void
+    {
+        [$host, $slug] = $this->createDraftWithBody('Original body');
+        $id = $this->lookupPageId($host, $slug);
+        $draftPath = '/api/pages/'.$id.'/draft';
+        $this->request(Request::METHOD_POST, $draftPath, ['after' => 0]);
+        self::assertResponseIsSuccessful();
+        $joined = $this->decode();
+        $revision = $this->currentRevision($host, $slug);
+
+        /** @var class-string<User> $userClass */
+        $userClass = self::getContainer()->getParameter('pw.entity_user');
+        $other = $this->em->getRepository($userClass)->findOneBy(['email' => 'admin@example.tld']);
+        self::assertInstanceOf(User::class, $other);
+        self::assertNotNull($other->apiToken);
+        $this->client->jsonRequest(Request::METHOD_PATCH, '/api/page/'.$host.'/'.$slug.'?return=full', [
+            'edits' => [['find' => 'Original', 'replace' => 'Original']],
+        ], ['HTTP_AUTHORIZATION' => 'Bearer '.$other->apiToken, 'HTTP_IF_MATCH' => $revision]);
+        self::assertResponseIsSuccessful();
+        self::assertSame('Original body', $this->decode()['body']);
+        self::assertSame($other->email, $this->decode()['updatedBy']);
+
+        $this->request(Request::METHOD_POST, $draftPath, ['room' => $joined['room'], 'after' => 0]);
+        self::assertResponseIsSuccessful();
+        $current = $this->decode();
+        self::assertNotSame($joined['revision'], $current['revision']);
+        self::assertSame($joined['room'], $current['room']);
+    }
+
+    #[TestWith([4_194_305])]
+    #[TestWith([2_000_000])]
+    public function testMarkdownPatchDoesNotWriteAnOversizedSharedDraft(int $length): void
+    {
+        [$host, $slug] = $this->createDraftWithBody('Original body');
+        $id = $this->lookupPageId($host, $slug);
+        $this->request(Request::METHOD_POST, '/api/pages/'.$id.'/draft', ['after' => 0]);
+        self::assertResponseIsSuccessful();
+        $revision = $this->currentRevision($host, $slug);
+        $this->request(Request::METHOD_PATCH, '/api/page/'.$host.'/'.$slug, [
+            'edits' => [['find' => 'Original body', 'replace' => str_repeat('x', $length)]],
+        ], ['HTTP_IF_MATCH' => $revision]);
+        self::assertResponseStatusCodeSame(Response::HTTP_REQUEST_ENTITY_TOO_LARGE);
+        self::assertSame('update_too_large', $this->decode()['error']);
+        self::assertSame($revision, $this->currentRevision($host, $slug));
+    }
+
     public function testPatchWithReturnFullEchoesBody(): void
     {
         [$host, $slug] = $this->createDraftWithBody('one two three');
@@ -783,6 +919,11 @@ final class PageApiControllerTest extends WebTestCase
             'edits' => [['find' => 'body', 'replace' => 'x']],
         ], ['HTTP_IF_MATCH' => 'stale']);
         self::assertSame(409, $response->getStatusCode());
+
+        $this->request(Request::METHOD_PATCH, '/api/page/'.$host.'/'.$slug, [
+            'frontmatter' => ['h1' => 'Out-of-date title'],
+        ], ['HTTP_IF_MATCH' => 'stale']);
+        self::assertResponseStatusCodeSame(Response::HTTP_CONFLICT);
     }
 
     public function testPatchWithNeitherEditsNorFrontmatterReturns400(): void

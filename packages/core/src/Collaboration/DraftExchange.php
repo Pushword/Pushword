@@ -15,7 +15,9 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Lock\LockFactory;
+use Symfony\Component\Lock\SharedLockInterface;
 
+/** @phpstan-import-type MarkdownPatch from LiveProjection */
 final readonly class DraftExchange
 {
     private const int MAX_SIZE = 4_194_304;
@@ -45,6 +47,66 @@ final readonly class DraftExchange
                 return [];
             },
         );
+    }
+
+    /**
+     * A Markdown PATCH checks its HTTP revision under the draft lock. A current
+     * room gets the edit even if all participant heartbeats have expired.
+     *
+     * @param callable(): (MarkdownPatch|JsonResponse) $prepare
+     * @param callable(string): ?JsonResponse          $apply
+     */
+    public function patchPage(Page $page, callable $prepare, callable $apply): ?JsonResponse
+    {
+        $document = 'page:'.$page->id;
+        $lock = $this->acquireDocumentLock($document);
+
+        try {
+            $this->entities->refresh($page);
+            $patch = $prepare();
+            if ($patch instanceof JsonResponse) {
+                return $patch;
+            }
+
+            $state = $this->loadState($document);
+            if (! $state instanceof LiveEditingState || $state->revision !== (string) $page->writeVersion || null === $state->anchors) {
+                $failure = $apply($patch['content']);
+                if (null === $failure) {
+                    $this->entities->flush();
+                } else {
+                    $this->entities->refresh($page);
+                }
+
+                return $failure;
+            }
+
+            if (\strlen($patch['content']) > self::MAX_SIZE) {
+                return new JsonResponse(['error' => 'update_too_large'], Response::HTTP_REQUEST_ENTITY_TOO_LARGE);
+            }
+
+            $baseline = $page->mainContent;
+            $legacy = null === $state->snapshot ? $this->legacyUpdates($state, false, $baseline) : [];
+            $projection = $this->projection->patchMarkdown($baseline, $state->snapshot, $patch, $legacy);
+            if ($projection instanceof JsonResponse) {
+                return $projection;
+            }
+
+            $failure = $this->saveProjection(
+                $state,
+                $page,
+                static fn (int $increment): string => (string) ($page->writeVersion + $increment),
+                static fn (): string => $page->mainContent,
+                $apply,
+                $projection,
+            );
+            if ($failure instanceof JsonResponse) {
+                $this->entities->refresh($page);
+            }
+
+            return $failure;
+        } finally {
+            $lock->release();
+        }
     }
 
     /**
@@ -79,8 +141,7 @@ final readonly class DraftExchange
             return new JsonResponse(['error' => 'invalid_update'], Response::HTTP_BAD_REQUEST);
         }
 
-        $lock = $this->locks->createLock('live-editing-'.$document);
-        $lock->acquire(true);
+        $lock = $this->acquireDocumentLock($document);
 
         try {
             $this->entities->refresh($entity);
@@ -89,10 +150,7 @@ final readonly class DraftExchange
                 return $this->result($room, $current, $after);
             }
 
-            $state = $this->entities->find(LiveEditingState::class, $document);
-            if ($state instanceof LiveEditingState) {
-                $this->entities->refresh($state);
-            }
+            $state = $this->loadState($document);
 
             $expected = $request->headers->get('If-Match');
             if (null === $room) {
@@ -147,39 +205,59 @@ final readonly class DraftExchange
      */
     private function commit(LiveEditingState $state, object $entity, callable $revision, callable $baseline, callable $apply, string $snapshot, string $content): JsonResponse
     {
+        $projection = $this->projection->resolve(! $entity instanceof Page, $baseline(), $state->snapshot, $snapshot, $content);
+        if ($projection instanceof JsonResponse) {
+            return $projection;
+        }
+
+        $failure = $this->saveProjection($state, $entity, $revision, $baseline, static function (string $content) use ($apply): ?JsonResponse {
+            $violations = $apply($content);
+
+            return [] === $violations ? null : new JsonResponse([
+                'error' => 'invalid_content',
+                'violations' => $violations,
+            ], Response::HTTP_UNPROCESSABLE_ENTITY);
+        }, $projection);
+
+        return $failure ?? $this->answer($state, $state->cursor, true);
+    }
+
+    /**
+     * @param callable(int): string                    $revision
+     * @param callable(): string                       $baseline
+     * @param callable(string): ?JsonResponse          $apply
+     * @param array{snapshot: string, content: string} $projection
+     */
+    private function saveProjection(LiveEditingState $state, object $entity, callable $revision, callable $baseline, callable $apply, array $projection): ?JsonResponse
+    {
+        if (\strlen($projection['snapshot']) + \strlen($projection['content']) > self::MAX_SIZE) {
+            return new JsonResponse(['error' => 'update_too_large'], Response::HTTP_REQUEST_ENTITY_TOO_LARGE);
+        }
+
         $now = $this->clock->now()->getTimestamp();
         $checkpoint = null === $state->lastSavedAt
             || $now - $state->lastSavedAt >= 300
             || $now - ($state->groupStartedAt ?? $now) >= 1800;
 
         $previous = $baseline();
-        $projection = $this->projection->resolve(! $entity instanceof Page, $previous, $state->snapshot, $snapshot, $content);
-        if ($projection instanceof JsonResponse) {
-            return $projection;
-        }
-
-        if (\strlen($projection['snapshot']) + \strlen($projection['content']) > self::MAX_SIZE) {
-            return new JsonResponse(['error' => 'update_too_large'], Response::HTTP_REQUEST_ENTITY_TOO_LARGE);
-        }
+        $previousEditor = $entity instanceof Page ? $entity->editedBy?->id : null;
 
         try {
             $this->write->begin($entity, $checkpoint);
-            $violations = $apply($projection['content']);
-            if ([] !== $violations) {
-                return new JsonResponse([
-                    'error' => 'invalid_content',
-                    'violations' => $violations,
-                ], Response::HTTP_UNPROCESSABLE_ENTITY);
+            $failure = $apply($projection['content']);
+            if (null !== $failure) {
+                return $failure;
             }
 
             $changed = $previous !== $baseline();
-            if ($changed) {
+            $updated = $changed || ($entity instanceof Page && $previousEditor !== $entity->editedBy?->id);
+            if ($updated) {
                 $state->remember($previous);
             }
 
             $state->snapshot = $projection['snapshot'];
             ++$state->cursor;
-            $state->revision = $revision($changed ? 1 : 0);
+            $state->revision = $revision($updated ? 1 : 0);
             if ($changed) {
                 $state->lastSavedAt = $now;
                 if ($checkpoint) {
@@ -191,10 +269,28 @@ final readonly class DraftExchange
             // write. A single flush also lets postFlush run after the commit.
             $this->entities->flush();
 
-            return $this->answer($state, $state->cursor, true);
+            return null;
         } finally {
             $this->write->end();
         }
+    }
+
+    private function loadState(string $document): ?LiveEditingState
+    {
+        $state = $this->entities->find(LiveEditingState::class, $document);
+        if ($state instanceof LiveEditingState) {
+            $this->entities->refresh($state);
+        }
+
+        return $state;
+    }
+
+    private function acquireDocumentLock(string $document): SharedLockInterface
+    {
+        $lock = $this->locks->createLock('live-editing-'.$document);
+        $lock->acquire(true);
+
+        return $lock;
     }
 
     private function isUpToDate(string $document, string $room, string $revision, int $cursor): bool

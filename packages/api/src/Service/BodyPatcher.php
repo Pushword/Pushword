@@ -20,32 +20,34 @@ final readonly class BodyPatcher
      */
     public function apply(string $body, array $edits): string
     {
-        foreach ($edits as $index => $edit) {
-            $body = $this->applyOne($body, $edit, $index);
-        }
-
-        return $body;
+        return $this->prepare($body, $edits)['content'];
     }
 
     /**
-     * @param array<string, mixed> $edit
+     * @param list<array<string, mixed>> $edits
+     *
+     * @return array{content: string, replacements: list<array{find: string, replace: string}>}
      */
-    private function applyOne(string $body, array $edit, int $index): string
+    public function prepare(string $body, array $edits): array
     {
-        $find = \is_string($edit['find'] ?? null) ? $edit['find'] : '';
-        $replace = \is_string($edit['replace'] ?? null) ? $edit['replace'] : '';
-        $replaceAll = true === ($edit['replaceAll'] ?? false);
+        $replacements = [];
+        foreach ($edits as $index => $edit) {
+            $find = \is_string($edit['find'] ?? null) ? $edit['find'] : '';
+            $replace = \is_string($edit['replace'] ?? null) ? $edit['replace'] : '';
+            $matches = '' === $find ? 0 : substr_count($body, $find);
 
-        $matches = '' === $find ? 0 : substr_count($body, $find);
+            if (0 === $matches) {
+                throw new BodyPatchException($index, 'not_found', 0);
+            }
 
-        if (0 === $matches) {
-            throw new BodyPatchException($index, 'not_found', 0);
+            if ($matches > 1 && true !== ($edit['replaceAll'] ?? false)) {
+                throw new BodyPatchException($index, 'ambiguous', $matches);
+            }
+
+            $body = str_replace($find, $replace, $body);
+            $replacements[] = ['find' => $find, 'replace' => $replace];
         }
 
-        if ($matches > 1 && ! $replaceAll) {
-            throw new BodyPatchException($index, 'ambiguous', $matches);
-        }
-
-        return str_replace($find, $replace, $body);
+        return ['content' => $body, 'replacements' => $replacements];
     }
 }
