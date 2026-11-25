@@ -385,7 +385,7 @@ final class PageFileApiControllerTest extends WebTestCase
         self::assertStringNotContainsString('parseYaml', (string) $response->getContent(), 'the shipped client holds no YAML');
     }
 
-    public function testProtectedPageFileSaveKeepsTheSharedPageWhileAnEditorIsPresent(): void
+    public function testPageFileSaveKeepsTheSharedPageWhileAnEditorIsPresent(): void
     {
         $page = $this->persistPage(static fn (Page $page): null => null);
         $export = $this->serializer->serialize($page);
@@ -396,7 +396,7 @@ final class PageFileApiControllerTest extends WebTestCase
         $presence->sync($join, 'page:'.$page->id, $ready);
 
         $path = '/api/content/page/'.$page->host.'/'.$page->slug;
-        $headers = $this->server() + ['HTTP_IF_MATCH' => $this->revisionOf($export), 'HTTP_X_PUSHWORD_RESPECT_COLLABORATION' => '1'];
+        $headers = $this->server() + ['HTTP_IF_MATCH' => $this->revisionOf($export)];
         $this->client->request(Request::METHOD_PUT, $path, server: $headers, content: $file);
         self::assertResponseStatusCodeSame(Response::HTTP_LOCKED);
         self::assertJsonStringEqualsJsonString(json_encode(['error' => 'collaboration_active', 'id' => $page->id], \JSON_THROW_ON_ERROR), (string) $this->client->getResponse()->getContent());

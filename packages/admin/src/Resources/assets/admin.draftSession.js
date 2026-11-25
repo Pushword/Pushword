@@ -79,7 +79,8 @@ export function openDraft({ url, revision, token, authorization, model, view, st
   }
 
   async function exchange(force) {
-    if (!active || (!force && (view.wait?.() || document.hidden))) return false
+    const presenceDue = tab && Date.now() - announcedAt >= PRESENCE_INTERVAL_MS
+    if (!active || (!force && (view.wait?.() || (document.hidden && !presenceDue)))) return false
     if (view.prepare) await view.prepare()
     if (!active || (!force && view.wait?.())) return false
     capture()

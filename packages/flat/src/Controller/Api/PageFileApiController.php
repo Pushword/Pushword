@@ -199,7 +199,7 @@ final class PageFileApiController extends AbstractApiController
                         'description' => 'The server parses and re-serializes the file, so clients hold no YAML: send the bytes, write the response bytes back. A front-matter key missing from the upload (vs the current canonical file) is reset — a file is a total document, not a patch.',
                         'parameters' => [
                             ['name' => 'If-Match', 'in' => 'header', 'required' => true, 'schema' => ['type' => 'string'], 'description' => 'The `revision:` value from the file'],
-                            ['name' => LivePresence::RESPECT_COLLABORATION, 'in' => 'header', 'schema' => ['type' => 'string', 'enum' => ['1']], 'description' => 'Refuse a classic save while collaborative editing is active.'],
+                            ['name' => LivePresence::RESPECT_COLLABORATION, 'in' => 'header', 'schema' => ['type' => 'string', 'enum' => ['0', '1'], 'default' => '1'], 'description' => 'By default, classic saves are refused during a shared editing session. Set 0 only to allow a classic save that may end the session.'],
                         ],
                         'requestBody' => ['required' => true, 'content' => $markdownBody],
                         'responses' => [
@@ -208,7 +208,7 @@ final class PageFileApiController extends AbstractApiController
                             '404' => ['description' => 'Page not found'],
                             '409' => ['description' => "Revision mismatch — the body is the server's current canonical file text; overwrite the local file and re-apply", 'content' => ['text/markdown' => ['schema' => ['type' => 'string']]]],
                             '422' => ['description' => 'invalid_frontmatter or validation error (JSON)'],
-                            '423' => ['description' => 'Collaborative editing is active (collaboration_active)'],
+                            '423' => ['description' => 'Collaborative editing is active. Apply Markdown changes via POST /api/pages/{id}/draft.'],
                             '428' => ['description' => 'Missing If-Match header'],
                         ],
                     ],

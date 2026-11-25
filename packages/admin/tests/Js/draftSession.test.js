@@ -93,6 +93,36 @@ it('merges edits in the same sentence, keeps pending edits on disconnect, and re
   expect(bob.value).toBe(alice.value)
 })
 
+it('renews the same browser presence at a lower polling rate in a hidden tab', async () => {
+  vi.useFakeTimers()
+  try {
+    const room = sharedRoom('Initial text')
+    const editor = participant('Initial text')
+    expect(await editor.flush()).toBe(true)
+    const headers = fetch.mock.calls[0][1].headers
+    expect(headers['X-Collaboration-Tab']).toMatch(/^[a-f0-9]{32}$/)
+    vi.spyOn(document, 'hidden', 'get').mockReturnValue(true)
+
+    // Put the next poll exactly on the presence deadline.
+    vi.setSystemTime(Date.now() - 150)
+    await vi.advanceTimersByTimeAsync(3149)
+    expect(fetch).toHaveBeenCalledTimes(1)
+    await vi.advanceTimersByTimeAsync(1)
+    expect(fetch).toHaveBeenCalledTimes(2)
+    expect(fetch.mock.calls[1][1].headers['X-Collaboration-Tab']).toBe(headers['X-Collaboration-Tab'])
+    await vi.advanceTimersByTimeAsync(3150)
+    expect(fetch).toHaveBeenCalledTimes(3)
+
+    // An explicit save must still send edits if a background poll was just skipped.
+    editor.type('Edited text')
+    vi.advanceTimersByTime(350)
+    expect(await editor.flush()).toBe(true)
+    expect(room.content).toBe('Edited text')
+  } finally {
+    vi.useRealTimers()
+  }
+})
+
 it('keeps collaborative edits on the original slide after a concurrent reorder', async () => {
   const original = { slides: [{ title: 'A nice hike' }, { title: 'Another slide' }] }
   sharedRoom(JSON.stringify(original))

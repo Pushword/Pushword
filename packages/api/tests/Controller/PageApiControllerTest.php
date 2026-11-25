@@ -107,7 +107,7 @@ final class PageApiControllerTest extends WebTestCase
 
     #[TestWith([Request::METHOD_PUT])]
     #[TestWith([Request::METHOD_PATCH])]
-    public function testLiveStatusAndProtectedJsonUpdatesFollowCollaborationPresence(string $method): void
+    public function testLiveStatusAndJsonUpdatesFollowCollaborationPresence(string $method): void
     {
         [$host, $slug, $revision] = $this->createTestPage();
         $id = $this->lookupPageId($host, $slug);
@@ -124,7 +124,7 @@ final class PageApiControllerTest extends WebTestCase
         self::assertSame(['id' => $id, 'collaborative' => true], $this->decode());
 
         $edit = ['frontmatter' => ['h1' => 'Updated title']];
-        $headers = ['HTTP_IF_MATCH' => $revision, 'HTTP_X_PUSHWORD_RESPECT_COLLABORATION' => '1'];
+        $headers = ['HTTP_IF_MATCH' => $revision];
         self::assertSame(Response::HTTP_LOCKED, $this->request($method, $path, $edit, $headers)->getStatusCode());
         self::assertSame(['error' => 'collaboration_active', 'id' => $id], $this->decode());
         self::assertSame($revision, $this->currentRevision($host, $slug));

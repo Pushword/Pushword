@@ -1,8 +1,14 @@
 ---
-title: ''
+title: 'classic page API updates respect active co-editing by default'
 publishedAt: '2099-01-01 00:00'
 parentPage: upgrade
 ---
+
+**Concerns:** `pushword/api`, `pushword/core`, `pushword/flat`
+
+## Classic page API updates during co-editing
+
+Classic page updates return HTTP 423 during an active session. Use the [shared draft API](/extension/api#collaborative-editing) for Markdown edits or wait to change other fields.
 
 <!--
 The upgrade note for the next release. `.scripts/release` renames this file to

@@ -22,7 +22,10 @@ final readonly class LivePresence
 {
     public const string RESPECT_COLLABORATION = 'X-Pushword-Respect-Collaboration';
 
-    private const int LIFETIME = 12;
+    private const int API_LIFETIME = 12;
+
+    // Background browser timers can run as infrequently as once a minute.
+    private const int BROWSER_LIFETIME = 75;
 
     public function __construct(
         #[Autowire(service: 'cache.app')]
@@ -74,7 +77,7 @@ final readonly class LivePresence
      */
     public function guardPageWrite(Request $request, Page $page, callable $save): Response
     {
-        if ('1' !== $request->headers->get(self::RESPECT_COLLABORATION)) {
+        if ('0' === $request->headers->get(self::RESPECT_COLLABORATION)) {
             return $save();
         }
 
@@ -131,7 +134,7 @@ final readonly class LivePresence
         $active = $this->activeTabs($item->get());
 
         if ($present) {
-            $expiresAt = $this->clock->now()->getTimestamp() + self::LIFETIME;
+            $expiresAt = $this->clock->now()->getTimestamp() + ($api ? self::API_LIFETIME : self::BROWSER_LIFETIME);
             $active[$tab] = $user instanceof User ? [
                 'expiresAt' => $expiresAt,
                 'participant' => [
@@ -144,7 +147,7 @@ final readonly class LivePresence
             unset($active[$tab]);
         }
 
-        $this->cache->save($item->set($active)->expiresAfter(self::LIFETIME));
+        $this->cache->save($item->set($active)->expiresAfter(self::BROWSER_LIFETIME));
     }
 
     /**

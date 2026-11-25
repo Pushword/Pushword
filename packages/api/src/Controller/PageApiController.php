@@ -503,8 +503,8 @@ final class PageApiController extends AbstractApiController
         $respectCollaboration = [
             'name' => LivePresence::RESPECT_COLLABORATION,
             'in' => 'header',
-            'schema' => ['type' => 'string', 'enum' => ['1']],
-            'description' => 'Refuse a classic save while collaborative editing is active.',
+            'schema' => ['type' => 'string', 'enum' => ['0', '1'], 'default' => '1'],
+            'description' => 'By default, classic saves are refused during a shared editing session. Set 0 only to allow a classic save that may end the session.',
         ];
         $editingSchema = [
             'type' => 'object',
@@ -582,7 +582,7 @@ final class PageApiController extends AbstractApiController
                             '200' => ['description' => 'Updated (minimal write response by default, full Page with ?return=full)'],
                             '409' => ['description' => 'Revision mismatch, includes fresh page'],
                             '422' => ['description' => 'Validation error'],
-                            '423' => ['description' => 'Collaborative editing is active (collaboration_active)'],
+                            '423' => ['description' => 'Collaborative editing is active. Apply Markdown changes via POST /api/pages/{id}/draft.'],
                             '428' => ['description' => 'Missing If-Match header'],
                         ],
                     ],
@@ -598,7 +598,7 @@ final class PageApiController extends AbstractApiController
                             '200' => ['description' => 'Patched (minimal write response by default, full Page with ?return=full)'],
                             '400' => ['description' => 'Neither edits nor frontmatter provided'],
                             '409' => ['description' => 'Revision mismatch, includes fresh page'],
-                            '423' => ['description' => 'Collaborative editing is active (collaboration_active)'],
+                            '423' => ['description' => 'Collaborative editing is active. Apply Markdown changes via POST /api/pages/{id}/draft.'],
                             '422' => ['description' => 'patch_failed (find not_found/ambiguous) or validation error'],
                             '428' => ['description' => 'Missing If-Match header'],
                         ],

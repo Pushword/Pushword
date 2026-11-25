@@ -59,7 +59,7 @@ final class LivePresenceTest extends TestCase
         self::assertSame(Response::HTTP_NO_CONTENT, $presence->sync($request, $page, $never)->getStatusCode());
         self::assertTrue($presence->isActive($page));
 
-        $clock->sleep(11);
+        $clock->sleep(74);
         self::assertTrue($presence->isActive($page));
         $clock->sleep(1);
         self::assertFalse($presence->isActive($page));
@@ -126,10 +126,16 @@ final class LivePresenceTest extends TestCase
         ], $presence->snapshot($document, $viewer)['participants']);
         $clock->sleep(4);
         self::assertSame([
+            ['id' => 2, 'name' => 'Élodie', 'api' => false],
             ['id' => 1, 'name' => 'robin', 'api' => true],
             ['id' => 2, 'name' => 'Élodie', 'api' => true],
         ], $presence->snapshot($document, $viewer)['participants']);
         $clock->sleep(8);
+        self::assertSame([
+            'collaborative' => true,
+            'participants' => [['id' => 2, 'name' => 'Élodie', 'api' => false]],
+        ], $presence->snapshot($document, $viewer));
+        $clock->sleep(55);
         self::assertSame(['collaborative' => false, 'participants' => []], $presence->snapshot($document, $viewer));
     }
 
@@ -147,7 +153,7 @@ final class LivePresenceTest extends TestCase
 
             return new JsonResponse([]);
         };
-        $write = Request::create('/write', Request::METHOD_PUT, server: ['HTTP_X_PUSHWORD_RESPECT_COLLABORATION' => '1']);
+        $write = Request::create('/write', Request::METHOD_PUT);
         $join = Request::create('/draft', Request::METHOD_POST, server: ['HTTP_X_COLLABORATION_TAB' => str_repeat('a', 32)]);
 
         self::assertSame(Response::HTTP_OK, $presence->guardPageWrite($write, $page, $lockedOperation)->getStatusCode());
@@ -160,7 +166,7 @@ final class LivePresenceTest extends TestCase
         self::assertSame(Response::HTTP_LOCKED, $blocked->getStatusCode());
         self::assertJsonStringEqualsJsonString('{"error":"collaboration_active","id":42}', (string) $blocked->getContent());
 
-        $clock->sleep(12);
+        $clock->sleep(75);
         $editor = new User();
         $editor->username = 'Editor';
 
