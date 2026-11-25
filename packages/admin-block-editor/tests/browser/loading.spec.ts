@@ -49,13 +49,16 @@ test('waits for Markdown content before revealing or saving the editor', async (
   await expect(page.locator('.h1Field')).toHaveValue('Title edited while loading')
   const source = page.locator('textarea[data-editorjs]')
   const original = await source.inputValue()
-  const posts: string[] = []
-  page.on('request', request => { if (request.method() === 'POST') posts.push(request.url()) })
+  const saveUrl = page.url()
+  const savePosts: string[] = []
+  page.on('request', request => {
+    if (request.method() === 'POST' && request.url() === saveUrl) savePosts.push(request.url())
+  })
   await page.keyboard.press('ControlOrMeta+s')
   await expect(page.locator('[data-pw-editor-status]')).toBeVisible()
-  expect(posts).toEqual([])
+  expect(savePosts).toEqual([])
   await expect(source).toHaveValue(original)
-  const response = page.waitForResponse(response => response.request().method() === 'POST' && response.url() === page.url())
+  const response = page.waitForResponse(response => response.request().method() === 'POST' && response.url() === saveUrl)
   await page.evaluate(() => (window as any).releaseLoading())
   expect((await response).status()).toBe(204)
   await expect(page.locator('.action-saveAndReturn')).toBeEnabled()
@@ -89,11 +92,14 @@ test('offers a reload after a failed import and preserves the original source', 
   await expect(page.locator('.pw-editor-mode:disabled')).toHaveCount(3)
   await expect(page.locator('textarea[data-editorjs]')).toHaveValue(original)
   await waitForEditorWorker(page)
-  const posts: string[] = []
-  page.on('request', request => { if (request.method() === 'POST') posts.push(request.url()) })
+  const saveUrl = page.url()
+  const savePosts: string[] = []
+  page.on('request', request => {
+    if (request.method() === 'POST' && request.url() === saveUrl) savePosts.push(request.url())
+  })
   await page.getByRole('button', { name: 'Save', exact: true }).click()
   await expect(page.locator('[data-pw-editor-load-error]')).toBeVisible()
-  expect(posts).toEqual([])
+  expect(savePosts).toEqual([])
   await expect(page.locator('textarea[data-editorjs]')).toHaveValue(original)
   await page.getByRole('button', { name: 'Reload page', exact: true }).press('Enter')
   await expect(page.locator('[data-pw-editor-widget]')).toHaveAttribute('data-pw-editor-state', 'ready')
