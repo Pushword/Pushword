@@ -61,6 +61,27 @@ final class LoginRateLimiterTest extends TestCase
         self::assertFalse($this->tryLogin('editor@example.tld', '192.0.2.10'), 'the network budget was kept');
     }
 
+    public function testASuccessfulLoginRefundsOnlyItsOwnNetworkToken(): void
+    {
+        $ip = '192.0.2.10';
+        $email = 'editor@example.tld';
+        for ($i = 1; $i <= 4; ++$i) {
+            self::assertTrue($this->tryLogin($email, $ip));
+        }
+
+        for ($i = 1; $i <= 20; ++$i) {
+            self::assertTrue($this->tryLogin('other'.$i.'@example.tld', $ip));
+        }
+
+        $successful = $this->request($email, $ip);
+        self::assertTrue($this->limiter->consume($successful)->isAccepted());
+        $this->limiter->reset($successful);
+        $this->limiter->reset($successful);
+
+        self::assertTrue($this->tryLogin($email, $ip), 'the successful attempt refunded one token');
+        self::assertFalse($this->tryLogin('other@example.tld', $ip), 'the failed attempts still count');
+    }
+
     private function tryLogin(string $username, string $ip): bool
     {
         return $this->limiter->consume($this->request($username, $ip))->isAccepted();

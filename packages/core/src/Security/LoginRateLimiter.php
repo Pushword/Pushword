@@ -11,6 +11,7 @@ use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\RateLimiter\AbstractRequestRateLimiter;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\RateLimiter\LimiterInterface;
+use Symfony\Component\RateLimiter\RateLimit;
 use Symfony\Component\RateLimiter\RateLimiterFactoryInterface;
 use Symfony\Component\Security\Http\SecurityRequestAttributes;
 
@@ -20,6 +21,8 @@ use Symfony\Component\Security\Http\SecurityRequestAttributes;
  */
 final class LoginRateLimiter extends AbstractRequestRateLimiter
 {
+    private const string NETWORK_TOKEN_CONSUMED = '_pushword_login_network_token_consumed';
+
     public function __construct(
         #[Autowire(service: 'limiter.login_throttling_network')]
         private readonly RateLimiterFactoryInterface $networkFactory,
@@ -31,11 +34,25 @@ final class LoginRateLimiter extends AbstractRequestRateLimiter
     ) {
     }
 
-    /** The network limit bounds how many accounts one client may try: a successful login keeps it. */
+    #[Override]
+    public function consume(Request $request): RateLimit
+    {
+        $limit = parent::consume($request);
+        $request->attributes->set(self::NETWORK_TOKEN_CONSUMED, $limit->isAccepted());
+
+        return $limit;
+    }
+
     #[Override]
     public function reset(Request $request): void
     {
         $this->accountLimiter($request)->reset();
+
+        // Symfony can check the budget without consuming a token before a successful login.
+        if ($request->attributes->getBoolean(self::NETWORK_TOKEN_CONSUMED)) {
+            $request->attributes->remove(self::NETWORK_TOKEN_CONSUMED);
+            $this->networkLimiter($request)->consume(-1);
+        }
     }
 
     /**
@@ -45,9 +62,14 @@ final class LoginRateLimiter extends AbstractRequestRateLimiter
     protected function getLimiters(Request $request): array
     {
         return [
-            $this->networkFactory->create($this->hash(ClientNetwork::of($request->getClientIp()))),
+            $this->networkLimiter($request),
             $this->accountLimiter($request),
         ];
+    }
+
+    private function networkLimiter(Request $request): LimiterInterface
+    {
+        return $this->networkFactory->create($this->hash(ClientNetwork::of($request->getClientIp())));
     }
 
     private function accountLimiter(Request $request): LimiterInterface

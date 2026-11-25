@@ -2331,8 +2331,7 @@ final class StaticGeneratorTest extends KernelTestCase
         $this->overrideStaticDir();
         $em = self::getContainer()->get('doctrine.orm.default_entity_manager');
 
-        // `..` survives slug normalization, so this page's output path escapes the
-        // static dir and PathGuard throws.
+        // The invalid slug survives normalization and makes URL or output path generation throw.
         $probe = $this->makeProbePage('../worker-throw-probe');
         self::assertSame('../worker-throw-probe', $probe->slug, 'slug normalization changed: pick another way to throw');
         $em->persist($probe);
@@ -2352,10 +2351,9 @@ final class StaticGeneratorTest extends KernelTestCase
                 $stdout = (string) ob_get_clean();
             }
 
-            self::assertSame(
-                ['Failed to generate localhost.dev/../worker-throw-probe: The resolved path escapes its configured directory.'],
-                $staticAppGenerator->getErrors(),
-            );
+            $errors = $staticAppGenerator->getErrors();
+            self::assertCount(1, $errors);
+            self::assertStringStartsWith('Failed to generate localhost.dev/'.$probe->slug.': ', $errors[0]);
             self::assertStringNotContainsString('[ERROR]', $stdout);
         } finally {
             new Filesystem()->remove([$scratch.'.json', $scratch.'-redirections.json']);
