@@ -201,7 +201,8 @@ final class DraftExchangeTest extends KernelTestCase
         $filesystem = new Filesystem();
         $directory = sys_get_temp_dir().'/pw-live-'.bin2hex(random_bytes(8));
         $locks = new LockFactory(new InMemoryStore());
-        $exchange = new DraftExchange($em, $locks, new MockClock(), self::getContainer()->get(LiveWrite::class), $filesystem, $directory, new LiveProjection());
+        $projection = new LiveProjection();
+        $exchange = new DraftExchange($em, $locks, new MockClock(), self::getContainer()->get(LiveWrite::class), $filesystem, $directory, $projection);
         $page = new Page();
         $page->host = 'localhost.dev';
         $page->slug = 'server-patch-'.bin2hex(random_bytes(5));
@@ -223,7 +224,9 @@ final class DraftExchangeTest extends KernelTestCase
             $prepare = static function () use ($probe): array {
                 self::assertFalse($probe->acquire());
 
-                return ['content' => 'Fresh text', 'replacements' => [['find' => 'Initial', 'replace' => 'Fresh']]];
+                $replacement = '<a id="empty"></a> Fresh';
+
+                return ['content' => $replacement.' text', 'replacements' => [['find' => 'Initial', 'replace' => $replacement]]];
             };
             $reject = static function (string $body) use ($page, $rejected): JsonResponse {
                 $page->mainContent = $body;
@@ -254,7 +257,11 @@ final class DraftExchangeTest extends KernelTestCase
             self::assertNull($exchange->patchPage($page, $prepare, $apply));
             $em->refresh($page);
             $em->refresh($state);
-            self::assertSame('Fresh text — legacy suffix', $page->mainContent);
+            self::assertSame(' Fresh text — legacy suffix', $page->mainContent);
+            self::assertNotNull($state->snapshot);
+            $materialized = $projection->resolve(false, '', $state->snapshot, null, null);
+            self::assertIsArray($materialized);
+            self::assertSame($page->mainContent, $materialized['content']);
             self::assertSame($room, $state->room);
             self::assertSame(1, $state->cursor);
             self::assertSame((string) $page->writeVersion, $state->revision);

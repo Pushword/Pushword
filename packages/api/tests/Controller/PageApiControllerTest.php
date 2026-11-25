@@ -771,6 +771,41 @@ final class PageApiControllerTest extends WebTestCase
         self::assertSame('First middle last', $projected['content']);
     }
 
+    #[TestWith([false])]
+    #[TestWith([true])]
+    public function testMarkdownPatchNormalizesTheBodyOnce(bool $shared): void
+    {
+        [$host, $slug] = $this->createDraftWithBody('Original body');
+        $path = '/api/page/'.$host.'/'.$slug;
+        $id = $this->lookupPageId($host, $slug);
+        $draftPath = '/api/pages/'.$id.'/draft';
+        if ($shared) {
+            $this->request(Request::METHOD_POST, $draftPath, ['after' => 0]);
+            self::assertResponseIsSuccessful();
+            $room = $this->decode()['room'];
+        }
+
+        $this->request(Request::METHOD_PATCH, $path.'?return=full', [
+            'edits' => [['find' => 'Original body', 'replace' => 'New body <a id="empty"></a>']],
+        ], ['HTTP_IF_MATCH' => $this->currentRevision($host, $slug)]);
+        self::assertResponseIsSuccessful();
+        self::assertSame('New body ', $this->decode()['body']);
+
+        $this->request(Request::METHOD_GET, $path);
+        self::assertResponseIsSuccessful();
+        self::assertSame('New body ', $this->decode()['body']);
+
+        if (isset($room)) {
+            $this->request(Request::METHOD_POST, $draftPath, ['room' => $room, 'after' => 0]);
+            self::assertResponseIsSuccessful();
+            $snapshot = $this->decode()['snapshot'];
+            self::assertIsString($snapshot);
+            $projection = self::getContainer()->get(LiveProjection::class)->resolve(false, '', $snapshot, null, null);
+            self::assertIsArray($projection);
+            self::assertSame('New body ', $projection['content']);
+        }
+    }
+
     public function testAnAuthorOnlyChangeKeepsTheDraftOnTheCurrentRevision(): void
     {
         [$host, $slug] = $this->createDraftWithBody('Original body');

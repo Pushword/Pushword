@@ -96,7 +96,8 @@ final readonly class DraftExchange
                 $page,
                 static fn (int $increment): string => (string) ($page->writeVersion + $increment),
                 static fn (): string => $page->mainContent,
-                $apply,
+                // The Page setter normalizes the raw content itself.
+                static fn (): ?JsonResponse => $apply($projection['raw']),
                 $projection,
             );
             if ($failure instanceof JsonResponse) {

@@ -49,18 +49,33 @@ final class LiveProjection
      * @param MarkdownPatch $patch
      * @param list<string>  $legacy
      *
-     * @return array{snapshot: string, content: string}|JsonResponse
+     * @return array{snapshot: string, content: string, raw: string}|JsonResponse
      */
     public function patchMarkdown(string $baseline, ?string $stored, array $patch, array $legacy): array|JsonResponse
     {
-        $patch['normalized'] = Page::normalizeMainContent($patch['content']);
+        $raw = $patch['content'];
+        $patch['normalized'] = [] === $legacy ? Page::normalizeMainContent($raw) : $raw;
 
-        return $this->project([
+        $projection = $this->project([
             'baseline' => $baseline,
             'stored' => $stored,
             'patch' => $patch,
             'legacy' => $legacy,
         ]);
+        if ([] !== $legacy && \is_array($projection)) {
+            // The canonical content is only known after merging the legacy updates.
+            $raw = $projection['content'];
+            $normalized = Page::normalizeMainContent($raw);
+            if ($raw !== $normalized) {
+                $projection = $this->project([
+                    'baseline' => $raw,
+                    'stored' => $projection['snapshot'],
+                    'patch' => ['replacements' => [], 'content' => $raw, 'normalized' => $normalized],
+                ]);
+            }
+        }
+
+        return \is_array($projection) ? $projection + ['raw' => $raw] : $projection;
     }
 
     /**
