@@ -214,6 +214,17 @@ final class EntityFilterTest extends KernelTestCase
         self::assertStringContainsString('id="anchor-two"', $bodyTwo);
     }
 
+    public function testInlineHeadingAnchorWithTrailingNonBreakingSpace(): void
+    {
+        $page = $this->getPage("## Heading {#anchor}\u{a0}\n\nText.");
+        $split = $this->getContentExtension()->mainContentSplit($page);
+
+        self::assertStringContainsString('<h2 id="anchor">Heading</h2>', $split->getContent());
+        $toc = $split->getToc();
+        self::assertIsString($toc);
+        self::assertStringContainsString('href="#anchor"', $toc);
+    }
+
     public function testInlineHeadingAttributeDoesNotMatchAcrossLines(): void
     {
         // Regression: \s* in regex matched newlines, causing {#nextblock} on a separate line

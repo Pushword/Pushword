@@ -18,6 +18,8 @@ final readonly class TempestMarkdownRenderer
     private const array UNSUPPORTED_PATTERNS = [
         '/\A<(?:input|hr|br|img)\b/i',
         '/^ {0,3}(?:[-*+]|\d+[.)]) \[[xX ]\] /m',
+        // CommonMark attaches these IDs to the heading, where Tempest leaves them as text.
+        '/^ {0,3}#{1,6}[ \t]+[^\r\n]*\{(?:#|id=)[^{}\r\n]+\}/mi',
         '/\{#[^}\n]*[^\x00-\x7F][^}\n]*\}/',
         '/^#{1,6} [^\n]+\n\{[.#][^}\n]+\}$/m',
         '/(?!\A)\{(?:[.#]|[a-z][a-z0-9_-]*=)[^}\n]*\s+[^}\n]*\}/i',

@@ -30,6 +30,17 @@ final class MarkdownExtensionTest extends KernelTestCase
         return self::getContainer()->get(MarkdownParser::class);
     }
 
+    public function testInlineHeadingIdsAreRenderedAsAttributes(): void
+    {
+        $parser = $this->getMarkdownParser();
+
+        self::assertSame(
+            "<h2 id=\"seo-and-performance\">SEO / GEO and performance</h2>\n<h3 id=\"details\"><em>Details</em></h3>\n",
+            $parser->transform("## SEO / GEO and performance {#seo-and-performance}\n### *Details* {id=details}"),
+        );
+        self::assertSame("<h2 id=\"anchor\">Heading\u{a0}</h2>\n", $parser->transform("## Heading {#anchor}\u{a0}"));
+    }
+
     // ===== Tests des liens obfusqués #[text](url) =====
 
     public function testObfuscatedLinkNode(): void

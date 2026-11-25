@@ -112,6 +112,20 @@ final class MarkdownParserCacheTest extends KernelTestCase
         self::assertSame('<p>A <strong>cached</strong> paragraph.</p>', trim($fresh));
     }
 
+    public function testHeadingAnchorReplacesThePreviouslyCachedLiteral(): void
+    {
+        $pool = new ArrayAdapter();
+        $parser = $this->buildParser($pool);
+        $markdown = '## Heading {#anchor}';
+
+        $legacy = $pool->getItem('pw_md.'.hash('xxh3', '43|'.$markdown));
+        $legacy->set("<h2>Heading {#anchor}</h2>\n");
+
+        $pool->save($legacy);
+
+        self::assertSame("<h2 id=\"anchor\">Heading</h2>\n", $parser->transform($markdown));
+    }
+
     public function testImageFreeFragmentSurvivesMediaVersionBump(): void
     {
         $pool = new ArrayAdapter();

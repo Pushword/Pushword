@@ -92,7 +92,7 @@ Pushword, Statamic and Sulu include multilingual support natively. WordPress use
 
 For projects with three or more languages, native support avoids a separate multilingual plugin.
 
-<h2 id="seo-and-performance">SEO / GEO and performance</h2>
+## SEO / GEO and performance {#seo-and-performance}
 
 | Feature                 | Pushword                        | WordPress                    | Statamic                            | Sulu                     |
 | ----------------------- | ------------------------------- | ---------------------------- | ----------------------------------- | ------------------------ |
@@ -103,7 +103,7 @@ For projects with three or more languages, native support avoids a separate mult
 | **Dead Link Detection** | Page Scanner extension          | Plugins                      | Addon or custom check               | Custom check             |
 | **Schema Markup**       | Native support                  | Plugins (Yoast, RankMath)    | SEO Pro addon                       | Developer-dependent      |
 
-<h3 id="seo-and-caching-in-practice">SEO / GEO and caching in practice</h3>
+### SEO / GEO and caching in practice {#seo-and-caching-in-practice}
 
 **Pushword** was built by an SEO / GEO consultant, with content optimization baked into core. Meta management, schema generation, and clean URL structures require no third-party plugins. The Page Scanner extension audits internal links and detects broken links. The Static Generator extension can export HTML for static hosting; actual response and paint times depend on the site, host, network and browser.
 
