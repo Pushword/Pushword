@@ -8,6 +8,7 @@ use Facebook\WebDriver\Interactions\WebDriverActions;
 use Facebook\WebDriver\WebDriverBy;
 use Facebook\WebDriver\WebDriverDimension;
 use Facebook\WebDriver\WebDriverHasInputDevices;
+use Facebook\WebDriver\WebDriverKeys;
 use PHPUnit\Framework\Attributes\Group;
 
 /**
@@ -65,13 +66,25 @@ final class AdminJSTest extends AbstractPantherAdminTest
         );
 
         self::assertTrue($inputIsFocused, 'Clicking the magnifier should focus the list search input');
+        new WebDriverActions($webDriver)
+            ->sendKeys(null, WebDriverKeys::TAB)
+            ->keyDown(null, WebDriverKeys::SHIFT)
+            ->sendKeys(null, WebDriverKeys::TAB)
+            ->keyUp(null, WebDriverKeys::SHIFT)
+            ->perform();
+
         self::assertTrue(
-            $client->executeScript(
+            $this->pollUntilTrue(
+                $client,
                 'const input = document.querySelector("input[type=search][name=query]");
-                 const style = getComputedStyle(input);
-                 return style.outlineStyle === "none" && style.boxShadow.includes("inset");'
+                 const inputStyle = getComputedStyle(input);
+                 const widgetStyle = getComputedStyle(input.closest(".form-widget"));
+                 return input.matches(":focus-visible")
+                     && inputStyle.outlineStyle === "none" && inputStyle.boxShadow === "none"
+                     && widgetStyle.boxShadow === "none" && widgetStyle.outlineStyle === "solid"
+                     && parseFloat(widgetStyle.outlineOffset) <= -parseFloat(widgetStyle.outlineWidth);',
             ),
-            'The list search focus indicator should be drawn inside the input',
+            'The list search should show a single focus outline inside the visible search box',
         );
 
         $originalWindowSize = $webDriver->manage()->window()->getSize();
